@@ -141,12 +141,9 @@ static XS(apreq_xs_request_config)
 {
     dXSARGS;
     apreq_request_t *req;
-    apr_status_t status = APR_SUCCESS;
     int j;
-    if (items == 0)
-        XSRETURN_UNDEF;
-    if (!SvROK(ST(0)))
-        Perl_croak(aTHX_ "usage: $req->config(@settings)");
+    if (items % 2 != 1 || !SvROK(ST(0)))
+        Perl_croak(aTHX_ "usage: $req->config(%settings)");
 
     req = apreq_xs_sv2(request,ST(0));
 
@@ -158,8 +155,8 @@ static XS(apreq_xs_request_config)
         if (strcasecmp(attr,"POST_MAX")== 0
             || strcasecmp(attr, "MAX_BODY") == 0) 
         {
-            status = apreq_env_max_body(req->env,
-                                        (apr_off_t)apreq_atoi64f(val));
+            apreq_env_max_body(req->env,
+                               (apr_off_t)apreq_atoi64f(val));
         }
         else if (strcasecmp(attr, "TEMP_DIR") == 0) {
             apreq_env_temp_dir(req->env, val);
@@ -186,11 +183,7 @@ static XS(apreq_xs_request_config)
             Perl_warn(aTHX_ "Apache::Request::config: "
                       "Unrecognized attribute %s", attr);
         }
-
-        if (status != APR_SUCCESS)
-            break;
     }
-    XSRETURN_IV(status);
 }
 
 static XS(apreq_xs_request_parse)
@@ -205,5 +198,9 @@ static XS(apreq_xs_request_parse)
 
     do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);
     while (s == APR_INCOMPLETE);
-    XSRETURN_IV(s);
+    if (GIMME_V != G_VOID)
+        XSRETURN_IV(s);
+    if (s == APR_SUCCESS)
+        apreq_xs_croak(aTHX_ newHV(), s, "Apache::Request::parse", 
+                       "Apache::Request::Error");
 }
