@@ -8,6 +8,9 @@ use Cwd;
 require Win32;
 use ExtUtils::MakeMaker;
 use File::Basename;
+use Archive::Tar;
+use File::Path;
+use LWP::Simple;
 my ($apache, $debug, $help, $no_perl, $perl);
 my $result = GetOptions( 'with-apache2=s' => \$apache,
 			 'debug' => \$debug,
@@ -54,6 +57,44 @@ DOXYGEN_CONF=\$(APREQ_HOME)\\build\\doxygen.conf.win32
 END
 
 print $make $_ while (<DATA>);
+
+my $apxs = dirname(which('apxs')) || fetch_apxs();
+
+my $test = << 'END';
+TEST: $(LIBAPREQ) $(MOD)
+	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
+        set PATH=%PATH%;$(APACHE)\bin
+        cd $(LIBDIR) && $(TESTALL).exe -v
+        cd $(APREQ_HOME)
+END
+
+my $clean = << 'END';
+CLEAN:
+        cd $(LIBDIR)
+        $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
+        cd $(APREQ_HOME)
+!IF EXIST("$(PERLGLUE)\Makefile")
+        cd $(PERLGLUE)
+        $(MAKE) /nologo clean
+        cd $(APREQ_HOME)
+!ENDIF
+END
+
+if ($apxs) {
+    $test .= << "END";
+        cd env
+        $^X t/TEST.PL -apxs $apxs/apxs
+        cd \$(APREQ_HOME)
+END
+    $clean .= << "END";
+        cd env
+        $^X t/TEST.PL -clean
+        cd \$(APREQ_HOME)
+END
+}
+
+print $make "\n", $test, "\n";
+print $make "\n", $clean, "\n";
 
 if ($doxygen) {
     print $make <<"END";
@@ -126,7 +167,6 @@ sub search {
     my $apache;
   SEARCH: {
         my $candidate;
-        my $bin = which('Apache');
         if (my $bin = which('Apache')) {
             ($candidate = $bin) =~ s!bin$!!;
             if (-d $candidate and check($candidate)) {
@@ -249,6 +289,53 @@ END
     
 }
 
+sub fetch_apxs {
+    print << 'END';
+
+I could not find an apxs utility on your system, which is
+needed to run tests in the env/ subdirectory. The apxs 
+utiltity (and apr-config and apu-config utilties) have not
+yet been ported to Apache2 on Win32, but a development port
+is available, which I can install for you, if you like.
+
+END
+
+    my $ans = prompt('Install apxs?', 'yes');
+    return unless $ans =~ /^y/i;
+    my $file = 'apxs_win32.tar.gz';
+    my $remote = 'http://perl.apache.org/dist/win32-bin/' . $file;
+    print "Fetching $remote ... ";
+    unless (is_success(getstore($remote, $file))) {
+        warn "Download of $remote failed";
+        return;
+    }
+    print " done!\n";
+    
+    my $arc = Archive::Tar->new($file, 1);
+    $arc->extract($arc->list_files());
+    my $dir = 'apxs';
+    unless (-d $dir) {
+        warn "Unpacking $file failed";
+        return;
+    }
+    print "chdir $dir\n";
+    chdir $dir or do {
+        warn "chdir to $dir failed: $!";
+        return;
+    };
+    my @args = ($^X, 'Configure.pl');
+    print "@args\n\n";
+    system(@args) == 0 or do {
+         warn "system @args failed: $?";
+         return;
+     };
+    chdir '..';
+    rmtree($dir, 1, 1) or warn "rmtree of $dir failed: $!";
+    print "unlink $file\n";
+    unlink $file or warn "unlink of $file failed: $!";
+    return "$apache/bin";
+}
+
 __DATA__
 
 LIBAPREQ=libapreq
@@ -291,22 +378,6 @@ ALL : "$(LIBAPREQ)"
 
 $(LIBAPREQ):
 	$(MAKE) /nologo /f $(CFG_HOME)\$(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
-
-CLEAN:
-        cd $(LIBDIR)
-        $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
-        cd $(APREQ_HOME)
-!IF EXIST("$(PERLGLUE)\Makefile")
-        cd $(PERLGLUE)
-        $(MAKE) /nologo clean
-        cd $(APREQ_HOME)
-!ENDIF
-
-TEST: $(LIBAPREQ)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
-        set PATH=%PATH%;$(APACHE)\bin
-        cd $(LIBDIR) && $(TESTALL).exe -v
-        cd $(APREQ_HOME)
 
 $(MOD): $(LIBAPREQ)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
