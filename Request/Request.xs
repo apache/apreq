@@ -491,8 +491,13 @@ ApreqInputStream
 ApacheUpload_fh(upload)
     Apache::Upload upload
 
+    PREINIT:
+    int fd;
+
     CODE:
-    if (  ( RETVAL = PerlIO_importFILE(ApacheUpload_fh(upload),0) ) == NULL  )
+    fd = PerlLIO_dup(fileno(ApacheUpload_fh(upload)));
+
+    if ( !(RETVAL = PerlIO_fdopen(fd, "r")) )
 	    XSRETURN_UNDEF;
 
     OUTPUT:
@@ -501,18 +506,8 @@ ApacheUpload_fh(upload)
     CLEANUP:
     if (ST(0) != &PL_sv_undef) {
 	IO *io = GvIOn((GV*)SvRV(ST(0)));
-	int fd = PerlIO_fileno(IoIFP(io));
-	PerlIO *fp;
-
-	fd = PerlLIO_dup(fd);
-	if (!(fp = PerlIO_fdopen(fd, "r"))) { 
-	    PerlLIO_close(fd);
-	    croak("fdopen failed!");
-	}
 	if (upload->req->parsed)
-	    PerlIO_seek(fp, 0, 0);
-
-	IoIFP(io) = fp;  	
+	    PerlIO_seek(IoIFP(io), 0, 0);
     }
 
 long
