@@ -10,15 +10,20 @@ AC_DEFUN([AC_APREQ], [
                 AC_HELP_STRING([--with-perl],[path to perl executable]),
                 [PERL=$withval],[PERL="perl"])
         AC_ARG_WITH(apache2-apxs,
-                AC_HELP_STRING([--with-apache2-apxs],[path to apache2's apxs]),
+                AC_HELP_STRING([--with-apache2-apxs],[path to apxs]),
                 [APACHE2_APXS=$withval],[APACHE2_APXS="apxs"])
         AC_ARG_WITH(apache2-src,
-                AC_HELP_STRING([--with-apache2-src],[path to httpd-2 source]),
+                AC_HELP_STRING([--with-apache2-src],[path to httpd source]),
                 [APACHE2_SRC=$withval],[APACHE2_SRC=""])
+        AC_ARG_WITH(apache2-httpd,
+                AC_HELP_STRING([--with-apache2-httpd],[path to httpd binary]),
+                [APACHE2_HTTPD=$withval],[APACHE2_HTTPD=""])
 
         prereq_check="$PERL build/version_check.pl"
 
         if test -n "$APACHE2_SRC"; then
+                # no apxs: must compile httpd from source
+
                 APACHE2_SRC=`cd $APACHE2_SRC;pwd`
 
                 AC_CHECK_FILE([$APACHE2_SRC/include/httpd.h],,
@@ -34,9 +39,11 @@ AC_DEFUN([AC_APREQ], [
                     [APU_CONFIG=$withval],[APU_CONFIG="$APACHE2_SRC/srclib/apr-util/apu-config"])
 
         else
+                # have apxs: use it
+
                 APACHE2_INCLUDES=-I`$APACHE2_APXS -q INCLUDEDIR`
-                APACHE2_HTTPD=`$APACHE2_APXS -q SBINDIR`/httpd
-                APR_MAJOR_VERSION=`$APACHE2_APXS -q APR_VERSION | cut -d. -f 1`
+                ${APACHE2_HTTPD:=`$APACHE2_APXS -q SBINDIR`/`$APACHE2_APXS -q progname`}
+                APR_MAJOR_VERSION=`$APACHE2_APXS -q APR_VERSION 2>/dev/null | cut -d. -f 1`
                 if test ${APR_MAJOR_VERSION:=0} -eq 0; then
                     APR_CONFIG=apr-config
                     APU_CONFIG=apu-config 
@@ -48,7 +55,7 @@ AC_DEFUN([AC_APREQ], [
                 APU_CONFIG=`$APACHE2_APXS -q APU_BINDIR`/$APU_CONFIG
 
                 if test -z "`$prereq_check apache2 $APACHE2_HTTPD`"; then
-                    AC_MSG_ERROR([Bad apache2 version])
+                    AC_MSG_ERROR([Bad apache2 binary])
                 fi
         fi
 
