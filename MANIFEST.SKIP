@@ -32,5 +32,7 @@ glue/perl/xs\b
 
 #Apache Test stuff
 t/TEST$
-t/conf/*.conf$
+t/conf/.*\.conf$
+t/conf/.*\.p[lm]$
+t/htdocs
 t/logs
