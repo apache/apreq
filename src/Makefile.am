@@ -11,17 +11,26 @@ libapreq2_la_LDFLAGS = -version-info @APREQ_LIBTOOL_VERSION@
 
 pkgincludedir = $(includedir)/@APREQ_LIBNAME@
 
+if ENABLE_PROFILE
+
+AM_CFLAGS= -fprofile-arcs -ftest-coverage
+
+clean-local:
+	-rm *.bb *.bbg *.da *.gcov
+
+endif
+
 
 if BUILD_APR
 
 @APR_LA@:
-	cd `@APR_CONFIG@ --srcdir` && make
+	cd `@APR_CONFIG@ --srcdir` && $(MAKE)
 
 endif
 
 if BUILD_APU
 
 @APU_LA@: @APR_LA@
-	cd `@APU_CONFIG@ --srcdir` && make
+	cd `@APU_CONFIG@ --srcdir` && $(MAKE)
 
 endif

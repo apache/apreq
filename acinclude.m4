@@ -1,5 +1,8 @@
 AC_DEFUN([AC_APREQ], [
 
+        AC_ARG_ENABLE(profile,
+                AC_HELP_STRING([--enable-profile],[compile libapreq2 with "-fprofile-arcs -ftest-coverage" for gcov/gprof]),
+                [PROFILE=$enableval],[PROFILE="no"])
         AC_ARG_ENABLE(perl_glue,
                 AC_HELP_STRING([--enable-perl-glue],[build perl modules Apache::Request and Apache::Cookie]),
                 [PERL_GLUE=$enableval],[PERL_GLUE="no"])
@@ -77,7 +80,7 @@ AC_DEFUN([AC_APREQ], [
            (cd glue/perl && $PERL ../../build/xsbuilder.pl run)],
                 [PERL=$PERL;PERL_GLUE=$PERL_GLUE;APACHE2_APXS=$APACHE2_APXS])
 
-
+        AM_CONDITIONAL(ENABLE_PROFILE, test "x$PROFILE" != "xno")
         AM_CONDITIONAL(BUILD_PERL_GLUE, test "x$PERL_GLUE" != "xno")
         AM_CONDITIONAL(HAVE_APACHE_TEST, test -n "`$prereq_check Apache::Test`")
         AM_CONDITIONAL(BUILD_HTTPD, test -n "$APACHE2_SRC")
