@@ -52,7 +52,6 @@ APR::Request
     add_hook (requires APR::Request::Hook)
     parser (requires APR::Request::Parser)
 
-
 ==================================================
 
 APR::Request::CGI @ISA=(APR::Request)
@@ -159,7 +158,6 @@ APR::Request::Param
     upload_tempname
     upload_io
     upload_fh
-    disable_uploads
 
 --------------------------------------------------
 Current (pure-perl) Apache2:: module breakdown
@@ -170,6 +168,22 @@ Apache2::Request @ISA=(Apache2::RequestRec, APR::Request::Apache2)
   ctor:
     new
 
+  methods:
+    instance           (deprecated, ok to remove this)
+    disable_uploads
+
+  missing:
+    hook_data
+    upload_hook
+
+  2.04-deltas:
+    env() removed
+    params() method inherited from APR::Request; not deprecated anymore.
+    parms() removed
+    status() removed.
+    args() needs to become Apache2::RequestRec::args!!!
+    The args() change probably deserves a runtime warning in 2.05-dev.
+
 ==================================================
 
 Apache2::Cookie @ISA=(APR::Request::Cookie)
@@ -178,6 +192,7 @@ Apache2::Cookie @ISA=(APR::Request::Cookie)
     Apache2::Cookie::Jar @ISA=(APR::Request::Apache2)
       methods:
         cookies
+        status
 
   subs:
     encode
@@ -190,6 +205,9 @@ Apache2::Cookie @ISA=(APR::Request::Cookie)
     freeze
     thaw
     value
+
+  2.04-deltas:
+    env() removed
 
 ==================================================
 
@@ -208,3 +226,6 @@ Apache2::Upload @ISA=(APR::Request::Param)
     io
     filename
     bb          (need to deprecate this)
+
+  2.04-deltas:
+    Apache::Upload::Brigade is now APR::Request::Brigade.

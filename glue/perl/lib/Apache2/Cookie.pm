@@ -81,5 +81,22 @@ package Apache2::Cookie::Jar;
 use APR::Request::Apache2;
 push our @ISA, qw/APR::Request::Apache2/;
 sub cookies { Apache2::Cookie->fetch(shift) }
+*Apache2::Cookie::Jar::status = *APR::Request::jar_status;
+
+my %old_args = (
+    value_class => "cookie_class",
+);
+
+sub new {
+    my $class = shift;
+    my $jar = $class->APR::Request::Apache2::new(shift);
+    my %attrs = @_;
+    while (my ($k, $v) = each %attrs) {
+        $k =~ s/^-//;
+        my $method = $old_args{lc($k)} || lc $k;
+        $jar->$method($v);
+    }
+    return $jar;
+}
 
 1;
