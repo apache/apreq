@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/07/17 21:59:30 $]   -*-text-*-
+Last modified at [$Date: 2003/07/18 18:38:38 $]   -*-text-*-
 /** @page STATUS
 
      2.0.0  in development
@@ -46,6 +46,9 @@ TODO:
       and Apache::Request don't need to be linked against mod_apreq
       to resolve missing apreq_env* symbols. 
 
+    - continue working on the top-level Makefile.PL to completely
+      abstract all the targets so one needs to do only:
+      perl Makefile.PL && make && make test && make install
 
 OPEN ISSUES:
 

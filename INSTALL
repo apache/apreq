@@ -32,6 +32,16 @@ Unix build, where libtool/automake/autoconf works:
             % make install
   (optional)% make perl_install
 
+Or using the CPAN/perlish way:
+
+  (optional)% ./buildconf
+            % perl Makefile.PL --with-apache2-apxs=/path/to/apache2/bin/apxs
+            % make && make test
+  (optional)% make perl_glue
+  (optional)% make perl_test
+            % make install
+  (optional)% make perl_install
+
 
 Win32 build:
   C:\httpd-apreq-2> cd win32
