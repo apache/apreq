@@ -4,6 +4,8 @@ use strict;
 my $myVERSION = MM->parse_version('Request/Request.pm');
 $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
 
+check_compat();
+
 WriteMakefile(
 	      'NAME'	 => 'libapreq',
 	      'VERSION' => $myVERSION,
@@ -26,6 +28,13 @@ sub check_compat {
     }
 }
 
+sub MY::pasthru {
+     my $self = shift;
+    chomp(my $str = $self->MM::pasthru);
+    join $/, "$str\\", 
+     "\t".'DEFINE="$(DEFINE)"', 
+    "";   
+}
 sub MY::postamble { 
     return <<'EOF'; 
 

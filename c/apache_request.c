@@ -109,8 +109,22 @@ static int util_read(ApacheRequest *req, const char **rbuf)
 char *ApacheRequest_script_name(ApacheRequest *req)
 {
     request_rec *r = req->r;
-    int path_info_start = ap_find_path_info(r->uri, r->path_info);
-    return ap_pstrndup(r->pool, r->uri, path_info_start);
+    char *tmp;
+
+    if (r->path_info && *r->path_info) {
+	int path_info_start = ap_find_path_info(r->uri, r->path_info); 
+	tmp = ap_pstrndup(r->pool, r->uri, path_info_start);
+    }
+    else {
+	tmp = r->uri;
+    }
+
+    return tmp;
+}
+
+char *ApacheRequest_script_path(ApacheRequest *req)
+{
+    return ap_make_dirstr_parent(req->r->pool, ApacheRequest_script_name(req));
 }
 
 const char *ApacheRequest_param(ApacheRequest *req, const char *key)
@@ -220,7 +234,7 @@ ApacheRequest *ApacheRequest_new(request_rec *r)
     return req;
 }
 
-static int urlword_dlm[] = {'&', ';', NULL};
+static int urlword_dlm[] = {'&', ';', 0};
 
 static char *my_urlword(pool *p, const char **line)
 {
@@ -255,41 +269,10 @@ static char *my_urlword(pool *p, const char **line)
     return NULL;
 }
 
-int ApacheRequest_parse_urlencoded(ApacheRequest *req)
+static void split_to_parms(ApacheRequest *req, const char *data)
 {
     request_rec *r = req->r; 
-    const char *data, *val, *type;
-    int rc = OK;
-
-    switch(r->method_number) {
-    case M_POST:
-	type = ap_table_get(r->headers_in, "Content-Type");
-	if (!strcaseEQ(type, DEFAULT_ENCTYPE)) {
-	    return DECLINED;
-	}
-	if ((rc = util_read(req, &data)) != OK) {
-	    return rc;
-	}
-	break;
-
-    case M_GET:
-	if (r->args) {
-	    data = r->args;
-	}        
-	else {
-	    return rc;
-	}
-	break;
-       
-    default:
-	ap_log_rerror(REQ_ERROR, 
-		      "[libapreq] method `%s' unsupported", r->method);
-	return HTTP_METHOD_NOT_ALLOWED;
-    }
-
-    if (!data) {
-	return rc;
-    }
+    const char *val;
 
     while (*data && (val = my_urlword(r->pool, &data))) {
 	const char *key = ap_getword(r->pool, &val, '=');
@@ -301,6 +284,33 @@ int ApacheRequest_parse_urlencoded(ApacheRequest *req)
 
 	ap_table_add(req->parms, key, val);
     }
+
+}
+
+int ApacheRequest_parse_urlencoded(ApacheRequest *req)
+{
+    request_rec *r = req->r; 
+    int rc = OK;
+
+    if (r->method_number == M_POST) { 
+	const char *data, *type;
+
+	type = ap_table_get(r->headers_in, "Content-Type");
+
+	if (!strcaseEQ(type, DEFAULT_ENCTYPE)) {
+	    return DECLINED;
+	}
+	if ((rc = util_read(req, &data)) != OK) {
+	    return rc;
+	}
+	if (data) {
+	    split_to_parms(req, data);
+	}
+    }
+
+    if (r->args) {
+	split_to_parms(req, r->args);
+    }        
 
     return OK;
 }
@@ -427,6 +437,10 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 	    }
 	}
     }
+
+    if (r->args) {
+	split_to_parms(req, r->args);
+    }        
 
     return OK;
 }

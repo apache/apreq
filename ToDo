@@ -1,3 +1,6 @@
+o what should Apache::Request->param return if attr has no value,
+e.g. http://blah.com?foo
+
 o win32 port
 
 o better Makefile.noperl

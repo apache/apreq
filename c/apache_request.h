@@ -52,6 +52,7 @@ ApacheRequest *ApacheRequest_new(request_rec *r);
 int ApacheRequest_parse_multipart(ApacheRequest *req);
 int ApacheRequest_parse_urlencoded(ApacheRequest *req);
 char *ApacheRequest_script_name(ApacheRequest *req);
+char *ApacheRequest_script_path(ApacheRequest *req);
 const char *ApacheRequest_param(ApacheRequest *req, const char *key);
 array_header *ApacheRequest_params(ApacheRequest *req, const char *key);
 char *ApacheRequest_params_as_string(ApacheRequest *req, const char *key);

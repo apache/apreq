@@ -57,16 +57,6 @@
 
 #include "apache_cookie.h"
 
-static char *cookie_path(request_rec *r)
-{
-    int path_info_start = ap_find_path_info(r->uri, r->path_info); 
-    int uri_len = strlen(r->uri);
-    char *retval, *tmp = r->uri;
-    tmp += (uri_len - path_info_start);
-    retval = ap_make_dirstr_parent(r->pool, tmp);
-    return retval;
-}
-
 char *ApacheCookie_expires(ApacheCookie *c, char *time_str)
 {
     char *expires;
@@ -123,14 +113,24 @@ char *ApacheCookie_attr(ApacheCookie *c, char *key, char *val)
 ApacheCookie *ApacheCookie_new(request_rec *r, ...)
 {
     va_list args;
+    ApacheRequest req;
     ApacheCookie *c = 
 	ap_pcalloc(r->pool, sizeof(ApacheCookie));
 
+    req.r = r;
     c->r = r;
     c->values = ap_make_array(r->pool, 1, sizeof(char *));
     c->secure = 0;
-    c->name = c->expires = c->domain = NULL;
-    c->path = cookie_path(r);
+    c->name = c->expires = NULL;
+
+#ifdef CGI_253
+    /* CGI.pm 2.53 uses these default values */
+    c->domain = (char *)ap_get_server_name(r);
+    c->path = r->uri;
+#else
+    c->domain = NULL;
+    c->path = ApacheRequest_script_path(&req);
+#endif
 
     va_start(args, r);
     for(;;) {
