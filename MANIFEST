@@ -54,7 +54,6 @@ missing
 mkinstalldirs
 patches/README
 patches/apache-1.3+apreq.patch
-t/TEST
 t/TEST.PL
 t/TEST.win32
 t/apreq/big_input.t
