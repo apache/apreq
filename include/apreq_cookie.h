@@ -72,13 +72,6 @@ apreq_cookie_t *apreq_value_to_cookie(const char *val)
            apreq_attr_to_type(apreq_value_t, data, deconst.out));
 }
 
-static APR_INLINE
-const char *apreq_cookie_name(const apreq_cookie_t *c) { return c->v.name; }
-
-static APR_INLINE
-const char *apreq_cookie_value(const apreq_cookie_t *c) { return c->v.data; }
-
-
 /**@return 1 if this is an RFC cookie, 0 if its a Netscape cookie. */
 static APR_INLINE
 unsigned apreq_cookie_version(const apreq_cookie_t *c) {
@@ -131,9 +124,9 @@ void apreq_cookie_taint_off(apreq_cookie_t *c) {
 }
 
 
-APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *pool,
-                                                     apr_table_t *jar,
-                                                     const char *header);
+APREQ_DECLARE(apr_status_t) apreq_parse_cookie_header(apr_pool_t *pool,
+                                                      apr_table_t *jar,
+                                                      const char *header);
 
 /**
  * Returns a new cookie, made from the argument list.
@@ -145,10 +138,10 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *pool,
  * @param vlen  Length of value.
  */
 APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *pool, 
-                                  const char *name, const apr_size_t nlen, 
-                                  const char *value, const apr_size_t vlen);
-
-#define apreq_make_cookie(p,n,nl,v,vl) apreq_cookie_make(p,n,nl,v,vl)
+                                                  const char *name,
+                                                  const apr_size_t nlen, 
+                                                  const char *value,
+                                                  const apr_size_t vlen);
 
 /**
  * Sets the associated cookie attribute.
@@ -161,10 +154,12 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *pool,
  * @param vlen Length of new attribute.
  * @remarks    Ensures cookie version & time are kept in sync.
  */
-APREQ_DECLARE(apr_status_t) 
-    apreq_cookie_attr(apr_pool_t *p, apreq_cookie_t *c, 
-                      const char *attr, apr_size_t alen,
-                      const char *val, apr_size_t vlen);
+APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apr_pool_t *p,
+                                              apreq_cookie_t *c, 
+                                              const char *attr,
+                                              apr_size_t alen,
+                                              const char *val,
+                                              apr_size_t vlen);
 
 
 /**
@@ -192,8 +187,6 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(const apreq_cookie_t *c,
 APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
                                           char *buf, apr_size_t len);
 
-#define apreq_serialize_cookie(buf,len,c) apreq_cookie_serialize(c,buf,len)
-
 /**
  * Set the Cookie's expiration date.
  * 
@@ -204,6 +197,9 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
  * is not NULL, the expiration date will be reset to the offset (from now)
  * represented by time_str.  The time_str should be in a format that 
  * apreq_atoi64t() can understand, namely /[+-]?\d+\s*[YMDhms]/.
+ *
+ * @remarks Now time_str may also be a fixed date; see apr_date_parse_rfc()
+ * for admissible formats.
  */
 APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
                                          const char *time_str);

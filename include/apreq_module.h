@@ -19,6 +19,7 @@
 
 #include "apreq_cookie.h"
 #include "apreq_parser.h"
+#include "apreq_error.h"
 
 #ifdef  __cplusplus
  extern "C" {
@@ -67,6 +68,21 @@ typedef struct apreq_module_t {
     apr_status_t (*header_out)(apreq_handle_t *, const char *,char *);
 
 } apreq_module_t;
+
+
+static APR_INLINE
+unsigned char apreq_module_status_is_error(apr_status_t s) {
+    switch (s) {
+    case APR_SUCCESS:
+    case APR_INCOMPLETE:
+    case APR_EINIT:
+    case APREQ_ERROR_NODATA:
+
+        return 0;
+    default:
+        return 1;
+    }
+}
 
 
 /**

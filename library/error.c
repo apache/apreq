@@ -30,11 +30,20 @@ static const char *apreq_error_string(apr_status_t statcode)
 {
     switch (statcode) {
 
+
+/* 0's: generic error status codes */
+
     case APREQ_ERROR_GENERAL:
         return "Internal apreq error";
 
-    case APREQ_ERROR_NODATA:
-        return "Missing input data";
+    case APREQ_ERROR_TAINTED:
+        return "Attempt to perform unsafe action with tainted data";
+
+
+/* 10's: malformed input */
+
+    case APREQ_ERROR_BADDATA:
+        return "Malformed input data";
 
     case APREQ_ERROR_BADSEQ:
         return "Invalid byte sequence";
@@ -42,11 +51,11 @@ static const char *apreq_error_string(apr_status_t statcode)
     case APREQ_ERROR_BADCHAR:
         return "Invalid character";
 
+    case APREQ_ERROR_NOTOKEN:
+        return "Expected token not present";
+
     case APREQ_ERROR_BADTOKEN:
         return "Invalid token";
-
-    case APREQ_ERROR_NOTOKEN:
-        return "Required token not found";
 
     case APREQ_ERROR_BADATTR:
         return "Unrecognized attribute";
@@ -54,11 +63,33 @@ static const char *apreq_error_string(apr_status_t statcode)
     case APREQ_ERROR_BADHEADER:
         return "Malformed header string";
 
-    case APREQ_ERROR_NOPARSER:
-        return "Parser not found";
 
-    case APREQ_ERROR_TAINTED:
-        return "Attempt to perform unsafe action with tainted data";
+/* 20's: missing input */
+
+    case APREQ_ERROR_NODATA:
+        return "Missing input data";
+
+    case APREQ_ERROR_NOATTR:
+        return "Missing attribute";
+
+    case APREQ_ERROR_NOHEADER:
+        return "Missing header";
+
+    case APREQ_ERROR_NOPARSER:
+        return "Missing parser";
+
+
+/* 30's: configuration conflicts */
+
+    case APREQ_ERROR_MISMATCH:
+        return "Conflicting information";
+
+    case APREQ_ERROR_OVERLIMIT:
+        return "Exceeds configured limit";
+
+    case APREQ_ERROR_NOTEMPTY:
+        return "Setting already configured";
+
 
     default:
         return "Error string not yet specified by apreq";

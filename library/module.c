@@ -79,7 +79,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
     len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
 
     if (apreq_cookie_version(c) == 0)
-        return APREQ_ERROR_CONFLICT;
+        return APREQ_ERROR_MISMATCH;
 
     if (len >= APREQ_COOKIE_MAX_LENGTH)
         return APREQ_ERROR_OVERLIMIT;

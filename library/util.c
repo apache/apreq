@@ -24,33 +24,7 @@
 #define MAX(a,b) ( (a) > (b) ? (a) : (b) )
 
 
-APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,
-                                          const apreq_expires_t type)
-{
-    apr_time_t when;
-    apr_time_exp_t tms;
-    char sep = (type == APREQ_EXPIRES_HTTP) ? ' ' : '-';
-
-    if (time_str == NULL) {
-	return NULL;
-    }
-
-    when = apr_time_now();
-    if (strcasecmp(time_str,"now")) 
-        when += apr_time_from_sec(apreq_atoi64t(time_str));
-
-    if ( apr_time_exp_gmt(&tms, when) != APR_SUCCESS )
-        return NULL;
-
-    return apr_psprintf(p,
-		       "%s, %.2d%c%s%c%.2d %.2d:%.2d:%.2d GMT",
-		       apr_day_snames[tms.tm_wday],
-		       tms.tm_mday, sep, apr_month_snames[tms.tm_mon], sep,
-		       tms.tm_year + 1900,
-		       tms.tm_hour, tms.tm_min, tms.tm_sec);
-}
-
-/* used for specifying file & byte sizes */
+/* used for specifying file sizes */
 
 APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s)
 {
@@ -420,10 +394,10 @@ APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src,
 }
 
 
-APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 
-                                       const char *sep, 
-                                       const apr_array_header_t *arr,
-                                       apreq_join_t mode)
+APREQ_DECLARE(char *) apreq_join(apr_pool_t *p, 
+                                 const char *sep, 
+                                 const apr_array_header_t *arr,
+                                 apreq_join_t mode)
 {
     apr_ssize_t len, slen;
     apreq_value_t *rv;
@@ -757,7 +731,7 @@ APREQ_DECLARE(apr_status_t)
         hdr = v;
     }
 
-    return APR_NOTFOUND;
+    return APREQ_ERROR_NOATTR;
 }
 
 

@@ -46,10 +46,12 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
     }
 }
 
-APREQ_DECLARE(apr_status_t) 
-    apreq_cookie_attr(apr_pool_t *p, apreq_cookie_t *c, 
-                      const char *attr, apr_size_t alen,
-                      const char *val, apr_size_t vlen)
+APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apr_pool_t *p,
+                                              apreq_cookie_t *c, 
+                                              const char *attr,
+                                              apr_size_t alen,
+                                              const char *val,
+                                              apr_size_t vlen)
 {
     if (alen < 2)
         return APR_EBADARG;
@@ -122,8 +124,10 @@ APREQ_DECLARE(apr_status_t)
 }
 
 APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p, 
-                                  const char *name, const apr_size_t nlen,
-                                  const char *value, const apr_size_t vlen)
+                                                  const char *name,
+                                                  const apr_size_t nlen,
+                                                  const char *value,
+                                                  const apr_size_t vlen)
 {
     apreq_cookie_t *c;
     apreq_value_t *v;
@@ -158,10 +162,10 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
     return c;
 }
 
-APR_INLINE
-static apr_status_t get_pair(apr_pool_t *p, const char **data,
-                             const char **n, apr_size_t *nlen,
-                             const char **v, apr_size_t *vlen, unsigned unquote)
+static APR_INLINE
+apr_status_t get_pair(apr_pool_t *p, const char **data,
+                      const char **n, apr_size_t *nlen,
+                      const char **v, apr_size_t *vlen, unsigned unquote)
 {
     const char *hdr, *key, *val;
 
@@ -317,7 +321,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
                 return APREQ_ERROR_BADSEQ;
             }
             else if (version == NETSCAPE) {
-                return APREQ_ERROR_CONFLICT;
+                return APREQ_ERROR_MISMATCH;
             }
 
             ++hdr;
@@ -350,7 +354,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
             if (status != APR_SUCCESS)
                 return status;
 
-            c = apreq_make_cookie(p, name, nlen, value, vlen);
+            c = apreq_cookie_make(p, name, nlen, value, vlen);
             APREQ_FLAGS_ON(c->flags, APREQ_TAINT);
             if (version != NETSCAPE)
                 apreq_cookie_version_set(c, version);

@@ -25,9 +25,9 @@
 #define MAX_READ_AHEAD  (1024 * 64)
 
 APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p, 
-                                                const char *name, 
+                                                const char *name,
                                                 const apr_size_t nlen, 
-                                                const char *val, 
+                                                const char *val,
                                                 const apr_size_t vlen)
 {
     apreq_param_t *param = apr_palloc(p, nlen + vlen + 1 + sizeof *param);
@@ -51,9 +51,9 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
 
 
 APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
-                                               apr_pool_t *pool, 
+                                               apr_pool_t *pool,
                                                const char *word,
-                                               const apr_size_t nlen, 
+                                               const apr_size_t nlen,
                                                const apr_size_t vlen)
 {
     apr_status_t status;
@@ -87,7 +87,7 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
 }
 
 
-APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool, 
+APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool,
                                          const apreq_param_t *param)
 {
     apreq_value_t *v;
@@ -239,5 +239,3 @@ APREQ_DECLARE(const apreq_param_t *) apreq_upload(const apr_table_t *body,
     apr_table_do(upload_set, &param, body, name, NULL);
     return param;
 }
-
-

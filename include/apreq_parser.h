@@ -93,7 +93,8 @@ struct apreq_parser_t {
  */
 static APR_INLINE
 apr_status_t apreq_parser_run(struct apreq_parser_t *psr, apr_table_t *t,
-                              apr_bucket_brigade *bb) {
+                              apr_bucket_brigade *bb)
+{
     return psr->parser(psr, t, bb);
 }
 
@@ -106,7 +107,8 @@ apr_status_t apreq_parser_run(struct apreq_parser_t *psr, apr_table_t *t,
  */
 static APR_INLINE
 apr_status_t apreq_hook_run(struct apreq_hook_t *h, apreq_param_t *param,
-                            apr_bucket_brigade *bb) {
+                            apr_bucket_brigade *bb)
+{
     return h->hook(h, param, bb);
 }
 
@@ -160,15 +162,14 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser);
  * @param ctx Parser's internal scratch pad.
  * @return New parser.
  */
-APREQ_DECLARE(apreq_parser_t *)
-        apreq_parser_make(apr_pool_t *pool,
-                          apr_bucket_alloc_t *bucket_alloc,
-                          const char *content_type,
-                          apreq_parser_function_t parser,
-                          apr_size_t brigade_limit,
-                          const char *temp_dir,
-                          apreq_hook_t *hook,
-                          void *ctx);
+APREQ_DECLARE(apreq_parser_t *) apreq_parser_make(apr_pool_t *pool,
+                                                  apr_bucket_alloc_t *ba,
+                                                  const char *content_type,
+                                                  apreq_parser_function_t pfn,
+                                                  apr_size_t brigade_limit,
+                                                  const char *temp_dir,
+                                                  apreq_hook_t *hook,
+                                                  void *ctx);
 
 /**
  * Construct a hook.
@@ -179,11 +180,10 @@ APREQ_DECLARE(apreq_parser_t *)
  * @param ctx Hook's internal scratch pad.
  * @return New hook.
  */
-APREQ_DECLARE(apreq_hook_t *)
-        apreq_hook_make(apr_pool_t *pool,
-                        apreq_hook_function_t hook,
-                        apreq_hook_t *next,
-                        void *ctx);
+APREQ_DECLARE(apreq_hook_t *) apreq_hook_make(apr_pool_t *pool,
+                                              apreq_hook_function_t hook,
+                                              apreq_hook_t *next,
+                                              void *ctx);
 
 
 /**
@@ -219,7 +219,7 @@ APREQ_DECLARE(apreq_parser_function_t)apreq_parser(const char *enctype);
  */
 
 APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
-                                                  apreq_parser_function_t parser);
+                                                  apreq_parser_function_t pfn);
 
 
 /**

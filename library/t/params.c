@@ -104,10 +104,10 @@ static void header_attributes(dAT)
     apr_status_t s;
 
     s = apreq_header_attribute(hdr, "none", 4, &val, &vlen);
-    AT_int_eq(s, APR_NOTFOUND);
+    AT_int_eq(s, APREQ_ERROR_NOATTR);
 
     s = apreq_header_attribute(hdr, "set", 3, &val, &vlen);
-    AT_int_eq(s, APR_NOTFOUND);
+    AT_int_eq(s, APREQ_ERROR_NOATTR);
 
     s = apreq_header_attribute(hdr, "boundary", 8, &val, &vlen);
     AT_int_eq(s, APR_SUCCESS);

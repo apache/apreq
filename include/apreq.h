@@ -34,6 +34,8 @@
 #define APREQ_DECLARE_DATA              __declspec(dllexport)
 #endif
 
+
+
 #define APREQ_DEFAULT_READ_BLOCK_SIZE   (64  * 1024)
 #define APREQ_DEFAULT_READ_LIMIT        (64 * 1024 * 1024)
 #define APREQ_DEFAULT_BRIGADE_LIMIT     (256 * 1024)
@@ -98,7 +100,7 @@ typedef struct apreq_value_t {
  * libapreq2.
  *
  * @param pool a base pool persisting while libapreq2 is used
- * @remark after you detroyed the pool, you have to call this function again
+ * @remarks after you detroyed the pool, you have to call this function again
  *    with a new pool if you still plan to use libapreq2
  */
 APREQ_DECLARE(apr_status_t) apreq_initialize(apr_pool_t *pool);

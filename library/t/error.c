@@ -27,28 +27,33 @@ static void test_strerror(dAT)
     AT_ptr_eq(str, buf);
     AT_str_eq(str, "Internal apreq error");
 
-    str = apreq_strerror(APR_EGENERAL, buf, sizeof buf);
-    AT_ptr_eq(str, buf);
-    AT_str_eq(str, "Internal error");
-
-    str = apreq_strerror(APREQ_ERROR_NODATA, buf, sizeof buf);
-    AT_str_eq(str, "Missing input data");
+    str = apreq_strerror(APREQ_ERROR_TAINTED, buf, sizeof buf);
+    AT_str_eq(str, "Attempt to perform unsafe action with tainted data");
 
     str = apreq_strerror(APREQ_ERROR_BADSEQ, buf, sizeof buf);
     AT_str_eq(str, "Invalid byte sequence");
 
-    str = apreq_strerror(APREQ_ERROR_TAINTED, buf, sizeof buf);
-    AT_str_eq(str,  "Attempt to perform unsafe action with tainted data");
+    str = apreq_strerror(APREQ_ERROR_NODATA, buf, sizeof buf);
+    AT_str_eq(str, "Missing input data");
 
     str = apreq_strerror(APREQ_ERROR_GENERAL+99, buf, sizeof buf);
     AT_str_eq(str, "Error string not yet specified by apreq");
+
+
+
+
+    /* Test some common APR status codes also */
+
+    str = apreq_strerror(APR_EGENERAL, buf, sizeof buf);
+    AT_ptr_eq(str, buf);
+    AT_str_eq(str, "Internal error");
 
     str = apreq_strerror(APR_SUCCESS, buf, sizeof buf);
     AT_str_eq(str, "Success");
 
     str = apreq_strerror(APR_EINIT, buf, sizeof buf);
-    AT_str_eq(str,  "There is no error, this value signifies an initialized "
-                    "error code");
+    AT_str_eq(str, "There is no error, this value signifies an initialized "
+                   "error code");
 
     str = apreq_strerror(APR_INCOMPLETE, buf, sizeof buf);
     AT_str_eq(str, "Partial results are valid but processing is incomplete");
@@ -70,7 +75,7 @@ int main(int argc, char *argv[])
     apr_pool_t *p;
     dAT;
     at_test_t test_list [] = {
-        { dT(test_strerror, 13) }
+        { dT(test_strerror, 13), "1" }
     };
 
     apr_initialize();

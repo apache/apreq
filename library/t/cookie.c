@@ -75,6 +75,7 @@ static void jar_get_ns(dAT)
 
 static void netscape_cookie(dAT)
 {
+    char expires[APR_RFC822_DATE_LEN];
     char *val;
     apreq_cookie_t *c;
 
@@ -83,7 +84,7 @@ static void netscape_cookie(dAT)
 
     c = apreq_value_to_cookie(val);
 
-    AT_str_eq(apreq_cookie_value(c), "bar");
+    AT_str_eq(c->v.data, "bar");
     AT_int_eq(apreq_cookie_version(c), 0);
     AT_str_eq(apreq_cookie_as_string(c, p), "foo=bar");
 
@@ -95,19 +96,24 @@ static void netscape_cookie(dAT)
               "foo=bar; path=/quux; domain=example.com");
 
     apreq_cookie_expires(c, "+1y");
+    apr_rfc822_date(expires, apr_time_now()
+                             + apr_time_from_sec(apreq_atoi64t("+1y")));
+    expires[7] = '-';
+    expires[11] = '-';
     val = apr_pstrcat(p, "foo=bar; path=/quux; domain=example.com; expires=", 
-                      apreq_expires(p, "+1y", APREQ_EXPIRES_NSCOOKIE), NULL);
+                      expires, NULL);
+
     AT_str_eq(apreq_cookie_as_string(c, p), val);
 }
 
 
 static void rfc_cookie(dAT)
 {
-    apreq_cookie_t *c = apreq_make_cookie(p,"rfc",3,"out",3);
+    apreq_cookie_t *c = apreq_cookie_make(p,"rfc",3,"out",3);
     const char *expected;
     long expires; 
 
-    AT_str_eq(apreq_cookie_value(c), "out");
+    AT_str_eq(c->v.data, "out");
 
     apreq_cookie_version_set(c, 1);
     AT_int_eq(apreq_cookie_version(c), 1);

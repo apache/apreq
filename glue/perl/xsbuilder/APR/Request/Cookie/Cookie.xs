@@ -73,7 +73,7 @@ static XS(apreq_xs_jar)
             apr_status_t s;
 
             s = apreq_jar(req, &t);
-            if (apreq_status_is_error(s))
+            if (apreq_module_status_is_error(s))
                 APREQ_XS_THROW_ERROR(r, s, "APR::Request::jar", error_pkg);
 
             XSRETURN_UNDEF;
@@ -86,7 +86,7 @@ static XS(apreq_xs_jar)
 
         s = apreq_jar(req, &t);
 
-        if (apreq_status_is_error(s))
+        if (apreq_module_status_is_error(s))
             APREQ_XS_THROW_ERROR(r, s, "APR::Request::jar", error_pkg);
 
         if (t == NULL)
@@ -124,7 +124,7 @@ static XS(apreq_xs_table_get)
     dXSARGS;
     const apr_table_t *t;
     apreq_handle_t *req;
-    const char *elt_pkg = "APR::Request::Param";
+    const char *elt_pkg = "APR::Request::Cookie";
     SV *sv, *t_obj, *r_obj;
     IV iv;
 
@@ -289,3 +289,66 @@ BOOT:
     );
     newXS("APR::Request::Cookie::()", XS_APR__Request__Cookie_nil, file);
     newXS("APR::Request::Cookie::(\"\"", XS_APR__Request__Cookie_value, file);
+
+
+MODULE = APR::Request::Cookie   PACKAGE = APR::Request::Cookie
+
+char *
+name(obj)
+    APR::Request::Cookie obj
+
+  CODE:
+    RETVAL = obj->v.name;
+
+  OUTPUT:
+    RETVAL
+
+UV
+secure(obj, val=NULL)
+    APR::Request::Cookie obj
+    SV *val
+
+  CODE:
+    RETVAL = apreq_cookie_is_secure(obj);
+    if (items == 2) {
+        if (SvTRUE(val))
+            apreq_cookie_secure_on(obj);
+        else
+            apreq_cookie_secure_off(obj);
+    }
+
+  OUTPUT:
+    RETVAL
+
+UV
+version(obj, val=0)
+    APR::Request::Cookie obj
+    UV val
+
+  CODE:
+    RETVAL = apreq_cookie_version(obj);
+    if (items == 2)
+        apreq_cookie_version_set(obj, val);
+ 
+  OUTPUT:
+    RETVAL
+
+IV
+tainted(obj, val=NULL)
+    APR::Request::Cookie obj
+    SV *val
+  PREINIT:
+    /*nada*/
+
+  CODE:
+    RETVAL = apreq_cookie_is_tainted(obj);
+
+    if (items == 2) {
+        if (SvTRUE(val))
+           apreq_cookie_taint_on(obj);
+        else
+           apreq_cookie_taint_off(obj);
+    }
+
+  OUTPUT:
+    RETVAL

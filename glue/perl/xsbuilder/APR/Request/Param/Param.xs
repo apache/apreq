@@ -74,7 +74,7 @@ static XS(apreq_xs_args)
             apr_status_t s;
             s = apreq_args(req, &t);
 
-            if (apreq_status_is_error(s))
+            if (apreq_module_status_is_error(s))
                 APREQ_XS_THROW_ERROR(r, s, "APR::Request::args", error_pkg);
 
             XSRETURN_UNDEF;
@@ -87,7 +87,7 @@ static XS(apreq_xs_args)
 
         s = apreq_args(req, &t);
 
-        if (apreq_status_is_error(s))
+        if (apreq_module_status_is_error(s))
             APREQ_XS_THROW_ERROR(r, s, "APR::Request::args", error_pkg);
 
         if (t == NULL)
@@ -151,7 +151,7 @@ static XS(apreq_xs_body)
             apr_status_t s;
             s = apreq_body(req, &t);
 
-            if (apreq_status_is_error(s))
+            if (apreq_module_status_is_error(s))
                 APREQ_XS_THROW_ERROR(r, s, "APR::Request::body", error_pkg);
 
             XSRETURN_UNDEF;
@@ -164,7 +164,7 @@ static XS(apreq_xs_body)
 
         s = apreq_body(req, &t);
 
-        if (apreq_status_is_error(s))
+        if (apreq_module_status_is_error(s))
             APREQ_XS_THROW_ERROR(r, s, "APR::Request::body", error_pkg);
 
         if (t == NULL)
@@ -369,3 +369,35 @@ BOOT:
     newXS("APR::Request::Param::(\"\"", XS_APR__Request__Param_value, file);
 
 
+MODULE = APR::Request::Param   PACKAGE = APR::Request::Param
+
+char *
+name(obj)
+    APR::Request::Param obj
+
+  CODE:
+    RETVAL = obj->v.name;
+
+  OUTPUT:
+    RETVAL
+
+
+IV
+tainted(obj, val=NULL)
+    APR::Request::Param obj
+    SV *val
+  PREINIT:
+    /*nada*/
+
+  CODE:
+    RETVAL = apreq_param_is_tainted(obj);
+
+    if (items == 2) {
+        if (SvTRUE(val))
+           apreq_param_taint_on(obj);
+        else
+           apreq_param_taint_off(obj);
+    }
+
+  OUTPUT:
+    RETVAL

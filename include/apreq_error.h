@@ -38,46 +38,29 @@ apreq_strerror(apr_status_t s, char *buf, apr_size_t bufsize);
 
 /* 0's: generic error status codes */
 #define APREQ_ERROR_GENERAL        APR_OS_START_USERERR
-#define APREQ_ERROR_INTERRUPT      APREQ_ERROR_GENERAL + 1
+#define APREQ_ERROR_TAINTED        (APREQ_ERROR_GENERAL + 1)
 
 /* 10's: malformed input */
-#define APREQ_ERROR_NODATA         APREQ_ERROR_GENERAL + 10
-#define APREQ_ERROR_BADSEQ         APREQ_ERROR_GENERAL + 11
-#define APREQ_ERROR_BADCHAR        APREQ_ERROR_GENERAL + 12
-#define APREQ_ERROR_BADTOKEN       APREQ_ERROR_GENERAL + 13
-#define APREQ_ERROR_NOTOKEN        APREQ_ERROR_GENERAL + 14
-#define APREQ_ERROR_BADATTR        APREQ_ERROR_GENERAL + 15
-#define APREQ_ERROR_BADHEADER      APREQ_ERROR_GENERAL + 16
-#define APREQ_ERROR_NOHEADER       APREQ_ERROR_GENERAL + 17
+#define APREQ_ERROR_BADDATA        (APREQ_ERROR_GENERAL  + 10)
+#define APREQ_ERROR_BADSEQ         (APREQ_ERROR_BADDATA  +  1)
+#define APREQ_ERROR_BADCHAR        (APREQ_ERROR_BADDATA  +  2)
+#define APREQ_ERROR_BADTOKEN       (APREQ_ERROR_BADDATA  +  3)
+#define APREQ_ERROR_NOTOKEN        (APREQ_ERROR_BADDATA  +  4)
+#define APREQ_ERROR_BADATTR        (APREQ_ERROR_BADDATA  +  5)
+#define APREQ_ERROR_BADHEADER      (APREQ_ERROR_BADDATA  +  6)
 
-/* 20's: misconfiguration */
-#define APREQ_ERROR_CONFLICT       APREQ_ERROR_GENERAL + 20 /*XXX this sucks*/
-#define APREQ_ERROR_NOPARSER       APREQ_ERROR_GENERAL + 21
-#define APREQ_ERROR_TAINTED        APREQ_ERROR_GENERAL + 22
-
-
-/* 30's: limit violations */
-#define APREQ_ERROR_OVERLIMIT      APREQ_ERROR_GENERAL + 30
-#define APREQ_ERROR_UNDERLIMIT     APREQ_ERROR_GENERAL + 31
-
-/* unsafe output */
+/* 20's: missing input */
+#define APREQ_ERROR_NODATA         (APREQ_ERROR_GENERAL  + 20)
+#define APREQ_ERROR_NOATTR         (APREQ_ERROR_NODATA   +  1)
+#define APREQ_ERROR_NOHEADER       (APREQ_ERROR_NODATA   +  2)
+#define APREQ_ERROR_NOPARSER       (APREQ_ERROR_NODATA   +  3)
 
 
-static APR_INLINE
-unsigned char apreq_status_is_error(apr_status_t s) {
-    switch (s) {
-    case APR_SUCCESS:
-    case APR_INCOMPLETE:
-    case APR_EINIT:
-    case APREQ_ERROR_NODATA:
-
-        return 0;
-    default:
-        return 1;
-    }
-}
-
-
+/* 30's: configuration conflicts */
+#define APREQ_ERROR_MISMATCH       (APREQ_ERROR_GENERAL  + 30)
+#define APREQ_ERROR_OVERLIMIT      (APREQ_ERROR_MISMATCH +  1)
+#define APREQ_ERROR_UNDERLIMIT     (APREQ_ERROR_MISMATCH +  2)
+#define APREQ_ERROR_NOTEMPTY       (APREQ_ERROR_MISMATCH +  3)
 
 
 #ifdef __cplusplus

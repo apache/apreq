@@ -531,7 +531,7 @@ static apr_status_t cgi_parser_set(apreq_handle_t *env,
         return APR_SUCCESS;
     }
     else
-        return APREQ_ERROR_CONFLICT;
+        return APREQ_ERROR_MISMATCH;
 }
 
 
@@ -569,7 +569,7 @@ static apr_status_t cgi_brigade_limit_set(apreq_handle_t *env,
         return APR_SUCCESS;
     }
 
-    return APREQ_ERROR_CONFLICT;
+    return APREQ_ERROR_MISMATCH;
 }
 
 static apr_status_t cgi_brigade_limit_get(apreq_handle_t *env,
@@ -593,7 +593,7 @@ static apr_status_t cgi_read_limit_set(apreq_handle_t *env,
         return APR_SUCCESS;
     }
 
-    return APREQ_ERROR_CONFLICT;
+    return APREQ_ERROR_MISMATCH;
 }
 
 
@@ -621,7 +621,7 @@ static apr_status_t cgi_temp_dir_set(apreq_handle_t *env,
         return APR_SUCCESS;
     }
 
-    return APREQ_ERROR_CONFLICT;
+    return APREQ_ERROR_MISMATCH;
 }
 
 

@@ -22,11 +22,11 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif /* __cplusplus */
+#endif
 
 
 /**
- * @file apreq_params.h
+ * @file apreq_param.h
  * @brief Request parsing and parameter API
  * @ingroup libapreq2
  */
@@ -39,12 +39,6 @@ typedef struct apreq_param_t {
     unsigned             flags;  /**< charsets, taint marks, app-specific bits */
     const apreq_value_t  v;      /**< underlying name/value/status info */
 } apreq_param_t;
-
-static APR_INLINE
-const char *apreq_param_name(const apreq_param_t *p) { return p->v.name; }
-
-static APR_INLINE
-const char *apreq_param_value(const apreq_param_t *p) { return p->v.data; }
 
 
 /** @return 1 if the taint flag is set, 0 otherwise. */
@@ -73,16 +67,16 @@ apreq_param_t *apreq_value_to_param(const char *val)
     union { const char *in; char *out; } deconst;
 
     deconst.in = val;
-    return apreq_attr_to_type(apreq_param_t, v, 
+    return apreq_attr_to_type(apreq_param_t, v,
            apreq_attr_to_type(apreq_value_t, data, deconst.out));
 }
 
 
 /** creates a param from name/value information */
-APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p, 
-                                                const char *name, 
-                                                const apr_size_t nlen, 
-                                                const char *val, 
+APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
+                                                const char *name,
+                                                const apr_size_t nlen,
+                                                const char *val,
                                                 const apr_size_t vlen);
 
 /**
@@ -96,18 +90,18 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
  *            
  */
 APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
-                                               apr_pool_t *pool, 
+                                               apr_pool_t *pool,
                                                const char *word,
-                                               const apr_size_t nlen, 
+                                               const apr_size_t nlen,
                                                const apr_size_t vlen);
+
 /**
  * Url-encodes the param into a name-value pair.
  * @param pool Pool which allocates the returned string.
  * @param param Param to encode.
  * @return name-value pair representing the param.
  */
-
-APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool, 
+APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool,
                                          const apreq_param_t *param);
 
 /**
@@ -121,11 +115,9 @@ APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool,
  *                as a name-value pair with value-length = 0.
  *
  */
-
 APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
-                                                     apr_table_t *t, 
+                                                     apr_table_t *t,
                                                      const char *qs);
-
 
 
 /**
@@ -163,9 +155,8 @@ APREQ_DECLARE(const char *) apreq_params_as_string(apr_pool_t *p,
  * @return Upload table.
  * @remark Will parse the request if necessary.
  */
-
-APREQ_DECLARE(const apr_table_t *)
-        apreq_uploads(const apr_table_t *body, apr_pool_t *pool);
+APREQ_DECLARE(const apr_table_t *) apreq_uploads(const apr_table_t *body,
+                                                 apr_pool_t *pool);
 
 /**
  * Returns the first param in req->body which has both param->v.name 
@@ -175,16 +166,15 @@ APREQ_DECLARE(const apr_table_t *)
  * @return Corresponding upload, NULL if none found.
  * @remark Will parse the request as necessary.
  */
-
-APREQ_DECLARE(const apreq_param_t *)
-        apreq_upload(const apr_table_t *body, const char *name);
+APREQ_DECLARE(const apreq_param_t *) apreq_upload(const apr_table_t *body,
+                                                  const char *name);
 
 
 #ifdef __cplusplus
 }
-
 #endif
-#endif /* APREQ_PARAMS_H */
+
+#endif /* APREQ_PARAM_H */
 
 
 

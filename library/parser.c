@@ -30,19 +30,18 @@
         return APR_INCOMPLETE;                     \
 } while (0);
 
-APREQ_DECLARE(apreq_parser_t *)
-    apreq_parser_make(apr_pool_t *pool,
-                      apr_bucket_alloc_t *ba,
-                      const char *content_type,
-                      apreq_parser_function_t parser,
-                      apr_size_t brigade_limit,
-                      const char *temp_dir,
-                      apreq_hook_t *hook,
-                      void *ctx)
+APREQ_DECLARE(apreq_parser_t *) apreq_parser_make(apr_pool_t *pool,
+                                                  apr_bucket_alloc_t *ba,
+                                                  const char *content_type,
+                                                  apreq_parser_function_t pfn,
+                                                  apr_size_t brigade_limit,
+                                                  const char *temp_dir,
+                                                  apreq_hook_t *hook,
+                                                  void *ctx)
 {
     apreq_parser_t *p = apr_palloc(pool, sizeof *p);
     p->content_type = content_type;
-    p->parser = parser;
+    p->parser = pfn;
     p->hook = hook;
     p->pool = pool;
     p->bucket_alloc = ba;
@@ -52,11 +51,10 @@ APREQ_DECLARE(apreq_parser_t *)
     return p;
 }
 
-APREQ_DECLARE(apreq_hook_t *)
-    apreq_hook_make(apr_pool_t *pool,
-                    apreq_hook_function_t hook,
-                    apreq_hook_t *next,
-                    void *ctx)
+APREQ_DECLARE(apreq_hook_t *) apreq_hook_make(apr_pool_t *pool,
+                                              apreq_hook_function_t hook,
+                                              apreq_hook_t *next,
+                                              void *ctx)
 {
     apreq_hook_t *h = apr_palloc(pool, sizeof *h);
     h->hook = hook;
@@ -129,7 +127,7 @@ APREQ_DECLARE(apr_status_t) apreq_initialize(apr_pool_t *pool) {
 }
 
 APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
-                                                  apreq_parser_function_t parser)
+                                                  apreq_parser_function_t pfn)
 {
     apr_status_t status;
     apreq_parser_function_t *f = NULL;
@@ -144,9 +142,9 @@ APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
     if (status != APR_SUCCESS)
         return status;
 
-    if (parser != NULL) {
+    if (pfn != NULL) {
         f = apr_palloc(default_parser_pool, sizeof *f);
-        *f = parser;
+        *f = pfn;
     }
     apr_hash_set(default_parsers, apr_pstrdup(default_parser_pool, enctype),
                  APR_HASH_KEY_STRING, f);
@@ -155,6 +153,7 @@ APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
 
     return APR_SUCCESS;
 }
+
 APREQ_DECLARE(apreq_parser_function_t)apreq_parser(const char *enctype)
 {
     apr_status_t status;

@@ -15,13 +15,6 @@
 
 <apreq_handle_t MODULE=APR::Request::Handle>
 ! module
-#!   args
-#!   body
-#!   parser
-#!   cfg
-#!  env
-#   args_status
-#   body_status
 </apreq_handle_t>
 
 <apreq_cookie_t MODULE=APR::Request::Cookie>

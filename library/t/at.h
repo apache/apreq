@@ -39,8 +39,8 @@ struct at_test_t {
     at_test_function_t   func;
     int                  plan;
     const char          *fatals;
-    const char          *todos;
     const char          *skips;
+    const char          *todos;
 };
 
 struct at_report_t {
@@ -63,8 +63,8 @@ struct at_t {
     const char          *name;    /* name of current test */
     int                  plan;    /* total # of checks in this test */
     const int           *fatal;   /* list of unrecoverables */
-    const int           *todo;    /* list of expected failures */
     const int           *skip;    /* list of ignorabe assertions */
+    const int           *todo;    /* list of expected failures */
     at_report_t         *report  ;/* handles the results of each check */
     unsigned char        flags;   /* verbosity: concise, trace, debug, etc. */
     apr_pool_t          *pool;    /* creator pool with end-of-test cleanup */
