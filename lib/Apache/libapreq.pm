@@ -1,4 +1,5 @@
 package Apache::libapreq;
+$VERSION = '1.1';
 
 use strict;
 use Config;
