@@ -94,8 +94,14 @@ struct apreq_xs_table_key_magic {
     const char *val;
 };
 
-/* Comment this define out if perl still chokes on key magic */
+/*
+** Comment the define of APREQ_XS_TABLE_USE_KEY_MAGIC out
+** if perl still chokes on key magic
+** Need 5.8.1 or higher for PERL_MAGIC_vstring
+*/
+#if PERL_REVISION == 5 && PERL_VERSION == 8 && PERL_SUBVERSION >= 1
 #define APREQ_XS_TABLE_USE_KEY_MAGIC
+#endif
 
 #ifdef APREQ_XS_TABLE_USE_KEY_MAGIC
 
