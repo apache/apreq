@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/06/10 20:51:33 $]   -*-text-*-
+Last modified at [$Date: 2004/06/11 20:29:33 $]   -*-text-*-
 /** @page STATUS
 
      2.03-dev under development
@@ -84,6 +84,10 @@ BUGS:
 
     - Strange bug when ssl is enabled & lots of fields are present: see
         http://marc.theaimsgroup.com/?t=107766265600001&r=1&w=2
+
+     - Another (possibly related) bug has to do with the mfd
+       parser misbehaving on file uploads when ssl is enabled:
+        http://marc.theaimsgroup.com/?l=apreq-dev&m=108609005217749&w=2
 
     - Fix build automake/libtool/autoconf build system so it works
       properly on OSX & AIX.
