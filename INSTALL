@@ -44,10 +44,9 @@ Or using the CPAN/perlish way:
 
 
 Win32 build:
-  C:\httpd-apreq-2> cd win32
-  C:\httpd-apreq-2\win32> perl Configure.pl
-  C:\httpd-apreq-2\win32> nmake
-  C:\httpd-apreq-2\win32> nmake test
-  C:\httpd-apreq-2\win32> nmake mod_apreq
-  C:\httpd-apreq-2\win32> nmake perl_glue
-  C:\httpd-apreq-2\win32> nmake perl_test
+  C:\httpd-apreq-2> perl Makefile.PL
+  C:\httpd-apreq-2> nmake
+  C:\httpd-apreq-2> nmake test
+  C:\httpd-apreq-2> nmake mod_apreq
+  C:\httpd-apreq-2> nmake perl_glue
+  C:\httpd-apreq-2> nmake perl_test

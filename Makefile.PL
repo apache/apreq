@@ -7,21 +7,30 @@ use Getopt::Long qw(GetOptions);
 use Config;
 
 use constant PERL_PATH => $Config{perlpath}; # XXX
+use constant WIN32 => ($^O =~ /Win32/);
 
-my @opts = qw(with-apache2-apxs with-perl);
+if (WIN32) {
+    push @ARGV, '--with-perl=' . PERL_PATH;
+    my @args = (PERL_PATH, 'win32/Configure.pl', @ARGV);
+    print "@args\n";
+    system(@args) == 0 or die "system @args failed: $?";
+}
+else {
+    my @opts = qw(with-apache2-apxs with-perl);
 
-my %opts;
-
+    my %opts;
+    
 # grab from @ARGV only the options that we expect
-GetOptions(\%opts, (map "$_=s", @opts));
+    GetOptions(\%opts, (map "$_=s", @opts));
 
-$opts{"with-perl"} = PERL_PATH;
+    $opts{"with-perl"} = PERL_PATH;
 
-my $opts = join " ", map {"--$_=$opts{$_}"} @opts;
+    my $opts = join " ", map {"--$_=$opts{$_}"} @opts;
 
-qx{./configure $opts};
+    qx{./configure $opts};
 
-push @ARGV, ('-apxs', $opts{"with-apache2-apxs"}) 
-    if exists $opts{"with-apache2-apxs"};
+    push @ARGV, ('-apxs', $opts{"with-apache2-apxs"}) 
+        if exists $opts{"with-apache2-apxs"};
 
-qx{cd "glue/perl" && $opts{"with-perl"} Makefile.PL @ARGV};
+    qx{cd "glue/perl" && $opts{"with-perl"} Makefile.PL @ARGV};
+}

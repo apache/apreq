@@ -111,9 +111,9 @@ sub usage {
 Options:
 
   --with-apache2=C:\Path\to\Apache2 : specify the top-level Apache2 directory
-  --debug                          : build a debug version
-  --without-perl                   : skip initializing the perl glue
-  --help                           : print this help message
+  --debug                           : build a debug version
+  --without-perl                    : skip initializing the perl glue
+  --help                            : print this help message
 
 With no options specified, an attempt will be made to find a suitable 
 Apache2 directory, and if found, a non-debug version will be built.
