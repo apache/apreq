@@ -212,7 +212,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
         apreq_request_t *old = c->req;
         c->req = req;
         apreq_log(APREQ_DEBUG 0, r, 
-                  "apreq request is now initialized" );
+                  "apreq request is now initialized (%d)", req);
         return old;
     }
 
@@ -307,11 +307,13 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
              * 
              */
 
-            apreq_log(APREQ_DEBUG 0, r, "dropping stale apreq filter");
+            apreq_log(APREQ_DEBUG 0, r, "dropping stale apreq filter (%d)", f);
             req->parser = NULL;
             req->body = NULL;
-            ctx->status = APR_SUCCESS;
-            cfg->f = NULL;
+            if (cfg->f == f) {
+                ctx->status = APR_SUCCESS;
+                cfg->f = NULL;
+            }
         }
         else {
             /* No data was parsed/prefetched, so it's safe to move the filter
@@ -328,7 +330,7 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
         ctx->spool  = apr_brigade_create(r->pool, alloc);
         ctx->status = APR_INCOMPLETE;
         apreq_log(APREQ_DEBUG 0, r, 
-                  "apreq filter is initialized" );
+                  "apreq filter is initialized (%d)", f);
     }
 
     return APR_SUCCESS;

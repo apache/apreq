@@ -102,14 +102,18 @@ static void *create_access_config(apr_pool_t *p, char *dummy)
 static int apreq_access_checker(request_rec *r)
 {
     apreq_request_t *req = apreq_request(r, NULL);
+    apreq_param_t *param;
     struct access_test_cfg *cfg = (struct access_test_cfg *)
         ap_get_module_config(r->per_dir_config, &apreq_access_test_module);
 
     if (!cfg || !cfg->param)
         return DECLINED;
 
-    if (apreq_param(req, cfg->param))
+    param = apreq_param(req, cfg->param);
+    if (param) {
+        apreq_log(APREQ_DEBUG 0, r, "%s => %s", cfg->param, param->v.data);
         return OK;
+    }
     else {
         if (req->body)
             apreq_log(APREQ_DEBUG HTTP_FORBIDDEN, r, "%s not found in %d elts",

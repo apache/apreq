@@ -55,7 +55,7 @@
 #if CONFIG_FOR_HTTPD_TEST
 
 <Location /apreq_redirect_test>
-   TestAccess location
+   TestAccess test
    SetHandler apreq_redirect_test
 </Location>
 
@@ -68,29 +68,20 @@
 #include "apreq_env.h"
 #include "httpd.h"
 
-static int dump_table(void *ctx, const char *key, const char *value)
-{
-    request_rec *r = ctx;
-    apreq_log(APREQ_DEBUG 0, r, "%s => %s", key, value);
-    ap_rprintf(r, "\t%s => %s\n", key, value);
-    return 1;
-}
-
 static int apreq_redirect_test_handler(request_rec *r)
 {
-    apr_bucket_brigade *bb;
     apreq_request_t *req;
     const apreq_param_t *loc;
-    apr_status_t s;
-    int saw_eos = 0;
 
     if (strcmp(r->handler, "apreq_redirect_test") != 0)
         return DECLINED;
 
     req = apreq_request(r, NULL);
+    apreq_log(APREQ_DEBUG 0, r, "looking for new location");
     loc = apreq_param(req, "location");
     if (!loc)
         return DECLINED;
+    apreq_log(APREQ_DEBUG 0,r, "redirecting to %s", loc->v.data);
     ap_internal_redirect(loc->v.data, r);
     return OK;
 }
