@@ -15,7 +15,8 @@ my @scripts = ();
 {
     local @ARGV = qw(VERSION run);
     print "Building xs/  ...\n";
-    do "../../build/xsbuilder.pl";
+    my $stat = do "../../build/xsbuilder.pl";
+    die "failed to run xsbuilder: $@" if !defined($stat) && $@;
 }
 
 finddepth(sub {
