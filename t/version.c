@@ -35,6 +35,8 @@ static void version_number(CuTest *tc)
     CuAssertIntEquals(tc, APREQ_PATCH_VERSION, v.patch);
 #ifdef APREQ_IS_DEV_VERSION
     CuAssertIntEquals(tc, 1, v.is_dev);
+#else
+    CuAssertIntEquals(tc, 0, v.is_dev);
 #endif
 
 }
