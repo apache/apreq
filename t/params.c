@@ -125,6 +125,34 @@ static void make_values(CuTest *tc)
     CuAssertStrEquals(tc, val, v2->data);
 }
 
+static void quote_strings(CuTest *tc)
+{
+    apr_size_t exp_len, res_len, res_quote_len;
+    char *res = apr_palloc(p,24);
+    char *res_quote = apr_palloc(p,24);
+    char *exp = apr_palloc(p,24);
+    int i;
+    char * arr[] = {"cest", "\"cest", "ce\"st", "\"cest\""};
+    char * arr_quote[] = 
+        {"\"cest\"", "\"\\\"cest\"", "\"ce\\\"st\"", "\"\\\"cest\\\"\""};
+    apr_size_t arr_len[] = {4, 5, 5, 6};
+    apr_size_t arr_quote_len[] = {6, 8, 8, 10};
+
+    for (i=0; i<4; i++) {
+        res_len = apreq_quote(res, arr[i], arr_len[i]);
+        CuAssertIntEquals(tc, arr_quote_len[i], res_len);
+        CuAssertStrNEquals(tc, arr_quote[i], res, res_len);
+        res_quote_len = apreq_quote_once(res_quote, res, res_len);
+        CuAssertIntEquals(tc, res_len, res_quote_len);
+        CuAssertStrNEquals(tc, res, res_quote, res_len);
+        res_len = apreq_quote_once(res, arr[i], arr_len[i]);
+        exp_len = (i == 3) ? arr_len[i] : arr_quote_len[i];
+        exp = (i == 3) ? arr[i] : arr_quote[i];
+        CuAssertIntEquals(tc, exp_len, res_len);
+        CuAssertStrNEquals(tc, exp, res, exp_len);
+    }
+}
+
 CuSuite *testparam(void)
 {
     CuSuite *suite = CuSuiteNew("Param");
@@ -135,6 +163,7 @@ CuSuite *testparam(void)
     SUITE_ADD_TEST(suite, string_decoding_in_place);
     SUITE_ADD_TEST(suite, header_attributes);
     SUITE_ADD_TEST(suite, make_values);
+    SUITE_ADD_TEST(suite, quote_strings);
 
     return suite;
 }

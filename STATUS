@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/17 17:05:27 $]   -*-text-*-
+Last modified at [$Date: 2004/07/18 03:09:57 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -63,8 +63,6 @@ TODO:
       -  apreq_merge_values()
       -  apreq_enctype()
       -  apreq_memmem()
-      -  apreq_quote()
-      -  apreq_quote_once()
       -  apreq_escape()
       -  apreq_encode_param()
 
