@@ -478,7 +478,7 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(apr_pool_t *p,
         return NULL;
 }
 
-APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c,
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
                                               void *env)
 {
     char *s = apreq_cookie_as_string(apreq_env_pool(env),c);
@@ -493,7 +493,7 @@ APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c,
     return apreq_env_set_cookie(env, s);
 }
 
-APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c,
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
                                                void *env)
 {
     char *s = apreq_cookie_as_string(apreq_env_pool(env),c);
