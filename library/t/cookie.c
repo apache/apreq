@@ -101,7 +101,7 @@ static void netscape_cookie(dAT)
 static void rfc_cookie(dAT)
 {
     apreq_cookie_t *c = apreq_make_cookie(p,"rfc",3,"out",3);
-    char *val;
+    const char *expected;
     long expires; 
 
     AT_str_eq(apreq_cookie_value(c), "out");
@@ -112,6 +112,7 @@ static void rfc_cookie(dAT)
     c->domain = apr_pstrdup(p, "example.com");
 
 #ifndef WIN32
+
     AT_str_eq(apreq_cookie_as_string(c,p),
               "rfc=out; Version=1; domain=\"example.com\"");
     c->path = apr_pstrdup(p, "/quux");
@@ -120,15 +121,27 @@ static void rfc_cookie(dAT)
 
     apreq_cookie_expires(c, "+3m");
     expires = apreq_atoi64t("+3m");
-    val = apr_psprintf(p, "rfc=out; Version=1; path=\"/quux\"; "
+    expected = apr_psprintf(p, "rfc=out; Version=1; path=\"/quux\"; "
                        "domain=\"example.com\"; max-age=%ld",
                        expires);
-    AT_str_eq(apreq_cookie_as_string(c,p), val);
+    AT_str_eq(apreq_cookie_as_string(c,p), expected);
 
 #else
-    (void)val;
-    (void)expires;
-    AT_skip(3, "VC++ preprocessor error C2107: illegal escape sequence");
+
+    expected = "rfc=out; Version=1; domain=\"example.com\"";
+    AT_str_eq(apreq_cookie_as_string(c,p), expected);
+
+    c->path = apr_pstrdup(p, "/quux");
+    expected = "rfc=out; Version=1; path=\"/quux\"; domain=\"example.com\"";
+    AT_str_eq(apreq_cookie_as_string(c,p), expected);
+
+    apreq_cookie_expires(c, "+3m");
+    expires = apreq_atoi64t("+3m");
+    expected = apr_psprintf(p, "rfc=out; Version=1; path=\"/quux\"; "
+                           "domain=\"example.com\"; max-age=%ld",
+                           expires);
+    AT_str_eq(apreq_cookie_as_string(c,p), expected);
+
 #endif
 
 }
