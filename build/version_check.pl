@@ -41,12 +41,14 @@ sub mp2_version {
     };
 }
 
-my %cvs = (
+my %svn = (
                 libtool => { version => "1.4.2",   test => \&gnu_version },
                autoconf => { version => "2.53",    test => \&gnu_version },
                automake => { version => "1.4.0",   test => \&gnu_version },
                 doxygen => { version => "1.2",     test => \&gnu_version },
-          );
+                   perl => { version => "5.6.1",   test => \&gnu_version },
+  "ExtUtils::XSBuilder" => { version => "0.23",    test => \&xsb_version },
+            );
 
 my %build = (
                 apache2 => { version => "2.0.46",  test => \&exe_version },
@@ -54,17 +56,17 @@ my %build = (
                              comment => "bundled with apache2 2.0.46"    },
                     apu => { version => "0.9.4",   test => \&gnu_version,
                              comment => "bundled with apache2 2.0.46"    },
-                   perl => { version => "5.6.1",   test => \&gnu_version },
+                   perl => $svn{perl},
             );
 
 my %perl_glue = (
-                  perl  => $build{perl},
+                  perl  => $svn{perl},
+  "ExtUtils::XSBuilder" => $svn{"ExtUtils::XSBuilder"},
          "Apache::Test" => { version => "1.04",    test => \&a_t_version,
                              comment => "Win32 requires version 1.06"    },
-  "ExtUtils::XSBuilder" => { version => "0.23",    test => \&xsb_version },
                  # mp2 does not contain "_" in its reported version number
               mod_perl  => { version => "1.9915", test => \&mp2_version },
-  "ExtUtils::MakeMaker" => { version => "6.15",    test => \&mm_version  },
+  "ExtUtils::MakeMaker" => { version => "6.15",    test => \&mm_version },
            "Test::More" => { version => "0.47",    test => \&tm_version },
                 );
 
@@ -120,7 +122,7 @@ EOT
             "Perl glue (Apache::Request) prerequisites\n", \%perl_glue;
         print "\n", "=" x 50, "\n";
         print_prereqs
-            "Additional prerequisites for httpd-apreq-2 cvs builds\n", \%cvs;
+            "Additional prerequisites for apreq subversion builds\n", \%svn;
     }
 
     exit 0;
@@ -129,7 +131,7 @@ EOT
 
 # test prerequisites from the command-line arguments
 
-my %prereq = (%cvs, %build, %perl_glue);
+my %prereq = (%svn, %build, %perl_glue);
 die "$0 failed: unknown tool '$tool'.\n" unless $prereq{$tool};
 my $version = $prereq{$tool}->{version};
 my @version = split /\./, $version;

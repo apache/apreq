@@ -23,7 +23,7 @@ if (WIN32) {
     system(@args) == 0 or die "system @args failed: $?";
 }
 else {
-    my @opts = qw(with-apache2-apxs with-apache2-src
+    my @opts = qw(with-apache2-apxs with-apache2-src with-apache2-httpd
                   with-apr-config with-apu-config apxs);
 
     my @flags = qw/enable-maintainer-mode enable-perl-glue disable-perl-glue/;

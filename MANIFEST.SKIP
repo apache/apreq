@@ -24,7 +24,6 @@ Makefile$
 
 # perl glue
 glue/perl/blib
-glue/perl/xsbuilder/tables
 glue/perl/xs\b
 
 #Apache Test stuff

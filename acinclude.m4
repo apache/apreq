@@ -110,10 +110,6 @@ AC_DEFUN([AC_APREQ], [
             fi
         fi
 
-        AC_CONFIG_COMMANDS_POST([test "x$PERL_GLUE" != "xno" && 
-           (cd glue/perl && $PERL ../../build/xsbuilder.pl run)],
-                [PERL=$PERL;PERL_GLUE=$PERL_GLUE;APACHE2_APXS=$APACHE2_APXS])
-
         AM_CONDITIONAL(ENABLE_PROFILE, test "x$PROFILE" != "xno")
         AM_CONDITIONAL(BUILD_PERL_GLUE, test "x$PERL_GLUE" != "xno")
         AM_CONDITIONAL(HAVE_APACHE_TEST, test -n "`$prereq_check Apache::Test`")

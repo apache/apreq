@@ -5,6 +5,15 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- Build system [joes]
+  Add --with-apache2-httpd option so users can override apxs's
+  notion of where the httpd executable is.  XSBuilder's header
+  parser runs from buildconf now instead of configure, so we
+  will include those tables in the release tarball.  buildconf
+  gets an additional --with-perl option for running the xsbuilder.pl
+  parsing script.  The XS generation code in xsbuilder.pl has moved 
+  to glue/perl/Makefile.PL.
+
 - Perl API [joes]
   Allow ctors for Apache::Cookie, Apache::Cookie::Jar
   and Apache:::Request to accept Apache::Request objects
