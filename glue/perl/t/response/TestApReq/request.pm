@@ -59,6 +59,13 @@ sub handler {
             $req->print($data);
         }
     }
+    elsif ($test eq 'disable_uploads') {
+        $req->config(DISABLE_UPLOADS => 1);
+        eval {my $upload = $req->upload('HTTPUPLOAD')};
+        if (ref $@ eq "Apache::Request::Error") {
+            $req->print("ok");
+        }
+    }
 
     return 0;
 }

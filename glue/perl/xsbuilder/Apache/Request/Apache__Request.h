@@ -165,7 +165,13 @@ static XS(apreq_xs_request_config)
             apreq_env_max_brigade(req->env, (apr_ssize_t)apreq_atoi64f(val));
         }
         else if (strcasecmp(attr, "DISABLE_UPLOADS") == 0) {
-            ;
+            if (req->parser == NULL)
+                req->parser = apreq_parser(req->env, NULL);
+            if (req->parser != NULL)
+                apreq_add_hook(req->parser,
+                               apreq_make_hook(apreq_env_pool(req->env), 
+                                               apreq_hook_disable_uploads,
+                                               NULL, NULL));
         }
         else if (strcasecmp(attr, "UPLOAD_HOOK") == 0) {
             ;

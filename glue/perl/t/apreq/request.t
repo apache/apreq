@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
-plan tests => 11, have_lwp;
+plan tests => 12, have_lwp;
 
 my $location = "/TestApReq__request";
 #print GET_BODY $location;
@@ -31,4 +31,10 @@ for my $test (qw/slurp bb_read fh_read tempfile bad;query=string%%/) {
     }
 
     ok t_cmp(length($value), $i, "basic upload length");    
+}
+
+{
+    my $value = 'DataUpload' x 100;
+    my $result = UPLOAD_BODY("$location?test=disable_uploads", content => $value); 
+    ok t_cmp("ok", $result, "disabled uploads");
 }
