@@ -66,9 +66,9 @@ static SV *upload_bless(ApacheUpload *upload)
 #define upload_push(upload) \
     XPUSHs(sv_2mortal(upload_bless(upload))) 
 
-static void apreq_add_magic(SV *sv, ApacheRequest *req)
+static void apreq_add_magic(SV *sv, SV *obj, ApacheRequest *req)
 {
-    sv_magic(SvRV(sv), Nullsv, '~', "dummy", -1);
+    sv_magic(SvRV(sv), obj, '~', "dummy", -1);
     SvMAGIC(SvRV(sv))->mg_ptr = (char *)req->r;
 }
 
@@ -111,10 +111,12 @@ ApacheRequest_new(class, r, ...)
 
     PREINIT:
     int i;
+    SV *robj;
 
     CODE:
     class = class; /* -Wall */ 
-    RETVAL = ApacheRequest_new(r->main ? r->main : r);
+    robj = ST(1);
+    RETVAL = ApacheRequest_new(r);
     register_uploads(RETVAL);
 
     for (i=2; i<items; i+=2) { 
@@ -139,7 +141,7 @@ ApacheRequest_new(class, r, ...)
     RETVAL
 
     CLEANUP:
-    apreq_add_magic(ST(0), RETVAL);
+    apreq_add_magic(ST(0), robj, RETVAL);
 
 char *
 ApacheRequest_script_name(req)
