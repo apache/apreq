@@ -2,6 +2,19 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.13 - April 18, 2003
+
+Sync test suite uris with latest Apache::Test [Stas]
+
+Patch mfd parser's Content-Disposition header to do case-insensitive
+matches on "name" & "filename" keywords.  This feature allows uploads
+from Nokia Series 60 phones to work as expected. [Oskari 'Okko' Ojala]
+
+Patch Request.xs to revert to using pre-1.1 $upload->fh code for
+pre-5.8 perls.  This patch may get backed out prior to 1.2's release,
+unless it is known to resolve problems (zombies?) reported to occur 
+with libapreq-1.1 uploads and pre-5.8 perls. [Joe]
+
 =item 1.12 - February 27, 2003
 
 do a better mod_perl version checking, including the test for mod_perl

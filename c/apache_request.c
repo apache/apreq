@@ -565,10 +565,10 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 		}
 		if (ap_ind(pair, '=')) {
 		    key = ap_getword(r->pool, &pair, '=');
-		    if(strEQ(key, "name")) {
+		    if(strcaseEQ(key, "name")) {
 			param = ap_getword_conf(r->pool, &pair);
 		    }
-		    else if(strEQ(key, "filename")) {
+		    else if(strcaseEQ(key, "filename")) {
 			filename = ap_getword_conf(r->pool, &pair);
 		    }
 		}
