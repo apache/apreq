@@ -133,7 +133,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req)
 {
     if (req->body == NULL) {
         if (req->status == APR_SUCCESS) {
-            req->body = apreq_table_make(req->pool, APREQ_DEFAULT_NELTS);
+            req->body = apreq_table_make(req->pool, APREQ_NELTS);
             return apreq_env_parse(req);
         }
         else
@@ -167,10 +167,10 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params(apr_pool_t *pool,
 APREQ_DECLARE(apr_status_t) apreq_split_params(apr_pool_t *pool,
                                                apreq_table_t *t,
                                                const char *data, 
-                                               apr_ssize_t dlen)
+                                               apr_size_t dlen)
 {
     const char *start = data, *end = data + dlen;
-    apr_ssize_t nlen = 0;
+    apr_size_t nlen = 0;
     apr_status_t status = APR_SUCCESS;
 
     for (; data < end; ++data) {

@@ -100,6 +100,7 @@ typedef struct apreq_table_t apreq_table_t;
  * @return The new table.
  */
 APREQ_DECLARE(apreq_table_t *) apreq_table_make(apr_pool_t *p, int nelts);
+#define apreq_make_table(p,n) apreq_table_make(p,n)
 
 /**
  * Create a new table and copy another table into it
