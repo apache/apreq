@@ -12,8 +12,15 @@ Apache::Upload - Methods for dealing with file uploads.
     $req->body_status(0);
     $req->parse;
     $req->body->add($u);
-    $data = do { local (@ARGV, $/) = __FILE__; <> };
+    open(my $fh, __FILE__) or die $!;
+    binmode $fh;
+    {
+      local $/;
+      $data = <$fh>;
+    }
+    close $fh;
     ok length $data == -s __FILE__;
+    $data =~ s{\r}{}g;
 
 
 
@@ -248,6 +255,7 @@ The return value is the length of the file.
 
 =for example_testing
     is $size, length $contents;
+    $contents =~ s{\r}{}g;
     is $contents, $data;
 
 
