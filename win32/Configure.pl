@@ -35,7 +35,7 @@ my $cfg = $debug ? 'Debug' : 'Release';
 check_depends();
 
 my @tests = qw(cookie parsers params version);
-my @test_files = map {catfile('t', "$_.t")} @tests;
+my @test_files = map {catfile('library', 't', "$_.t")} @tests;
 generate_tests($apreq_home, \@tests);
 
 my %apr_libs;
@@ -348,7 +348,7 @@ sub check_depends {
 
 sub generate_tests {
   my ($top, $test_files) = @_;
-  my $t = catdir $top, 't';
+  my $t = catdir $top, 'library', 't';
   foreach my $test(@$test_files) {
     my $file = catfile $t, $test;
     open my $fh, '>', "$file.t" || die "Cannot open $file.t: $!";
@@ -412,7 +412,7 @@ __DATA__
 LIBAPREQ=libapreq2
 APREQ2_TEST=apreq2_test
 CGITEST=test_cgi
-MOD=mod_apreq
+MOD=mod_apreq2
 
 !IF "$(CFG)" != "Release" && "$(CFG)" != "Debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
@@ -446,7 +446,7 @@ LIBDIR=$(CFG_HOME)\libs
 PERLGLUE=$(APREQ_HOME)\glue\perl
 APACHE_LIB=$(APACHE)\lib
 APREQ_ENV=$(APREQ_HOME)\env
-TDIR=$(APREQ_HOME)\t
+TDIR=$(APREQ_HOME)\library\t
 
 ALL : "$(LIBAPREQ)"
 

@@ -48,18 +48,18 @@ NULL=nul
 
 CPP=cl.exe
 RSC=rc.exe
-CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /I"$(APACHE)\include" /I"$(APREQ_HOME)\src" /Fp"$(INTDIR)\testall.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 CFG_HOME=$(APREQ_HOME)\win32
-OUTDIR=$(CFG_HOME)\libs
-INTDIR=$(CFG_HOME)\libs
-TDIR=$(APREQ_HOME)\t
-PROGRAMS="$(TDIR)\params.exe" "$(TDIR)\version.exe" \
-  "$(TDIR)\parsers.exe" "$(TDIR)\cookie.exe"
+LIBTDIR=$(APREQ_HOME)\library\t
+OUTDIR=$(LIBTDIR)
+INTDIR=$(LIBTDIR)
+LIBDIR=$(CFG_HOME)\libs
+PROGRAMS="$(LIBTDIR)\params.exe" "$(LIBTDIR)\version.exe" \
+  "$(LIBTDIR)\parsers.exe" "$(LIBTDIR)\cookie.exe"
 
 !IF  "$(CFG)" == "apreq2_test - Win32 Release"
 
-ALL : "$(OUTDIR)\apreq2_test.lib" $(PROGRAMS)
+ALL : "$(LIBDIR)\apreq2_test.lib" $(PROGRAMS)
 
 CLEAN :
 	-@erase "$(INTDIR)\at.obj"
@@ -69,17 +69,17 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fp"$(INTDIR)\apreq2_test.pch" /I"$(APACHE)\include" /I"$(APREQ_HOME)\src" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fp"$(INTDIR)\apreq2_test.pch" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /Fo"$(OUTDIR)\\" /Fd"$(OUTDIR)\\" /FD /c 
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\apreq2_test.bsc"	
+BSC32_FLAGS=/nologo /o"$(LIBDIR)\apreq2_test.bsc"	
 LIB32=link.exe -lib
-LIB32_FLAGS=/nologo /out:"$(OUTDIR)\apreq2_test.lib" 
+LIB32_FLAGS=/nologo /out:"$(LIBDIR)\apreq2_test.lib" 
 LIB32_OBJS= \
-	"$(INTDIR)\at.obj" \
+	"$(LIBDIR)\at.obj" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
 
-"$(OUTDIR)\apreq2_test.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
+"$(LIBDIR)\apreq2_test.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
     $(LIB32) @<<
   $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
 <<
@@ -88,29 +88,29 @@ LINK32=link.exe
 LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:yes  /debug /machine:I386 /pdbtype:sept 
 
 LINK32_OBJS= \
-	"$(OUTDIR)\libapreq2.lib" \
-	"$(OUTDIR)\apreq2_test.lib" \
+	"$(LIBDIR)\libapreq2.lib" \
+	"$(LIBDIR)\apreq2_test.lib" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)" \
 	"$(APACHE)\lib\libhttpd.lib"
 
-"$(TDIR)\cookie.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\cookie.obj"
-    $(LINK32) /pdb:"$(TDIR)\cookie.pdb" /out:"$(TDIR)\cookie.exe" @<<
+"$(LIBTDIR)\cookie.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\cookie.obj"
+    $(LINK32) /pdb:"$(LIBTDIR)\cookie.pdb" /out:"$(LIBTDIR)\cookie.exe" @<<
   $(LINK32_FLAGS) $(LINK32_OBJS) "$(OUTDIR)\cookie.obj"
 <<
 
-"$(TDIR)\params.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\params.obj"
-    $(LINK32) /pdb:"$(TDIR)\params.pdb" /out:"$(TDIR)\params.exe" @<<
+"$(LIBTDIR)\params.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\params.obj"
+    $(LINK32) /pdb:"$(LIBTDIR)\params.pdb" /out:"$(LIBTDIR)\params.exe" @<<
   $(LINK32_FLAGS) $(LINK32_OBJS) "$(OUTDIR)\params.obj"
 <<
 
-"$(TDIR)\parsers.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\parsers.obj"
-    $(LINK32) /pdb:"$(TESTFILE)\parsers.pdb" /out:"$(TDIR)\parsers.exe" @<<
+"$(LIBTDIR)\parsers.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\parsers.obj"
+    $(LINK32) /pdb:"$(LIBTDIR)\parsers.pdb" /out:"$(LIBTDIR)\parsers.exe" @<<
   $(LINK32_FLAGS) $(LINK32_OBJS) "$(OUTDIR)\parsers.obj"
 <<
 
-"$(TDIR)\version.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\version.obj"
-    $(LINK32) /pdb:"$(TDIR)\version.pdb" /out:"$(TDIR)\version.exe" @<<
+"$(LIBTDIR)\version.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\version.obj"
+    $(LINK32) /pdb:"$(LIBTDIR)\version.pdb" /out:"$(LIBTDIR)\version.exe" @<<
   $(LINK32_FLAGS) $(LINK32_OBJS) "$(OUTDIR)\version.obj"
 <<
 
@@ -127,38 +127,38 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"$(INTDIR)\apreq2_test.pch" /YX /I"$(APACHE)\include" /I"$(APREQ_HOME)\src" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ  /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"$(LIBDIR)\apreq2_test.pch" /YX /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /Fo"$(OUTDIR)\\" /Fd"$(OUTDIR)\\" /FD /GZ  /c 
 BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\apreq2_test.bsc" 
+BSC32_FLAGS=/nologo /o"$(LIBDIR)\apreq2_test.bsc" 
 LIB32=link.exe -lib
-LIB32_FLAGS=/nologo /out:"$(OUTDIR)\apreq2_test.lib" 
+LIB32_FLAGS=/nologo /out:"$(LIBDIR)\apreq2_test.lib" 
 LIB32_OBJS= \
-	"$(INTDIR)\at.obj" \
+	"$(LIBDIR)\at.obj" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
 
-"$(OUTDIR)\apreq2_test.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
+"$(LIBDIR)\apreq2_test.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
     $(LIB32) @<<
   $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
 <<
 
-"$(TDIR)\cookie.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\cookie.obj"
-    $(LINK32) /pdb:"$(TDIR)\cookie.pdb" /out:"$(TDIR)\cookie.exe" @<<
+"$(LIBTDIR)\cookie.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\cookie.obj"
+    $(LINK32) /pdb:"$(LIBTDIR)\cookie.pdb" /out:"$(LIBTDIR)\cookie.exe" @<<
   $(LINK32_FLAGS) $(LINK32_OBJS) "$(OUTDIR)\cookie.obj"
 <<
 
-"$(TDIR)\params.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\params.obj"
-    $(LINK32) /pdb:"$(TDIR)\params.pdb" /out:"$(TDIR)\params.exe" @<<
+"$(LIBTDIR)\params.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\params.obj"
+    $(LINK32) /pdb:"$(LIBTDIR)\params.pdb" /out:"$(LIBTDIR)\params.exe" @<<
   $(LINK32_FLAGS) $(LINK32_OBJS) "$(OUTDIR)\params.obj"
 <<
 
-"$(TDIR)\parser.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\parser.obj"
-    $(LINK32) /pdb:"$(TESTFILE)\parser.pdb" /out:"$(TDIR)\parser.exe" @<<
+"$(LIBTDIR)\parser.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\parser.obj"
+    $(LINK32) /pdb:"$(TESTFILE)\parser.pdb" /out:"$(LIBTDIR)\parser.exe" @<<
   $(LINK32_FLAGS) $(LINK32_OBJS) "$(OUTDIR)\parser.obj"
 <<
 
-"$(TDIR)\version.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\version.obj"
-    $(LINK32) /pdb:"$(TDIR)\version.pdb" /out:"$(TDIR)\version.exe" @<<
+"$(LIBTDIR)\version.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\version.obj"
+    $(LINK32) /pdb:"$(LIBTDIR)\version.pdb" /out:"$(LIBTDIR)\version.exe" @<<
   $(LINK32_FLAGS) $(LINK32_OBJS) "$(OUTDIR)\version.obj"
 <<
 
@@ -205,33 +205,31 @@ LIB32_OBJS= \
 
 
 !IF "$(CFG)" == "apreq2_test - Win32 Release" || "$(CFG)" == "apreq2_test - Win32 Debug"
-SOURCE=t\at.c
 
-"$(INTDIR)\at.obj" : $(SOURCE) "$(INTDIR)"
+SOURCE=$(LIBTDIR)\at.c
+
+"$(LIBDIR)\at.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-SOURCE=t\cookie.c
+SOURCE=$(LIBTDIR)\cookie.c
 
 "$(OUTDIR)\cookie.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-SOURCE=t\params.c
+SOURCE=$(LIBTDIR)\params.c
 
 "$(OUTDIR)\params.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-SOURCE=t\parsers.c
+SOURCE=$(LIBTDIR)\parsers.c
 
 "$(OUTDIR)\parsers.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-SOURCE=t\version.c
+SOURCE=$(LIBTDIR)\version.c
 
 "$(OUTDIR)\version.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
 
 !ENDIF 
 

@@ -57,7 +57,7 @@ foreach (qw(bin lib include build)) {
     $ap_dir{$_} = catdir $prefix, $_;
 }
 
-my $src_version = catfile $apreq_home, 'src', 'apreq_version.h';
+my $src_version = catfile $apreq_home, 'include', 'apreq_version.h';
 my $apache_version = catfile $ap_dir{include}, 'apreq_version.h';
 
 my $apreq_version = -e $src_version ? $src_version : $apache_version;
