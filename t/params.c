@@ -91,7 +91,7 @@ static void string_decoding_in_place(CuTest *tc)
 
 static void header_attributes(CuTest *tc)
 {
-    const char hdr[] = "text/plain; boundary=\"-foo-\", charset=ISO-8859-1";
+    const char *hdr = "text/plain; boundary=\"-foo-\", charset=ISO-8859-1";
     const char *val;
     apr_size_t vlen;
     apr_status_t s;
@@ -111,6 +111,17 @@ static void header_attributes(CuTest *tc)
     CuAssertIntEquals(tc, APR_SUCCESS, s);
     CuAssertIntEquals(tc, 10, vlen);
     CuAssertStrNEquals(tc, "ISO-8859-1", val, 10);
+
+    hdr = "max-age=20; no-quote=\"...";
+
+    s = apreq_header_attribute(hdr, "max-age", 7, &val, &vlen);
+    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    CuAssertIntEquals(tc, 2, vlen);
+    CuAssertStrNEquals(tc, "20", val, 2);
+
+    s = apreq_header_attribute(hdr, "no-quote", 8, &val, &vlen);
+    CuAssertIntEquals(tc, APR_EGENERAL, s);
+
 
 }
 
@@ -186,7 +197,7 @@ static void quote_strings(CuTest *tc)
     }
 }
 
-static void memmem(CuTest *tc)
+static void test_memmem(CuTest *tc)
 {
     char *hay = apr_palloc(p,29);
     char *partial, *full;
@@ -221,7 +232,7 @@ CuSuite *testparam(void)
     SUITE_ADD_TEST(suite, make_values);
     SUITE_ADD_TEST(suite, quote_strings);
     SUITE_ADD_TEST(suite, make_param);
-    SUITE_ADD_TEST(suite, memmem);
+    SUITE_ADD_TEST(suite, test_memmem);
 
     return suite;
 }
