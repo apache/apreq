@@ -2,12 +2,19 @@
 
 @section 2.0.0-dev Changes with libapreq-2.0.0-dev
 
+- July 18, 2003 - C bugfix: apreq_decode [Graham Clark]
+
+If the source and destination strings are represented by the same
+pointer - e.g. if called as apreq_unescape(s) - string s is modified
+incorrectly in general.  Patch includes new unit test.
+
+
 - July 16, 2003 - Perl API [joes]
 
 Added $req->parse, $req->status, & "preparse" logic 
 to $req->param & $req->upload.
 
-- July 16 ,2003 - C API [joes]
+- July 16, 2003 - C API [joes]
 
 Added "preparse" logic to apreq_params & apreq_uploads
 to bring behavior in line with libapreq-1.x.

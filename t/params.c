@@ -92,6 +92,26 @@ static void request_args_get(CuTest *tc)
 
 }
 
+static void string_decoding_in_place(CuTest *tc)
+{
+    apreq_value_t *v;
+    char *s1 = malloc(4096);
+    char *s2 = malloc(4096);
+
+    strcpy(s1, "bend it like beckham");
+    strcpy(s2, "dandy %3Edons");
+
+    CuAssertStrEquals(tc,"bend it like beckham",s1);
+    apreq_unescape(s1);
+    CuAssertStrEquals(tc,"bend it like beckham",s1);
+    CuAssertStrEquals(tc,"dandy %3Edons",s2);
+    apreq_unescape(s2);
+    CuAssertStrEquals(tc,"dandy >dons",s2);
+    
+    free(s2);
+    free(s1);
+}
+
 
 CuSuite *testparam(void)
 {
@@ -99,6 +119,7 @@ CuSuite *testparam(void)
 
     SUITE_ADD_TEST(suite, request_make);
     SUITE_ADD_TEST(suite, request_args_get);
+    SUITE_ADD_TEST(suite, string_decoding_in_place);
     return suite;
 }
 
