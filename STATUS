@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/07/10 04:35:18 $]   -*-text-*-
+Last modified at [$Date: 2003/07/15 14:04:40 $]   -*-text-*-
 /** @page STATUS
 
      2.0.0  in development
@@ -17,9 +17,11 @@ RELEASE SHOWSTOPPERS:
 
     - Missing Perl API components: 
       -# What should $req->parse do?
-      -# How should we encode/decode $cookie->value?
-      -# What about CGI?  We can use import() to autoload 
-         an environment if none exists, but should we?
+
+    - Choose a versioning system:
+      -# src/,  (libtool-based, following apr)
+      -# env/,  (module-magic-number ?)   
+      -# glue/, (per-language ?)
 
 CURRENT VOTES:
 
@@ -31,11 +33,6 @@ TODO:
          Output filter w/ a streaming content-handler,
          that needs apreq to read POST data that is beyond 
          what the content handler has already pulled in.
-
-    - Adopt a versioning system for the various components: 
-      -# src/,  (libtool-based, following apr)
-      -# env/,  (module-magic-number ?)   
-      -# glue/, (per-language ?)
 
     - Bring Perl documentation up to speed.
 

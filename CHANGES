@@ -2,6 +2,14 @@
 
 @section 2.0.0-dev Changes with libapreq-2.0.0-dev
 
+- July 15, 2003 - C API [joes]
+
+Dropped param->charset.
+
+- July 14, 2003 - Documentation [joes]
+
+Updated Cookie_pod to reflect API changes over v1.X.
+
 - June 30, 2003 - Documentation [joes]
 
 Added doxygen links to Apache::Request and Apache::Cookie 
