@@ -221,7 +221,7 @@ dnl APR_CONFIG_NICE(filename)
 dnl
 dnl Saves a snapshot of the configure command-line for later reuse
 dnl
-AC_DEFUN(APR_CONFIG_NICE,[
+AC_DEFUN([APR_CONFIG_NICE],[
   rm -f $1
   cat >$1<<EOF
 #! /bin/sh
