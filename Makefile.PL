@@ -2,10 +2,19 @@ use ExtUtils::MakeMaker;
 use strict;
 use 5.005;
 
-use Apache::test;
-my %params = Apache::test->get_test_params();
-Apache::test->write_httpd_conf(%params, include => join '', <DATA>);
-*MY::test = sub {Apache::test->MM_test(%params)};
+
+eval {
+    require Apache::test;
+    local $SIG{ALRM} = sub { die "alarm\n" };
+    alarm 60;
+    my %params = Apache::test->get_test_params();
+    alarm 0;
+
+    Apache::test->write_httpd_conf(%params, include => join '', <DATA>);
+    *MY::test = sub {Apache::test->MM_test(%params)};
+};
+
+print "\n[timeout] skipping test setup...\n" if $@ eq "alarm\n";
 # prerequisites
 my %require = (
     "Apache::test" => "", # any version will do
@@ -40,11 +49,12 @@ if ($Is_Win32) {
   $ENV{AP_LIB} = $Apache::MyConfig::Setup{APACHE_LIB};
   $ENV{MP_LIB} = $Apache::MyConfig::Setup{MODPERL_LIB};
   unless (-f "$ENV{MP_LIB}/mod_perl.so") {
-    die "Cannot find mod_perl.so in $ENV{MP_LIB}. Please build mod_perl first";
+    die "Cannot find mod_perl.so in $ENV{MP_LIB}. " .
+        "Please build mod_perl first";
   }
   unless (-f "$ENV{AP_LIB}/ApacheCore.lib") {
-    die "Cannot find ApacheCore.lib in $ENV{AP_LIB}. Please build apache first
-    .";
+    die "Cannot find ApacheCore.lib in $ENV{AP_LIB}. " .
+        "Please build apache first.";
   }
 }
 
