@@ -17,11 +17,11 @@
 #include "apreq.h"
 #include "apreq_env.h"
 #include "apreq_params.h"
-#include "apreq_parsers.h"
 #include "apreq_cookie.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_env.h"
+#include "apr_file_io.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -89,13 +89,34 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
     return apreq_env->read(env,block,bytes);
 }
 
+APREQ_DECLARE(const char *) apreq_env_temp_dir(void *env, const char *path)
+{
+    return apreq_env->temp_dir(env,path);
+}
+
+APREQ_DECLARE(apr_off_t) apreq_env_max_body(void *env, apr_off_t bytes)
+{
+    return apreq_env->max_body(env,bytes);
+}
+
+APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(void *env, apr_ssize_t bytes)
+{
+    return apreq_env->max_brigade(env,bytes);
+}
+
+
 #define dP apr_pool_t *p = (apr_pool_t *)env
 
 static struct {
     apreq_request_t    *req;
     apreq_jar_t        *jar;
     apr_status_t        status;
-} ctx;
+    const char         *temp_dir;
+    apr_off_t           max_body;
+    apr_ssize_t         max_brigade;
+    apr_bucket_brigade *in;
+    apr_off_t           bytes_read;
+} ctx =  {NULL, NULL, APR_SUCCESS, NULL, -1, APREQ_MAX_BRIGADE_LEN, NULL, 0};
 
 #define CRLF "\015\012"
 
@@ -120,7 +141,7 @@ static struct {
 
 
 #define APREQ_MODULE_NAME         "CGI"
-#define APREQ_MODULE_MAGIC_NUMBER 20031025
+#define APREQ_MODULE_MAGIC_NUMBER 20040324
 
 static apr_pool_t *cgi_pool(void *env)
 {
@@ -201,7 +222,9 @@ static void cgi_log(const char *file, int line, int level,
                     va_list vp)
 {
     dP;
-    fprintf(stderr, "[%s(%d)] %s\n", file, line, apr_pvsprintf(p,fmt,vp));
+    char buf[256];
+    fprintf(stderr, "[%s(%d): %s] %s\n", file, line, 
+            apr_strerror(status,buf,255),apr_pvsprintf(p,fmt,vp));
 }
 
 static apr_status_t cgi_read(void *env, 
@@ -210,20 +233,98 @@ static apr_status_t cgi_read(void *env,
 {
     dP;
     apreq_request_t *req = apreq_request(env, NULL);
+    apr_bucket *e;
+    apr_status_t s;
 
-    if (req->body == NULL) {
+    if (ctx.in == NULL) {
         apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(p);
-        apr_bucket_brigade *bb = apr_brigade_create(p, alloc);
         apr_bucket *stdin_pipe, *eos = apr_bucket_eos_create(alloc);
         apr_file_t *in;
         apr_file_open_stdin(&in, p);
         stdin_pipe = apr_bucket_pipe_create(in,alloc);
-        APR_BRIGADE_INSERT_HEAD(bb, stdin_pipe);
-        APR_BRIGADE_INSERT_TAIL(bb, eos);
-        ctx.status = apreq_parse_request(req, bb);
+        ctx.in = apr_brigade_create(p, alloc);
+        APR_BRIGADE_INSERT_HEAD(ctx.in, stdin_pipe);
+        APR_BRIGADE_INSERT_TAIL(ctx.in, eos);
+        ctx.status = APR_INCOMPLETE;
     }
-    return ctx.status;
+
+
+    if (ctx.status != APR_INCOMPLETE)
+        return ctx.status;
+
+    switch (s = apr_brigade_partition(ctx.in, bytes, &e)) {
+        apr_bucket_brigade *bb;
+        apr_off_t len;
+
+    case APR_SUCCESS:
+        bb = ctx.in;
+        ctx.in = apr_brigade_split(bb, e);
+        ctx.bytes_read += bytes;
+        if (ctx.max_body >= 0) {
+            if (ctx.bytes_read > ctx.max_body)
+                return ctx.status = APR_ENOSPC;
+        }
+        return ctx.status = apreq_parse_request(req, bb);
+
+    case APR_INCOMPLETE:
+        bb = ctx.in;
+        ctx.in = apr_brigade_split(bb, e);
+        s = apr_brigade_length(bb,1,&len);
+        if (s != APR_SUCCESS)
+            return ctx.status = s;
+        ctx.bytes_read += len;
+        if (ctx.max_body >= 0) {
+            if (ctx.bytes_read > ctx.max_body)
+                return ctx.status = APR_ENOSPC;
+        }
+        return ctx.status = apreq_parse_request(req, bb);
+
+    default:
+        return ctx.status = s;
+    }
 }
+
+
+static const char *cgi_temp_dir(void *env, const char *path)
+{
+    if (path != NULL) {
+        dP;
+        const char *rv = ctx.temp_dir;
+        ctx.temp_dir = apr_pstrdup(p, path);
+        return rv;
+    }
+    if (ctx.temp_dir == NULL) {
+        dP;
+        if (apr_temp_dir_get(&ctx.temp_dir, p) != APR_SUCCESS)
+            ctx.temp_dir = NULL;
+    }
+
+    return ctx.temp_dir;
+}
+
+
+static apr_off_t cgi_max_body(void *env, apr_off_t bytes)
+{
+    if (bytes >= 0) {
+        apr_off_t rv = ctx.max_body;
+        ctx.max_body = bytes;
+        return rv;
+    }
+    return ctx.max_body;
+}
+
+
+static apr_ssize_t cgi_max_brigade(void *env, apr_ssize_t bytes)
+{
+    if (bytes >= 0) {
+        apr_ssize_t rv = ctx.max_brigade;
+        ctx.max_brigade = bytes;
+        return rv;
+    }
+    return ctx.max_brigade;
+}
+
+
 
 static APREQ_ENV_MODULE(cgi, APREQ_MODULE_NAME, 
                         APREQ_MODULE_MAGIC_NUMBER);

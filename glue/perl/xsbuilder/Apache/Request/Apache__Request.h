@@ -161,6 +161,8 @@ static XS(apreq_xs_request_config)
 
     req = apreq_xs_sv2(request,ST(0));
 
+    XSRETURN_UNDEF; /* XXX fixme (apreq_request_config is now gone)
+
     for (j = 1; j + 1 < items; j += 2) {
         STRLEN alen, vlen;
         const char *attr = SvPVbyte(ST(j),alen), 
@@ -169,6 +171,7 @@ static XS(apreq_xs_request_config)
         if (status != APR_SUCCESS)
             break;
     }
+*/
     XSRETURN_IV(status);
 }
 

@@ -54,7 +54,7 @@ static const struct testlist {
 /* rigged environent for unit tests */
 
 #define APREQ_MODULE_NAME "TEST"
-#define APREQ_MODULE_MAGIC_NUMBER 20031025
+#define APREQ_MODULE_MAGIC_NUMBER 20040324
 
 #define CRLF "\015\012"
 
@@ -106,6 +106,49 @@ static apr_status_t test_read(void *env, apr_read_type_e block,
 {
     return APR_ENOTIMPL;
 }
+
+static const char *test_temp_dir(void *env, const char *path)
+{
+    static const char *temp_dir;
+    if (path != NULL) {
+        const char *rv = temp_dir;
+        temp_dir = apr_pstrdup(p, path);
+        return rv;
+    }
+    if (temp_dir == NULL) {
+        if (apr_temp_dir_get(&temp_dir, p) != APR_SUCCESS)
+            temp_dir = NULL;
+    }
+
+    return temp_dir;
+}
+
+
+static apr_off_t test_max_body(void *env, apr_off_t bytes)
+{
+    static apr_off_t max_body = -1;
+    if (bytes >= 0) {
+        apr_off_t rv = max_body;
+        max_body = bytes;
+        return rv;
+    }
+    return max_body;
+}
+
+
+static apr_ssize_t test_max_brigade(void *env, apr_ssize_t bytes)
+{
+    static apr_ssize_t max_brigade = -1;
+
+    if (bytes >= 0) {
+        apr_ssize_t rv = max_brigade;
+        max_brigade = bytes;
+        return rv;
+    }
+    return max_brigade;
+}
+
+
 
 static APREQ_ENV_MODULE(test, APREQ_MODULE_NAME,
                        APREQ_MODULE_MAGIC_NUMBER);

@@ -1,12 +1,5 @@
 ##########  APREQ structures  ##########
 
-<apreq_cfg_t MODULE=Apache::Request>
-  temp_dir
-  max_len
-  read_bytes
-  disable_uploads
-</apreq_cfg_t>
-
 #<apreq_value_t MODULE=Apache::Request>
 #   name
 #   status
@@ -15,7 +8,6 @@
 #</apreq_value_t>
 
 !<apreq_param_t MODULE=Apache::Request>
-!  charset
 !   info
 !   bb
 !   v

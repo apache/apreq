@@ -76,12 +76,12 @@ apreq_value_t * apreq_merge_values(apr_pool_t *p,
 APREQ_DECLARE(const char *)apreq_enctype(void *env)
 {
     char *enctype;
-    const char *ct = apreq_env_content_type(env), *semicolon;
+    const char *ct = apreq_env_content_type(env);
 
     if (ct == NULL)
         return NULL;
     else {
-        semicolon = strchr(ct, ';');
+        const char *semicolon = strchr(ct, ';');
         if (semicolon) {
             enctype = apr_pstrdup(apreq_env_pool(env), ct);
             enctype[semicolon - ct] = 0;
@@ -568,7 +568,7 @@ APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p,
                                    const char *src, const apr_size_t slen)
 {
     apreq_value_t *rv;
-    if (src == NULL || slen == 0)
+    if (src == NULL)
         return NULL;
 
     rv = apr_palloc(p, 3 * slen + sizeof *rv);
@@ -624,7 +624,7 @@ static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v,
     return s;
 }
 
-
+/* this function now consumes the brigade, deleting buckets as it goes */
 APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f, 
                                                  apr_off_t *wlen,
                                                  apr_bucket_brigade *bb)
@@ -636,7 +636,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
     *wlen = 0;
 
     for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
-         e = APR_BUCKET_NEXT(e)) 
+         e = APR_BRIGADE_FIRST(bb)) 
     {
         apr_size_t len;
         if (n == APREQ_NELTS) {
@@ -651,6 +651,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
             return s;
 
         v[n++].iov_len = len;
+        apr_bucket_delete(e);
     }
 
     while (n > 0) {
@@ -702,7 +703,7 @@ APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb)
 }
 
 APREQ_DECLARE(apr_bucket_brigade *)
-    apreq_copy_brigade(const apr_bucket_brigade *bb)
+    apreq_brigade_copy(const apr_bucket_brigade *bb)
 {
     apr_bucket_brigade *copy;
     apr_bucket *e;

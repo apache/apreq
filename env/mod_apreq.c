@@ -26,7 +26,6 @@
 #include "apreq.h"
 #include "apreq_env.h"
 #include "apreq_params.h"
-#include "apreq_parsers.h"
 #include "apreq_cookie.h"
 
 #define dR  request_rec *r = (request_rec *)env
@@ -36,6 +35,9 @@ struct env_config {
     apreq_jar_t        *jar;
     apreq_request_t    *req;
     ap_filter_t        *f;
+    const char         *temp_dir;
+    apr_off_t           max_body;
+    apr_ssize_t         max_brigade;
 };
 
 /** Tracks the filter state */
@@ -44,6 +46,7 @@ struct filter_ctx {
     apr_bucket_brigade *spool;
     apr_status_t        status;
     unsigned            saw_eos;
+    apr_off_t           bytes_read;
 };
 
 static const char filter_name[] = "APREQ";
@@ -76,7 +79,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER 20031107
+#define APREQ_MODULE_MAGIC_NUMBER 20040324
 
 
 static void apache2_log(const char *file, int line, int level, 
@@ -129,6 +132,8 @@ static struct env_config *get_cfg(request_rec *r)
     if (cfg == NULL) {
         cfg = apr_pcalloc(r->pool, sizeof *cfg);
         ap_set_module_config(r->request_config, &apreq_module, cfg);
+        cfg->max_body = -1;
+        cfg->max_brigade = APREQ_MAX_BRIGADE_LEN;
     }
     return cfg;
 }
@@ -200,11 +205,35 @@ static void apreq_filter_make_context(ap_filter_t *f)
     request_rec *r = f->r;
     apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
     struct filter_ctx *ctx = apr_palloc(r->pool, sizeof *ctx);
+    struct env_config *cfg = get_cfg(r);
+
     f->ctx       = ctx;
     ctx->bb      = apr_brigade_create(r->pool, alloc);
     ctx->spool   = apr_brigade_create(r->pool, alloc);
     ctx->status  = APR_INCOMPLETE;
     ctx->saw_eos = 0;
+    ctx->bytes_read = 0;
+
+    if (cfg->max_body >= 0) {
+        const char *cl = apr_table_get(r->headers_in, "Content-Length");
+        if (cl != NULL) {
+            char *dummy;
+            apr_int64_t content_length = apr_strtoi64(cl,&dummy,0);
+
+            if (dummy == NULL || *dummy != 0) {
+                apreq_log(APREQ_ERROR APR_BADARG, r, 
+                      "invalid Content-Length header (%s)", cl);
+                ctx->status = APR_BADARG;
+            }
+            else if (content_length > (apr_int64_t)cfg->max_body) {
+                apreq_log(APREQ_ERROR APR_EINIT, r,
+                          "Content-Length header (%s) exceeds configured "
+                          "max_body limit (" APR_OFF_T_FMT ")", 
+                          cl, cfg->max_body);
+                ctx->status = APR_EINIT;
+            }
+        }
+    }
 }
 
 /**
@@ -234,10 +263,58 @@ static apr_status_t apache2_read(void *env,
 }
 
 
+static const char *apache2_temp_dir(void *env, const char *path)
+{
+    dR;
+    struct env_config *c = get_cfg(r);
+
+    if (path != NULL) {
+        const char *rv = c->temp_dir;
+        c->temp_dir = apr_pstrdup(r->pool, path);
+        return rv;
+    }
+    if (c->temp_dir == NULL) {
+        if (apr_temp_dir_get(&c->temp_dir, r->pool) != APR_SUCCESS)
+            c->temp_dir = NULL;
+    }
+
+    return c->temp_dir;
+}
+
+
+static apr_off_t apache2_max_body(void *env, apr_off_t bytes)
+{
+    dR;
+    struct env_config *c = get_cfg(r);
+
+    if (bytes >= 0) {
+        apr_off_t rv = c->max_body;
+        c->max_body = bytes;
+        return rv;
+    }
+    return c->max_body;
+}
+
+
+static apr_ssize_t apache2_max_brigade(void *env, apr_ssize_t bytes)
+{
+    dR;
+    struct env_config *c = get_cfg(r);
+
+    if (bytes >= 0) {
+        apr_ssize_t rv = c->max_brigade;
+        c->max_brigade = bytes;
+        return rv;
+    }
+    return c->max_brigade;
+}
+
+
 static apr_status_t apreq_filter_init(ap_filter_t *f)
 {
     request_rec *r = f->r;
     struct filter_ctx *ctx;
+    struct env_config *cfg = get_cfg(r);
 
     /* We must be inside config.c:ap_invoke_handler -> 
      * ap_invoke_filter_init (r->input_filters), and
@@ -260,7 +337,6 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
          */
 
         if (!APR_BRIGADE_EMPTY(ctx->spool)) {
-            struct env_config *cfg = get_cfg(r);
             apreq_request_t *req = cfg->req;
 
             /* Adding "f" to the protocol filter chain ensures the 
@@ -277,7 +353,8 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
              * 
              */
 
-            apreq_log(APREQ_DEBUG 0, r, "dropping stale apreq filter (%d)", f);
+            apreq_log(APREQ_DEBUG 0, r, "dropping stale apreq filter (%p)", f);
+
             if (req) {
                 req->parser = NULL;
                 req->body = NULL;
@@ -293,7 +370,7 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
              */
             apreq_filter_relocate(f);
         }
-    } 
+    }
 
     return APR_SUCCESS;
 }
@@ -307,13 +384,12 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 {
     request_rec *r = f->r;
     struct filter_ctx *ctx;
-    apr_status_t rv;
+    struct env_config *cfg;
     apreq_request_t *req;
+    apr_status_t rv;
 
     if (f->ctx == NULL)
         apreq_filter_make_context(f);
-
-    ctx = f->ctx;
 
     switch (mode) {
     case AP_MODE_READBYTES:
@@ -324,20 +400,37 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         return APR_ENOTIMPL;
     }
 
-    req = get_cfg(r)->req;
+    ctx = f->ctx;
+    cfg = get_cfg(r);
+    req = cfg->req;
 
     if (bb != NULL) {
 
         if (!ctx->saw_eos) {
-            apr_bucket_brigade *tmp;
-            rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
+
+            if (ctx->status == APR_INCOMPLETE) {
+                apr_bucket_brigade *tmp;
+                apr_off_t len;
+                rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
             
-            if (rv != APR_SUCCESS) {
-                apreq_log(APREQ_ERROR rv, r, "get_brigade failed");
-                return rv;
+                if (rv != APR_SUCCESS) {
+                    apreq_log(APREQ_ERROR rv, r, "get_brigade failed");
+                    return rv;
+                }
+
+                tmp = apreq_brigade_copy(bb);
+                apr_brigade_length(tmp,0,&len);
+                ctx->bytes_read += len;
+                APR_BRIGADE_CONCAT(ctx->bb, tmp);
+
+                if (cfg->max_body >= 0 && ctx->bytes_read > cfg->max_body) {
+                    ctx->status = APR_ENOSPC;
+                    apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (" APR_OFF_T_FMT
+                              ") exceeds configured max_body limit (" APR_OFF_T_FMT ")",
+                              ctx->bytes_read, cfg->max_body);
+                }
+
             }
-            tmp = apreq_copy_brigade(bb);
-            APR_BRIGADE_CONCAT(ctx->bb, tmp);
             if (APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(ctx->bb)))
                 ctx->saw_eos = 1;
         }
@@ -359,7 +452,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
         if (ctx->status != APR_INCOMPLETE) {
             if (APR_BRIGADE_EMPTY(ctx->spool)) {
-                apreq_log(APREQ_DEBUG ctx->status,r,"removing filter(%d)",
+                apreq_log(APREQ_DEBUG ctx->status,r,"removing filter (%d)",
                           r->input_filters == f);
                 ap_remove_input_filter(f);
             }
@@ -394,12 +487,20 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             if (rv != APR_SUCCESS)
                 return rv;
 
-            bb = apreq_copy_brigade(tmp);
+            bb = apreq_brigade_copy(tmp);
             apr_brigade_length(bb,0,&len);
             total_read += len;
-            apreq_brigade_concat(r->pool, req->cfg, ctx->spool, tmp);
+            apreq_brigade_concat(r, ctx->spool, tmp);
             APR_BRIGADE_CONCAT(ctx->bb, bb);
             last = APR_BRIGADE_LAST(ctx->spool);
+        }
+        ctx->bytes_read += total_read;
+
+        if (cfg->max_body >= 0 && ctx->bytes_read > cfg->max_body) {
+            ctx->status = APR_ENOSPC;
+            apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (" APR_OFF_T_FMT
+                      ") exceeds configured max_body limit (" APR_OFF_T_FMT ")",
+                      ctx->bytes_read, cfg->max_body);
         }
     }
     else
@@ -434,4 +535,3 @@ module AP_MODULE_DECLARE_DATA apreq_module =
 	NULL,
 	register_hooks,			/* callback for registering hooks */
 };
-

@@ -19,7 +19,6 @@
 
 #include "apreq_params.h"
 #include "apreq_cookie.h"
-#include "apreq_parsers.h"
 
 #ifdef HAVE_SYSLOG
 #include <syslog.h>
@@ -87,7 +86,6 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
 APREQ_DECLARE(const char *) apreq_env_query_string(void *env);
 APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name);
 
-
 #define apreq_env_content_type(env) apreq_env_header_in(env, "Content-Type")
 #define apreq_env_cookie(env) apreq_env_header_in(env, "Cookie")
 #define apreq_env_cookie2(env) apreq_env_header_in(env, "Cookie2")
@@ -103,6 +101,10 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
                                            apr_read_type_e block,
                                            apr_off_t bytes);
 
+APREQ_DECLARE(const char *) apreq_env_temp_dir(void *env, const char *path);
+APREQ_DECLARE(apr_off_t) apreq_env_max_body(void *env, apr_off_t bytes);
+APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(void *env, apr_ssize_t bytes);
+
 typedef struct apreq_env_t {
     const char *name;
     apr_uint32_t magic_number;
@@ -114,11 +116,15 @@ typedef struct apreq_env_t {
     const char *(*header_in)(void *,const char *);
     apr_status_t (*header_out)(void *, const char *,char *);
     apr_status_t (*read)(void *,apr_read_type_e,apr_off_t);
+    const char *(*temp_dir)(void *, const char *);
+    apr_off_t (*max_body)(void *,apr_off_t);
+    apr_ssize_t (*max_brigade)(void *, apr_ssize_t);
 } apreq_env_t;
 
 #define APREQ_ENV_MODULE(pre, name, mmn) const apreq_env_t pre##_module = { \
   name, mmn, pre##_log, pre##_pool, pre##_jar, pre##_request,               \
-  pre##_query_string, pre##_header_in, pre##_header_out, pre##_read }
+  pre##_query_string, pre##_header_in, pre##_header_out, pre##_read,        \
+  pre##_temp_dir, pre##_max_body, pre##_max_brigade }
 
 
 APREQ_DECLARE(const apreq_env_t *) apreq_env_module(const apreq_env_t *mod);

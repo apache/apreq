@@ -15,7 +15,6 @@
 */
 
 #include "apreq_params.h"
-#include "apreq_parsers.h"
 #include "apreq_env.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
@@ -51,16 +50,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
 APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
 {
     apreq_request_t *req;
-    apreq_cfg_t *cfg;
     apr_pool_t *p;
-
-    /** default parser configuration */
-    static const apreq_cfg_t default_cfg = {
-        MAX_LEN,          /**< limit on POST data size */
-        MAX_BRIGADE_LEN,  /**< limit on brigade size */
-        MAX_FIELDS,       /**< maximum number of form fields */
-        MAX_READ_AHEAD    /**< maximum amount of prefetch data */
-    };
 
     if (qs == NULL) {
         apreq_request_t *old_req = apreq_env_request(env,NULL);
@@ -73,11 +63,8 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req = apr_palloc(p, sizeof *req);
         req->env      = env;
         req->args     = apr_table_make(p, APREQ_NELTS);
-        req->cfg      = apr_palloc(p, sizeof(apreq_cfg_t));
         req->body     = NULL;
         req->parser   = apreq_parser(env, NULL);
-
-        /* XXX need to install copy/merge callbacks for apreq_param_t */
 
         /* XXX get/set race condition here wrt apreq_env_request? */
         old_req = apreq_env_request(env, req);
@@ -96,14 +83,10 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req = apr_palloc(p, sizeof *req);
         req->env      = env;
         req->args     = apr_table_make(p, APREQ_NELTS);
-        req->cfg      = apr_palloc(p, sizeof(apreq_cfg_t));
         req->body     = NULL;
         req->parser   = apreq_parser(env, NULL);
 
-        /* XXX need to install copy/merge callbacks for apreq_param_t */ 
     }
-
-    *req->cfg = default_cfg;
 
     if (qs != NULL) {
         apr_status_t s = apreq_parse_query_string(p, req->args, qs);
@@ -124,12 +107,11 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
         val = apr_table_get(req->body, name);
 
     if (val == NULL) {
-        if (req->cfg->read_ahead) {
-            apreq_env_read(req->env, APR_BLOCK_READ, req->cfg->read_ahead);
-            if (req->body)
-                val = apr_table_get(req->body, name);
-        }
+        apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
+        if (req->body)
+            val = apr_table_get(req->body, name);
     }
+
     return val ? apreq_value_to_param(apreq_strtoval(val)) : NULL;
 }
 
@@ -137,11 +119,10 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
 APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *pool,
                                           const apreq_request_t *req)
 {
-    if (req->cfg->read_ahead) {
-        apr_status_t s;
-        do s = apreq_env_read(req->env, APR_BLOCK_READ, req->cfg->read_ahead);
-        while (s == APR_INCOMPLETE);
-    }
+    apr_status_t s;
+
+    do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
+    while (s == APR_INCOMPLETE);
 
     return req->body ? apr_table_overlay(pool, req->args, req->body) :
         apr_table_copy(pool, req->args);
@@ -253,8 +234,6 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
 APREQ_DECLARE(apr_status_t) apreq_parse_request(apreq_request_t *req, 
                                                 apr_bucket_brigade *bb)
 {
-    apreq_cfg_t *cfg = req->cfg;
-
     if (req->parser == NULL)
         req->parser = apreq_parser(req->env,NULL);
     if (req->parser == NULL)
@@ -263,7 +242,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_request(apreq_request_t *req,
     if (req->body == NULL)
         req->body = apr_table_make(apreq_env_pool(req->env),APREQ_NELTS);
 
-    return apreq_run_parser(req->parser, req->cfg, req->body, bb);
+    return apreq_run_parser(req->parser, req->env, req->body, bb);
 }
 
 
@@ -281,11 +260,9 @@ APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
                                            const apreq_request_t *req)
 {
     apr_table_t *t;
-    if (req->cfg->read_ahead) {
-        apr_status_t s;
-        do s = apreq_env_read(req->env, APR_BLOCK_READ, req->cfg->read_ahead);
-        while (s == APR_INCOMPLETE);
-    }
+    apr_status_t s;
+    do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
+    while (s == APR_INCOMPLETE);
 
     if (req->body == NULL)
         return NULL;
@@ -312,70 +289,9 @@ APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
                                             const char *key)
 {
     apreq_param_t *param = NULL;
-    if (req->cfg->read_ahead)
-        apreq_env_read(req->env, APR_BLOCK_READ, req->cfg->read_ahead);
+    apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
     if (req->body == NULL)
         return NULL;
     apr_table_do(upload_get, &param, req->body, key, NULL);
     return param;
-}
-
-APREQ_DECLARE(apr_status_t) 
-    apreq_request_config(apreq_request_t *req, 
-                         const char *attr, apr_size_t alen,
-                         const char *val, apr_size_t vlen)
-{
-    apreq_cfg_t *cfg = req->cfg;
-    apr_pool_t *p;
-
-    if (alen < 2)
-        return APR_BADARG;
-
-    if ( attr[0] ==  '-' || attr[0] == '$' ) {
-        ++attr;
-        --alen;
-    }
-
-    switch (apr_tolower(*attr)) {
-
-    case 'p': /* POST_MAX */
-        cfg->max_len = apreq_atoi64f(val);
-        break;
-
-    case 'd': /* DISABLE_UPLOADS */
-        while (!apr_isdigit(*val)) {
-            if (vlen == 0)
-                return APR_BADARG;
-            ++val;
-            --vlen;
-        }
-        cfg->disable_uploads = *val - '0';
-        break;
-
-    case 'f': /* FIELD_LIMIT */
-        cfg->max_fields = apreq_atoi64f(val);
-        break;
-
-    case 'b': /* BRIGADE_LIMIT */
-        cfg->max_brigade_len = apreq_atoi64f(val);
-        break;
-
-    case 'r': /* READ_AHEAD */
-        cfg->read_ahead = apreq_atoi64f(val);
-        break;
-
-    case 't': /* TEMP_DIR */
-        p = apreq_env_pool(req->env);
-        cfg->temp_dir = (vlen ? apr_pstrmemdup(p,val,vlen) : NULL);
-        break;
-
-    case 'u': /* UPLOAD_HOOK */
-        /* XXX not implemented yet */
-
-    default:
-        return APR_ENOTIMPL;
-
-    };
-
-    return APR_SUCCESS;
 }

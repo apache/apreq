@@ -106,6 +106,8 @@
 #define APREQ_XML_ENCTYPE               "application/xml"
 
 #define APREQ_NELTS                     8
+#define APREQ_READ_AHEAD                (64 * 1024)
+#define APREQ_MAX_BRIGADE_LEN           (256 * 1024)
 
 /**
  * libapreq-2's pre-extensible string type 
@@ -355,7 +357,7 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
 APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 
 APREQ_DECLARE(apr_bucket_brigade *)
-         apreq_copy_brigade(const apr_bucket_brigade *bb);
+         apreq_brigade_copy(const apr_bucket_brigade *bb);
 
 APREQ_DECLARE(apr_status_t)
          apreq_header_attribute(const char *hdr,

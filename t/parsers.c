@@ -19,7 +19,6 @@
 #include "apreq.h"
 #include "apreq_params.h"
 #include "apr_strings.h"
-#include "apreq_parsers.h"
 
 #define CRLF "\015\012"
 
@@ -38,7 +37,6 @@ static char form_data[] =
 
 extern apr_bucket_brigade *bb;
 extern apr_table_t *table;
-extern apreq_cfg_t *config;
 
 static void parse_urlencoded(CuTest *tc)
 {

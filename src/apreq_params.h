@@ -18,7 +18,6 @@
 #define APREQ_PARAM_H
 
 #include "apreq.h"
-#include "apreq_parsers.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +42,9 @@ typedef struct apreq_param_t {
     apreq_value_t        v;    /**< underlying name/value/status info */
 } apreq_param_t;
 
+typedef struct apreq_hook_t apreq_hook_t;
+typedef struct apreq_parser_t apreq_parser_t;
+
 /** accessor macros */
 #define apreq_value_to_param(ptr) apreq_attr_to_type(apreq_param_t, v, ptr)
 #define apreq_param_name(p)      ((p)->v.name)
@@ -63,7 +65,6 @@ typedef struct apreq_request_t {
     apr_table_t        *args;         /**< parsed query_string */
     apr_table_t        *body;         /**< parsed post data */
     apreq_parser_t     *parser;       /**< active parser for this request */
-    apreq_cfg_t        *cfg;          /**< parser configuration */
     void               *env;          /**< request environment */
 } apreq_request_t;
 
@@ -195,10 +196,58 @@ APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
 APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
                                             const char *key);
 
-APREQ_DECLARE(apr_status_t) 
-    apreq_request_config(apreq_request_t *req, 
-                         const char *attr, apr_size_t alen,
-                         const char *val, apr_size_t vlen);
+
+#define APREQ_DECLARE_PARSER(f) apr_status_t (f)(apreq_parser_t *parser, \
+                                                 void *env,              \
+                                                 apr_table_t *t,         \
+                                                 apr_bucket_brigade *bb)
+
+#define APREQ_DECLARE_HOOK(f) apr_status_t (f)(apreq_hook_t *hook,         \
+                                               void *env,                  \
+                                               const apreq_param_t *param, \
+                                               apr_bucket_brigade *bb)
+
+struct apreq_hook_t {
+    APREQ_DECLARE_HOOK    (*hook);
+    apreq_hook_t           *next;
+    void                   *ctx;
+};
+
+struct apreq_parser_t {
+    APREQ_DECLARE_PARSER  (*parser);
+    const char             *enctype;
+    apreq_hook_t           *hook;
+    void                   *ctx;
+};
+
+
+#define apreq_run_parser(psr,env,t,bb) (psr)->parser(psr,env,t,bb)
+#define apreq_run_hook(h,env,param,bb) (h)->hook(h,env,param,bb)
+
+APREQ_DECLARE(apr_status_t) apreq_brigade_concat(void *env,
+                                                 apr_bucket_brigade *out, 
+                                                 apr_bucket_brigade *in);
+
+
+APREQ_DECLARE_PARSER(apreq_parse_headers);
+APREQ_DECLARE_PARSER(apreq_parse_urlencoded);
+APREQ_DECLARE_PARSER(apreq_parse_multipart);
+
+APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
+                                                  const char *enctype,
+                                                  APREQ_DECLARE_PARSER(*parser),
+                                                  apreq_hook_t *hook,
+                                                  void *ctx);
+
+APREQ_DECLARE(apreq_hook_t *) apreq_make_hook(apr_pool_t *pool,
+                                              APREQ_DECLARE_HOOK(*hook),
+                                              apreq_hook_t *next,
+                                              void *ctx);
+
+APREQ_DECLARE(apr_status_t)apreq_add_hook(apreq_parser_t *p, 
+                                          apreq_hook_t *h);
+
+APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook);
 
 /** @} */
 #ifdef __cplusplus
