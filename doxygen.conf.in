@@ -8,7 +8,7 @@ BRIEF_MEMBER_DESC      = YES
 REPEAT_BRIEF           = YES
 
 TAB_SIZE               = 8
-ALIASES                = "req=@arg The request handle.\n"
+ALIASES                = "req=@arg The request handle"
 OPTIMIZE_OUTPUT_FOR_C  = YES
 
 INTERNAL_DOCS          = NO
