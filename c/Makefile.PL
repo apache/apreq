@@ -10,8 +10,6 @@ else {
     require Apache::src;
     my $src = Apache::src->new;
 
-    check_compat();
-
     use Cwd;
     my $pwd = fastcwd;
     my @objs = qw(apache_request.o apache_cookie.o multipart_buffer.o);

@@ -4,6 +4,8 @@ use strict;
 my $myVERSION = MM->parse_version('Request/Request.pm');
 $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
 
+check_compat();
+
 WriteMakefile(
 	      'NAME'	 => 'libapreq',
 	      'VERSION' => $myVERSION,
