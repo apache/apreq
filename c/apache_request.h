@@ -116,6 +116,7 @@ ap_table_get(upload->info, key)
 ApacheUpload_info(upload, "Content-Type")
 
 #define ApacheRequest_set_post_max(req, max) (req->post_max = max)
+#define ApacheRequest_set_temp_dir(req, dir) (req->temp_dir = dir)
 
 char *ApacheUtil_expires(pool *p, char *time_str, int type);
 #define EXPIRES_HTTP   1
