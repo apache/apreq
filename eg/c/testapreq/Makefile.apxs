@@ -1,9 +1,7 @@
-APXS = /maz/dougm/apache/bin/apxs
+APXS = apxs
 
-PERL = perl
-
-MY_CFLAGS = `$(PERL) -MApache::libapreq -e ccopts`
-MY_LDFLAGS = `$(PERL) -MApache::libapreq -e ldopts`
+MY_CFLAGS = -I/usr/local/include/libapreq
+MY_LDFLAGS = -L/usr/local/include -lapreq
 
 SRC = mod_testapreq.c
 

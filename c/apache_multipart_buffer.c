@@ -55,7 +55,7 @@
  *
  */
 
-#include "multipart_buffer.h"
+#include "apache_multipart_buffer.h"
 
 #define FILLUNIT (1024 * 5)
 #ifndef CRLF

@@ -72,8 +72,8 @@ RANLIB = @RANLIB@
 VERSION = @VERSION@
 
 lib_LTLIBRARIES = libapreq.la
-pkginclude_HEADERS = apache_cookie.h apache_request.h
-libapreq_la_SOURCES = apache_cookie.c apache_request.c 	multipart_buffer.c multipart_buffer.h
+pkginclude_HEADERS = apache_cookie.h apache_request.h apache_multipart_buffer.h
+libapreq_la_SOURCES = apache_cookie.c apache_request.c 	apache_multipart_buffer.c 
 
 INCLUDES = @LIBAPREQ_INCLUDES@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -89,7 +89,7 @@ LIBS = @LIBS@
 libapreq_la_LDFLAGS = 
 libapreq_la_LIBADD = 
 libapreq_la_OBJECTS =  apache_cookie.lo apache_request.lo \
-multipart_buffer.lo
+apache_multipart_buffer.lo
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -104,8 +104,8 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = tar
 GZIP_ENV = --best
-DEP_FILES =  .deps/apache_cookie.P .deps/apache_request.P \
-.deps/multipart_buffer.P
+DEP_FILES =  .deps/apache_cookie.P .deps/apache_multipart_buffer.P \
+.deps/apache_request.P
 SOURCES = $(libapreq_la_SOURCES)
 OBJECTS = $(libapreq_la_OBJECTS)
 

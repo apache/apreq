@@ -35,8 +35,8 @@ c/apache_request.h
 c/apache_request.c
 c/apache_cookie.h
 c/apache_cookie.c
-c/multipart_buffer.h
-c/multipart_buffer.c
+c/apache_multipart_buffer.h
+c/apache_multipart_buffer.c
 c/Makefile.am
 c/Makefile.in
 c/libapreq_config.h.in

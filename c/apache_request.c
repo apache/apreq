@@ -56,7 +56,7 @@
  */
 
 #include "apache_request.h"
-#include "multipart_buffer.h"
+#include "apache_multipart_buffer.h"
 
 static void req_plustospace(char *str)
 {
@@ -261,7 +261,6 @@ static void split_to_parms(ApacheRequest *req, const char *data)
     }
 
 }
-
 
 int ApacheRequest___parse(ApacheRequest *req)
 {
