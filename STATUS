@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/10/27 03:07:28 $]   -*-text-*-
+Last modified at [$Date: 2003/10/29 22:02:41 $]   -*-text-*-
 /** @page STATUS
 
      2.0.1  in development
@@ -17,12 +17,8 @@ RELEASE SHOWSTOPPERS:
 
     - Incorporate prereq checks into build system:
 
-      -# autoconf et.al version tests in buildconf,
-      -# perl module checks in Makefile.PL,
-      -# doxygen, ap[ru] & httpd version checks in configure.ac
+      -# perl module checks in Makefile.PL
 
-    - Fix *nix build system so "% make dist" generates a CPAN-friendly
-      and fully functional tarball.
 
 CURRENT VOTES:
 
@@ -44,10 +40,6 @@ TODO:
       -# win32 now has hardcoded .def files (need to automate, e.g. based
          on exports.c ala httpd-2.0)
       -# aix needs .exp files
-
-    - on Win32, figure out how to build things so Apache::Cookie
-      and Apache::Request don't need to be linked against mod_apreq
-      to resolve missing apreq_env* symbols. 
 
 
 OPEN ISSUES:

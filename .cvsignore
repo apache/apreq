@@ -16,3 +16,4 @@ ltmain.sh
 missing
 mkinstalldirs
 apreq2-config
+*.tar.gz
