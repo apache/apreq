@@ -95,7 +95,7 @@ static XS(apreq_xs_cookie_expires)
     if (c->max_age == -1)
         XSRETURN_UNDEF;
 
-    if (c->version == NETSCAPE) {
+    if (c->version == APREQ_COOKIE_VERSION_NETSCAPE) {
         char expires[APR_RFC822_DATE_LEN] = {0};
         apr_rfc822_date(expires, c->max_age + apr_time_now());
         expires[7] = '-';

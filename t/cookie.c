@@ -56,24 +56,24 @@ static void jar_table_get(CuTest *tc)
 static void netscape_cookie(CuTest *tc)
 {
     apreq_cookie_t *c;
-    apreq_cookie_version_t version = NETSCAPE;
+    apreq_cookie_version_t version = APREQ_COOKIE_VERSION_NETSCAPE;
 
     c = apreq_cookie(j,"foo");
     CuAssertStrEquals(tc,"bar",apreq_cookie_value(c));
     CuAssertIntEquals(tc, version,c->version);
 
-    CuAssertStrEquals(tc,"foo=bar", apreq_cookie_as_string(p,c));
+    CuAssertStrEquals(tc,"foo=bar", apreq_cookie_as_string(c,p));
     c->domain = apr_pstrdup(p, "example.com");
     CuAssertStrEquals(tc,"foo=bar; domain=example.com", 
-                      apreq_cookie_as_string(p,c));
+                      apreq_cookie_as_string(c,p));
 
     c->path = apr_pstrdup(p, "/quux");
     CuAssertStrEquals(tc, "foo=bar; path=/quux; domain=example.com",
-                      apreq_cookie_as_string(p,c));
+                      apreq_cookie_as_string(c,p));
     apreq_cookie_expires(c, "+1y");
     CuAssertStrEquals(tc,apr_pstrcat(p,
                          "foo=bar; path=/quux; domain=example.com; expires=", 
-                         apreq_expires(p,"+1y",NSCOOKIE), NULL), apreq_cookie_as_string(p,c));
+                         apreq_expires(p,"+1y",NSCOOKIE), NULL), apreq_cookie_as_string(c,p));
 }
 
 
@@ -83,23 +83,23 @@ static void rfc_cookie(CuTest *tc)
     long expires; 
 
     CuAssertStrEquals(tc,"out",apreq_cookie_value(c));
-    c->version = RFC;
+    c->version = APREQ_COOKIE_VERSION_RFC;
 
-    CuAssertStrEquals(tc,"rfc=out; Version=1", apreq_cookie_as_string(p,c));
+    CuAssertStrEquals(tc,"rfc=out; Version=1", apreq_cookie_as_string(c,p));
     c->domain = apr_pstrdup(p, "example.com");
     CuAssertStrEquals(tc,"rfc=out; Version=1; domain=example.com", 
-                      apreq_cookie_as_string(p,c));
+                      apreq_cookie_as_string(c,p));
 
     c->path = apr_pstrdup(p, "/quux");
     CuAssertStrEquals(tc, 
               "rfc=out; Version=1; path=/quux; domain=example.com",
-                      apreq_cookie_as_string(p,c));
+                      apreq_cookie_as_string(c,p));
 
     apreq_cookie_expires(c, "+3m");
     expires = apreq_atoi64t("+3m");
     CuAssertStrEquals(tc,apr_psprintf(p,
          "rfc=out; Version=1; path=/quux; domain=example.com; max-age=%ld",
-               expires), apreq_cookie_as_string(p,c));
+               expires), apreq_cookie_as_string(c,p));
 
 }
 

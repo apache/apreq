@@ -19,6 +19,9 @@
 #include "apr_strings.h"
 #include "apr_lib.h"
 
+#define RFC      APREQ_COOKIE_VERSION_RFC
+#define NETSCAPE APREQ_COOKIE_VERSION_NETSCAPE
+#define DEFAULT  APREQ_COOKIE_VERSION_DEFAULT
 
 APREQ_DECLARE(apreq_cookie_t *) apreq_cookie(const apreq_jar_t *jar, 
                                              const char *name)
@@ -29,8 +32,8 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie(const apreq_jar_t *jar,
     return apreq_value_to_cookie(apreq_char_to_value(val));
 }
 
-APREQ_DECLARE(void) apreq_add_cookie(apreq_jar_t *jar, 
-                                     const apreq_cookie_t *c)
+APREQ_DECLARE(void) apreq_jar_add(apreq_jar_t *jar, 
+                                  const apreq_cookie_t *c)
 {
     apr_table_addn(jar->cookies,
                    c->v.name,c->v.data);
@@ -65,7 +68,7 @@ APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env)
         apreq_jar_t *j = apreq_jar(env, NULL);
 
         if (j == NULL || apreq_jar_nelts(j) == 0) 
-            return APREQ_COOKIE_VERSION;
+            return NETSCAPE;
 
         else if (apr_table_do(has_rfc_cookie, NULL, j->cookies) == 1)
             return NETSCAPE;
@@ -148,7 +151,7 @@ APREQ_DECLARE(apr_status_t)
     return APR_ENOTIMPL;
 }
 
-APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(apr_pool_t *p, 
+APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p, 
                                   const char *name, const apr_size_t nlen,
                                   const char *value, const apr_size_t vlen)
 {
@@ -160,7 +163,7 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(apr_pool_t *p,
     memcpy(v->data, value, vlen);
     v->data[vlen] = 0;
     
-    c->version = APREQ_COOKIE_VERSION;
+    c->version = DEFAULT;
 
     /* session cookie is the default */
     c->max_age = -1;
@@ -367,8 +370,8 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
 }
 
 
-APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
-                                          const apreq_cookie_t *c)
+APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
+                                          char *buf, apr_size_t len)
 {
     /*  The format string must be large enough to accomodate all
      *  of the cookie attributes.  The current attributes sum to 
@@ -440,14 +443,13 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
 }
 
 
-APREQ_DECLARE(char*) apreq_cookie_as_string(apr_pool_t *p,
-                                            const apreq_cookie_t *c)
-
+APREQ_DECLARE(char*) apreq_cookie_as_string(const apreq_cookie_t *c,
+                                            apr_pool_t *p)
 {
-    char s[APREQ_COOKIE_LENGTH];
-    int n = apreq_serialize_cookie(s, APREQ_COOKIE_LENGTH, c);
+    char s[APREQ_COOKIE_MAX_LENGTH];
+    int n = apreq_serialize_cookie(s, APREQ_COOKIE_MAX_LENGTH, c);
 
-    if (n < APREQ_COOKIE_LENGTH)
+    if (n < APREQ_COOKIE_MAX_LENGTH)
         return apr_pstrmemdup(p, s, n);
     else
         return NULL;
@@ -456,12 +458,12 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(apr_pool_t *p,
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
                                               void *env)
 {
-    char *s = apreq_cookie_as_string(apreq_env_pool(env),c);
+    char *s = apreq_cookie_as_string(c,apreq_env_pool(env));
 
     if (s == NULL) {
         apreq_log(APREQ_ERROR APR_ENAMETOOLONG, env, 
-                  "Serialized cookie exceeds APREQ_COOKIE_LENGTH = %d", 
-                    APREQ_COOKIE_LENGTH);
+                  "Serialized cookie exceeds APREQ_COOKIE_MAX_LENGTH = %d", 
+                    APREQ_COOKIE_MAX_LENGTH);
         return APR_ENAMETOOLONG;
     }
 
@@ -471,12 +473,12 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
                                                void *env)
 {
-    char *s = apreq_cookie_as_string(apreq_env_pool(env),c);
+    char *s = apreq_cookie_as_string(c,apreq_env_pool(env));
 
     if ( s == NULL ) {
         apreq_log(APREQ_ERROR APR_ENAMETOOLONG, env,
-                  "Serialized cookie exceeds APREQ_COOKIE_LENGTH = %d", 
-                    APREQ_COOKIE_LENGTH);
+                  "Serialized cookie exceeds APREQ_COOKIE_MAX_LENGTH = %d", 
+                    APREQ_COOKIE_MAX_LENGTH);
         return APR_ENAMETOOLONG;
     }
     else if ( c->version == NETSCAPE ) {
