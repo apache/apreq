@@ -218,6 +218,7 @@ static apr_status_t report_local_cleanup(void *data)
 
 static apr_status_t at_report_local_write(at_report_t *ctx, const char *msg)
 {
+    char buf[256];
     struct at_report_local *q = (struct at_report_local *)ctx;
     dAT = q->t;
 
@@ -226,8 +227,11 @@ static apr_status_t at_report_local_write(at_report_t *ctx, const char *msg)
         AT->report = q->saved_report;
         AT->fatal = q->saved_fatal;
         apr_pool_cleanup_kill(q->pool, q, report_local_cleanup);
-        at_trace(AT, "Abandon %s, omitting tests %d - %d from this run.",
-                 AT->name, AT->prior + AT->current + 1, AT->prior + AT->plan);
+        while (AT->current++ < AT->plan) {
+            snprintf(buf, 256, "not ok %d # skipped: aborting test %s",
+                     AT->prior + AT->current, AT->name);
+            at_report(AT, buf);
+        }
         longjmp(*AT->abort, 0);
     }
     AT->current--;
