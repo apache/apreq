@@ -127,7 +127,7 @@ static XS(apreq_xs_table_##attr##_##method)                             \
     const char *key, *val;                                              \
     SV *sv, *obj;                                                       \
     STRLEN klen, vlen;                                                  \
-    apreq_##attr##_t *RETVAL;                                           \
+    apreq_##attr##_t *RETVAL = NULL;                                    \
                                                                         \
     switch (items) {                                                    \
     case 2:                                                             \
@@ -442,7 +442,7 @@ static XS(apreq_xs_##attr##_do)                                         \
     struct apreq_xs_do_arg d = { NULL, NULL, NULL, NULL, 0, aTHX };     \
     apr_table_t *t;                                                     \
     void *env;                                                          \
-    int i, rv;                                                          \
+    int i, rv = 1;                                                      \
     SV *sv, *obj;                                                       \
     MAGIC *mg;                                                          \
                                                                         \
