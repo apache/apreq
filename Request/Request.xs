@@ -313,7 +313,7 @@ ApacheRequest_new(class, r, ...)
 
           case 't':
             if (strcaseEQ(key, "temp_dir")) {
-                RETVAL->temp_dir = (char *)SvPV(ST(i+1), PL_na);
+                RETVAL->temp_dir = ap_pstrdup(r->pool,SvPV(ST(i+1), PL_na));
                 break;
             }
 
