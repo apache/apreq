@@ -2,6 +2,12 @@
 
 @section v2_02_dev Changes with libapreq2-2.02-dev
 
+- November 12, 2003 - Perl API [joes]
+
+Fix missing SvRV() in Apache::Cookie::set_attr(),
+which caused Apache::Cookie::new to segfault.  Bug
+first reported to modperl list by Wolfgang Kubens.
+
 
 @section v2_01_dev Changes with libapreq2-2.01-dev
 
