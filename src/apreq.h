@@ -121,8 +121,8 @@ APREQ_DECLARE(apreq_value_t *) apreq_make_value(apr_pool_t *p,
  * @param p  Pool.
  * @param val Original value to copy.
  */
-apreq_value_t * apreq_copy_value(apr_pool_t *p, 
-                                 const apreq_value_t *val);
+APREQ_DECLARE(apreq_value_t *) apreq_copy_value(apr_pool_t *p, 
+                                                const apreq_value_t *val);
 
 /**
  * Merges an array of values into one.

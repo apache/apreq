@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/17 01:09:39 $]   -*-text-*-
+Last modified at [$Date: 2004/07/17 17:05:27 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -60,8 +60,6 @@ TODO:
 
     - The current tests don't cover these functions, 
       so add CuTest tests for them:
-      -  apreq_make_value()
-      -  apreq_copy_value()
       -  apreq_merge_values()
       -  apreq_enctype()
       -  apreq_memmem()

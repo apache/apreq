@@ -45,8 +45,8 @@ APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t  *p,
 }
 
 
-apreq_value_t * apreq_copy_value(apr_pool_t *p, 
-                                 const apreq_value_t *val)
+APREQ_DECLARE(apreq_value_t *)apreq_copy_value(apr_pool_t *p, 
+                                               const apreq_value_t *val)
 {
     apreq_value_t *v;
     if (val == NULL)

@@ -105,6 +105,25 @@ static void header_attributes(CuTest *tc)
 
 }
 
+static void make_values(CuTest *tc)
+{
+    apreq_value_t *v1, *v2;
+    apr_size_t len = 4;
+    char *name = apr_palloc(p,len);
+    char *val = apr_palloc(p,len);
+    strcpy(name, "foo");
+    strcpy(val, "bar");
+ 
+    v1 = apreq_make_value(p, name, len, val, len);
+    CuAssertStrEquals(tc, name, v1->name);
+    CuAssertIntEquals(tc, len, v1->size);
+    CuAssertStrEquals(tc, val, v1->data);
+
+    v2 = apreq_copy_value(p, v1);
+    CuAssertStrEquals(tc, name, v2->name);
+    CuAssertIntEquals(tc, len, v2->size);
+    CuAssertStrEquals(tc, val, v2->data);
+}
 
 CuSuite *testparam(void)
 {
@@ -115,6 +134,7 @@ CuSuite *testparam(void)
     SUITE_ADD_TEST(suite, params_as);
     SUITE_ADD_TEST(suite, string_decoding_in_place);
     SUITE_ADD_TEST(suite, header_attributes);
+    SUITE_ADD_TEST(suite, make_values);
 
     return suite;
 }
