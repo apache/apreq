@@ -177,7 +177,7 @@ static void quote_strings(CuTest *tc)
     apr_size_t exp_len, res_len, res_quote_len;
     char *res = apr_palloc(p,24);
     char *res_quote = apr_palloc(p,24);
-    const char *exp = apr_palloc(p,24);
+    const char *expe = apr_palloc(p,24);
     int i;
     const char * arr[] = {"cest", "\"cest", "ce\"st", "\"cest\""};
     const char * arr_quote[] = 
@@ -194,9 +194,9 @@ static void quote_strings(CuTest *tc)
         CuAssertStrNEquals(tc, res, res_quote, res_len);
         res_len = apreq_quote_once(res, arr[i], arr_len[i]);
         exp_len = (i == 3) ? arr_len[i] : arr_quote_len[i];
-        exp = (i == 3) ? arr[i] : arr_quote[i];
+        expe = (i == 3) ? arr[i] : arr_quote[i];
         CuAssertIntEquals(tc, exp_len, res_len);
-        CuAssertStrNEquals(tc, exp, res, exp_len);
+        CuAssertStrNEquals(tc, expe, res, exp_len);
     }
 }
 
