@@ -2,7 +2,7 @@ Revision history for Perl extension Apache::Request.
 
 =over 4
 
-=item 0.20_02-dev
+=item 0.30_01 - January, 27 - 1999
 
 added ApacheRequest_script_name (r->uri minus r->path_info)
 
