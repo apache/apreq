@@ -638,6 +638,7 @@ struct mfd_ctx {
         MFD_ERROR 
     }                            status;
     apr_bucket                   *eos;
+    apreq_param_t                *upload;
 };
 
 
@@ -978,18 +979,12 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 ctx->status = MFD_PARAM;
             } 
             else {
-                apr_array_header_t *arr;
-                apr_table_entry_t e = {NULL};
                 apreq_param_t *param = apreq_make_param(pool, name, nlen, 
                                                         filename, flen);
                 param->info = ctx->info;
                 param->bb = apr_brigade_create(pool, 
                                                apr_bucket_alloc_create(pool));
-                arr = (apr_array_header_t *)apr_table_elts(t);
-                e.key = (char *)param->v.name;
-                e.val = param->v.data;
-                *(apr_table_entry_t *)(apr_array_push(arr)) = e;
-                arr->nelts--;
+                ctx->upload = param;
                 ctx->status = MFD_UPLOAD;
                 goto mfd_parse_brigade;
             }
@@ -1050,15 +1045,9 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
     case MFD_UPLOAD:
         {
-            apreq_param_t *param;
-            apr_array_header_t *arr;
-            apr_table_entry_t *e;
+            apreq_param_t *param = ctx->upload;
 
             s = split_on_bdry(ctx->bb, ctx->in, ctx->pattern, ctx->bdry);
-            arr = (apr_array_header_t *)apr_table_elts(t);
-            e = (apr_table_entry_t *)arr->elts;
-            param = apreq_value_to_param(apreq_strtoval(e[arr->nelts].val));
-
             switch (s) {
 
             case APR_INCOMPLETE:
@@ -1112,5 +1101,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
 APREQ_DECLARE_HOOK(apreq_hook_disable_uploads)
 {
+    apreq_log(APREQ_ERROR APR_EGENERAL, env, 
+              "Uploads are disabled for this request.");
     return APR_EGENERAL;
 }

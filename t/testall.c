@@ -97,7 +97,7 @@ static void test_log(const char *file, int line, int level,
                      apr_status_t status, void *env, const char *fmt,
                      va_list vp)
 {
-    if (level < APREQ_LOG_DEBUG)
+    if (level < APREQ_LOG_ERR)
         fprintf(stderr, "[%s(%d)] %s\n", file, line, apr_pvsprintf(p,fmt,vp));
 }
 
