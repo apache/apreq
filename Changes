@@ -2,7 +2,17 @@ Revision history for libapreq
 
 =over 4
 
-=item 0.33_01 - ?
+=item 1.0 - February 21, 2002
+
+update to Apache Software License, Version 1.1
+
+work around bug in Mozilla 0.9.7, which fails to send a required
+CRLF with each empty file field. [Joe Schaefer <joe@sunstarsys.com>]
+
+ignore empty cookie attributes; replace ap_getword calls with
+ap_getword_nulls for parsing "&" separator. brings the behavior of
+Apache::Cookie closer to that of CGI::Cookie, and hopefully improves
+the functionality of the C interface as well. [Maurice Aubrey]
 
 make apache_cookie.h c++ compatible [Simon Tamás <simont@westel.hu>]
 
