@@ -184,6 +184,7 @@ static XS(apreq_xs_request_config)
                       "Unrecognized attribute %s", attr);
         }
     }
+    XSRETURN(0);
 }
 
 static XS(apreq_xs_request_parse)
@@ -200,7 +201,7 @@ static XS(apreq_xs_request_parse)
     while (s == APR_INCOMPLETE);
     if (GIMME_V != G_VOID)
         XSRETURN_IV(s);
-    if (s == APR_SUCCESS)
+    if (s != APR_SUCCESS)
         apreq_xs_croak(aTHX_ newHV(), s, "Apache::Request::parse", 
                        "Apache::Request::Error");
 }
