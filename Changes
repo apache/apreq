@@ -2,7 +2,7 @@ Revision history for libapreq
 
 =over 4
 
-=item 0.32 - ?
+=item 0.32 - April 4, 2001
 
 fix $r->param( key => [ 0..9 ] ), convert to XS. [Joe Schaefer <joe@sunstarsys.com>]
 Thanks to Jody Biggs <jody@codegrok.com> for the spot and suggested fix.
