@@ -20,8 +20,6 @@ CURRENT RELEASE NOTES:
 RELEASE SHOWSTOPPERS:
 
      - The api docs and perl glue are currently broken.
-     - Need to fix the memory leak regression in apreq_env_custom and 
-       apreq_env_cgi (created bucket allocators need to be explicitly destroyed).
 
 
 CURRENT VOTES:

@@ -59,11 +59,23 @@ static apr_pool_t *cgi_pool(apreq_env_handle_t *env)
     return cgi_env->pool;
 }
 
+static apr_status_t bucket_alloc_cleanup(void *data)
+{
+    apr_bucket_alloc_t *ba = data;
+    apr_bucket_alloc_destroy(ba);
+    return APR_SUCCESS;
+}
+
+
 static apr_bucket_alloc_t *cgi_bucket_alloc(apreq_env_handle_t *env)
 {
     struct cgi_env *cgi_env = (struct cgi_env*)env;
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(cgi_env->pool);
 
-    return apr_bucket_alloc_create(cgi_env->pool);
+    apr_pool_cleanup_register(cgi_env->pool, ba,
+                              bucket_alloc_cleanup,
+                              bucket_alloc_cleanup);
+    return ba;
 }
 
 static const char *cgi_query_string(apreq_env_handle_t *env)

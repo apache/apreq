@@ -43,11 +43,22 @@ static apr_pool_t *custom_pool(apreq_env_handle_t *env) {
     return handle->pool;
 }
 
+static apr_status_t bucket_alloc_cleanup(void *data)
+{
+    apr_bucket_alloc_t *ba = data;
+    apr_bucket_alloc_destroy(ba);
+    return APR_SUCCESS;
+}
+
 static apr_bucket_alloc_t *custom_bucket_alloc(apreq_env_handle_t *env)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(handle->pool);
 
-    return apr_bucket_alloc_create(handle->pool);
+    apr_pool_cleanup_register(handle->pool, ba,
+                              bucket_alloc_cleanup,
+                              bucket_alloc_cleanup);
+    return ba;
 }
 
 static const char *custom_query_string(apreq_env_handle_t *env)
