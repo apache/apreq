@@ -67,9 +67,9 @@ extern "C" {
 #endif /* __cplusplus */
 
 
-/***************************************************
- * API: apreq_params.c
- *
+/**
+ * @file apreq_params.h
+ * @brief Request and param stuff.
  */
 
 #define APREQ_CHARSET  UTF_8;

@@ -49,6 +49,12 @@
  extern "C" {
 #endif 
 
+/**
+ * @file apreq_env.h
+ * @brief Logging and environment (module) declarations.
+ *
+ */
+
 extern const char apreq_env[];
 
 #define APREQ_DECLARE_LOG(f) APREQ_DECLARE_NONSTD(void)(f)(const char *file, \

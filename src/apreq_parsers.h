@@ -9,12 +9,15 @@
 extern "C" {
 #endif 
 
-/* parsers: single copy paradigm */
 
-/***********************************************************
- * API: apreq_parsers.c
+/**
+ * Single-copy paradigm.
+ *
+ * @file apreq_parsers.h
+ * @brief Parser and Hook stuff.
  */
 
+/** Request config */
 typedef struct apreq_cfg_t {
     char          *temp_dir;
     apr_off_t      max_len;
