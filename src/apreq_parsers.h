@@ -59,10 +59,7 @@ APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
                                                   void *out);
 
 APREQ_DECLARE(apr_status_t) apreq_register_parser(apreq_request_t *req,
-                                                  const char *enctype,
-                                                  APREQ_PARSER(*parser),
-                                                  APREQ_HOOK(*hook),
-                                                  void *out);
+                                                  apreq_parser_t *parser);
 
 APREQ_DECLARE(apr_status_t) apreq_copy_parser(apr_pool_t *p, 
                                               const apreq_value_t *v);

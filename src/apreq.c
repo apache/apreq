@@ -505,7 +505,7 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
         break;
 
 
-    default:
+    case AS_IS:
         memcpy(d,a[0]->data,a[0]->size);
         d += a[0]->size;
 
@@ -517,6 +517,8 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
         }
         break;
 
+    default:
+        break;
     }
 
     *d = 0;

@@ -121,21 +121,12 @@ APREQ_DECLARE(apreq_request_t *)apreq_request(void *ctx);
  * @remark Also parses the request as necessary.
  */
 
-APREQ_DECLARE(const apreq_param_t *) apreq_param(const apreq_request_t *req, 
+APREQ_DECLARE(const char *) apreq_param(const apreq_request_t *req, 
                                         const char *name); 
 
 APREQ_DECLARE(const char *) apreq_arg(const apreq_request_t *req, 
                                       const char *name);
 #define apreq_arg(req,k) apreq_table_get((req)->args, k)
-
-
-APREQ_DECLARE(const apreq_table_t *) apreq_args(const apreq_request_t *req);
-#define apreq_args(req) (const apreq_table_t *)((req)->args)
-
-APREQ_DECLARE(const apreq_table_t *) apreq_body(const apreq_request_t *req);
-/* Danger Will Robinson!  */
-#define apreq_body(req) (const apreq_table_t *)((req)->body)
-
 
 /**
  * Returns all parameters for the requested key,
@@ -171,8 +162,7 @@ APREQ_DECLARE(apr_array_header_t *) apreq_keys(apreq_request_t *req);
 
 APREQ_DECLARE(apr_status_t)  apreq_split_params(apr_pool_t *pool,
                                                 apreq_table_t *t, 
-                                                const char *data, 
-                                                const apr_size_t dlen);
+                                                const char *data);
 
 APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool, 
                                                   const char *word,

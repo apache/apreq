@@ -1,10 +1,12 @@
 AC_DEFUN(AC_APREQ, [
-	AC_ARG_WITH(apache-includes,
-		[  --with-apache-includes  where the apache header files live],
-		[APACHE_INCLUDES=$withval],
-		[APACHE_INCLUDES="/usr/local/apache/include"])
-	APREQ_INCLUDES="-I$APACHE_INCLUDES"
-	AC_SUBST(APREQ_INCLUDES)
+	AC_ARG_WITH(apache2,
+		[  --with-apache2  the apache-2 server_root directory],
+		[APACHE2=$withval],
+		[APACHE2="/usr/local/apache2"])
+	APACHE2_INCLUDES="$APACHE2/include"
+        APACHE2_MODULES="$APACHE2/modules"
+        APACHE2_LIBS="$APACHE2/lib"
+	AC_SUBST(APACHE2_INCLUDES) AC_SUBST(APACHE2_MODULES) AC_SUBST(APACHE2_LIBS)
 ])
 
 AC_DEFUN(APR_ADDTO,[

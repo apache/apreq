@@ -70,14 +70,15 @@
 /* the "warehouse" */
 
 struct env_ctx {
-    apreq_request_t *req;
-    apreq_jar_t *jar;
+    apreq_request_t    *req;
+    apreq_jar_t        *jar;
     apr_bucket_brigade *bb_in;
     apr_bucket_brigade *bb_parse;
 };
 
 static const char env_name[] = "APACHE2";
 static const char filter_name[] = "APREQ";
+module AP_MODULE_DECLARE_DATA apreq_module;
 
 static apr_pool_t *env_pool(void *ctx)
 {
@@ -94,7 +95,7 @@ static const char *env_in(void *ctx, const char *name)
 static apr_status_t env_out(void *ctx, const char *name, char *value)
 {
     dR;
-    apr_table_add(r->headers_out, name, value);
+    apr_table_addn(r->headers_out, name, value);
     return APR_SUCCESS;
 }
 
@@ -151,6 +152,16 @@ static apreq_cfg_t *env_cfg(void *ctx)
     return NULL;
 }
 
+
+static int dump_table(void *ctx, const char *key, const char *value)
+{
+    request_rec *r = ctx;
+    dAPREQ_LOG;
+    apreq_log(APREQ_DEBUG 0, r, "%s => %s", key, value);
+    return 1;
+}
+
+
 static apr_status_t apreq_filter(ap_filter_t *f,
                                  apr_bucket_brigade *bb,
                                  ap_input_mode_t mode,
@@ -159,8 +170,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 {
     request_rec *r = f->r;
     struct env_ctx *ctx;
-
     apr_status_t rv;
+    dAPREQ_LOG;
 
     /* just get out of the way of things we don't want. */
     if (mode != AP_MODE_READBYTES) {
@@ -174,7 +185,16 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             ctx->bb_in = apr_brigade_create(r->pool, f->c->bucket_alloc);
         if (ctx->bb_parse == NULL)
             ctx->bb_parse = apr_brigade_create(r->pool, f->c->bucket_alloc);
-
+        if (ctx->req == NULL) {
+            apreq_parser_t *parser;
+            ctx->req = apreq_request(r);
+            parser = apreq_make_parser(r->pool, APREQ_URL_ENCTYPE,
+                                       apreq_parse_urlencoded, NULL, ctx->req);
+            apreq_register_parser(ctx->req, parser);
+            parser = apreq_make_parser(r->pool, APREQ_MFD_ENCTYPE,
+                                       apreq_parse_multipart, NULL, ctx->req);
+            apreq_register_parser(ctx->req, parser);
+        }
     }
     else
         ctx = (struct env_ctx *)f->ctx;
@@ -184,12 +204,15 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     rv = ap_get_brigade(f->next, ctx->bb_in, AP_MODE_READBYTES,
                         block, readbytes);
 
+    apreq_log(APREQ_DEBUG rv, r, "dump args:");
+    apreq_table_do(dump_table, r, ctx->req->args, NULL);
+
 
     if (ctx->req->v.status == APR_INCOMPLETE) {
         int saw_eos = 0;
 
         while (! APR_BRIGADE_EMPTY(ctx->bb_in)) {
-            apr_bucket *e, *f = APR_BRIGADE_FIRST(bb);
+            apr_bucket *e, *f = APR_BRIGADE_FIRST(ctx->bb_in);
             apr_bucket_copy(f, &e);
             apr_bucket_setaside(e, r->pool);
 
@@ -206,12 +229,15 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         rv = apreq_parse(ctx->req, ctx->bb_parse);
 
         if (rv == APR_INCOMPLETE && saw_eos == 1)
-            return APR_EGENERAL;        /* parser choked on EOS */
+            return APR_EGENERAL;        /* parser choked on EOS bucket */
     }
 
     else {
         APR_BRIGADE_CONCAT(bb, ctx->bb_in);
     }
+
+    apreq_log(APREQ_DEBUG rv, r, "dump body:");
+    apreq_table_do(dump_table, r, ctx->req->body, NULL);
 
     return rv;
 }

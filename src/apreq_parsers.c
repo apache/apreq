@@ -93,15 +93,10 @@ APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
 
 
 APREQ_DECLARE(apr_status_t) apreq_register_parser(apreq_request_t *req,
-                                                  const char *enctype,
-                                                  APREQ_PARSER(*parser),
-                                                  APREQ_HOOK(*hook),
-                                                  void *out)
+                                                  apreq_parser_t *parser)
 {
-    apreq_parser_t *p = apreq_make_parser(req->pool, enctype, 
-                                          parser, hook, out);
     if (req->body == NULL)
-        return apreq_table_add((apreq_table_t *)req->v.data, &p->v);
+        return apreq_table_add(*(apreq_table_t **)req->v.data, &parser->v);
     else
         return APR_EGENERAL;
 }
@@ -110,17 +105,27 @@ APREQ_DECLARE(apr_status_t) apreq_register_parser(apreq_request_t *req,
 APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req, 
                                         apr_bucket_brigade *bb)
 {
+    dAPREQ_LOG;
 
-    if (req->v.name == NULL)
-        return req->v.status;
+    if (req->v.name == NULL) {
+        if (req->v.status == APR_SUCCESS)
+            return APR_SUCCESS;
+        else
+            return req->v.status = APR_EINIT;
+    }
 
-    if (req->body == NULL && req->v.status == APR_SUCCESS) {
-        const char *q = apreq_table_get((apreq_table_t *)req->v.data,
-                                                         req->v.name);
-        if (q == NULL)
+    if (req->body == NULL) {
+        const char *q = apreq_table_get(*(apreq_table_t **)req->v.data,
+                                        req->v.name);
+        if (q == NULL) {
+            apreq_log(APREQ_DEBUG APR_NOTFOUND, req->env, 
+                      "can't find %s parser", req->v.name);
             return req->v.status = APR_NOTFOUND;
-
+        }
         req->body = apreq_table_make(req->pool, APREQ_NELTS);
+
+        apreq_log(APREQ_DEBUG APR_SUCCESS, req->env, 
+                  "found %s parser", req->v.name);
 
         *(apreq_parser_t **)req->v.data = 
             apreq_value_to_parser(apreq_strtoval(q));
@@ -129,9 +134,10 @@ APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req,
         req->v.status = APR_INCOMPLETE;
     }
 
-    if (req->v.status == APR_INCOMPLETE && req->body != NULL) {
-        apreq_parser_t *p = (apreq_parser_t *)req->v.data;
+    if (req->v.status == APR_INCOMPLETE) {
+        apreq_parser_t *p = *(apreq_parser_t **)req->v.data;
         req->v.status = p->parser(req->pool, bb, p);
+        apreq_log(APREQ_DEBUG req->v.status, req->env, "parsing request.");
     }
 
     return req->v.status;
@@ -156,7 +162,7 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
     param->charset = UTF_8;
     param->language = NULL;
 
-    v->name = v->data + vlen;
+    v->name = v->data + vlen + 1;
 
     off = 0;
     total = 0;
@@ -165,7 +171,7 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
         const char *data;
         apr_bucket *f = APR_BRIGADE_FIRST(bb);
         apr_status_t s = apr_bucket_read(f, &data, &dlen, APR_BLOCK_READ);
-        apr_ssize_t rv;
+        apr_ssize_t decoded_len;
 
         if ( s != APR_SUCCESS )
             return s;
@@ -175,14 +181,14 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
             dlen = nlen - total;
         }
 
-        rv = apreq_decode((char *)v->name + off, data, dlen);
+        decoded_len = apreq_decode((char *)v->name + off, data, dlen);
 
-        if (rv < 0) {
+        if (decoded_len < 0) {
             return APR_BADARG;
         }
 
         total += dlen;
-        off += rv;
+        off += decoded_len;
         apr_bucket_delete(f);
     }
 
@@ -217,7 +223,7 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
         const char *data;
         apr_bucket *f = APR_BRIGADE_FIRST(bb);
         apr_status_t s = apr_bucket_read(f, &data, &dlen, APR_BLOCK_READ);
-        apr_ssize_t rv;
+        apr_ssize_t decoded_len;
 
         if ( s != APR_SUCCESS )
             return s;
@@ -227,14 +233,14 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
             dlen = vlen - total;
         }
 
-        rv = apreq_decode(v->data + off, data, dlen);
+        decoded_len = apreq_decode(v->data + off, data, dlen);
 
-        if (rv < 0) {
+        if (decoded_len < 0) {
             return APR_BADCH;
         }
 
         total += dlen;
-        off += rv;
+        off += decoded_len;
         apr_bucket_delete(f);
     }
 
@@ -252,7 +258,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_urlencoded(apr_pool_t *pool,
 {
     apreq_request_t *req = (apreq_request_t *)parser->out;
     apreq_table_t *t = req->body;
-
+    dAPREQ_LOG;
     apr_ssize_t nlen, vlen;
     apr_bucket *e;
 
@@ -273,10 +279,12 @@ APREQ_DECLARE(apr_status_t) apreq_parse_urlencoded(apr_pool_t *pool,
         const char *data;
         apr_status_t s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
 
-        if (APR_BUCKET_IS_EOS(e))
-            return nlen == 0 ? APR_SUCCESS : 
+        if (APR_BUCKET_IS_EOS(e)) {
+            apreq_log(APREQ_DEBUG s, req->env,
+                      "got eos bucket: %d, %d", nlen, vlen);
+            return vlen == 0 ? APR_SUCCESS : 
                 split_urlword(pool, t, bb, nlen, vlen);
-
+        }
         if ( s != APR_SUCCESS )
             return s;
 

@@ -12,11 +12,8 @@
 #define APREQ_DECLARE(d)                d
 
 #define APREQ_URL_ENCTYPE               "application/x-www-form-urlencoded"
-#define APREQ_URL_LENGTH                33
 #define APREQ_MFD_ENCTYPE               "multipart/form-data"
-#define APREQ_MFD_ENCTYPE_LENGTH        19
 #define APREQ_XML_ENCTYPE               "application/xml"
-#define APREQ_XML_ENCTYPE_LENGTH        15
 
 #define APREQ_NELTS                     8
 

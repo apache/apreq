@@ -95,7 +95,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
     apreq_request_t *req, *old_req = apreq_env_request(ctx, NULL);
     const char *query_string, *ct;
     apr_pool_t *p;
-
+    apr_status_t s;
     dAPREQ_LOG;
 
     if (old_req != NULL)
@@ -103,8 +103,8 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 
     p = apreq_env_pool(ctx);
     req = apr_palloc(p, sizeof(apreq_table_t *) + sizeof *req);
-
-    *(apreq_table_t **)&req->v.data = apreq_make_table(p, APREQ_NELTS);
+    req->pool = p;
+    *(apreq_table_t **)req->v.data = apreq_make_table(p, APREQ_NELTS);
     req->v.size   = sizeof(apreq_table_t *);
     req->v.status = APR_EINIT;
     req->env      = ctx;
@@ -116,11 +116,11 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
     if (ct == NULL)
         req->v.name = NULL;
     else {
-        char *enctype = apr_pstrdup(req->pool, ct);
+        char *enctype = apr_pstrdup(p, ct);
         char *semicolon = strchr(enctype, ';');
         if (semicolon)
             *semicolon = 0;
-
+        apreq_log(APREQ_DEBUG 0, ctx, "enctype: %s", enctype);
         req->v.name = enctype;
     }
 
@@ -135,36 +135,28 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
         return old_req;
     }
 
-    apreq_log(APREQ_DEBUG req->v.status, ctx, "making new request");
-
     /* XXX need to install copy/merge callbacks for apreq_param_t */
     req->pool = p;
     query_string = apreq_env_args(ctx);
-    req->v.status = (query_string == NULL) ? APR_SUCCESS :
-        apreq_split_params(p, req->args, query_string, strlen(query_string));
- 
+
+    s = (query_string == NULL) ? APR_SUCCESS : 
+        apreq_split_params(p, req->args, query_string);
+
+    if (s == APR_SUCCESS)
+        req->v.status = ct ? APR_INCOMPLETE : APR_SUCCESS;
+
     return req;
 }
 
 
-APREQ_DECLARE(const apreq_param_t *)apreq_param(const apreq_request_t *req, 
-                                                const char *name)
+APREQ_DECLARE(const char *)apreq_param(const apreq_request_t *req, 
+                                       const char *name)
 {
-    const apreq_param_t *param = UPGRADE(apreq_table_get(req->args, name));
-    return param ? param : UPGRADE(apreq_table_get(req->body, name));
+    const char *param = apreq_table_get(req->args, name);
+    return  param ? param : 
+        req->body ? apreq_table_get(req->body, name) : NULL;
 }
 
-
-APREQ_DECLARE(const apreq_table_t *) (apreq_args)(const apreq_request_t *req)
-{
-    return apreq_args(req);
-}
-
-
-APREQ_DECLARE(const apreq_table_t *) (apreq_body)(const apreq_request_t *req)
-{
-    return apreq_body(req);
-}
 
 APREQ_DECLARE(apr_array_header_t *) apreq_params(apr_pool_t *pool,
                                                  const apreq_request_t *req, 
@@ -178,14 +170,13 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params(apr_pool_t *pool,
 
 APREQ_DECLARE(apr_status_t) apreq_split_params(apr_pool_t *pool,
                                                apreq_table_t *t,
-                                               const char *data, 
-                                               apr_size_t dlen)
+                                               const char *data)
 {
-    const char *start = data, *end = data + dlen;
+    const char *start = data;
     apr_size_t nlen = 0;
     apr_status_t status = APR_SUCCESS;
 
-    for (; data < end; ++data) {
+    for (;;++data) {
         switch (*data) {
 
         case '=':
@@ -199,23 +190,19 @@ APREQ_DECLARE(apr_status_t) apreq_split_params(apr_pool_t *pool,
         case '&':
         case ';': 
         case 0:
-            if (nlen == 0) {
-                return APR_BADARG;
-            }
-            else {
+            if (nlen > 0) {
                 const apr_size_t vlen = data - start - nlen - 1;
                 status = apreq_table_add(t, p2v(
                                 apreq_decode_param( pool, start,
                                                     nlen, vlen )));
 
-                if (status != APR_SUCCESS)
+                if (*data == 0 || status != APR_SUCCESS)
                     return status;
             }
 
             nlen = 0;
             start = data + 1;
-            if (start < end)
-                status = APR_INCOMPLETE;
+            status = APR_INCOMPLETE;
         }
     }
     return status;
@@ -230,7 +217,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool,
     apreq_param_t *param;
     apr_ssize_t size;
 
-    if (nlen == 0 || vlen == 0 || word[nlen] != '=')
+    if (nlen == 0 || word[nlen] != '=')
         return NULL;
 
     param = apr_palloc(pool, nlen + vlen + 1 + sizeof *param);
@@ -280,5 +267,3 @@ APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool,
 
     return v->data;
 }
-
-
