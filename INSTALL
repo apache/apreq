@@ -7,6 +7,15 @@ architecture dependent library.  See the Apache::libapreq module for
 routines that can be called by your application Makefile to find the
 include and linker arguments.
 
+If the test suite doesn't find your httpd, you should help it to find it.
+If your httpd is built as DSO:
+
+ perl Makefile.PL -apxs /path/to/apache/bin/apxs 
+
+If your httpd is static:
+
+ perl Makefile.PL -httpd /path/to/apache/bin/httpd
+
 To build libapreq without the Makefile.PL, run:
 
  ./configure [--with-apache-includes=DIR] && make
