@@ -151,14 +151,14 @@ static XS(apreq_xs_table_##attr##_##method)                             \
     if (SvROK(ST(2))) {                                                 \
         RETVAL = (apreq_##attr##_t *) SvIVX(SvRV(ST(2)));               \
     }                                                                   \
-    else if (SvPOK(ST(2))) {                                            \
+    else if (SvOK(ST(2))) {                                             \
         val = SvPV(ST(2), vlen);                                        \
         RETVAL = apreq_make_##attr(apreq_env_pool(env), key, klen,      \
                                                      val, vlen);        \
     }                                                                   \
     else                                                                \
         Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val): "     \
-                   "unrecognized SV type for $val");                    \
+                   "cannot store an undefined $val in the table");      \
                                                                         \
     apr_table_##method##n(t, RETVAL->v.name, RETVAL->v.data);           \
     XSRETURN_EMPTY;                                                     \
