@@ -14,3 +14,5 @@ missing
 mkinstalldirs
 apreq2-config
 *.tar.gz*
+*.gif
+*.html
