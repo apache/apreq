@@ -1,6 +1,6 @@
 /** @page CHANGES
 
-@section 2.01-dev Changes with libapreq2-2.01-dev
+@section v2_01_dev Changes with libapreq2-2.01-dev
 
 - October 26, 2003 - C API [joes]
 
@@ -9,8 +9,7 @@ and add apreq_env_t and initializer apreq_env_module() to manage the
 environment at runtime (determining the environment at load-time
 was problematic on non-ELF systems).
 
-
-@section 2.00-dev Changes with libapreq2-2.00-dev
+@section v2_0_0 Changes with libapreq2-2.00-dev
 
 - October 24, 2003 - C API: libapreq_cgi.c [randyk, joes]
 
