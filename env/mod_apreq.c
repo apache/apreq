@@ -141,6 +141,11 @@ static void *env_request(void *ctx, void *req)
 
     if (req != NULL) {
         apreq_request_t *oldreq = c->req;
+
+        if (oldreq == NULL) {
+            /* XXX: SOMEHOW INJECT APREQ INPUT FILTER */
+        }
+
         c->req = (apreq_request_t *)req;
         return oldreq;
     }
