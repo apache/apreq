@@ -93,21 +93,36 @@ AC_DEFUN([AC_APREQ], [
         fi
 
         if test "x$PERL_GLUE" != "xno"; then
+            AC_MSG_CHECKING(for perl)
             if test -z "`$prereq_check perl $PERL`"; then
                 AC_MSG_ERROR([Bad perl version])
             fi
+            AC_MSG_RESULT($PERL)
+
+            AC_MSG_CHECKING(for ExtUtils::XSBuilder)
             if test -z "`$prereq_check ExtUtils::XSBuilder`"; then
                 AC_MSG_ERROR([Bad ExtUtils::XSBuilder version])
             fi
+            AC_MSG_RESULT(yes)
+
+            AC_MSG_CHECKING(for mod_perl)
             if test -z "`$prereq_check mod_perl`"; then
                 AC_MSG_ERROR([Bad mod_perl version])
             fi
+            AC_MSG_RESULT(yes)
+
+            AC_MSG_CHECKING(for Apache::Test)
             if test -z "`$prereq_check Apache::Test`"; then
                 AC_MSG_ERROR([Bad Apache::Test version])
             fi
+            AC_MSG_RESULT(yes)
+
+            AC_MSG_CHECKING(for ExtUtils::MakeMaker)
             if test -z "`$prereq_check ExtUtils::MakeMaker`"; then
                 AC_MSG_ERROR([Bad ExtUtils::MakeMaker version])
             fi
+            AC_MSG_RESULT(yes)
+
         fi
 
         AM_CONDITIONAL(ENABLE_PROFILE, test "x$PROFILE" != "xno")
