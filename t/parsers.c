@@ -43,7 +43,11 @@ static void parse_urlencoded(CuTest *tc)
     const char *val;
     apreq_request_t *req = apreq_request(APREQ_URL_ENCTYPE,"");
     apr_status_t rv;
+    const char *enctype;
     CuAssertPtrNotNull(tc, req);
+
+    enctype = apreq_enctype(req->env);
+    CuAssertStrEquals(tc, APREQ_URL_ENCTYPE, enctype);
 
     bb = apr_brigade_create(p, apr_bucket_alloc_create(p));
 
@@ -80,14 +84,18 @@ static void parse_multipart(CuTest *tc)
     apr_size_t len;
     apr_table_t *t;
     apr_status_t rv;
+    const char *enctype;
     apreq_request_t *req = apreq_request(APREQ_MFD_ENCTYPE
                          "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"" ,"");
     apr_bucket_brigade *bb = apr_brigade_create(p, 
                                    apr_bucket_alloc_create(p));
-    int j;
+    apr_size_t j;
 
     CuAssertPtrNotNull(tc, req);
     CuAssertStrEquals(tc, req->env, apreq_env_content_type(req->env));
+
+    enctype = apreq_enctype(req->env);
+    CuAssertStrEquals(tc, APREQ_MFD_ENCTYPE, enctype);
 
     /* strlen(form_data) == 319 */
     for (j = 0; j <= strlen(form_data); ++j) {

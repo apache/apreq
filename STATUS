@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/18 03:49:49 $]   -*-text-*-
+Last modified at [$Date: 2004/07/18 04:19:28 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -61,7 +61,6 @@ TODO:
     - The current tests don't cover these functions, 
       so add CuTest tests for them:
       -  apreq_merge_values()
-      -  apreq_enctype()
       -  apreq_memmem()
 
     - CuTest needs va_arg to print comments for a failed unit test.
