@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/05/30 22:15:01 $]
+Last modified at [$Date: 2003/06/12 05:23:43 $]
 
      2.0.0  in development
 
@@ -58,6 +58,11 @@ TODO:
         play nice with (& without) modperl-2.
 
     * Add XForms logic to the mfd parser.
+
+  * symbol exports files:
+    - win32 now has hardcoded .def files (need to automate, e.g. based
+      on exports.c ala httpd-2.0)
+    - aix needs .exp files 
 
 
 OPEN ISSUES:
