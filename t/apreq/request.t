@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
-plan tests => 2;
+plan tests => 2, &need_lwp;
 
 my $location = "/TestApReq__request";
 #print GET_BODY $location;
