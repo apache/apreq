@@ -58,7 +58,6 @@
 #include "apreq_params.h"
 #include "apr_strings.h"
 
-
 static apreq_request_t *r = NULL;
 
 static void request_make(CuTest *tc)
@@ -108,8 +107,6 @@ static void string_decoding_in_place(CuTest *tc)
     apreq_unescape(s2);
     CuAssertStrEquals(tc,"dandy >dons",s2);
     
-    free(s2);
-    free(s1);
 }
 
 
