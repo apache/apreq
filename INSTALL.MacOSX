@@ -4,7 +4,7 @@ Mac OS X 10.2
 On Mac OS X 10.2.x Jaguar, the C and Perl libraries must be installed
 separately. Here's how to do it.
 
-% cd httpd-apreq-1.x
+% cd libapreq-1.x
 % sh BUILD.sh
 
 Unpack the libapreq tarball, change into the source code diretory, and then
