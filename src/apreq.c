@@ -637,7 +637,7 @@ static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v,
     return s;
 }
 
-/* this function now consumes the brigade, deleting buckets as it goes */
+
 APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f, 
                                                  apr_off_t *wlen,
                                                  apr_bucket_brigade *bb)
@@ -649,7 +649,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
     *wlen = 0;
 
     for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
-         e = APR_BRIGADE_FIRST(bb)) 
+         e = APR_BUCKET_NEXT(e)) 
     {
         apr_size_t len;
         if (n == APREQ_NELTS) {
@@ -664,7 +664,6 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
             return s;
 
         v[n++].iov_len = len;
-        apr_bucket_delete(e);
     }
 
     while (n > 0) {
@@ -715,22 +714,6 @@ APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb)
         return NULL;
 }
 
-APREQ_DECLARE(apr_bucket_brigade *)
-    apreq_brigade_copy(const apr_bucket_brigade *bb)
-{
-    apr_bucket_brigade *copy;
-    apr_bucket *e;
-
-    copy = apr_brigade_create(bb->p, bb->bucket_alloc);
-    for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
-         e = APR_BUCKET_NEXT(e))
-    {
-        apr_bucket *c;
-        apr_bucket_copy(e, &c);
-        APR_BRIGADE_INSERT_TAIL(copy, c);
-    }
-    return copy;
-}
 
 APREQ_DECLARE(apr_status_t)
     apreq_header_attribute(const char *hdr,

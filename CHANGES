@@ -2,6 +2,11 @@
 
 @section v2_04_dev Changes with libapreq2-2.04-dev
 
+- C API [joes, Scott Hutton]
+  Replace apreq_brigade_copy with more effective APREQ_BRIGADE_COPY
+  macro.  Also introduce APREQ_BRIGADE_SETASIDE to deal with buckets 
+  that need to be set aside for use in future function calls. mod_ssl 
+  generates transient buckets which tickled this bug.
 
 - Perl API [joes]
   Separate Apache::Upload module from Apache::Request for 

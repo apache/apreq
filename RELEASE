@@ -93,7 +93,7 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
    Be sure to update the libapreq2 documentation. For instructions on updating 
    the httpd website, see build/WEBSITE.
 
-10. Post a final announcement to the announce@httpd, modperl@ and 
+10. Post a final announcement to the announce@httpd, announce@perl, modperl@ and 
     apreq-dev@ lists:
 
         Subject: [ANNOUNCE] libapreq2-2.XX-dev release

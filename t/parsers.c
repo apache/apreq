@@ -83,7 +83,7 @@ static void parse_multipart(CuTest *tc)
     CuAssertPtrNotNull(tc, req);
     CuAssertStrEquals(tc, req->env, apreq_env_content_type(req->env));
 
-    for (j = 0; j < strlen(form_data); ++j) {
+    for (j = 0; j <= strlen(form_data); ++j) {
         apr_bucket *e = apr_bucket_immortal_create(form_data,
                                                    strlen(form_data),
                                                    bb->bucket_alloc);
@@ -103,7 +103,7 @@ static void parse_multipart(CuTest *tc)
 
         rv = apreq_parse_request(req,bb);
         CuAssertIntEquals(tc, APR_INCOMPLETE, rv);
-        rv = apreq_parse_request(req, tail);        
+        rv = apreq_parse_request(req, tail);
         CuAssertIntEquals(tc, APR_SUCCESS, rv);
         CuAssertPtrNotNull(tc, req->body);
         CuAssertIntEquals(tc, 2, apr_table_elts(req->body)->nelts);

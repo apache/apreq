@@ -391,13 +391,38 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
 APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 
 /**
- * Duplicate a brigade.
- * @param bb Original brigade.
- * @return New brigade containing a bucket-by-bucket copy of the original.
+ * Set aside all buckets in the brigade.
+ * @param bb Brigade.
+ * @param p  Setaside buckets into this pool.
  */
 
-APREQ_DECLARE(apr_bucket_brigade *)
-         apreq_brigade_copy(const apr_bucket_brigade *bb);
+#define APREQ_BRIGADE_SETASIDE(bb,p) do {                               \
+    apr_bucket *e;                                                      \
+    for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);      \
+         e = APR_BUCKET_NEXT(e))                                        \
+    {                                                                   \
+        apr_bucket_setaside(e, p);                                      \
+    }                                                                   \
+} while (0)
+
+
+/* Copy a brigade.
+ * @param d (destination) Copied buckets are appended to this brigade.
+ * @param s (source) Brigade to copy from.
+ * @remark s == d is undefined.
+ */
+
+#define APREQ_BRIGADE_COPY(d,s) do {                                \
+    apr_bucket *e;                                                  \
+    for (e = APR_BRIGADE_FIRST(s); e != APR_BRIGADE_SENTINEL(s);    \
+         e = APR_BUCKET_NEXT(e))                                    \
+    {                                                               \
+        apr_bucket *c;                                              \
+        apr_bucket_copy(e, &c);                                     \
+        APR_BRIGADE_INSERT_TAIL(d, c);                              \
+    }                                                               \
+} while (0)
+
 
 /**
  * Search a header string for the value of a particular named attribute.

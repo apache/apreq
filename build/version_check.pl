@@ -131,4 +131,3 @@ $0 failed: $tool version $saw unsupported ($version or greater is required).
 EOM
 }
 print "$tool: $saw ok\n";
-exit 0;

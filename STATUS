@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/06/12 17:26:26 $]   -*-text-*-
+Last modified at [$Date: 2004/06/14 02:19:58 $]   -*-text-*-
 /** @page STATUS
 
      2.04-dev under development
@@ -66,7 +66,7 @@ TODO:
 
     - Bring Perl documentation up to speed.
 
-    - Write parser/hook API documentation.
+    - Write parser/hook API documentation, and add perl glue for the API.
 
     - Add XForms logic to the mfd parser.
 
@@ -83,19 +83,6 @@ OPEN ISSUES:
 
 
 BUGS:
-
-    - Strange bug when ssl is enabled & lots of fields are present: see
-        http://marc.theaimsgroup.com/?t=107766265600001&r=1&w=2
-
-    - Another (possibly related) bug has to do with the mfd
-      parser misbehaving on file uploads when ssl is enabled:
-        http://marc.theaimsgroup.com/?l=apreq-dev&m=108609005217749&w=2
-
-      To fix these ssl bugs above, we need to call apr_bucket_setaside
-      on all stored-away buckets.  This change will affect all current parsers
-      as well as mod_apreq's filter, so we need to have a decent set
-      of ssl tests in place to avoid regressions.  I suggest we write
-      the tests first before attmepting to muck around in the dark. --joes
 
     - Fix build automake/libtool/autoconf build system so it works
       properly on OSX & AIX.
