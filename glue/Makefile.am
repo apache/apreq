@@ -18,7 +18,7 @@ perl_install:
 	cd perl; $(MAKE) install
 
 perl_clean:
-	cd perl; $(MAKE) clean
+	-cd perl; $(MAKE) clean
 
 if BUILD_PERL_GLUE
 
