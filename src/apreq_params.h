@@ -26,15 +26,9 @@ extern "C" {
 
 /**
  * @file apreq_params.h
- * @brief Request and param stuff.
+ * @brief Request parsing and parameter API
+ * @ingroup libapreq2
  */
-/**
- * @defgroup APREQ_PARAMS_H Request params
- * @brief Foo
- * @ingroup LIBRARY
- * @{
- */
-
 
 /** Common data structure for params and file uploads */
 typedef struct apreq_param_t {
@@ -386,7 +380,6 @@ APREQ_DECLARE(void) apreq_add_hook(apreq_parser_t *p,
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env,
                                             apreq_hook_t *hook);
 
-/** @} */
 #ifdef __cplusplus
 }
 #endif

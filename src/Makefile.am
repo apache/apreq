@@ -1,5 +1,6 @@
 INCLUDES = @APR_INCLUDES@ @APU_INCLUDES@
 LIBS = @APR_LTLIBS@ @APU_LTLIBS@
+EXTRA_DIST = groups.dox.in
 BUILT_SOURCES= @APR_LA@ @APU_LA@
 lib_LTLIBRARIES = libapreq2.la
 libapreq2_la_SOURCES = apreq.c apreq_version.c apreq_cookie.c \

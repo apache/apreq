@@ -67,11 +67,7 @@
 /**
  * @file apreq_env.h
  * @brief Logging and environment (module) declarations.
- */
-/**
- * @defgroup ENV  Environment declarations
- * @ingroup LIBRARY
- * @{
+ * @ingroup libapreq2
  */
 
 /**
@@ -230,8 +226,10 @@ APREQ_DECLARE(apr_off_t) apreq_env_max_body(void *env, apr_off_t bytes);
 APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(void *env, apr_ssize_t bytes);
 
 /**
- * The environment structure, which must be fully defined
- * for libapreq2 to operate properly in a given environment.
+ * This must be fully defined for libapreq2 to operate properly 
+ * in a given environment. Normally it is set once, with an apreq_env_module() 
+ * call during process initialization, and should remain fixed thereafter.
+ * @brief Vtable describing the necessary environment functions.
  */
 
 typedef struct apreq_env_t {
@@ -284,7 +282,6 @@ APREQ_DECLARE(const apreq_env_t *) apreq_env_module(const apreq_env_t *mod);
  */
 #define apreq_env_magic_number (apreq_env_module(NULL)->magic_number)
 
-/** @} */
 #ifdef __cplusplus
  }
 #endif

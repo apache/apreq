@@ -26,47 +26,6 @@
  extern "C" {
 #endif 
 
-/** @defgroup LIBRARY libapreq2     */
-/** @defgroup MODULES Environments  */
-/** @defgroup GLUE Language Bindings*/
-
-/**
- * @mainpage
- * Project Website: http://httpd.apache.org/apreq/
- * @verbinclude README
- */
-
-/** 
- * @page LICENSE 
- * @verbinclude LICENSE
- */
-/** 
- * @page NOTICE
- * @verbinclude NOTICE
- */
-/** 
- * @page INSTALL 
- * @verbinclude INSTALL
- */
-/**
- * @defgroup XS Perl
- * @ingroup GLUE
- */
-/** 
- * @defgroup XS_Request Apache::Request
- * @ingroup XS
- * @htmlinclude Request.html
- */
-/** 
- * @defgroup XS_Upload Apache::Upload
- * @ingroup XS
- * @htmlinclude Upload.html
- */
-/** 
- * @defgroup XS_Cookie Apache::Cookie
- * @ingroup XS
- * @htmlinclude Cookie.html
- */
 /**
  * The objects in apreq.h are used in various contexts:
  *
@@ -77,16 +36,13 @@
  *    - simple time, date, & file-size converters
  * @file apreq.h
  * @brief Common functions, structures and macros.
- */
-/**
- * @defgroup Utils Common functions, structures and macros
  * @ingroup libapreq2
- * @{
  */
 
 #ifndef WIN32
 #define APREQ_DECLARE(d)                APR_DECLARE(d)
 #define APREQ_DECLARE_NONSTD(d)         APR_DECLARE_NONSTD(d)
+#define APREQ_DECLARE_DATA
 #else
 #define APREQ_DECLARE(type)             __declspec(dllexport) type __stdcall
 #define APREQ_DECLARE_NONSTD(type)      __declspec(dllexport) type
@@ -99,11 +55,14 @@
 
 #define APREQ_NELTS                     8
 #define APREQ_READ_AHEAD                (64 * 1024)
-#define APREQ_MAX_BRIGADE_LEN           (256 * 1024)
-
 /**
- * libapreq-2's pre-extensible string type 
- */
+ * Maximum amount of heap space a brigade may use before switching to file
+ * buckets
+*/
+#define APREQ_MAX_BRIGADE_LEN           (256 * 1024) 
+                     
+
+/** @brief libapreq's pre-extensible string type */
 typedef struct apreq_value_t {
     const char    *name;    /**< value's name */
     apr_status_t   status;  /**< APR status, usually APR_SUCCESS or APR_INCOMPLETE*/
@@ -401,10 +360,11 @@ APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 } while (0)
 
 
-/* Copy a brigade.
+/**
+ * Copy a brigade.
  * @param d (destination) Copied buckets are appended to this brigade.
  * @param s (source) Brigade to copy from.
- * @remark s == d is undefined.
+ * @remark s == d produces Undefined Behavior.
  */
 
 #define APREQ_BRIGADE_COPY(d,s) do {                                \
@@ -433,7 +393,6 @@ APREQ_DECLARE(apr_status_t)
                                 const char *name, const apr_size_t nlen,
                                 const char **val, apr_size_t *vlen);
 
-/** @} */
 
 #ifdef __cplusplus
  }

@@ -86,6 +86,8 @@ provides:
     version: $opts{version}
   Apache::Cookie:
     version: $opts{version}
+  Apache::Upload:
+    version: $opts{version}
 generated_by: $0
 EOT
         my %runtime_prereqs =  (

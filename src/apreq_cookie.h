@@ -25,18 +25,22 @@ extern "C" {
 #endif 
 
 /**
- * Cookie and Jar functions.
- *
  * @file apreq_cookie.h
  * @brief Cookies and Jars.
- */
-/**
- *@defgroup cookies Cookies (request and response)
- *@ingroup LIBRARY
- * @{
+ * @ingroup libapreq2
+ *
+ * apreq_cookie.h describes a common server-side API for request (incoming)
+ * and response (outgoing) cookies.  It aims towards compliance with the 
+ * standard cookie specifications listed below.
+ *
+ * @see http://wp.netscape.com/newsref/std/cookie_spec.html
+ * @see http://www.ietf.org/rfc/rfc2109.txt
+ * @see http://www.ietf.org/rfc/rfc2964.txt
+ * @see http://www.ietf.org/rfc/rfc2965.txt
+ *
  */
 
-/** Cookie Jar */
+/** @brief This is the container class for libapreq cookies. */
 typedef struct apreq_jar_t {
     apr_table_t   *cookies;     /**< cookie table */
     void          *env;         /**< environment */
@@ -63,18 +67,18 @@ typedef enum { APREQ_COOKIE_VERSION_NETSCAPE,
 /** Maximum length of a single Set-Cookie(2) header */
 #define APREQ_COOKIE_MAX_LENGTH            4096
 
-/** cookie XXX ... */
+/** @brief Cookie type, supporting both Netscape and RFC cookie specifications.
+ */
 typedef struct apreq_cookie_t {
 
     apreq_cookie_version_t version; /**< RFC or Netscape compliant cookie */
 
-    char           *path;
-    char           *domain; 
-    char           *port;
-    unsigned        secure;
-
-    char           *comment;
-    char           *commentURL;
+    char           *path;        /**< Restricts url path */
+    char           *domain;      /**< Restricts server domain */
+    char           *port;        /**< Restricts server port */
+    unsigned        secure;      /**< Notify browser of "https" requirement */
+    char           *comment;     /**< RFC cookies may send a comment */
+    char           *commentURL;  /**< RFC cookies may place an URL here */
     apr_time_t      max_age;     /**< total duration of cookie: -1 == session */
     apreq_value_t   v;           /**< "raw" cookie value */
 
@@ -228,8 +232,6 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
  *         APREQ_COOKIE_VERSION_NETSCAPE otherwise.
  */
 APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env);
-
-/** @} */
 
 #ifdef __cplusplus
  }

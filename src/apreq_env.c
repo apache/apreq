@@ -134,12 +134,13 @@ static struct {
 
 
 /**
+ * @defgroup apreq_cgi Common Gateway Interface
+ * @ingroup apreq_env
+ * @brief CGI module included in the libapreq2 library.
+ *
  * CGI is the default environment module included in libapreq2...
  * XXX add more info here XXX
  *
- * @defgroup CGI Common Gateway Interface
- * @ingroup MODULES
- * @brief apreq_env.c: libapreq2's default CGI module
  * @{
  */
 

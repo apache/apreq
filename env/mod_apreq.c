@@ -80,34 +80,60 @@ static const char filter_name[] = "APREQ";
 module AP_MODULE_DECLARE_DATA apreq_module;
 
 /**
- * mod_apreq.c provides an input filter for using libapreq2
+ * @defgroup mod_apreq Apache 2.X Filter Module
+ * @ingroup apreq_env
+ * @brief mod_apreq - DSO that ties libapreq2 to Apache 2.X.
+ *
+ * mod_apreq provides an input filter for using libapreq2
  * (and allow its parsed data structures to be shared) within
- * the Apache-2 webserver.  Using it, libapreq2 works properly
+ * the Apache 2.X webserver.  Using it, libapreq2 works properly
  * in every phase of the HTTP request, from translation handlers 
  * to output filters, and even for subrequests / internal redirects.
  *
- * After installing mod_apreq, be sure your webserver's
- * httpd.conf activates it on startup with a LoadModule directive:
- * <pre><code>
+ * <hr>
  *
- *     LoadModule modules/mod_apreq.so
+ * <h2>Activating mod_apreq in Apache 2.X</h2>
  *
- * </code></pre>
- * Normally the installation process triggered by '% make install'
- * will make the necessary changes to httpd.conf for you.
- * 
- * XXX describe normal operation, effects of config settings, etc. 
+ * Normally the installation process triggered by
+ * <code>% make install</code>
+ * will make the necessary changes to httpd.conf for you. In any case,
+ * after installing the mod_apreq.so module, be sure your webserver's
+ * httpd.conf activates it on startup with a LoadModule directive, e.g.
+ * @code
  *
- * @defgroup mod_apreq Apache-2 Filter Module
- * @ingroup MODULES
- * @brief mod_apreq.c: Apache-2 filter module
+ *     LoadModule    modules/mod_apreq.so
+ *
+ * @endcode
+ *
+ * <hr>
+ *
+ * <h2>Server Configuration Directives</h2>
+ *
+ * <TABLE class="qref"><CAPTION>Per-directory commands for mod_apreq</CAPTION>
+ * <TR><TH>Directive</TH><TH>Context</TH><TH>Default</TH><TH>Description</TH></TR>
+ * <TR class="odd"><TD>APREQ_MaxBody</TD><TD>directory</TD><TD>-1 (Unlimited)</TD><TD>
+ * Maximum number of bytes mod_apreq will send off to libapreq for parsing.  
+ * mod_apreq will log this event and remove itself from the filter chain.
+ * The APR_ENOSPC (XXX) error will be reported to libapreq2 users via the return 
+ * value of apreq_env_read().
+ * </TD></TR>
+ * <TR><TD>APREQ_MaxBrigade</TD><TD>directory</TD><TD> #APREQ_MAX_BRIGADE_LEN </TD><TD>
+ * Maximum number of bytes apreq will allow to accumulate
+ * within a brigade.  Excess data will be spooled to a
+ * file bucket appended to the brigade.
+ * </TD></TR>
+ * <TR class="odd"><TD>APREQ_TempDir</TD><TD>directory</TD><TD>NULL</TD><TD>
+ * Sets the location of the temporary directory apreq will use to spool
+ * overflow brigade data (based on the APREQ_MaxBrigade setting).
+ * If left unset, libapreq2 will select a platform-specific location via apr_temp_dir_get().
+ * </TD></TR>
+ * </TABLE>
  * @{
  */
 
 
-#define APREQ_MODULE_NAME "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER 20040621
-
+#define APREQ_MODULE_NAME               "APACHE2"
+#define APREQ_MODULE_MAGIC_NUMBER       20040621
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -274,7 +300,7 @@ static void apreq_filter_make_context(ap_filter_t *f)
     }
 }
 
-/**
+/*
  * Reads data directly into the parser.
  */
 
@@ -641,6 +667,8 @@ static const char *apreq_set_max_brigade(cmd_parms *cmd, void *data,
 
     return NULL;
 }
+/**
+ */
 
 static const command_rec apreq_cmds[] =
 {
@@ -653,9 +681,7 @@ static const command_rec apreq_cmds[] =
     {NULL}
 };
 
-
 /** @} */
-
 module AP_MODULE_DECLARE_DATA apreq_module =
 {
 	STANDARD20_MODULE_STUFF,
