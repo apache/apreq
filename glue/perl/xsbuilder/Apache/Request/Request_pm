@@ -3,7 +3,15 @@ use APR::Bucket;
 use APR::Brigade;
 
 package Apache::Request::Table;
-push our(@ISA), 'APR::Table';
+push our(@ISA), "APR::Table";
+BEGIN {
+    my @BAD_METHODS = qw/add compress make merge overlap set STORE/;
+    for (@BAD_METHODS) {
+        no strict;
+        next unless my $meth = APR::Table->can($_);
+        *{$_} = sub {die __PACKAGE__ ."::",  "$_: unsafe operation"};
+    }
+}
 
 package Apache::Request;
 push our(@ISA), __PACKAGE__ -> env;

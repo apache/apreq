@@ -5,4 +5,12 @@ use APR::Brigade;
 use APR::PerlIO;
 
 package Apache::Upload::Table;
-push our(@ISA), 'APR::Table';
+push our(@ISA), "APR::Table";
+BEGIN {
+    my @BAD_METHODS = qw/add compress make merge overlap set STORE/;
+    for (@BAD_METHODS) {
+        no strict;
+        next unless my $meth = APR::Table->can($_);
+        *{$_} = sub {die __PACKAGE__ ."::",  "$_: unsafe operation"};
+    }
+}
