@@ -982,7 +982,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             apr_status_t s;
             s = split_on_bdry(pool, ctx->bb, bb, NULL, ctx->bdry + 2);
             if (s != APR_SUCCESS) {
-                printf("mfd init: split_on_bdry failed: %d\n",s);
                 return s;
             }
             ctx->status = MFD_NEXTLINE;
@@ -994,7 +993,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             apr_status_t s;
             s = split_on_bdry(pool, ctx->bb, bb, NULL, CRLF);
             if (s != APR_SUCCESS) {
-                printf("split_on_bdry failed: '%s'\n", CRLF);
                 return s;
             }
             ctx->status = MFD_HEADER;
@@ -1018,14 +1016,12 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 if (s == APR_EOF)
                     return APR_SUCCESS;
                 else {
-                    printf("header parser failed: %d\n", s);
                     return s;
                 }
             cd = apr_table_get(ctx->info, "Content-Disposition");
 
             if (cd == NULL) {
                 ctx->status = MFD_ERROR;
-                printf("Can't find Content-Disposition header.\n");
                 return APR_BADARG;
             }
 
@@ -1111,7 +1107,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
     case MFD_UPLOAD:
         {
-            apr_bucket *eos;
             apr_status_t s = split_on_bdry(pool, ctx->bb, bb, 
                                            ctx->pattern, ctx->bdry);
             apreq_param_t *param;
@@ -1133,16 +1128,16 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 return mfd_bb_concat(pool, cfg, param->bb, ctx->bb);
 
             case APR_SUCCESS:
-                eos = apr_bucket_eos_create(ctx->bb->bucket_alloc);
-                APR_BRIGADE_INSERT_TAIL(ctx->bb, eos);
-
                 if (parser->hook) {
+                    apr_bucket *eos = 
+                        apr_bucket_eos_create(ctx->bb->bucket_alloc);
+                    APR_BRIGADE_INSERT_TAIL(ctx->bb, eos);
                     s = apreq_run_hook(parser->hook, pool, cfg, ctx->bb);
+                    apr_bucket_delete(eos);
                     if (s != APR_SUCCESS)
                         return s;
                 }
 
-                apr_bucket_delete(eos);
                 param->v.status = mfd_bb_concat(pool, cfg,
                                                 param->bb, ctx->bb);
 
