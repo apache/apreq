@@ -668,6 +668,7 @@ static apr_status_t split_on_bdry(apr_bucket_brigade *out,
             continue;
         }
 
+    look_for_boundary_up_front:
         if (strncmp(bdry + off, buf, MIN(len, blen - off)) == 0) {
             if ( len >= blen - off ) {
                 /* complete match */
@@ -688,13 +689,17 @@ static apr_status_t split_on_bdry(apr_bucket_brigade *out,
             continue;
         }
         else if (off > 0) {
-            /* prior (partial) strncmp failed, restart */
+            /* prior (partial) strncmp failed, 
+             * so we can move previous buckets across
+             * and retest buf against the full bdry.
+             */
             do {
                 apr_bucket *f = APR_BRIGADE_FIRST(in);
                 APR_BUCKET_REMOVE(f);
                 APR_BRIGADE_INSERT_TAIL(out, f);
             } while (e != APR_BRIGADE_FIRST(in));
             off = 0;
+            goto look_for_boundary_up_front;
         }
 
         if (pattern != NULL && len >= blen) {
@@ -711,7 +716,12 @@ static apr_status_t split_on_bdry(apr_bucket_brigade *out,
         else
             idx = apreq_index(buf, len, bdry, blen, APREQ_MATCH_PARTIAL);
 
-        if (idx > 0)
+        /* Theoretically idx should never be 0 here, because we 
+         * already tested the front of the brigade for a potential match.
+         * However, it doesn't hurt to allow for the possibility,
+         * since this will just start the whole loop over again.
+         */
+        if (idx >= 0)
             apr_bucket_split(e, idx);
 
         APR_BUCKET_REMOVE(e);
@@ -1071,7 +1081,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                                                        param->bb, ctx->bb);
 
                 if (param->v.status != APR_SUCCESS)
-                    return s;
+                    return param->v.status;
 
                 ctx->status = MFD_NEXTLINE;
                 goto mfd_parse_brigade;

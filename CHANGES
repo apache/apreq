@@ -3,6 +3,11 @@
 
 @section v2_04_dev Changes with libapreq2-2.04-dev
 
+- C API [Jean-François Meesse]
+  mfd parser fails to parse CRLF-terminated files when the terminating
+  boundary string is at the start of a new bucket.  This is reportedly
+  a common event for PDF files uploaded with Netscape 7.
+
 - Perl API [joes]
   Add back-compat support for Apache::Cookie->fetch() via
   Apache->request.

@@ -32,7 +32,7 @@ static char form_data[] =
 "--AaB03x" CRLF
 "content-disposition: form-data; name=\"pics\"; filename=\"file1.txt\"" CRLF
 "Content-Type: text/plain" CRLF CRLF
-"... contents of file1.txt ..." CRLF
+"... contents of file1.txt ..." CRLF CRLF
 "--AaB03x--" CRLF;
 
 extern apr_bucket_brigade *bb;
@@ -120,8 +120,8 @@ static void parse_multipart(CuTest *tc)
         t = apreq_value_to_param(apreq_strtoval(val))->info;
         bb = apreq_value_to_param(apreq_strtoval(val))->bb;
         apr_brigade_pflatten(bb, (char **)&val, &len, p);
-        CuAssertIntEquals(tc,strlen("... contents of file1.txt ..."), len);
-        CuAssertStrNEquals(tc,"... contents of file1.txt ...", val, len);
+        CuAssertIntEquals(tc,strlen("... contents of file1.txt ..." CRLF), len);
+        CuAssertStrNEquals(tc,"... contents of file1.txt ..." CRLF, val, len);
         val = apr_table_get(t, "content-type");
         CuAssertStrEquals(tc, "text/plain", val);
     }
