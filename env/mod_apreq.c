@@ -69,6 +69,7 @@ struct env_config {
 
 /* Tracks the apreq filter state */
 struct filter_ctx {
+    request_rec        *r;     /* request that originally created this filter */
     apr_bucket_brigade *bb;    /* input brigade that's passed to the parser */
     apr_bucket_brigade *spool; /* copied prefetch data for downstream filters */
     apr_status_t        status;/* APR_SUCCESS, APR_COMPLETE, or parse error */
@@ -156,7 +157,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME               "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER       20040621
+#define APREQ_MODULE_MAGIC_NUMBER       20040623
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -295,6 +296,7 @@ static void apreq_filter_make_context(ap_filter_t *f)
     struct env_config *cfg = get_cfg(r);
 
     f->ctx       = ctx;
+    ctx->r       = r;
     ctx->bb      = apr_brigade_create(r->pool, alloc);
     ctx->spool   = apr_brigade_create(r->pool, alloc);
     ctx->status  = APR_INCOMPLETE;
@@ -487,22 +489,48 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             && r->proto_input_filters == f->next
             && strcmp(f->next->frec->name, filter_name) == 0) 
         {
-            /* Steal the context of the next apreq filter. */
+            /* Try to steal the context and parse data of the 
+               upstream apreq filter. */
+            ctx = f->next->ctx;
+
+            if (ctx->r != r) {
+                /* r is a new request (subrequest or internal redirect) */
+                apreq_request_t *old_req;
+
+                if (req != NULL) {
+                    if (req->parser != NULL)
+                        /* new parser on this request: cannot steal context */
+                        goto make_new_context;
+                }
+                else {
+                    req = apreq_request(r, NULL);
+                }
+
+                /* steal the parser output */
+                old_req = apreq_request(ctx->r, NULL);
+                req->parser = old_req->parser;
+                req->body = old_req->body;
+                ctx->r = r;
+            }
+
+            /* steal the filter context */
             f->ctx = f->next->ctx;
             r->proto_input_filters = f;
             ap_remove_input_filter(f->next);
+            goto context_initialized;
         }
-        else {
-            apreq_filter_make_context(f);
-            if (req != NULL && f == r->input_filters) {
-                if (req->body != NULL) {
-                    req->body = NULL;
-                    req->parser = NULL;
-                }
+
+    make_new_context:
+        apreq_filter_make_context(f);
+        if (req != NULL && f == r->input_filters) {
+            if (req->body != NULL) {
+                req->body = NULL;
+                req->parser = NULL;
             }
         }
     }
 
+ context_initialized:
     ctx = f->ctx;
 
     if (cfg->f != f)
