@@ -87,8 +87,34 @@
  * @verbinclude INSTALL
  */
 /**
- * @page CHANGES
- * @verbinclude CHANGES
+ * @defgroup XS Perl
+ * @ingroup GLUE
+ */
+/**
+ * @defgroup TCL TCL
+ * @ingroup GLUE
+ */
+/**
+ * @defgroup PYTHON Python
+ * @ingroup GLUE
+ */
+/**
+ * @defgroup PHP PHP
+ * @ingroup GLUE
+ */
+/**
+ * @defgroup RUBY Ruby
+ * @ingroup GLUE
+ */
+/** 
+ * @defgroup XS_Request Apache::Request
+ * @ingroup XS
+ * @htmlinclude Request.html
+ */
+/** 
+ * @defgroup XS_Cookie Apache::Cookie
+ * @ingroup XS
+ * @htmlinclude Cookie.html
  */
 
 /**
@@ -369,6 +395,10 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
  */
 
 APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
+
+
+APREQ_DECLARE(apr_bucket_brigade *)
+         apreq_copy_brigade(const apr_bucket_brigade *bb);
 
 /** @} */
 

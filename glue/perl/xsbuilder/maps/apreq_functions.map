@@ -22,7 +22,7 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Ta
 ##########  Apache::Upload:: Functions  ##########
 
 MODULE=Apache::Request PACKAGE=Apache::Upload PREFIX=Apache__Upload_
- apr_bucket_brigade *:DEFINE_bb  | apreq_param_brigade(apreq_xs_rv2param(sv)) | SV *:sv
+ apr_bucket_brigade *:DEFINE_bb  | apreq_copy_brigade(apreq_xs_rv2param(sv)->bb) | SV *:sv
  apr_table_t *:DEFINE_info       | apreq_param_info(apreq_xs_rv2param(sv)) | SV *:sv
  const char *:DEFINE_name        | apreq_param_name(apreq_xs_rv2param(sv)) | SV *:sv
  char *:DEFINE_filename          | apreq_param_value(apreq_xs_rv2param(sv)) | SV *:sv

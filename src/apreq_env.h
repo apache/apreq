@@ -105,7 +105,11 @@
 /**
  * @file apreq_env.h
  * @brief Logging and environment (module) declarations.
- *
+ */
+/**
+ * @defgroup ENV  Environment declarations
+ * @ingroup LIBRARY
+ * @{
  */
 
 #ifndef WIN32
@@ -118,6 +122,7 @@ __declspec(dllimport) const char apreq_env[];
 #endif
 #endif
 
+/** logger */
 #define APREQ_DECLARE_LOG(f) APREQ_DECLARE_NONSTD(void)(f)(const char *file, \
                              int line,  int level, apr_status_t status, \
                              void *env, const char *fmt, ...)
@@ -140,7 +145,7 @@ APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name);
 #define apreq_env_cookie(env) apreq_env_header_in(env, "Cookie")
 #define apreq_env_cookie2(env) apreq_env_header_in(env, "Cookie2")
 
-
+/** header out */
 APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, 
                                                 const char *name,
                                                 char *val);
@@ -148,13 +153,11 @@ APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env,
 #define apreq_env_set_cookie(e,s) apreq_env_header_out(e,"Set-Cookie",s)
 #define apreq_env_set_cookie2(e,s) apreq_env_header_out(e,"Set-Cookie2",s)
 
-
-
 APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
                                            apr_read_type_e block,
                                            apr_off_t bytes);
 
-
+/** @} */
 #ifdef __cplusplus
  }
 #endif

@@ -92,7 +92,9 @@ struct env_config {
 /** Tracks the filter state */
 struct filter_ctx {
     apr_bucket_brigade *bb;
+    apr_bucket_brigade *spool;
     apr_off_t           bytes_seen;
+    ap_input_mode_t     mode;
     apr_status_t        status;
 };
 
@@ -210,7 +212,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
 /**
  * Reads data directly into the parser.
  *@bug  This function is badly broken.  It needs to use
- *      SPECULATIVE mode when doing readsin pre-content-handler
+ *      SPECULATIVE mode when doing reads in pre-content-handler
  *      phase, but should use a normal (READBYTES) read otherwise.
  */
 
@@ -220,10 +222,13 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
 {
     dR;
     ap_filter_t *f = get_apreq_filter(r);
+    struct filter_ctx *ctx;
+
     if (f == NULL)
         return APR_NOTFOUND;
+    ctx = f->ctx;
 
-    return ap_get_brigade(f, NULL, AP_MODE_SPECULATIVE, block, bytes);
+    return ap_get_brigade(f, NULL, ctx->mode, block, bytes);
 }
 
 APR_INLINE
@@ -234,8 +239,10 @@ static void apreq_filter_make_context(ap_filter_t *f)
     struct filter_ctx *ctx = apr_palloc(r->pool, sizeof *ctx);
     f->ctx      = ctx;
     ctx->bb     = apr_brigade_create(r->pool, alloc);
+    ctx->spool  = apr_brigade_create(r->pool, alloc);
     ctx->bytes_seen = 0;
     ctx->status = APR_INCOMPLETE;
+    ctx->mode = AP_MODE_SPECULATIVE;
 
     apreq_log(APREQ_DEBUG 0, r, 
               "apreq filter context created." );    
@@ -289,8 +296,7 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
 
              req->parser = NULL;
              req->body = NULL;
-
-             ctx->bytes_seen = 0;
+             apr_brigade_cleanup(ctx->spool);
              apr_brigade_cleanup(ctx->bb);
              ctx->status = APR_INCOMPLETE;
         }
@@ -300,16 +306,17 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
         ctx = apr_palloc(r->pool, sizeof *ctx);
         f->ctx      = ctx;
         ctx->bb     = apr_brigade_create(r->pool, alloc);
+        ctx->spool  = apr_brigade_create(r->pool, alloc);
         ctx->bytes_seen = 0;
         ctx->status = APR_INCOMPLETE;
-
         apreq_log(APREQ_DEBUG 0, r, 
                   "apreq filter is initialized" );
     }
-    
+
+    ctx->bytes_seen = 0;
+    ctx->mode = AP_MODE_READBYTES;
     return APR_SUCCESS;
 }
-
 
 
 static apr_status_t apreq_filter(ap_filter_t *f,
@@ -332,122 +339,77 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     switch (ctx->status) {
     case APR_INCOMPLETE:
         break;
-    case APR_EOF:
-        return APR_EOF;
-
     case APR_SUCCESS:
+        if (bb != NULL)
+            return ap_get_brigade(f->next, bb, mode, block, readbytes);
+    case APR_EOF:
     default:
-        return ap_get_brigade(f->next, bb, mode, block, readbytes);
+        return APR_EOF;
     }
 
-    switch (mode) {
+    if (bb != NULL) {
+        rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
 
-    case AP_MODE_SPECULATIVE: 
-        if (bb == NULL) {
+        switch (mode) {
+            apr_bucket_brigade *tmp;
 
-            /* prefetch read! */
+        case AP_MODE_SPECULATIVE:
+            return rv;
 
-            apr_off_t skip_bytes = ctx->bytes_seen;
+        case AP_MODE_EXHAUSTIVE:
+        case AP_MODE_READBYTES:
+            tmp = apreq_copy_brigade(bb);
+            APR_BRIGADE_CONCAT(ctx->bb, tmp);
 
-            bb = ctx->bb;
-            e = APR_BRIGADE_LAST(bb);
-            rv = ap_get_brigade(f->next, bb, mode, block,
-                                readbytes + skip_bytes);
+            if (!APR_BRIGADE_EMPTY(ctx->spool)) {
+                APR_BRIGADE_PREPEND(bb, ctx->spool);
+                if (mode == AP_MODE_READBYTES) {
+                    rv = apr_brigade_partition(bb, readbytes, &e);
+                    if (rv != APR_SUCCESS)
+                        return rv;
+                    ctx->spool = apr_brigade_split(bb, e);
+                }
+            }
+            break;
+        case AP_MODE_EATCRLF:
+        case AP_MODE_GETLINE:
+        default:
+            return APR_ENOTIMPL;
+        }
+    }
+    else {
+        /* prefetch read! */
+        apr_bucket_brigade *tmp = apr_brigade_create(r->pool, 
+                                       apr_bucket_alloc_create(r->pool));
+
+        rv = ap_get_brigade(f->next, tmp, mode, block,
+                            readbytes + ctx->bytes_seen);
+        if (rv != APR_SUCCESS)
+            return rv;
+
+        if (mode == AP_MODE_SPECULATIVE) {
+            apr_off_t len;
+            /* throw away buckets we've already seen */
+            rv = apr_brigade_partition(tmp, ctx->bytes_seen, &e);
             if (rv != APR_SUCCESS)
                 return rv;
-            e = APR_BUCKET_NEXT(e);
 
-            /* throw away buckets we've already seen */
+            bb = apr_brigade_split(tmp,e);
+            apr_brigade_destroy(tmp);
 
-            while (skip_bytes > 0 && e != APR_BRIGADE_SENTINEL(bb)) {
-                apr_bucket *f = e;
-                apr_size_t len;
-                const char *dummy;
+            rv = apr_brigade_length(bb, 1, &len);
+            if (rv != APR_SUCCESS)
+                return rv;
 
-                if (APR_BUCKET_IS_EOS(e)) {
-                    ctx->status = APR_EOF;
-                    break;
-                }
-                rv = apr_bucket_read(e, &dummy, &len, APR_BLOCK_READ);
-                if (rv != APR_SUCCESS)
-                    return rv;
-
-                if (skip_bytes < len) {
-                    apr_bucket_split(e, skip_bytes);
-                    len = skip_bytes;
-                }
-                e = APR_BUCKET_NEXT(e);
-                apr_bucket_delete(f);
-                skip_bytes -= len;
-            }
-
-            /* add the new buckets to the ctx->bytes_seen count */
-
-            while (e != APR_BRIGADE_SENTINEL(bb)) {
-                apr_bucket *f = e;
-                apr_size_t len;
-                const char *dummy;
-
-                if (APR_BUCKET_IS_EOS(e)) {
-                    ctx->status = APR_EOF;
-                    break;
-                }
-                rv = apr_bucket_read(e, &dummy, &len, APR_BLOCK_READ);
-                if (rv != APR_SUCCESS)
-                    return rv;
-
-                ctx->bytes_seen += len;
-            }
+            ctx->bytes_seen += len;
         }
         else {
-            /* not a prefetch read; can simply get out of the way */
-            return ap_get_brigade(f->next, bb, mode, block, readbytes);
+            /* append a copy of the brigade to the spool */
+            bb = apreq_copy_brigade(tmp);
+            APR_BRIGADE_CONCAT(ctx->spool, tmp);
         }
-        break;
 
-    case AP_MODE_EXHAUSTIVE:
-    case AP_MODE_READBYTES:
-        e = APR_BRIGADE_LAST(bb);
-
-        rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
-            if (rv != APR_SUCCESS)
-                return rv;
-
-        for (e  = APR_BUCKET_NEXT(e);
-             e != APR_BRIGADE_SENTINEL(bb); 
-             e  = APR_BUCKET_NEXT(e)) 
-        {
-            apr_bucket *b;
-
-            if (ctx->bytes_seen) {
-                const char *dummy;
-                apr_size_t len;
-                rv = apr_bucket_read(e, &dummy, &len, APR_BLOCK_READ);
-                if (rv != APR_SUCCESS)
-                    return rv;
-                if (ctx->bytes_seen < len) {
-                    apr_bucket_split(e, ctx->bytes_seen);
-                    len = ctx->bytes_seen;
-                }
-                ctx->bytes_seen -= len;
-                continue;
-            }
-
-            apr_bucket_copy(e, &b);
-            apr_bucket_setaside(b, r->pool);
-            APR_BRIGADE_INSERT_TAIL(ctx->bb, b);
-
-            if (APR_BUCKET_IS_EOS(e)) {
-                ctx->status = APR_EOF;
-                break;
-            }
-        }
-        break;
-
-    case AP_MODE_EATCRLF:
-    case AP_MODE_GETLINE:
-    default:
-        return APR_ENOTIMPL;
+        APR_BRIGADE_CONCAT(ctx->bb, bb);
     }
 
     rv = apreq_parse_request(apreq_request(r, NULL), ctx->bb);

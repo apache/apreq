@@ -11,11 +11,15 @@ use Apache::TestRun ();
 
 use File::Find qw(finddepth);
 use Apache::TestTrace;
-
 use Apache::Test;
 use Apache::TestConfigC;
-use base qw/Apache::TestConfig/;
+use base 'Apache::TestConfig';
 
+Apache::TestMM::filter_args();
+Apache::TestMM::generate_script("t/TEST");
+__END__
+bless my $cfg = Apache::Test->config();
+$cfg->cmodules_configure;
 
 sub cmodules_write_makefile {
     my($self, $mod) = @_;
@@ -44,10 +48,4 @@ EOF
     close $fh or die "close $makefile: $!";
 }
 
-Apache::TestMM::filter_args();
-Apache::TestMM::generate_script("t/TEST");
 
-$Apache::TestTrace::Level = 'debug';
-
-bless my $cfg = Apache::Test->config();
-$cfg->cmodules_configure;

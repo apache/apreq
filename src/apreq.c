@@ -735,3 +735,18 @@ APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb)
     else
         return NULL;
 }
+
+APREQ_DECLARE(apr_bucket_brigade *)
+    apreq_copy_brigade(const apr_bucket_brigade *bb)
+{
+    apr_bucket_brigade *copy;
+    apr_bucket *e;
+
+    copy = apr_brigade_create(bb->p, bb->bucket_alloc);
+    APR_BRIGADE_FOREACH(e,bb) {
+        apr_bucket *c;
+        apr_bucket_copy(e, &c);
+        APR_BRIGADE_INSERT_TAIL(copy, c);
+    }
+    return copy;
+}

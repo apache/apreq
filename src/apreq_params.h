@@ -94,10 +94,7 @@ typedef struct apreq_param_t {
 #define apreq_param_value(p)     ((p)->v.data)
 #define apreq_param_info(p)      ((p)->info)
 #define apreq_param_status(p)    ((p)->v.status)
-
-/** yields a copy of param->bb */
-APREQ_DECLARE(apr_bucket_brigade *)
-        apreq_param_brigade(const apreq_param_t *param);
+#define apreq_param_brigade(p) ((p)->bb ? apreq_copy_brigade((p)->bb) : NULL)
 
 /** creates a param from name/value information */
 APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
