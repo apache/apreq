@@ -35,22 +35,24 @@ Instructions for httpd-apreq Release Manager (RM)
     % make dist
 
 7. Test the release package, repeating step 2.  If all tests pass,
-   sign and (optionally) md5sum it:
+   sign it via gpg:
 
-    % gpg --detach-sign --armor libapreq-1.X.tar.gz
-    % md5sum libapreq-1.X.tar.gz > libapreq-1.X.tar.gz.md5
+     % gpg --detach-sign --armor libapreq-1.X.tar.gz
 
-8. Upload (scp) the package, signature, and md5 checksum to www.apache.org
+   or pgp:
+
+     % pgp -sba libapreq-1.X.tar.gz
+
+8. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
-    % scp libapreq-1.X.tar.gz* \
+    % scp libapreq-1.X.tar.gz libapreq-1.X.tar.gz.asc \
       <username>@www.apache.org:/www/httpd.apache.org/dist/httpd/libapreq/
 
-   Get another developer to confirm the uploaded package signatures
-   and md5 checksums are ok.
+   Get another developer to confirm the uploaded signature is ok.
 
     % gpg --verify libapreq-1.X.tar.gz.asc
-    % md5sum --check libapreq.1.X.tar.gz.md5
+    % pgp libapreq-1.X.tar.gz.asc
 
 9. Upload the package to CPAN. Doublecheck that the md5 checksum
    received from PAUSE is correct.
