@@ -383,53 +383,6 @@ static XS(apreq_xs_##attr##_get)                                        \
     }                                                                   \
 }
 
-static XS(apreq_xs_encode)
-{
-    dXSARGS;
-    STRLEN slen;
-    const char *src;
-
-    if (items != 1)
-        Perl_croak(aTHX_ "Usage: encode($string)");
-
-    src = SvPVbyte(ST(0), slen);
-    if (src == NULL)
-        XSRETURN_UNDEF;
-
-    ST(0) = sv_newmortal();
-    SvUPGRADE(ST(0), SVt_PV);
-    SvGROW(ST(0), 3 * slen + 1);
-    SvCUR(ST(0)) = apreq_encode(SvPVX(ST(0)), src, slen);
-    SvPOK_on(ST(0));
-    XSRETURN(1);
-}
-
-static XS(apreq_xs_decode)
-{
-    dXSARGS;
-    STRLEN slen;
-    apr_ssize_t len;
-    const char *src;
-
-    if (items != 1)
-        Perl_croak(aTHX_ "Usage: decode($string)");
-
-    src = SvPVbyte(ST(0), slen);
-    if (src == NULL)
-        XSRETURN_UNDEF;
-
-    ST(0) = sv_newmortal();
-    SvUPGRADE(ST(0), SVt_PV);
-    SvGROW(ST(0), slen + 1);
-    len = apreq_decode(SvPVX(ST(0)), src, slen);
-    if (len < 0)
-        XSRETURN_UNDEF;
-    SvCUR_set(ST(0),len);
-    SvPOK_on(ST(0));
-    XSRETURN(1);
-}
-
-
 /** @} */
 
 #endif /* APREQ_XS_POSTPERL_H */

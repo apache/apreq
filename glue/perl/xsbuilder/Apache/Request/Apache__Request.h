@@ -60,7 +60,6 @@
 
 APREQ_XS_DEFINE_ENV(request);
 APREQ_XS_DEFINE_OBJECT(request);
-APREQ_XS_DEFINE_MAKE(param);
 
 /* Too many GET macros :-( */
 
