@@ -4,9 +4,11 @@ build/
 
 
 
-UPDATING THE httpd-apreq SITE:
+UPDATING THE httpd-apreq WEBSITE:
+        (cf: http://jakarta.apache.org/site/jakarta-site2.html )
 
-RedHat Linux:
+
+RedHat Linux Instructions:
   1) Download and install j2re and j2sdk rpms from Sun's
      website:
 
@@ -32,4 +34,7 @@ RedHat Linux:
     $ ant
     $ cvs commit -m "..." xdocs/apreq/ docs/apreq/
 
-  5) Wait 24 hours for the changes to appear on the website.
+  5) Login (via ssh) to httpd.apache.org and do
+
+    $ cd /www/httpd.apache.org
+    $ cvs update index.html apreq/
