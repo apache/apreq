@@ -102,10 +102,6 @@ void apreq_parser_initialize(void)
     apreq_register_parser("multipart/related", apreq_parse_multipart);
 }
 
-struct apreq_parser_fcn {
-    apr_status_t (*parser) (APREQ_PARSER_ARGS);
-};
-
 APREQ_DECLARE(void) apreq_register_parser(const char *enctype, 
                                     apr_status_t (*parser) (APREQ_PARSER_ARGS))
 {
