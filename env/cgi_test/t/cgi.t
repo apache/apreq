@@ -16,7 +16,7 @@ my @big_key_len = (100, 500, 5000, 10000);
 my @big_key_num = (5, 15, 25);
 my @big_keys    = ('a'..'z');
 
-plan tests => 5 + @key_len * @key_num + @big_key_len * @big_key_num;
+plan tests => 8 + @key_len * @key_num + @big_key_len * @big_key_num;
 
 my $script = WIN32 ? '/cgi-bin/cgi_test.exe' : '/cgi-bin/cgi_test';
 my $line_end = WIN32 ? "\r\n" : "\n";
@@ -58,7 +58,7 @@ for my $big_key_len (@big_key_len) {
         my $query = join ";", @query;
 
         t_debug "# of keys : $big_key_num, big_key_len $big_key_len";
-        my $body = POST_BODY($script, content => "$query;$filler");
+        my $body = POST_BODY($script, content => $query);
         ok t_cmp($len,
                  $body,
                  "POST big data");
@@ -86,7 +86,6 @@ $body = UPLOAD_BODY("/$script?foo=0", content => $filler);
 ok t_cmp("\tfoo => 0$line_end", 
          $body, "simple upload");
 
-exit;
 
 {
     my $test  = 'netscape';
@@ -116,6 +115,7 @@ exit;
              GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
              $test);
 }
+exit;
 {
     my $test  = 'bake';
     my $key   = 'apache';

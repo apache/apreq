@@ -95,10 +95,11 @@ const unsigned int apreq_env_magic_number = 20031014;
 
 #define CRLF "\015\012"
 
-#define APREQ_ASSERT(rc_run) do { \
+#define APREQ_ENV_STATUS(rc_run, k) do { \
          apr_status_t rc = rc_run; \
          if (rc != APR_SUCCESS) { \
-             apreq_log(APREQ_DEBUG 0, ctx, "failed: %d", rc); \
+             apreq_log(APREQ_DEBUG 0, ctx, \
+                       "Lookup of %s failed: status=%d", k, rc); \
          } \
      } while (0)
 
@@ -111,8 +112,8 @@ APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
 APREQ_DECLARE(const char *)apreq_env_query_string(void *env)
 {
     dCTX;
-    char *value;
-    APREQ_ASSERT(apr_env_get(&value, "QUERY_STRING", ctx->pool));
+    char *value, qs[] = "QUERY_STRING";
+    APREQ_ENV_STATUS(apr_env_get(&value, qs, ctx->pool), qs);
     return value;
 }
 
@@ -121,7 +122,7 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
 {
     dCTX;
     char *key = apr_pstrdup(ctx->pool, name);
-    char *k, *value;
+    char *k, *value, *http_key, http[] = "HTTP_";
     for (k = key; *k; ++k) {
         if (*k == '-')
             *k = '_';
@@ -129,11 +130,19 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
             *k = apr_toupper(*k);
     }
 
-    APREQ_ASSERT(apr_env_get(&value, key, ctx->pool));
+    if (!strcmp(key, "CONTENT_TYPE") || !strcmp(key, "CONTENT_LENGTH")) {
+        APREQ_ENV_STATUS(apr_env_get(&value, key, ctx->pool), key);
+    }
+    else {
+        http_key = (char *) apr_palloc(ctx->pool, sizeof(http) + strlen(key));
+        http_key = strcat(strcpy(http_key, http), key);
+        APREQ_ENV_STATUS(apr_env_get(&value, http_key, ctx->pool), http_key);
+    }
+
     return value;
 }
 
-APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *ctx, const char *name, 
+APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, const char *name, 
                                                 char *value)
 {    
     return printf("%s: %s" CRLF, name, value) > 0 ? APR_SUCCESS : APR_EGENERAL;
@@ -187,15 +196,16 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
     if (ctx->bb == NULL) {
         apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(ctx->pool);
         apr_file_t *in;
-        apr_bucket *stdin_pipe;
+        apr_bucket *stdin_pipe, *b;
 
         ctx->bb = apr_brigade_create(ctx->pool, alloc);
         apr_file_open_stdin(&in, ctx->pool);
         stdin_pipe = apr_bucket_pipe_create(in,alloc);
         APR_BRIGADE_INSERT_HEAD(ctx->bb, stdin_pipe);
+        b = apr_bucket_eos_create(alloc);
+        APR_BRIGADE_INSERT_TAIL(ctx->bb, b);
     }
-
-    return apreq_parse_request(apreq_request(env,NULL), ctx->bb);
+    return apreq_parse_request(apreq_request(env, NULL), ctx->bb);
 }
 
 /** @} */
