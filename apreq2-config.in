@@ -20,8 +20,6 @@
 # APR-util script designed to allow easy command line access to APR-util
 # configuration parameters.
 
-APREQ_DOTTED_VERSION="@APREQ_DOTTED_VERSION@"
-
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 bindir="@bindir@"
@@ -54,16 +52,15 @@ Known values for OPTION are:
   --link-ld         print link switch(es) for linking to libapreq2
   --link-libtool    print the libtool inputs for linking to libapreq2
   --la-file         print the path to the library's .la file, if available
-  --library-version print the libapreq2 library version as a dotted triple
-  --package-version print the version of the distribution
-  --package-name    print the distribution file's name
-  --package-title   print the full name of the release
+  --library-version print the API version as a dotted triple
+  --libtool-version print the ABI version in a libtool-compatible format
+  --package-version print the version number of the distribution
   --help            print this help
 
 When linking with libtool, an application should do something like:
-  APREQ_LIBS="\`apreq2-config --link-libtool --ltlibs\`"
+  APREQ_LIBS="\`apreq2-config --link-libtool --libs\`"
 or when linking directly:
-  APREQ_LIBS="\`apreq2-config --link-ld --ldflags --ldlibs\`"
+  APREQ_LIBS="\`apreq2-config --link-ld --ldflags --libs\`"
 
 An application should use the results of --includes, and --ldflags in
 their build process.
@@ -126,18 +123,6 @@ while test $# -gt 0; do
     echo $prefix
     exit 0
     ;;
-    --package-name)
-    echo "@PACKAGE@-@VERSION@.tar.gz"
-    exit 0
-    ;;
-    --package-title)
-    echo "@PACKAGE_STRING@"
-    exit 0
-    ;;
-    --package-version)
-    echo "@VERSION@"
-    exit 0
-    ;;
     --bindir)
     echo $bindir
     exit 0
@@ -175,7 +160,15 @@ while test $# -gt 0; do
     exit 0
     ;;
     --library-version)
-    echo $APREQ_DOTTED_VERSION
+    echo @APREQ_DOTTED_VERSION@
+    exit 0
+    ;;
+    --libtool-version)
+    echo @APREQ_LIBTOOL_VERSION@
+    exit 0
+    ;;
+    --package-version)
+    echo "@VERSION@"
     exit 0
     ;;
     --link-ld)
