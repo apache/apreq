@@ -5,7 +5,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC);
 
-plan tests => 6;
+plan tests => 8;
 
 foreach my $location ('/apreq_request_test', '/apreq_access_test') {
 
@@ -31,3 +31,7 @@ BODY:
 \ttest => 6
 \tmore => $filler
 EOT
+
+ok t_cmp(403, GET_RC("/apreq_redirect_test"), "missing redirect location");
+ok t_cmp("ARGS:\n\ttest => 8\n", 
+        GET_BODY("/apreq_redirect_test?location=/apreq_request_test%3Ftest=8"), "redirect");

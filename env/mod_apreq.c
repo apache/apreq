@@ -189,7 +189,7 @@ static ap_filter_t *get_apreq_filter(request_rec *r)
         return cfg->f;
 
     for (f  = r->input_filters; 
-         f != NULL && f->frec->ftype == AP_FTYPE_CONTENT_SET;  
+         f != r->proto_input_filters;
          f  = f->next)
     {
         if (strcmp(f->frec->name, filter_name) == 0)
@@ -279,33 +279,45 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     if (f->ctx) {
         ctx = f->ctx;
 
-        /* if "f" is still at the top of the filter chain, we're ok. Why?*/
-        if (r->input_filters == f)
-           return APR_SUCCESS;
-
         /* We may have already prefetched some data.
-         * Since "f" is no longer at the top of the filter chain,
+         * If "f" is no longer at the top of the filter chain,
          * we need to add a new apreq filter to the top and start over.
+         * XXX: How safe would the following (unimplemented) optimization 
+         * be on redirects????: Leave the filter intact if
+         * it's still at the end of the input filter chain (this would
+         * imply that no other input filters were added after libapreq
+         * started parsing).
          */
 
         if (!APR_BRIGADE_EMPTY(ctx->spool)) {
             apreq_request_t *req = apreq_env_request(r, NULL);
             struct env_config *cfg = get_cfg(r);
 
-            apreq_log(APREQ_DEBUG 0, r, "adding new apreq filter");
-            /* must dump the current parser because 
+            /* Adding "f" to the protocol filter chain ensures the 
+             * spooled data is preserved across internal redirects.
+             */
+
+            r->proto_input_filters = f;            
+
+            /* We MUST dump the current parser (and filter) because 
              * its existing state is now incorrect.
              * NOTE:
              *   req->parser != NULL && req->body != NULL, since 
              *   apreq_parse_request was called at least once already.
              * 
              */
-            
+
+            apreq_log(APREQ_DEBUG 0, r, "dropping stale apreq filter");
             req->parser = NULL;
             req->body = NULL;
             ctx->status = APR_SUCCESS;
-            cfg->f = ap_add_input_filter(filter_name, NULL, r, r->connection);
-            apreq_filter_relocate(cfg->f);
+            cfg->f = NULL;
+        }
+        else {
+            /* No data was parsed/prefetched, so it's safe to move the filter
+             * up to the top of the chain.
+             */
+            apreq_filter_relocate(f);
         }
     } 
     else {
