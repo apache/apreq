@@ -1,8 +1,12 @@
-libapreq is written and maintained by Doug MacEachern (dougm@covalent.net)
+libapreq is written and maintained by the members of the
+httpd-apreq project (http://httpd.apache.org/apreq/)
 with contributions from:
 
-Covalent Technologies Inc. (http://www.covalent.net/) sponsors
-development of this packet, version 0.32-current
+Doug MacEachern (dougm@covalent.net) - author of the
+original libapreq package
+
+Covalent Technologies Inc. (http://www.covalent.net/) sponsored
+development of this package, version 0.32
 
 Critical Path Inc. (http://www.cp.net/) - sponsored development of
 this package, versions 0.01-0.31
