@@ -282,7 +282,7 @@ static int apreq_xs_table_keys(void *data, const char *key,
 }
 
 #define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
-#define apreq_xs_table2sv(t,class) apreq_xs_table_c2perl(aTHX_ t, env, class,NULL)
+#define apreq_xs_table2sv(t,class,parent) apreq_xs_table_c2perl(aTHX_ t, env, class,parent)
 #define apreq_xs_do(attr)          (items == 1 ? apreq_xs_table_keys \
                                    : apreq_xs_##attr##_table_values)
 
@@ -359,7 +359,7 @@ static XS(apreq_xs_##attr##_get)                                        \
         if (items == 1) {                                               \
             apr_table_t *t = apreq_xs_##attr##_sv2table(sv);            \
             if (t != NULL)                                              \
-                XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class)));         \
+                XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class,sv)));         \
             PUTBACK;                                                    \
             break;                                                      \
         }                                                               \
