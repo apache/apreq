@@ -129,8 +129,14 @@ static XS(apreq_xs_request)
     else {                                                                  \
         apr_status_t s;                                                     \
         apr_table_do(apreq_xs_do(request), d, req->args, key, NULL);        \
-        do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);   \
-        while (s == APR_INCOMPLETE);                                        \
+        s = req->body_status;                                               \
+        switch (s) {                                                        \
+        case APR_EINIT:                                                     \
+        case APR_INCOMPLETE:                                                \
+            do s = apreq_env_read(req->env, APR_BLOCK_READ,                 \
+                                  READ_BLOCK_SIZE);                         \
+            while (s == APR_INCOMPLETE);                                    \
+        }                                                                   \
         if (req->body)                                                      \
             apr_table_do(apreq_xs_request_table_values, d,                  \
                          req->body, key, NULL);                             \
@@ -409,9 +415,16 @@ static XS(apreq_xs_request_parse)
     sv = ST(0);
     obj = apreq_xs_find_obj(aTHX_ sv, "request");
     req = (apreq_request_t *)SvIVX(obj);
+    s = req->body_status;
+    switch (s) {
+    case APR_INCOMPLETE:
+    case APR_EINIT:
+        do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);
+        while (s == APR_INCOMPLETE);
+    }
 
-    do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);
-    while (s == APR_INCOMPLETE);
+    if (s == APR_SUCCESS)
+        s = req->args_status;
 
     if (req->body == NULL)
         req->body = apr_table_make(apreq_env_pool(req->env), APREQ_NELTS);

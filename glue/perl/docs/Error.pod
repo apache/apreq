@@ -3,7 +3,6 @@
 Apache::*::Error - Exception classes for Apache::Request, Apache::Upload, Apache::Cookie::Jar and Apache::Cookie
 
 =for testing
-    use POSIX;
     use Apache2;
     use Apache::Upload;
     use Apache::Cookie;
@@ -11,7 +10,8 @@ Apache::*::Error - Exception classes for Apache::Request, Apache::Upload, Apache
     use APR::Pool;
     $r = APR::Pool->new;
     $req = Apache::Request->new($r);
-    eval { POSIX::close(0); $req->parse };
+    $req->body_status(0);
+    $req->parse;
     $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
     $req->body->add($u);
     $jar = Apache::Cookie::Jar->new($r);
@@ -31,7 +31,7 @@ Apache::*::Error - Exception classes for Apache::Request, Apache::Upload, Apache
     $req->args_status(1); # artificial error status = 1 for I<query-string> parser
     $jar->status(2);      # artificial error status = 2 for I<Cookie> header parser
 
-    eval {$req->parse };
+    eval { $req->parse };
     ok $@->isa("Apache::Request::Error");
     ok $@ == 1;
     eval { @cookies = $jar->cookies };

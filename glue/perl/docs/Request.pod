@@ -4,7 +4,6 @@ Apache::Request - Methods for dealing with client request data
 
 
 =for testing
-    use POSIX;
     use Apache2;
     use Apache::Request;
     use Apache::Upload;
@@ -12,12 +11,12 @@ Apache::Request - Methods for dealing with client request data
     $r = APR::Pool->new;
     $req = Apache::Request->new($r);
     $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
-    eval { POSIX::close(0); $req->parse };
+    $req->body_status(0);
+    $req->parse;
     $req->body->add($u);
     $req->args->add(foo => 1);
     $req->args->add(bar => 2);
     $req->args->add(foo => 3);
-    $req->body_status(0);
 
 
 
@@ -427,12 +426,16 @@ C<(args_status, body_status)>.
     $req->parse()
 
 Forces the request to be parsed immediately.  In void context,
-this will throw an Apache::Request::Error should the parser fail. 
-Otherwise it will return the parser's I<APR> status code.
+this will throw an Apache::Request::Error should the either the
+query-string or body parser fail. In all other contexts it will
+return the two parsers' combined I<APR> status code 
 
-However C<parse> should be avoided in most normal situations.  
-For example, in a mod_perl content handler it is more efficient
-to write
+        $req->body_status || $req->args_status
+
+(see L<param_status> for the alternate order).
+
+However C<parse> should be avoided in most normal situations.  For example,
+in a mod_perl content handler it is more efficient to write
 
     sub handler {
         my $r = shift;

@@ -3,14 +3,14 @@
 Apache::Upload - Methods for dealing with file uploads.
 
 =for testing
-    use POSIX;
     use Apache2;
     use APR::Pool;
     use Apache::Upload;
     $r = APR::Pool->new;
     $req = Apache::Request->new($r);
     $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
-    eval { POSIX::close(0); $req->parse };
+    $req->body_status(0);
+    $req->parse;
     $req->body->add($u);
     $data = do { local (@ARGV, $/) = __FILE__; <> };
     ok length $data == -s __FILE__;

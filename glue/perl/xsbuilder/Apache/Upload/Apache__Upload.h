@@ -49,23 +49,29 @@
 #define READ_BLOCK_SIZE (1024 * 256)
 #define S2P(s) (s ? apreq_value_to_param(apreq_strtoval(s)) : NULL)
 
-#define apreq_xs_request_upload_push(sv,d,key) do {                             \
-    apreq_request_t *req = (apreq_request_t *)SvIVX(sv);                        \
-    if (items == 1) {                                                           \
-        apr_table_t *t = apreq_uploads(apreq_env_pool(req->env), req);          \
-        if (t != NULL) {                                                        \
-            apr_table_compress(t, APR_OVERLAP_TABLES_MERGE);                    \
-            apr_table_do(apreq_xs_table_keys, d, t, key, NULL);                 \
-        }                                                                       \
-    }                                                                           \
-    else {                                                                      \
-        apr_status_t s;                                                         \
-        do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);       \
-        while (s == APR_INCOMPLETE);                                            \
-        if (req->body)                                                          \
-            apr_table_do(apreq_xs_request_upload_table_values, d,               \
-                         req->body, key, NULL);                                 \
-    }                                                                           \
+#define apreq_xs_request_upload_push(sv,d,key) do {                     \
+    apreq_request_t *req = (apreq_request_t *)SvIVX(sv);                \
+    if (items == 1) {                                                   \
+        apr_table_t *t = apreq_uploads(apreq_env_pool(req->env), req);  \
+        if (t != NULL) {                                                \
+            apr_table_compress(t, APR_OVERLAP_TABLES_MERGE);            \
+            apr_table_do(apreq_xs_table_keys, d, t, key, NULL);         \
+        }                                                               \
+    }                                                                   \
+    else {                                                              \
+        apr_status_t s;                                                 \
+        s = req->body_status;                                           \
+        switch (s) {                                                    \
+        case APR_EINIT:                                                 \
+        case APR_INCOMPLETE:                                            \
+            do s = apreq_env_read(req->env, APR_BLOCK_READ,             \
+                                  READ_BLOCK_SIZE);                     \
+            while (s == APR_INCOMPLETE);                                \
+        }                                                               \
+        if (req->body)                                                  \
+            apr_table_do(apreq_xs_request_upload_table_values, d,       \
+                         req->body, key, NULL);                         \
+    }                                                                   \
 } while (0)
 
 #define apreq_xs_upload_table_push(sv,d,k) apreq_xs_push(upload_table,sv,d,k)
