@@ -1,22 +1,29 @@
 
 
-package heirarchy:
+current class diagram:
 
-        APREQ.xs  dynaloads appropriate env (if necessary)
-                  and wraps apreq.h
+                         apreq_env
 
-        APREQ::Value  (defined in APREQ.xs)
-               ::Cookie (Cookies.xs)
-               ::Param  (Params.xs)
-               ::Parser (Parsers.xs)
+                       /            \
+                                     
+               fetch /                \ new
+                                              
+                   /                    \
 
-        APREQ::Table (Tables.xs)
+           Apache::Cookie::Jar       Apache::Request
 
-        APREQ::Jar (defined in Cookies.xs)
-                 Apache2::Cookie.pm (includes CGI::Cookie conventions)
+       cookies  /       \                    \  args, body, params
 
-        APREQ::Request (defined in Params.xs)
-                 Apache2::Request.pm (subclasses Apache2 also)
-                    {     r => Apache2->request, 
-                      apreq => APREQ::Request    }
+   Apache::Cookie::Table  \ get         Apache::Request::Table
+                           
+            get  \          \
+ 
+                  Apache::Cookie
 
+
+
+missing components:  Apache::Request::Upload
+
+
+Can/should we collapse Apache::Cookie::Jar & Apache::Cookie::Table
+into a single package?
