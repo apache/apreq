@@ -111,6 +111,7 @@ static SV *apreq_xs_perl_sv2env(pTHX_ SV *sv)
  * @param obj C object.
  * @param env C environment.
  * @param class Class perl object will be blessed into.
+ * @param parent XXX
  * @return Reference to the new Perl object in class.
  */
 APR_INLINE
