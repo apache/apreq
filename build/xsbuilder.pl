@@ -256,14 +256,10 @@ if ($ENV{MOD_PERL}) {
     my $env = __PACKAGE__->env || '';
     if ($mod_perl::VERSION > 1.99) {
         die __PACKAGE__ . ": httpd must load mod_apreq.so first"
-               if $env ne "Apache::RequestRec";
-    }
-    elsif ($mod_perl::VERSION > 1.24) {
-        die __PACKAGE__ . ": httpd must load mod_apreq1.so first"
-              if $env ne "Apache";
+            if $env ne "Apache::RequestRec";
     }
     else {
-       die "Unrecognized mod_perl version number: $modperl::VERSION";
+        die "Unsupported mod_perl version number: $modperl::VERSION";
     }
 }
 EOF
