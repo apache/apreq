@@ -163,8 +163,8 @@ sub preprocess
 
     for ($_[1]) {
         ::c_macro("APREQ_DECLARE", "apreq.h")->();
-        ::c_macro("APREQ_DECLARE_HOOK", "apreq_parsers.h")->();
-        ::c_macro("APREQ_DECLARE_PARSER", "apreq_parsers.h")->();
+        ::c_macro("APREQ_DECLARE_HOOK", "apreq_params.h")->();
+        ::c_macro("APREQ_DECLARE_PARSER", "apreq_params.h")->();
         ::c_macro("APR_DECLARE")->();
         ::c_macro("XS")-> ();
     }
