@@ -320,7 +320,7 @@ APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
 
 static int upload_get(void *data, const char *key, const char *val)
 {
-    const apreq_param_t *p = apreq_value_to_param(apreq_strtoval(val));
+    apreq_param_t *p = apreq_value_to_param(apreq_strtoval(val));
     apreq_param_t **q = data;
     if (p->bb) {
         *q = p;
