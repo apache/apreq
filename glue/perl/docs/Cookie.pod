@@ -5,16 +5,16 @@ Apache::Cookie - HTTP Cookies Class
 
 
 =for testing
-  use Apache2;
-  use Apache::Cookie;
-  use APR::Pool;
-  $r = APR::Pool->new;
-  $j = Apache::Cookie::Jar->new($r);
-  $j->cookies->{foo} = Apache::Cookie->new($r, name => "foo", value => "1");
-  $j->cookies->add( Apache::Cookie->new($r, name => "bar", value => "2") );
-  # We must disable bake and bake2 in the api tests, 
-  # since they write directly to fd 1 via apr_file_write().
-  *Apache::Cookie::bake = *Apache::Cookie::bake2 = *Apache::Cookie::as_string;
+    use Apache2;
+    use Apache::Cookie;
+    use APR::Pool;
+    $r = APR::Pool->new;
+    $j = Apache::Cookie::Jar->new($r);
+    $j->cookies->{foo} = Apache::Cookie->new($r, name => "foo", value => "1");
+    $j->cookies->add( Apache::Cookie->new($r, name => "bar", value => "2") );
+    # We must disable bake and bake2 in the api tests, 
+    # since they write directly to fd 1 via apr_file_write().
+    *Apache::Cookie::bake = *Apache::Cookie::bake2 = *Apache::Cookie::as_string;
 
 
 
@@ -71,22 +71,28 @@ XXX Dump __PACKAGE__->env inheritance (doesn't work in CGI context) XXX
 
 
 Class method that retrieves the parsed cookie jar from the current 
-environment.
-
+environment.  The optional VALUE_CLASS => $cookie_class instructs
+the jar to bless any returned cookies into $cookie_class, instead
+of Apache::Cookie.  This feature could be most useful in situations 
+where C<Apache::Cookie::thaw> is unable to correctly interpret an incoming
+cookie's serialization.  Users can simply override C<thaw> in a subclass
+and pass that subclass's name in the VALUE_CLASS argument.
 
 =for example begin
-     {
+    {
         package FOO;
         @ISA= 'Apache::Cookie';
-     }
-        my $jar = Apache::Cookie::Jar->new($r, VALUE_CLASS => "FOO");
+    }
+    my $jar = Apache::Cookie::Jar->new($r, VALUE_CLASS => "FOO");
+    ok $jar->cookies("foo")->isa("FOO");
+    ok $jar->cookies->{bar}->isa("FOO");
 
 =for example end
 
 =for example_testing
-        ok $jar->isa("Apache::Cookie::Jar");
-        ok $jar->cookies("foo")->isa("FOO");
-        ok $jar->cookies->{foo}->isa("FOO");
+    ok $jar->isa("Apache::Cookie::Jar");
+    $jar->cookies->do(sub { ok $_[1]->isa("FOO"); });
+    map { ok $_->isa("FOO") } values %{$jar->cookies};
 
 
 
@@ -126,7 +132,6 @@ C<cookies> will croak if the parser failed to successfully parse the
 
 =for example end
 
-
 =for example_testing
      ok @cookies == 2;
      ok $_ -> name eq "foo" for $cookie, @cookies;
@@ -149,9 +154,12 @@ to a new value by passing it as an additional argument.
    eval { @cookies = $j->cookies("foo") };   # croaks
    ok $@->isa("Apache::Cookie::Jar::Error");
    $j->status(0);
-   ok $j->status == 0;
 
 =for example end
+
+=for example_testing
+   @cookies = $j->cookies("foo");
+   ok $j->status == 0;
 
 =head2 env
 
@@ -160,16 +168,14 @@ the environment class associated with Apache::Cookie::Jar.
 As an object method, C<< $jar->env >> returns the environment 
 object which first created the $jar (via C<new>).
 
-=for example
-   ok Apache::Cookie::Jar->env eq ref $j->env;
+=for example begin
 
+   ok $j->env->isa(Apache::Cookie::Jar->env);
 
-=head2 pool
+=for example end
 
-The pool associated with the current environment.
-
-=for example
-  ok $j->pool->isa("APR::Pool");
+=for example_testing
+   ok (Apache::Cookie::Jar->env eq "APR::Pool");
 
 
 
@@ -183,7 +189,9 @@ The pool associated with the current environment.
 
 Just like CGI::Cookie::new, but requires an I<Apache> request object:
 
-        my $cookie = Apache::Cookie->new($r,
+=for example begin
+
+    $cookie = Apache::Cookie->new($r,
                              -name    =>  'foo', 
                              -value   =>  'bar', 
                              -expires =>  '+3M', 
@@ -191,6 +199,15 @@ Just like CGI::Cookie::new, but requires an I<Apache> request object:
                              -path    =>  '/cgi-bin/database',
                              -secure  =>  1 
                             ); 
+
+=for example end
+
+=for example_testing
+     ok $cookie->name eq "foo";
+     ok $cookie->value eq "bar";
+     ok $cookie->domain eq ".capricorn.com";
+     ok $cookie->path eq "/cgi-bin/database";
+     ok $cookie->secure == 1;
 
 The C<-value> attribute may be either an arrayref, a hashref, or
 an object with a C<freeze> method.  The <freeze> method must serialize
@@ -203,8 +220,15 @@ and whitespace characters in its output.
 
 Format the cookie object as a string:
 
- #same as $cookie->bake
- $r->headers_out->add("Set-Cookie" => $cookie->as_string);
+=for example begin
+
+ print $cookie->as_string;
+
+
+=end example begin
+
+=for example_testing
+     ok substr($_STDOUT_, 0, 8) eq "foo=bar;";
 
 
 =head2 name
@@ -212,6 +236,7 @@ Format the cookie object as a string:
 Get the name of the cookie:
 
  my $name = $cookie->name;
+
 
 =head2 value
 
@@ -224,30 +249,48 @@ Note: if the cookie's value was serialized from an object possessing a
 C<freeze> method, one way to reconstitute the object is by subclassing 
 Apache::Cookie with a package that provides the associated C<thaw> sub:
 
-  package My::Cookie;
-  use base 'Apache::Cookie';
-  sub thaw { ... }
-  bless $cookie, __PACKAGE__;
+=for example begin
+    {
+        package My::COOKIE;
+        @ISA = 'Apache::Cookie'; 
+        sub thaw { my $val = shift->raw_value; $val =~ tr/a-z/A-Z/; $val }
+    }
 
-  my $obj = $cookie->value;  # same as $cookie->thaw($cookie->raw_value);
+    bless $cookie, "My::COOKIE";
+
+    ok ($cookie->value eq "BAR");
+
+=for example end
+
+
 
 =head2 raw_value
 
 Gets the raw (opaque) value string as it appears in the incoming
-"Cookie" header.
+"Cookie" header.  The quote-operator for Apache::Cookie is 
+overloaded to run this method whenever a cookie appears in quotes.
 
+=for example begin
+
+    ok $cookie->raw_value eq "bar";
+    ok "$cookie" eq "bar";
+
+=for example end
+
+=for example_testing
+   # run the example, don't just compile it
 
 
 =head2 bake
 
-Add a I<Set-Cookie> header to the outgoing headers table.
+Adds a I<Set-Cookie> header to the outgoing headers table.
 
     $cookie->bake;
 
 
 =head2 bake2
 
-Add a I<Set-Cookie2> header to the outgoing headers table.
+Adds a I<Set-Cookie2> header to the outgoing headers table.
 
     $cookie->bake2;
 
@@ -256,29 +299,56 @@ Add a I<Set-Cookie2> header to the outgoing headers table.
 
 Get or set the domain for the cookie:
 
- my $domain = $cookie->domain;
- $cookie->domain(".cp.net");
+=for example begin
+
+    $domain = $cookie->domain;
+    $cookie->domain(".cp.net");
+
+=for example end
+
+=for example_testing
+    ok $domain eq ".capricorn.com";
+    ok $cookie->domain eq ".cp.net";
+
 
 =head2 path
 
 Get or set the path for the cookie:
 
- my $path = $cookie->path;
- $cookie->path("/");
+=for example begin
+
+    $path = $cookie->path;
+    $cookie->path("/");
+
+=for example end
+
+=for example_testing
+    ok $path eq "/cgi-bin/database";
+    ok $cookie->path eq "/";
+
 
 =head2 expires
 
 Get or set the expire time for the cookie:
 
+=for example begin
+
  my $expires = $cookie->expires;
  $cookie->expires("+3h");
+
+=for example end
+
 
 =head2 secure
 
 Get or set the secure flag for the cookie:
 
+=for example begin
+
  my $secure = $cookie->secure;
  $cookie->secure(1);
+
+=for example end
 
 
 =head2 fetch
@@ -287,15 +357,16 @@ Fetch and parse the incoming I<Cookie> header:
 
 =for example begin
 
-    my $cookies = Apache::Cookie->fetch($r); #hash ref
+    my $cookies = Apache::Cookie->fetch($r); # Apache::Cookie::Table ref
 
     my %cookies = Apache::Cookie->fetch($r);
 
 =for example end
 
 =for example_testing
-#    ok "foobar" eq join "", keys %$cookies;
-#    ok 12 == join "", sort map {$_->value} values %cookies;
+    ok "foobarfoo" eq join "", keys %$cookies;
+    ok "barfoo" eq join "", sort keys %cookies; # %cookies lost original foo cookie
+    ok 23 == join "", sort map "$_", values %cookies;
 
 
 

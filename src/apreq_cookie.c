@@ -143,7 +143,8 @@ APREQ_DECLARE(apr_status_t)
         break;
 
     case 's':
-        c->secure = (!strncasecmp("on",val,vlen));
+        c->secure = (vlen > 0 && *val != '0' 
+                     && strncasecmp("off",val,vlen));
         return APR_SUCCESS;
 
     };

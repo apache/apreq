@@ -72,7 +72,7 @@ static XS(apreq_xs_jar)
 
 
 /* GET macros */
-#define S2C(s)  apreq_value_to_cookie(apreq_strtoval(s))
+#define S2C(s) (s ? apreq_value_to_cookie(apreq_strtoval(s)) : NULL)
 #define apreq_xs_jar_push(sv,d,key)   apreq_xs_push(jar,sv,d,key)
 #define apreq_xs_table_push(sv,d,key) apreq_xs_push(table,sv,d,key)
 #define apreq_xs_jar_sv2table(sv)     ((apreq_jar_t *)SvIVX(sv))->cookies
@@ -118,7 +118,8 @@ static XS(apreq_xs_cookie_as_string)
     sv = NEWSV(0, apreq_serialize_cookie(NULL, 0, c));
     SvCUR(sv) = apreq_serialize_cookie(SvPVX(sv), SvLEN(sv), c);
     SvPOK_on(sv);
-    ST(0) = sv_2mortal(sv);
+    XSprePUSH;
+    XPUSHs(sv_2mortal(sv));
     XSRETURN(1);
 }
 
@@ -201,6 +202,7 @@ static XS(apreq_xs_encode)
     dXSARGS;
     STRLEN slen;
     const char *src;
+    SV *sv;
 
     if (items != 1)
         Perl_croak(aTHX_ "Usage: encode($string)");
@@ -209,11 +211,13 @@ static XS(apreq_xs_encode)
     if (src == NULL)
         XSRETURN_UNDEF;
 
-    ST(0) = sv_newmortal();
-    SvUPGRADE(ST(0), SVt_PV);
-    SvGROW(ST(0), 3 * slen + 1);
-    SvCUR(ST(0)) = apreq_encode(SvPVX(ST(0)), src, slen);
-    SvPOK_on(ST(0));
+    sv = sv_newmortal();
+    SvUPGRADE(sv, SVt_PV);
+    SvGROW(sv, 3 * slen + 1);
+    SvCUR(sv) = apreq_encode(SvPVX(sv), src, slen);
+    SvPOK_on(sv);
+    XSprePUSH;
+    XPUSHs(sv);
     XSRETURN(1);
 }
 
@@ -223,6 +227,7 @@ static XS(apreq_xs_decode)
     STRLEN slen;
     apr_ssize_t len;
     const char *src;
+    SV *sv;
 
     if (items != 1)
         Perl_croak(aTHX_ "Usage: decode($string)");
@@ -231,13 +236,15 @@ static XS(apreq_xs_decode)
     if (src == NULL)
         XSRETURN_UNDEF;
 
-    ST(0) = sv_newmortal();
-    SvUPGRADE(ST(0), SVt_PV);
-    SvGROW(ST(0), slen + 1);
-    len = apreq_decode(SvPVX(ST(0)), src, slen);
+    sv = sv_newmortal();
+    SvUPGRADE(sv, SVt_PV);
+    SvGROW(sv, slen + 1);
+    len = apreq_decode(SvPVX(sv), src, slen);
     if (len < 0)
         XSRETURN_UNDEF;
-    SvCUR_set(ST(0),len);
-    SvPOK_on(ST(0));
+    SvCUR_set(sv,len);
+    SvPOK_on(sv);
+    XSprePUSH;
+    XPUSHs(sv);
     XSRETURN(1);
 }

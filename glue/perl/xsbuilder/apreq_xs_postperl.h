@@ -70,6 +70,7 @@ static SV *apreq_xs_find_obj(pTHX_ SV *in, const char *key)
              Perl_croak(aTHX_ "panic: unsupported SV type: %d", SvTYPE(sv));
        }
     }
+
     return NULL;
 }
 
@@ -144,13 +145,14 @@ static SV *apreq_xs_c2perl(pTHX_ void *obj, void *env, const char *class, SV *pa
  * base class for Apache::Request and Apache::Cookie::Jar objects.
  */
 #define APREQ_XS_DEFINE_ENV(type)                       \
-APR_INLINE                                              \
 static XS(apreq_xs_##type##_env)                        \
 {                                                       \
     char *class = NULL;                                 \
-    dMARK; dAX;                                         \
-                                                        \
+    dXSARGS;                                            \
+    SV *sv, *obj;                                       \
     /* map environment to package */                    \
+    if (items != 1)                                     \
+        Perl_croak(aTHX_ "Usage: $obj->env");           \
                                                         \
     if (strcmp(apreq_env_name, "APACHE2") == 0)         \
         class = "Apache::RequestRec";                   \
@@ -163,18 +165,14 @@ static XS(apreq_xs_##type##_env)                        \
     if (class == NULL)                                  \
         XSRETURN(0);                                    \
                                                         \
+    XSprePUSH;                                          \
     if (SvROK(ST(0))) {                                 \
-        SV *sv = apreq_xs_find_obj(aTHX_ ST(0), #type); \
-        void *env = apreq_xs_sv2env(sv);                \
-                                                        \
-        if (env)                                        \
-            ST(0) = sv_2mortal(sv_setref_pv(newSV(0),   \
-                                          class, env)); \
-        else                                            \
-            ST(0) = &PL_sv_undef;                       \
+        obj = apreq_xs_find_obj(aTHX_ ST(0), #type);    \
+        sv = apreq_xs_perl_sv2env(aTHX_ obj);           \
+        XPUSHs(sv_2mortal(newRV_inc(SvRV(sv))));        \
     }                                                   \
     else                                                \
-        ST(0) = sv_2mortal(newSVpv(class, 0));          \
+        XPUSHs(sv_2mortal(newSVpv(class, 0)));          \
                                                         \
     XSRETURN(1);                                        \
 }
@@ -242,8 +240,8 @@ static XS(apreq_xs_make_##type)                                         \
     key = SvPVbyte(ST(2), klen);                                        \
     val = SvPVbyte(ST(3), vlen);                                        \
     t = apreq_make_##type(pool, key, klen, val, vlen);                  \
-                                                                        \
-    ST(0) = sv_2mortal(apreq_xs_##type##2sv(t,class,ST(1)));            \
+    XSprePUSH;                                                          \
+    XPUSHs(sv_2mortal(apreq_xs_##type##2sv(t,class,ST(1))));             \
     XSRETURN(1);                                                        \
 }  
 
@@ -276,14 +274,16 @@ static XS(apreq_xs_##attr##_pool)                               \
 {                                                               \
     dXSARGS;                                                    \
     void *env;                                                  \
-    SV *obj;                                                    \
+    SV *obj, *sv;                                               \
                                                                 \
     if (items != 1 || !SvROK(ST(0)))                            \
         Perl_croak(aTHX_ "Usage: $obj->pool()");                \
     obj = apreq_xs_find_obj(aTHX_ ST(0), #attr);                \
     env = apreq_xs_sv2env(obj);                                 \
-    ST(0) = sv_2mortal(sv_setref_pv(newSV(0), "APR::Pool",      \
+    sv  = sv_2mortal(sv_setref_pv(newSV(0), "APR::Pool",        \
                                     apreq_env_pool(env)));      \
+    XSprePUSH;                                                  \
+    XPUSHs(sv);                                                  \
     XSRETURN(1);                                                \
 }
 

@@ -15,6 +15,9 @@ BEGIN {
 package Apache::Cookie::Error;
 push our(@ISA), qw/APR::Error Apache::Cookie/;
 
+package Apache::Cookie::Jar::Error;
+push our(@ISA), qw/APR::Error Apache::Cookie::Jar/;
+
 package Apache::Cookie::Jar;
 
 sub new {
@@ -27,6 +30,7 @@ sub new {
 
 
 package Apache::Cookie;
+use overload '""' => sub { shift->raw_value };
 
 sub jar {
     my ($self, $env) = @_;
@@ -87,9 +91,9 @@ sub freeze {
 }
 
 sub thaw {
-    my $self = shift;
-    my @rv = map decode($_), split /&/, $self->raw_value;
+    my @rv = map decode($_), split /&/, shift->raw_value;
     return wantarray ? @rv : $rv[0];
 }
 
 sub value { shift->thaw }
+

@@ -113,7 +113,8 @@ static XS(apreq_xs_table_##attr##_make)                                 \
     env = obj->env;                                                     \
     t = apr_table_make(apreq_env_pool(env), APREQ_NELTS);               \
     sv = apreq_xs_table2sv(t, class, ST(1), pkg);                       \
-    ST(0) = sv_2mortal(sv);                                             \
+    XSprePUSH;                                                          \
+    PUSHs(sv);                                                          \
     XSRETURN(1);                                                        \
 }
 
@@ -270,7 +271,7 @@ static XS(apreq_xs_##attr##_get)                                        \
         if (items == 1) {                                               \
             apr_table_t *t = apreq_xs_##attr##_sv2table(obj);           \
             if (t != NULL)                                              \
-                XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class,d.parent,d.pkg))); \
+                PUSHs(sv_2mortal(apreq_xs_table2sv(t,class,d.parent,d.pkg))); \
             PUTBACK;                                                    \
             break;                                                      \
         }                                                               \
@@ -278,7 +279,7 @@ static XS(apreq_xs_##attr##_get)                                        \
         RETVAL = apreq_xs_##attr##_##type(obj, key);                    \
                                                                         \
         if (RETVAL && (COND))                                           \
-            XPUSHs(sv_2mortal(                                          \
+            PUSHs(sv_2mortal(                                           \
                    apreq_xs_##type##2sv(RETVAL,d.pkg,d.parent)));       \
                                                                         \
     default:                                                            \
@@ -326,7 +327,8 @@ static XS(apreq_xs_##attr##_FETCH)                              \
         apreq_##type##_t *RETVAL = apreq_value_to_##type(       \
                                           apreq_strtoval(val)); \
         sv = apreq_xs_##type##2sv(RETVAL, pkg, parent);         \
-        ST(0) = sv_2mortal(sv);                                 \
+        XSprePUSH;                                              \
+        XPUSHs(sv_2mortal(sv));                                 \
         XSRETURN(1);                                            \
     }                                                           \
     else                                                        \
@@ -360,7 +362,8 @@ static XS(apreq_xs_##attr##_NEXTKEY)                            \
     }                                                           \
     idx = SvCUR(obj)++;                                         \
     sv = newSVpv(te[idx].key, 0);                               \
-    ST(0) = sv_2mortal(sv);                                     \
+    XSprePUSH;                                                  \
+    PUSHs(sv_2mortal(sv));                                      \
     XSRETURN(1);                                                \
 }
 

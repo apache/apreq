@@ -27,7 +27,7 @@
   path
   domain
   port
-!  secure
+  secure
   comment
   commentURL
 ! max_age

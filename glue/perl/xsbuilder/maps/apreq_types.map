@@ -8,6 +8,7 @@ char * | PV
 void | VOID
 void * | PTR
 const void * | PTR
+unsigned | UV
 
 #data structure stuff
 struct apr_pool_t           | APR::Pool | T_POOLOBJ
