@@ -1302,7 +1302,7 @@ APREQ_DECLARE_PARSER(apreq_parse_generic)
     }
 
     APREQ_BRIGADE_SETASIDE(bb, pool);
-    s = apreq_brigade_concat(bb, ctx->param->bb, bb);
+    s = apreq_brigade_concat(env, ctx->param->bb, bb);
 
     if (s != APR_SUCCESS) {
         ctx->status = GEN_ERROR;
