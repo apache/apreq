@@ -30,7 +30,6 @@ Apache::TestMM::generate_script("t/TEST");
 
 ModPerl::MM::WriteMakefile(
     NAME => 'libapreq2',
-    VERSION => '0.1',
     DIR => [qw(xs)],
     clean => { FILES => "xs t/logs t/TEST @scripts" },
     realclean => { FILES => "xsbuilder/tables" },
