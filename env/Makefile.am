@@ -1,5 +1,5 @@
-INCLUDES = -I../src -I@APACHE2_INCLUDES@
-
+INCLUDES = -I../src -I@APACHE2_INCLUDES@ -I@APR_INCLUDES@ -I@APU_INCLUDES@
+LIBS = @APR_LIBS@ @APU_LIBS@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
 
 lib_LIBRARIES = libapreq_cgi.a

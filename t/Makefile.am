@@ -1,5 +1,5 @@
-INCLUDES = -I../src -I@APACHE2_INCLUDES@
-LIBS = -L../src
+INCLUDES = -I../src -I@APR_INCLUDES@ -I@APU_INCLUDES@
+LIBS = -L../src @APR_LIBS@ @APU_LIBS@
 
 noinst_LIBRARIES = libapreq_tests.a
 libapreq_tests_a_SOURCES = CuTest.c env.c cookie.c params.c parsers.c
