@@ -686,7 +686,8 @@ APREQ_DECLARE(void) apreq_table_balance(apreq_table_t *t, const int on)
         t->flags &= ~TF_BALANCE;
     }
 }
-#include <stdio.h>
+
+
 APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t)
 {
     if (t->flags & TF_MERGE) {
@@ -711,7 +712,6 @@ APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t)
                 for ( ; j >= 0; j = j[o].tree[NEXT]) {
                     *(const apreq_value_t **)apr_array_push(&arr) = j[o].val;
                     KILL(t,j);
-            printf("GOT HERE(%d:%d): %s\n", t->ghosts, arr.nelts, idx[o].key);
                 }
 
                 v = t->merge(t->a.pool, &arr);
@@ -757,8 +757,6 @@ static int bury_table_entries(apreq_table_t *t, apr_array_header_t *q)
             m[o-j] = m[o];
 
     t->a.nelts -= q->nelts;
-
-    printf("GOT HERE(%d:%d:%d)\n", p[0], p[1], p[2]);
 
     /* reindex trees */
 
