@@ -62,7 +62,7 @@
 #include "apr_lib.h"
 #include "apr_tables.h"
 
-typedef struct env_ctx {
+typedef struct {
     apr_pool_t         *pool;
     apreq_request_t    *req;
     apreq_jar_t        *jar;
@@ -71,19 +71,21 @@ typedef struct env_ctx {
     apr_status_t        status;
 } env_ctx;
 
-static int dump_table(void *ctx, const char *key, const char *value)
+static int dump_table(void *count, const char *key, const char *value)
 {
-    env_ctx *c = (env_ctx *) ctx;
-    apreq_log(APREQ_DEBUG 0, c, "%s => %s", key, value);
-    printf("\t%s => %s\n", key, value);
+    int *c = (int *) count;
+    *c = *c + strlen(key) + strlen(value);
     return 1;
 }
 
 int main(void)
 {
-    apreq_request_t *req;
     env_ctx *ctx;
     apr_pool_t *pool;
+    const apreq_param_t *foo, *bar;
+    apr_table_t *params;
+    int count = 0;
+
     if (apr_initialize() != APR_SUCCESS) {
         fprintf(stderr, "apr_initialize failed\n");
         exit(-1);
@@ -92,21 +94,24 @@ int main(void)
         fprintf(stderr, "apr_pool_create failed\n");
         exit(-1);
     }
+
     ctx = (env_ctx *) apr_palloc(pool, sizeof(*ctx));
     ctx->loglevel = 0;
     ctx->pool = pool;
     apreq_log(APREQ_DEBUG 0, ctx, "%s", "Creating apreq_request");
-    req = apreq_request(ctx, NULL);
+    ctx->req = apreq_request(ctx, NULL);
+
     printf("%s", "Content-Type: text/plain\n\n");
     apreq_log(APREQ_DEBUG 0, ctx, "%s", "Fetching the parameters");
-    printf("ARGS:\n");
-    apr_table_do(dump_table, ctx, req->args, NULL);
-    if (req->body) {
-        printf("BODY:\n");
-        apr_table_do(dump_table, ctx, req->body, NULL);
+    foo = apreq_param(ctx->req, "foo");
+    bar = apreq_param(ctx->req, "bar");
+    if (foo || bar) {
+      if(foo) printf("\t%s => %s\n", "foo", foo->v.data);
+      if(bar) printf("\t%s => %s\n", "bar", bar->v.data);
+      return 0;
     }
-    
-    apreq_log(APREQ_DEBUG 0, ctx, "%s", "Done!");
+    params = apreq_params(ctx->pool, ctx->req);
+    apr_table_do(dump_table, &count, params, NULL);
+    printf("%d", count);
     return 0;
 }
-
