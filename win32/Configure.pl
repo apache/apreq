@@ -320,6 +320,7 @@ sub check_depends {
     my $rep = $] < 5.008 ? 
         'http://theoryx5.uwinnipeg.ca/ppmpackages' :
             'http://theoryx5.uwinnipeg.ca/ppms';
+    eval {require Apache2;};
     for my $mod (qw(ExtUtils::XSBuilder Apache::Test)) {
         eval "require $mod";
         if ($@) {
