@@ -97,7 +97,7 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
         if (*k == '-')
             *k = '_';
         else
-            *k = apr_toupper(k);
+            *k = apr_toupper(*k);
     }
 
 

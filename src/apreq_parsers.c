@@ -81,7 +81,7 @@ APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
                                                   apreq_hook_t *hook)
 {
     apreq_parser_t *p = apr_palloc(pool, APREQ_CTX_MAXSIZE + sizeof *p);
-    p->type = apr_pstrdup(pool,type);
+    p->name = apr_pstrdup(pool,type);
     p->parser = parser;
     p->hook = hook;
 
@@ -116,24 +116,19 @@ APREQ_DECLARE(apr_status_t)apreq_add_hook(apreq_parser_t *p,
     return APR_SUCCESS;
 }
 
-APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, 
-                                            APREQ_DECLARE_HOOK(*hook))
+APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
 {
     apr_pool_t *pool = apreq_env_pool(env);
-    apreq_hook_t *h = NULL;
     const char *type = apreq_env_content_type(env);
 
     if (type == NULL)
         return NULL;
 
-    if (hook)
-        h = apreq_make_hook(pool,hook,NULL,NULL);
-
     if (!strncasecmp(type, APREQ_URL_ENCTYPE,strlen(APREQ_URL_ENCTYPE)))
-        return apreq_make_parser(pool, type, apreq_parse_urlencoded, h);
+        return apreq_make_parser(pool, type, apreq_parse_urlencoded, hook);
 
     else if (!strncasecmp(type,APREQ_MFD_ENCTYPE,strlen(APREQ_MFD_ENCTYPE)))
-        return apreq_make_parser(pool, type, apreq_parse_multipart, h);
+        return apreq_make_parser(pool, type, apreq_parse_multipart, hook);
 
     else
         return NULL;
@@ -777,7 +772,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
         ctx = apr_pcalloc(pool, sizeof *ctx);
 
-        ct = strchr(parser->type, ';');
+        ct = strchr(parser->name, ';');
         if (ct == NULL) {
             return APR_EINIT;
         }

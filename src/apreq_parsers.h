@@ -48,17 +48,11 @@ struct apreq_hook_t {
 
 struct apreq_parser_t {
     APREQ_DECLARE_PARSER  (*parser);
-    const char             *type;
+    const char             *name;
     apreq_hook_t           *hook;
     void                   *ctx;
 };
 
-
-#define apreq_value_to_parser(ptr) apreq_attr_to_type(apreq_parser_t,v,ptr)
-#define apreq_ctx_to_parser(ptr) apreq_value_to_parser(apreq_strtoval(ptr))
-
-#define apreq_parser_enctype(p)  ((p)->v.name)
-#define apreq_parser_ctx(p)     ((p)->v.data)
 
 APREQ_DECLARE_PARSER(apreq_parse_headers);
 APREQ_DECLARE_PARSER(apreq_parse_urlencoded);
@@ -83,8 +77,7 @@ APREQ_DECLARE(apr_status_t) apreq_copy_parser(apr_pool_t *p,
 APREQ_DECLARE(apr_status_t) apreq_merge_parsers(apr_pool_t *p,
                                                 const apr_array_header_t *a);
 
-APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, 
-                                            APREQ_DECLARE_HOOK(*hook));
+APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook);
 
 #ifdef __cplusplus
  }

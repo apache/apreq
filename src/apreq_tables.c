@@ -69,17 +69,15 @@
 #include "apr_signal.h"
 
 /********************* table_entry structure ********************/
-#define CS_TYPE   apr_uint32_t
-#define CS_BYTES          4
-#define OFFSET ((CS_BYTES-1) * 8)
 
+#define CS_OFFSET (8 * (sizeof(unsigned int) - 1))
 
 /* private struct */
 
 typedef struct apreq_table_entry_t {
     const apreq_value_t *val;
     const char          *key;   /* = val->name : saves a ptr deref */
-    CS_TYPE              checksum;
+    unsigned int         checksum;
     enum { RED, BLACK }  color;
     int                  tree[4];  /* LEFT RIGHT UP NEXT */
 } apreq_table_entry_t;
@@ -107,13 +105,13 @@ typedef struct apreq_table_entry_t {
 
 #define COMPUTE_KEY_CHECKSUM(k, checksum)    \
 {                                            \
-    CS_TYPE c = (CS_TYPE)*(k);               \
+    unsigned int c = (unsigned int)*(k);     \
     int j = 0;                               \
     (checksum) = c;                          \
-    while (++j < CS_BYTES) {                 \
+    while (++j < sizeof(c)) {                \
       (checksum) <<= 8;                      \
       if (c) {                               \
-         c = (CS_TYPE)*++(k);                \
+         c = (unsigned int)*++(k);           \
          checksum |= c;                      \
       }                                      \
     }                                        \
@@ -156,7 +154,7 @@ struct apreq_table_t {
 
 /* NEVER KILL AN ENTRY THAT'S STILL WITHIN THE FOREST */
 #define IN_FOREST(t,idx) ( !DEAD(idx) && ( (idx)[o].tree[UP] >= 0 || \
-                   (idx) == t->root[TABLE_HASH((idx)[o].checksum>>OFFSET)] ) )
+               (idx) == t->root[TABLE_HASH((idx)[o].checksum>>CS_OFFSET)] ) )
 
 /* MUST ensure n's parent exists (>=0) before using LR(n) */
 #define LR(n) (  ( (n)[o].tree[UP][o].tree[LEFT] == (n) ) ? LEFT : RIGHT  )
@@ -220,7 +218,7 @@ static int search(const apreq_table_entry_t *const o,int *elt,
                   const char *key)
 {
     int idx = *elt;
-    CS_TYPE csum;
+    unsigned int csum;
 
     COMPUTE_KEY_CHECKSUM(key, csum);
 
@@ -273,7 +271,7 @@ static int insert(apreq_table_entry_t *const o, int *root, int x,
          *      http://www.cs.uiowa.edu/~hzhang/c44/lec14.PDF
          */
 
-        const CS_TYPE csum = elt->checksum;
+        const unsigned int csum = elt->checksum;
         const char *const key = elt->key;
 
         while (1) {
@@ -898,7 +896,7 @@ APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t,
     t->ghosts += s->ghosts;
 
     for (idx = n; idx < t->a.nelts; ++idx) {
-        const unsigned char hash = TABLE_HASH(idx[o].checksum>>OFFSET);
+        const unsigned char hash = TABLE_HASH(idx[o].checksum>>CS_OFFSET);
 
         if (DEAD(idx))
             continue;
