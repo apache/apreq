@@ -285,6 +285,7 @@ void apreq_filter_init_context(ap_filter_t *f)
  * before the filter chain is stacked by ap_get_brigade.
  */
 
+
 static apr_status_t apreq_filter_init(ap_filter_t *f)
 {
     request_rec *r = f->r;
@@ -318,10 +319,26 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     if (handle->f == f) {
         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r, 
                      "disabling stale protocol filter");
+        if (ctx->status == APR_INCOMPLETE)
+            ctx->status = APREQ_ERROR_INTERRUPT;
         handle->f = NULL;
     }
     return APR_SUCCESS;
 }
+
+static APR_INLINE
+unsigned apreq_filter_status_is_error(apr_status_t s)
+{
+    switch (s) {
+    case APR_INCOMPLETE:
+    case APREQ_ERROR_INTERRUPT:
+    case APR_SUCCESS:
+        return 0;
+    default:
+        return 1;
+    }
+}
+
 
 apr_status_t apreq_filter(ap_filter_t *f,
                           apr_bucket_brigade *bb,
@@ -350,15 +367,10 @@ apr_status_t apreq_filter(ap_filter_t *f,
 
     ctx = f->ctx;
 
-    switch (ctx->status) {
-
-    case APR_EINIT:
+    if (ctx->status == APR_EINIT)
         apreq_filter_init_context(f);
-        if (ctx->status == APR_INCOMPLETE)
-            break;
 
-    case APREQ_ERROR_NOPARSER:
-        assert(bb != NULL);
+    if (apreq_filter_status_is_error(ctx->status)) {
         rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
         ap_remove_input_filter(f);
         return rv;
@@ -556,7 +568,8 @@ void apreq_filter_make_context(ap_filter_t *f)
         ctx = f->next->ctx;
 
         switch (ctx->status) {
-        case APR_INCOMPLETE:
+        case APREQ_ERROR_INTERRUPT:
+            ctx->status = APR_INCOMPLETE;
         case APR_SUCCESS:
 
             if (d != NULL) {

@@ -54,7 +54,7 @@ apreq_strerror(apr_status_t s, char *buf, apr_size_t bufsize);
 #define APREQ_ERROR_NOATTR         (APREQ_ERROR_NODATA   +  1)
 #define APREQ_ERROR_NOHEADER       (APREQ_ERROR_NODATA   +  2)
 #define APREQ_ERROR_NOPARSER       (APREQ_ERROR_NODATA   +  3)
-
+#define APREQ_ERROR_INTERRUPT      (APREQ_ERROR_NODATA   +  4)
 
 /* 30's: configuration conflicts */
 #define APREQ_ERROR_MISMATCH       (APREQ_ERROR_GENERAL  + 30)

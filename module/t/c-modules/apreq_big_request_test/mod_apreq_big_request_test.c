@@ -39,16 +39,16 @@ static int dump_table(void *count, const char *key, const char *value)
 
 static int apreq_big_request_test_handler(request_rec *r)
 {
-    apreq_handle_t *env;
+    apreq_handle_t *req;
     apr_table_t *params;
     int count = 0;
 
     if (strcmp(r->handler, "apreq_big_request_test") != 0)
         return DECLINED;
 
-    env = apreq_handle_apache2(r);
+    req = apreq_handle_apache2(r);
 
-    params = apreq_params(r->pool, env);
+    params = apreq_params(req, r->pool);
     apr_table_do(dump_table, &count, params, NULL);
     ap_set_content_type(r, "text/plain");
     ap_rprintf(r, "%d", count);

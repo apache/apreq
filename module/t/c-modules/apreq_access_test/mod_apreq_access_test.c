@@ -80,7 +80,7 @@ static int apreq_access_checker(request_rec *r)
         return OK;
     }
     else {
-        const apr_table_t *t = apreq_params(r->pool, handle);
+        const apr_table_t *t = apreq_params(handle, r->pool);
         if (t != NULL) {
             ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_EGENERAL, r, 
                           "%s not found: parsing error detected (%d params)",

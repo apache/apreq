@@ -36,7 +36,7 @@ my @big_key_num = (5, 15, 25);
 my @big_keys    = ('a'..'z');
 
 plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num +
-  @names * @methods, under_construction;#, have_lwp, have_cgi;
+  @names * @methods, have_lwp && have_cgi;
 
 my $location = '/cgi-bin';
 my $script = $location . '/test_cgi.pl';
@@ -209,16 +209,16 @@ use blib;
 use Apache2;
 use APR;
 use APR::Pool;
-use Apache::Request;
-use Apache::Cookie;
-use Apache::Upload;
+use APR::Request::Param;
+use APR::Request::Cookie;
+use APR::Request::CGI;
 use File::Spec;
 require File::Basename;
 
 my $p = APR::Pool->new();
 
-apreq_log("Creating Apache::Request object");
-my $req = Apache::Request->new($p);
+apreq_log("Creating APR::Request::CGI object");
+my $req = APR::Request::CGI->new($p);
 
 my $foo = $req->param("foo");
 my $bar = $req->param("bar");
@@ -240,7 +240,7 @@ if ($foo || $bar) {
 }
     
 elsif ($test && $key) {
-    my %cookies = Apache::Cookie->fetch($p);
+    my %cookies = %{ $req->jar };
     apreq_log("Fetching cookie $key");
     if ($cookies{$key}) {
         if ($test eq "bake") {
