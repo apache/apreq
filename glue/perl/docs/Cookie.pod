@@ -25,12 +25,13 @@ Apache::Cookie - HTTP Cookies Class
     use Apache::Cookie;
 
     $j = Apache::Cookie::Jar->new($r);
-    $c_in = $j->cookies("foo");      # get cookie from request headers
+    $c_in = $j->cookies("foo");         # get cookie from request headers
 
     $c_out = Apache::Cookie->new($r, 
-                                  -name => "mycookie",
+                                  -name  => "mycookie",
                                   -value => $c_in->name );
-    $c_out->set_attr(path => "/bar");
+
+    $c_out->path("/bar");               # set path to "/bar"
     $c_out->bake;                       # send cookie in response headers
 
 =for example end
