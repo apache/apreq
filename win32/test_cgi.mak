@@ -83,7 +83,6 @@ LINK32=link.exe
 LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\test_cgi.pdb" /machine:I386 /out:"$(OUTDIR)\test_cgi.exe" 
 LINK32_OBJS= \
         "$(INTDIR)\test_cgi.obj" \
-        "$(OUTDIR)\libapreq2_cgi.lib" \
 	"$(OUTDIR)\libapreq2.lib" \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib"
@@ -140,7 +139,6 @@ LINK32=link.exe
 LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\test_cgi.pdb" /debug /machine:I386 /out:"$(OUTDIR)\test_cgi.exe" /pdbtype:sept 
 LINK32_OBJS= \
         "$(INTDIR)\test_cgi.obj" \
-        "$(OUTDIR)\libapreq2_cgi.lib" \
 	"$(OUTDIR)\libapreq2.lib" \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib"

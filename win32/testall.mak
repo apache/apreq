@@ -84,7 +84,6 @@ LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32
 LINK32_OBJS= \
 	"$(INTDIR)\cookie.obj" \
 	"$(INTDIR)\CuTest.obj" \
-	"$(INTDIR)\env.obj" \
 	"$(INTDIR)\params.obj" \
 	"$(INTDIR)\testall.obj" \
 	"$(OUTDIR)\libapreq2.lib" \
@@ -146,7 +145,6 @@ LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32
 LINK32_OBJS= \
 	"$(INTDIR)\cookie.obj" \
 	"$(INTDIR)\CuTest.obj" \
-	"$(INTDIR)\env.obj" \
 	"$(INTDIR)\params.obj" \
 	"$(INTDIR)\testall.obj" \
 	"$(OUTDIR)\libapreq2.lib" \
@@ -173,12 +171,6 @@ SOURCE=$(APREQ_HOME)\t\cookie.c
 SOURCE=$(APREQ_HOME)\t\CuTest.c
 
 "$(INTDIR)\CuTest.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-SOURCE=$(APREQ_HOME)\t\env.c
-
-"$(INTDIR)\env.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

@@ -64,9 +64,9 @@ unless ($apxs) {
 }
 
 my $test = << 'END';
-TEST: $(LIBAPREQ) $(MOD) $(CGI)
+TEST: $(LIBAPREQ) $(MOD)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
-        set PATH=%PATH%;$(APACHE)\bin
+        set PATH=%PATH%;$(APACHE)\bin;$(APREQ_HOME)\win32\libs
         cd $(LIBDIR) && $(TESTALL).exe -v
         cd $(APREQ_HOME)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
@@ -139,7 +139,6 @@ You can now run
   nmake               - builds the libapreq2 library
   nmake test          - runs the supplied tests
   nmake mod_apreq     - builds mod_apreq
-  nmake libapreq2_cgi - builds libapreq2_cgi
   nmake clean         - clean
   nmake install       - install the C libraries
   nmake perl_glue     - build the perl glue
@@ -280,26 +279,21 @@ EXPORTS
 
 END
     chdir "$apreq_home/env";
-    my %defs = (mod_apreq => 'mod_apreq.def',
-               libapreq_cgi => 'libapreq2_cgi.def');
     my $match = qr{^apreq_env};
-    foreach my $file(qw(mod_apreq libapreq_cgi)) {
-        my %fns = ();
-        open my $fh, "<$file.c"
-            or die "Cannot open env/$file.c: $!";
-        while (<$fh>) {
-            next unless /^APREQ_DECLARE\([^\)]+\)\s*(\w+)/;
-            my $fn = $1;
-            $fns{$fn}++ if $fn =~ /$match/;
-        }
-        close $fh;
-        open my $def, ">../win32/$defs{$file}"
-            or die "Cannot open win32/$defs{$file}: $!";
-        print $def $preamble;
-        print $def $_, "\n" for (sort keys %fns);
-        close $def;
+    my %fns = ();
+    open my $fh, "<mod_apreq.c"
+        or die "Cannot open env/mod_apreq.c: $!";
+    while (<$fh>) {
+        next unless /^APREQ_DECLARE\([^\)]+\)\s*(\w+)/;
+        my $fn = $1;
+        $fns{$fn}++ if $fn =~ /$match/;
     }
-    
+    close $fh;
+    open my $def, ">../win32/mod_apreq.def"
+        or die "Cannot open win32/mod_apreq.def: $!";
+    print $def $preamble;
+    print $def $_, "\n" for (sort keys %fns);
+    close $def;
 }
 
 sub fetch_apxs {
@@ -355,7 +349,6 @@ LIBAPREQ=libapreq2
 TESTALL=testall
 CGITEST=test_cgi
 MOD=mod_apreq
-CGI=libapreq2_cgi
 
 !IF "$(CFG)" != "Release" && "$(CFG)" != "Debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
@@ -398,9 +391,6 @@ $(LIBAPREQ):
 $(MOD): $(LIBAPREQ)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
 
-$(CGI): $(LIBAPREQ)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(CGI).mak CFG="$(CGI) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
-
 PERL_GLUE: $(MOD)
         cd $(PERLGLUE)
 	$(PERL) Makefile.PL
@@ -441,7 +431,6 @@ HELP:
 	@echo nmake               - builds the libapreq2 library
 	@echo nmake test          - runs the supplied tests
 	@echo nmake mod_apreq     - builds mod_apreq
-	@echo nmake libapreq2_cgi - builds libapreq2_cgi
 	@echo nmake clean         - clean
 	@echo nmake install       - install the C libraries
 	@echo nmake perl_glue     - build the perl glue
