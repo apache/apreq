@@ -107,12 +107,6 @@
 #define APREQ_MFD_ENCTYPE               "multipart/form-data"
 #define APREQ_XML_ENCTYPE               "application/xml"
 
-/* XXX WIN32 doesn't seem to put APR_INLINE fns into the lib */
-#ifdef WIN32
-#undef APR_INLINE
-#define APR_INLINE
-#endif
-
 #define APREQ_NELTS                     8
 
 /**
