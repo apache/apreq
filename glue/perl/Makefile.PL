@@ -1,4 +1,5 @@
-use ExtUtils::MakeMaker;
+use Apache2;
+use ModPerl::MM;
 
 use 5.005;
 
@@ -27,8 +28,8 @@ finddepth(sub {
 Apache::TestMM::filter_args();
 Apache::TestMM::generate_script("t/TEST");
 
-WriteMakefile(
-    NAME => 'httpd-apreq-2',
+ModPerl::MM::WriteMakefile(
+    NAME => 'libapreq',
     VERSION => '0.01',
     DIR => [qw(xs)],
     clean => { DIRS => "blib", FILES => "t/TEST @scripts" },

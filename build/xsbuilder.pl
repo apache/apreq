@@ -203,8 +203,8 @@ sub makefilepl_text {
     # XXX probably should gut EU::MM and use MP::MM instead
     my $txt = qq{
 $self->{noedit_warning_hash}
-
-use ExtUtils::MakeMaker ();
+use Apache2;
+use ModPerl::MM;
 
 local \$MMARGS ;
 
@@ -217,7 +217,7 @@ if (-f '$mmargspath')
 \$MMARGS ||= {} ;
 
 
-ExtUtils::MakeMaker::WriteMakefile(
+ModPerl::MM::WriteMakefile(
     'NAME'    => '$class',
     'VERSION' => '0.01',
     'TYPEMAPS' => [qw(@$mp2_typemaps $typemap)],
