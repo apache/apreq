@@ -1,7 +1,8 @@
 # version_check.pl tool version
 use strict;
 use warnings 'FATAL';
-
+use Getopt::Long qw/GetOptions/;
+GetOptions(\my %opts, "version=s"),
 my ($tool, $path) = @ARGV;
 $path = $tool unless defined $path;
 
@@ -30,25 +31,69 @@ sub mp2_version {
     };
 }
 
-my %prereq = (
+my %cvs = (
                 libtool => { test => \&gnu_version, version => "1.4.2" },
                autoconf => { test => \&gnu_version, version => "2.53"  },
                automake => { test => \&gnu_version, version => "1.6.3" },
-                apache2 => { test => \&exe_version, version => "2.0.46"},
-                    apr => { test => \&gnu_version, version => "0.9.4" },
-                    apu => { test => \&gnu_version, version => "0.9.4" },
-                   perl => { test => \&gnu_version, version => "5.6.1" },
-              xsbuilder => { test => \&xsb_version, version => "0.23"  },
-                    mp2 => { test => \&mp2_version, version => "1.99_09"},
                 doxygen => { test => \&gnu_version, version => "1.3"   },
-            apache_test => { test => \&a_t_version, version => "1.03"  },
-             );
+          );
+
+my %build = (
+                apache2 => { test => \&exe_version, version => "2.0.46"},
+                    apr => { test => \&gnu_version, version => "0.9.4",
+                             comment => "bundled with apache2 2.0.46"},
+                    apu => { test => \&gnu_version, version => "0.9.4",
+                             comment => "bundled with apache2 2.0.46"},
+                   perl => { test => \&gnu_version, version => "5.6.1" },
+            );
+
+my %perl_glue = (
+         "Apache::Test" => { test => \&a_t_version, version => "1.04",
+                             comment => "bundled with mod_perl 1.99_09"},
+  "ExtUtils::XSBuilder" => { test => \&xsb_version, version => "0.23"  },
+              mod_perl  => { test => \&mp2_version, version => "1.99_09"},
+                );
+
+sub print_prereqs ($$) {
+    my ($preamble, $prereq) = @_;
+    print $preamble, "\n";
+    for (sort keys %$prereq) {
+        my ($version, $comment) = @{$prereq->{$_}}{qw/version comment/};
+        if ($opts{version} or not defined $comment) {
+            $comment = "";
+        }
+        else {
+            $comment = "   ($comment)";
+        }
+
+        printf "%30s:  %s$comment\n", $_, $version;
+    }
+    print "\n";
+}
 
 if (@ARGV == 0) {
-    printf "%12s:  %s\n", $_, $prereq{$_}->{version} for sort keys %prereq;
+    if ($opts{version}) {
+        print <<EOT;
+name: libapreq2
+version: $opts{version}
+installdirs: site
+distribution_type: module
+generated_by: $0
+EOT
+        print_prereqs "requires:", \%perl_glue;
+    }
+    else {
+        print "=" x 50, "\n";
+        print_prereqs "Build system (core C API) prerequisites\n", \%build;
+        print "=" x 50, "\n";
+        print_prereqs "Perl glue (Apache::Request) prerequisites\n", \%perl_glue;
+        print "=" x 50, "\n";
+        print_prereqs "Additional prerequisites for httpd-apreq-2 cvs builds\n",\%cvs;
+    }
     exit 0;
 }
 
+my %prereq = (%cvs, %build, %perl_glue);
 die "$0 failed: unknown tool '$tool'.\n" unless $prereq{$tool};
 my $version = $prereq{$tool}->{version};
 my @version = split /\./, $version;
