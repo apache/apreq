@@ -667,31 +667,55 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
 }
 
 
-static apr_status_t getval(const char **line, const char *name,
-                           const char **val, apr_size_t *vlen)
+static apr_status_t nextval(const char **line, const char *name,
+                            const char **val, apr_size_t *vlen)
 {
-    const char *v = strstr(*line, name);
+    const char *loc = strchr(*line, '=');
+    const apr_size_t nlen = strlen(name);
     int in_quotes = 0;
 
-    if (v == NULL)
-        return APR_NOTFOUND;
+    if (loc == NULL) {
+        loc = strchr(*line, ';');
 
-    v += strlen(name);
+        if (loc == NULL || loc - *line < nlen)
+            return APR_NOTFOUND;
 
-    while (*v) {
-        if (*v == '=' || apr_isspace(*v))
-            ++v;
-        else
-            break;
+        *val = loc + 1;
+        vlen = 0;
+
+        while ( apr_isspace(*loc) && loc - *line > nlen )
+            --loc;
+
+        loc -= nlen;
+
+        if (strncasecmp(loc, name, nlen) != 0)
+            return APR_NOTFOUND;
+
+        *line = *val;
+        return APR_SUCCESS;
     }
 
-    if (*v == '"') {
-        ++v;
+
+    *val = loc + 1;
+
+    while (apr_isspace(*loc) && loc - *line > nlen)
+        --loc;
+
+    loc -= nlen;
+
+    if (strncasecmp(loc, name, nlen) != 0)
+        return APR_NOTFOUND;
+
+    while (apr_isspace(**val))
+            ++*val;
+
+    if (**val == '"') {
+        ++*val;
         in_quotes = 1;
     }
     
-    for(*val = v; *v; ++v) {
-        switch (*v) {
+    for(loc = *val; *loc; ++loc) {
+        switch (*loc) {
         case ';':
             if (in_quotes)
                 continue;
@@ -699,16 +723,16 @@ static apr_status_t getval(const char **line, const char *name,
         case '"':
             break;
         case '\\':
-            if (in_quotes && v[1] != 0)
-                ++v;
+            if (in_quotes && loc[1] != 0)
+                ++loc;
             break;
         default:
             break;
         }
     }
 
-    *vlen = v - *val;
-    *line = (*v == 0) ? v : v + 1;
+    *vlen = loc - *val;
+    *line = (*loc == 0) ? loc : loc + 1;
     return APR_SUCCESS;
 }
 
@@ -738,7 +762,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 
         memcpy(ctx->bdry, CRLF "--", 4);
 
-        s = getval(&ct, "boundary", &bdry, &blen);
+        s = nextval(&ct, "boundary", &bdry, &blen);
         
         if (s != APR_SUCCESS)
             return s;
@@ -806,18 +830,19 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 
             cd = apreq_table_get(ctx->t, "Content-Disposition");
 
-            if (cd == NULL) {
+            if (cd == NULL || 
+                nextval(&cd, "form-data", &name, &nlen) != APR_SUCCESS) {
                 parser->v.status = MFD_ERROR;
                 return APR_BADARG;
             }
 
-            s = getval(&cd, "name", &name, &nlen);
+            s = nextval(&cd, "name", &name, &nlen);
             if (s != APR_SUCCESS) {
                 parser->v.status = MFD_ERROR;
                 return APR_BADARG;
             }
 
-            s = getval(&cd, "filename", &filename, &flen);
+            s = nextval(&cd, "filename", &filename, &flen);
 
             if (s != APR_SUCCESS) {
                 apr_bucket *e;
