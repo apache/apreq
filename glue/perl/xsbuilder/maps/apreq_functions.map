@@ -121,3 +121,8 @@ apreq_handle_apache2_t *:DEFINE_new | apreq_handle_apache2 (r) | const char *:cl
 MODULE=APR::Request::CGI PACKAGE=APR::Request::CGI
 apreq_handle_cgi_t *:DEFINE_new | apreq_handle_cgi (p) | const char *:class, apr_pool_t *:p
 
+MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie PREFIX=apreq_cookie_
+apreq_cookie_name
+
+MODULE=APR::Request::Param PACKAGE=APR::Request::Param PREFIX=apreq_param_
+apreq_param_name
