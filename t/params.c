@@ -71,12 +71,14 @@ static void request_make(CuTest *tc)
 static void request_args_get(CuTest *tc)
 {
     const char *val;
+    apreq_value_t *v;
 
     val = apr_table_get(r->args,"a");
     CuAssertStrEquals(tc,"1",val);
     val = apr_table_get(r->args,"quux");
     CuAssertStrEquals(tc,"foo bar",val);
-
+    v = apreq_strtoval(val);
+    CuAssertIntEquals(tc, 7, v->size);
     val = apr_table_get(r->args,"plus");
     CuAssertStrEquals(tc,"+",val);
     val = apr_table_get(r->args,"uplus");

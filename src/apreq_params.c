@@ -263,7 +263,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
                 param = apreq_decode_param(pool, start, nlen, vlen);
 
                 if (param)
-                    apr_table_add(t, param->v.name, param->v.data);
+                    apr_table_addn(t, param->v.name, param->v.data);
                 else
                     return APR_BADARG;
             }
