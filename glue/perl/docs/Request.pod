@@ -2,16 +2,29 @@
 
 Apache::Request - Methods for dealing with client request data
 
+=for testing
+    use Apache2;
+    use Apache::Request;
+    use Apache::Upload;
+    use APR::Pool;
+    ok 1;
+
 =head1 SYNOPSIS
 
     use Apache::Request;
     my $req = Apache::Request->new($r);
+
+
+
 
 =head1 DESCRIPTION
 
 C<Apache::Request> adds methods for parsing B<GET> requests and B<POST> 
 requests where I<Content-type> is one of I<application/x-www-form-urlencoded>
 or I<multipart/form-data>.
+
+
+
 
 =head1 Apache::Request METHODS
 
@@ -21,38 +34,44 @@ query parameters. The main differences are
 =over 4
 
 =item * C<Apache::Request::new> takes an environment-specific
-object as (second) argument.  Newer versions of CGI.pm also accept
-this syntax within modperl.
+        object as (second) argument.  Newer versions of CGI.pm also accept
+        this syntax within modperl.
 
-=item * The query parameters are stored in APR::Table derived objects,
-and are therefore parsed using case-insensitive keys.
+=item * The query parameters are stored in APR::Table derived objects, and
+        are therefore retrieved from the table by using case-insensitive keys.
 
-=item * The query string is always parsed first, even for POST requests.
+=item * The query string is always parsed immediately, even for POST requests.
 
 =back
 
-=head2 C<new>  
 
-creates a new C<Apache::Request> object with an environment object $r:
+
+
+=head2 new
+
+    Apache::Request->new($r, %args)
+
+Creates a new Apache::Request object.
 
     my $req = Apache::Request->new($r);
 
-With mod_perl2, the environment object must be an C<Apache::RequestRec>
-object.  All methods from the environment class are inherited.
+With mod_perl2, the environment object $r must be an C<Apache::RequestRec>
+object.  In that case, all methods from Apache::RequestRec are inherited.
 
-The following attributes are optional:
+The following args are optional:
 
 =over 4
 
-=item C<POST_MAX>, C<MAX_BODY>
+=item * C<POST_MAX>, C<MAX_BODY>
 
 Limit the size of POST data (in bytes).
 
-=item C<DISABLE_UPLOADS>
+=item * C<DISABLE_UPLOADS>
 
 Disable file uploads.
 
-=item C<TEMP_DIR>
+
+=item * C<TEMP_DIR>
 
 Sets the directory where upload files are spooled.  On a *nix-like
 that supports I<link(2)>, the TEMP_DIR should be located on the same
@@ -65,13 +84,13 @@ file system as the final destination file:
 
 For more details on C<link>, see the L<Apache::Upload> manpage.
 
-=item C<HOOK_DATA>
+=item * C<HOOK_DATA>
 
 Extra configuration info passed as the fourth argument 
 to an upload hook.  See the description for the next item, 
 C<UPLOAD_HOOK>.
 
-=item C<UPLOAD_HOOK>
+=item * C<UPLOAD_HOOK>
 
 Sets up a callback to run whenever file upload data is read. This
 can be used to provide an upload progress meter during file uploads.
@@ -91,7 +110,11 @@ $upload->fh after the hook exits.
 =back
 
 
-=head2 C<instance($r)> [DEPRECATED]
+
+
+=head2 instance
+
+    Apache::Request->instance($r)
 
 The default (and only) behavior of I<Apache::Request> is to intelligently
 cache B<POST> data for the duration of the request.  Thus there is no longer
@@ -102,7 +125,13 @@ I<Apache::Request> object created during the request's lifetime.
 However an C<instance()> method is aliased to C<new()> in this release
 to ease the pain of porting from 1.X to 2.X.
 
-=head2 C<param([$name])>
+
+
+
+=head2 param
+
+    $req->param()
+    $req->param($name)
 
 Get the request parameters (using case-insensitive keys) by
 mimicing the OO interface of C<CGI::param>.
@@ -145,10 +174,9 @@ do not affect the actual request data, and will not be seen by other
 libapreq2 applications.
 
 
-XXX  Need to document all Apache::*::Error classes  XXX
 
 
-=head2 C<parms>, C<params> [DEPRECATED]
+=head2 parms, params
 
 The functionality of these functions is assumed by C<param>,
 so they are no longer necessary.  Aliases to C<param> are
@@ -156,7 +184,12 @@ provided in this release for backwards compatibility,
 however they may be removed from a future release.
 
 
-=head2 C<args([$name])>
+
+
+=head2 args
+
+    $req->args()
+    $req->args($name)
 
 Returns an I<Apache::Request::Table> object containing the query-string 
 parameters of the I<Apache::Request> object.
@@ -175,7 +208,10 @@ the underlying apr_table_t attribute in apreq_request_t, so their impact
 will be noticed by all libapreq2 applications during this request.
 
 
-=head2 C<body([$name])>
+=head2 body
+
+    $req->body()
+    $req->body($name)
 
 Returns an I<Apache::Request::Table> object containing the POST data 
 parameters of the I<Apache::Request> object.
@@ -194,11 +230,16 @@ the underlying apr_table_t attribute in apreq_request_t, so their impact
 will be noticed by all libapreq2 applications during this request.
 
 
-=head2 C<upload([$name])> (requires Apache::Upload)
 
-With no arguments, this returns an I<Apache::Upload::Table> object in 
-scalar context, or the names of all I<Apache::Upload> objects in
-list context.
+
+=head2 upload
+
+    $req->upload()
+    $req->upload($name)
+
+Requires C<Apache::Upload>.  With no arguments, this method
+returns an I<Apache::Upload::Table> object in scalar context, 
+or the names of all I<Apache::Upload> objects in list context.
 
 An optional name parameter can be passed to return the I<Apache::Upload>
 object associated with the given name:
@@ -211,23 +252,41 @@ generated by apreq_uploads()).  They do not affect the actual request
 data, and will not be seen by other libapreq2 applications.
 
 
-=head2 C<args_status()>
 
-Reports the final I<APR> status code of the query-string parser.
+
+=head2 args_status
+
+    $req->args_status()
+    $req->args_status($set)
+
+Get/set the I<APR> status code of the query-string parser.
 APR_SUCCESS on success, error otherwise.
 
-=head2 C<body_status()>
+
+
+
+=head2 body_status
+
+    $req->body_status()
 
 Reports the current I<APR> status code of the POST data parser.
 APR_SUCCESS when parser has completed, APR_INCOMPLETE if parser
 has more data to parse, error otherwise.
 
-=head2 C<param_status()>
+
+
+
+=head2 param_status
+
+    $req->param_status()
 
 In scalar context, this returns C<args_status> if there was
 an error during the query-string parse, otherwise this returns
 C<body_status>.  In list context this returns the list 
 C<(args_status, body_status)>.
+
+
+
 
 =head1 SUBCLASSING Apache::Request
 
@@ -246,7 +305,9 @@ Apache::Request object to delegate to.)  For example:
 	}
 
 
-=head1 PORTING from 1.X to 2.X
+
+
+=head1 PORTING from 1.X
 
 This is the complete list of changes to existing methods 
 from Apache::Request 1.X.  These issues need to be 
@@ -254,52 +315,65 @@ addressed when porting 1.X apps to the new 2.X API.
 
 =over 4
 
-=item Apache::Upload is now a separate module.  Applications
-      requiring the upload API must C<use Apache::Upload> in 2.X.
-      This is easily addressed by preloading the modules during 
-      server startup.
+=item * Apache::Upload is now a separate module.  Applications
+        requiring the upload API must C<use Apache::Upload> in 2.X.
+        This is easily addressed by preloading the modules during 
+        server startup.
 
-=item You must use the C<Apache::Request::Table> API via 
-      C<< scalar $req->args >> or C<< scalar $req->body >> 
-      to assign new parameters to the request.  You may 
-      no longer use the two-argument method calls; e.g.
+=item * You must use the C<Apache::Request::Table> API via 
+        C<< scalar $req->args >> or C<< scalar $req->body >> 
+        to assign new parameters to the request.  You may 
+        no longer use the two-argument method calls; e.g.
 
-        $req->param("foo" => "bar"); # NO: usage error in 2.X
-        $req->args->{foo} = "bar";   # OK: assign to args table
-        $req->body->add(foo => "bar");  # OK: add to body table
+          $req->param("foo" => "bar"); # NO: usage error in 2.X
+          $req->args->{foo} = "bar";   # OK: assign to args table
+          $req->body->add(foo => "bar");  # OK: add to body table
 
-        $req->param->add(foo => "bar"); # NO: this is an expensive noop, because
-                                        # the param table is generated
-                                        # by overlaying $req->args and $req->body.
+          $req->param->add(foo => "bar"); # NO: this is an expensive noop,
+                                          # because the param table is
+                                          # generated by overlaying $req->args
+                                          # and $req->body.
 
-        my $params = $req->param;
-        $params->set(foo => "bar"); # OK: sets "foo" entry in $params, which is a local
-                                    # (args + body) table. Neither $req->args, $req->body,
-                                    # nor future calls to $req->param, are affected by 
-                                    # mods to $params.
+          my $params = $req->param;
+          $params->set(foo => "bar"); # OK: sets "foo" entry in $params, which
+                                      # is a local (args + body) table. Neither
+                                      # $req->args, $req->body, nor future calls
+                                      # to $req->param, are affected by mods to
+                                      # $params.
 
 
-=item C<instance()> is now identical to C<new()>, and is now deprecated.  It 
-      may be removed from a future 2.X release.
+=item * C<instance()> is now identical to C<new()>, and is now deprecated.  It 
+        may be removed from a future 2.X release.
 
-=item C<param> includes the functionality of C<parms()> and C<params()>, so they
-      are now deprecated and may be removed from a future 2.X release.
+=item * C<param> includes the functionality of C<parms()> and C<params()>, so
+        they are now deprecated and may be removed from a future 2.X release.
 
 =back
 
 
+
+
 =head1 SEE ALSO
 
-L<Apache::Cookie>, L<Apache::Upload>, L<APR::Table>
+L<Apache::Cookie>, L<Apache::Upload>,
+L<Apache::Request::Table>, L<Apache::Request::Error>
 
-=head1 CREDITS
 
-This interface is based on the original pure Perl version by Lincoln Stein.
 
-=head1 MISSING DOCS
 
-$req->config, Apache::Request::Table
+=head1 COPYRIGHT
 
-=for testing
-ok 1;
+  Copyright 2003-2004  The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
 

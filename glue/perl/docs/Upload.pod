@@ -13,7 +13,7 @@ Apache::Upload - Methods for dealing with file uploads.
     eval { POSIX::close(0); $req->parse };
     $req->body->add($u);
     $data = do { local (@ARGV, $/) = __FILE__; <> };
-
+    ok length $data == -s __FILE__;
 
 
 
@@ -32,6 +32,7 @@ Apache::Upload - Methods for dealing with file uploads.
     $upload->slurp($slurp_data);
 
     read $upload->fh, $fh_data, $size;
+    ok $slurp_data eq $fh_data;
 
     $io = $upload->io;
     print while <$io>;
@@ -239,9 +240,15 @@ copy the temporary file to the specified location.
 Reads the full contents of a file upload into the scalar argument.
 The return value is the length of the file.
 
+=for example begin
+
+    my $size = $upload->slurp($contents);
+
+=for example end
+
 =for example_testing
-   is $upload->slurp($contents), -s __FILE__;
-   is $contents, $data;
+    is $size, length $contents;
+    is $contents, $data;
 
 
 
@@ -252,8 +259,14 @@ The return value is the length of the file.
 
 Provides the name of the spool file.
 
+=for example begin
+
+    my $tempname = $upload->tempname;
+
+=for example end
+
 =for example_testing
-    like $upload->tempname, qr/apreq.{6}$/;
+    like $tempname, qr/apreq.{6}$/;
 
 
 
