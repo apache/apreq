@@ -17,6 +17,66 @@ CURRENT RELEASE NOTES:
        place.
 
 
+     -  joes: We should also remove apreq_jar_t and apreq_request_t.
+        I want apreq_env_handle_t to ultimately look something like this:
+
+        typedef struct apreq_env_module_t {
+            const char *name;
+            apr_uint32_t magic_number;
+            apr_pool_t *(*pool)(apreq_env_handle_t *);
+            apr_bucket_alloc_t *(*bucket_alloc)(apreq_env_handle_t *);
+
+            apr_status_t (*jar)(apreq_env_handle_t *, const apr_table_t **);
+            apr_status_t (*args)(apreq_env_handle_t *, const apr_table_t **);
+            apr_status_t (*body)(apreq_env_handle_t *, const apr_table_t **);
+
+            apreq_cookie_t *(*jar_get)(apreq_env_handle_t *, const char *);
+            apreq_param_t *(*args_get)(apreq_env_handle_t *, const char *);
+            apreq_param_t *(*body_get)(apreq_env_handle_t *, const char *);
+
+            apr_status_t (*parser_get)(apreq_env_handle_t *, apreq_parser_t **);
+            apr_status_t (*parser_set)(apreq_env_handle_t *, apreq_parser_t *);
+            apr_status_t (*hook_add)(apreq_env_handle_t *, apreq_hook_t *);
+
+            const char *(*header_in)(apreq_env_handle_t *,const char *);
+            apr_status_t (*header_out)(apreq_env_handle_t *, const char *,char *);
+        } apreq_env_module_t;
+
+
+        Fates to be determined (ie, things that might need to stay in there somehow):
+
+            void (*log)(const char *,int,int,apr_status_t,apreq_env_handle_t *,
+                 const char *,va_list);
+
+            const char *(*temp_dir)(apreq_env_handle_t *, const char *);
+            apr_off_t (*max_body)(apreq_env_handle_t *,apr_off_t);
+            apr_ssize_t (*max_brigade)(apreq_env_handle_t *, apr_ssize_t);
+
+        If possible the log calls inside libapreq2 should be replaced by 
+        error codes that either libapreq2 apps or modules can log (or not).
+        The rest are controls (temp_dir, max_body, max_brigade) that
+        users will need to configure, and libapreq2 parsers will need
+        to look at.  However these APIs are missing status codes, for 
+        situations where a user tries to apply bogus settings 
+        (or which change a setting after the parser has done its work).  
+        I'm wondering if that these config shouldn't be moved into the
+        apreq_parser_t struct, in which case the new "parser_set" slot 
+        will accomplish the same effect.
+
+
+       Things to definitely remove (being either unneeded, boneheaded, 
+       or now obsolete):
+
+            apreq_jar_t (*jar)(apreq_env_handle_t *, apreq_jar_t *);
+            apreq_request_t (*request)(apreq_env_handle_t *, apreq_request_t *);
+
+            const char *(*query_string)(apreq_env_handle_t *);
+            apr_status_t (*read)(apreq_env_handle_t *,apr_read_type_e,apr_off_t);
+
+
+
+
+
 RELEASE SHOWSTOPPERS:
 
      - The api docs and perl glue are currently broken.
