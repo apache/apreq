@@ -143,6 +143,14 @@ APR_INLINE
 APREQ_DECLARE(int) apreq_table_nelts(const apreq_table_t *t);
 #define apreq_table_is_empty(t) ( apreq_table_nelts(t) == 0 )
 
+/**
+ * Returns the pool associated to the table's underlying array.
+ * @param t The table.
+ */
+
+APR_INLINE
+APREQ_DECLARE(apr_pool_t *) apreq_table_pool(apreq_table_t *t);
+
 
 /**
  * Get/set method for the table's value copier.

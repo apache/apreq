@@ -60,6 +60,7 @@
 #define APREQ_PARAM_H
 
 #include "apreq_tables.h"
+#include "apreq_parsers.h"
 #include "apr_buckets.h"
 
 #ifdef __cplusplus
@@ -99,18 +100,18 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
 typedef struct apreq_request_t {
     apreq_table_t      *args;         /* query_string params */
     apreq_table_t      *body;
-
-    apr_pool_t         *pool;
+    apreq_parser_t     *parser;
+    apreq_cfg_t        *cfg;
     void               *env;
-    apreq_value_t       v;
 } apreq_request_t;
 
 /**
  * Creates an apreq_request_t object.
- * @param ctx The current request context.
+ * @param env The current request environment.
+ * @param args Local query string.
  */
 
-APREQ_DECLARE(apreq_request_t *)apreq_request(void *ctx, const char *args);
+APREQ_DECLARE(apreq_request_t *)apreq_request(void *env, const char *args);
 
 
 /**
@@ -164,6 +165,9 @@ APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool,
 APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool, 
                                          const apreq_param_t *param);
 
+
+APREQ_DECLARE(apr_status_t)apreq_parse_request(apreq_request_t *req, 
+                                               apr_bucket_brigade *bb);
 
 #ifdef __cplusplus
 }

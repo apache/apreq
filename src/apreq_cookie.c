@@ -98,10 +98,10 @@ static int has_rfc_cookie(void *ctx, const char *key, const char *val)
                                       1 -> not found, keep going. */
 }
 
-APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *ctx)
+APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env)
 {
-    if (apreq_env_cookie2(ctx) == NULL) {
-        apreq_jar_t *j = apreq_jar(ctx, NULL);
+    if (apreq_env_cookie2(env) == NULL) {
+        apreq_jar_t *j = apreq_jar(env, NULL);
 
         if (j == NULL || apreq_jar_nelts(j) == 0) 
             return APREQ_COOKIE_VERSION;
@@ -273,10 +273,10 @@ static APR_INLINE apr_status_t get_pair(const char **data,
     return APR_SUCCESS;
 }
 
-APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx, 
+APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, 
                                        const char *data)
 {
-    apr_pool_t *p = apreq_env_pool(ctx);
+    apr_pool_t *p = apreq_env_pool(env);
 
     apreq_cookie_version_t version;
     apreq_jar_t *j = NULL;
@@ -293,22 +293,21 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
     if (data == NULL) {
         /* use the environment's cookie data */
 
-        /* fetch ctx->jar (cached jar) */
-        j = apreq_env_jar(ctx, NULL);
+        j = apreq_env_jar(env, NULL);
         if ( j != NULL )
             return j;
 
         j = apr_palloc(p, sizeof *j);
         j->pool = p;
-        j->env = ctx;
+        j->env = env;
         j->cookies = apreq_table_make(p, APREQ_NELTS);
 
-        data = apreq_env_cookie(ctx);
+        data = apreq_env_cookie(env);
 
         /* XXX: potential race condition here 
            between env_jar fetch and env_jar set.  */
 
-        apreq_env_jar(ctx,j);      /* set (cache) ctx->jar */
+        apreq_env_jar(env,j);
 
         if (data == NULL)
             return j;
@@ -316,13 +315,13 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
     else {
         j = apr_palloc(p, sizeof *j);
         j->pool = p;
-        j->env = ctx;
+        j->env = env;
         j->cookies = apreq_table_make(p, APREQ_NELTS);
     }
 
     origin = data;
 
-    apreq_log(APREQ_DEBUG 0, ctx, "parsing cookie data: %s", data);
+    apreq_log(APREQ_DEBUG 0, env, "parsing cookie data: %s", data);
 
     /* parse data */
 
@@ -360,14 +359,14 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
 
         case '$':
             if (c == NULL) {
-                apreq_log(APREQ_ERROR APR_BADCH, ctx,
+                apreq_log(APREQ_ERROR APR_BADCH, env,
                       "Saw attribute, expecting NAME=VALUE cookie pair: %s",
                           data);
                 return j;
             }
             else if (version == NETSCAPE) {
                 c->v.status = APR_EMISMATCH;
-                apreq_log(APREQ_ERROR c->v.status, ctx, 
+                apreq_log(APREQ_ERROR c->v.status, env, 
                           "Saw attribute in a Netscape Cookie header: %s", 
                           data);
                 return j;
@@ -380,7 +379,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
                                         apr_pstrmemdup(p,value, vlen));    
             else {
                 c->v.status = status;
-                apreq_log(APREQ_WARN c->v.status, ctx,
+                apreq_log(APREQ_WARN c->v.status, env,
                            "Ignoring bad attribute pair: %s", data);
             }
             break;
@@ -391,12 +390,12 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
             if (status == APR_SUCCESS) {
                 c = apreq_make_cookie(p, version, name, nlen, 
                                       value, vlen);
-                apreq_log(APREQ_DEBUG status, ctx, 
+                apreq_log(APREQ_DEBUG status, env, 
                           "adding cookie: %s => %s", c->v.name, c->v.data);
                 apreq_add_cookie(j, c);
             }
             else {
-                apreq_log(APREQ_WARN status, ctx,
+                apreq_log(APREQ_WARN status, env,
                           "Skipping bad NAME=VALUE pair: %s", data);
             }
         }
@@ -476,7 +475,7 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(apr_pool_t *p,
 
 {
     char s[APREQ_COOKIE_LENGTH];
-    int n = apreq_serialize_cookie(s, APREQ_COOKIE_LENGTH,c);
+    int n = apreq_serialize_cookie(s, APREQ_COOKIE_LENGTH, c);
 
     if ( n < APREQ_COOKIE_LENGTH )
         return apr_pstrmemdup(p, s, n);
@@ -485,40 +484,40 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(apr_pool_t *p,
 }
 
 APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c,
-                                              void *ctx)
+                                              void *env)
 {
-    char *s = apreq_cookie_as_string(apreq_env_pool(ctx),c);
+    char *s = apreq_cookie_as_string(apreq_env_pool(env),c);
     dAPREQ_LOG;
 
     if (s == NULL) {
-        apreq_log(APREQ_ERROR APR_ENAMETOOLONG, ctx, 
+        apreq_log(APREQ_ERROR APR_ENAMETOOLONG, env, 
                   "Serialized cookie exceeds APREQ_COOKIE_LENGTH = %d", 
                     APREQ_COOKIE_LENGTH);
         return APR_ENAMETOOLONG;
     }
 
-    return apreq_env_set_cookie(ctx, s);
+    return apreq_env_set_cookie(env, s);
 }
 
 APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c,
-                                               void *ctx)
+                                               void *env)
 {
-    char *s = apreq_cookie_as_string(apreq_env_pool(ctx),c);
+    char *s = apreq_cookie_as_string(apreq_env_pool(env),c);
     dAPREQ_LOG;
 
     if ( s == NULL ) {
-        apreq_log(APREQ_ERROR APR_ENAMETOOLONG, ctx,
+        apreq_log(APREQ_ERROR APR_ENAMETOOLONG, env,
                   "Serialized cookie exceeds APREQ_COOKIE_LENGTH = %d", 
                     APREQ_COOKIE_LENGTH);
         return APR_ENAMETOOLONG;
     }
     else if ( c->version == NETSCAPE ) {
-        apreq_log(APREQ_ERROR APR_EMISMATCH, ctx,
+        apreq_log(APREQ_ERROR APR_EMISMATCH, env,
                   "Cannot bake2 a Netscape cookie: %s", s);
         return APR_EMISMATCH;
     }
 
-    return apreq_env_set_cookie2(ctx, s);
+    return apreq_env_set_cookie2(env, s);
 }
 
 

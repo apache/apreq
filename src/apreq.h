@@ -60,6 +60,9 @@ APREQ_DECLARE(apreq_value_t *) apreq_merge_values(apr_pool_t *p,
                                             const apr_array_header_t *arr);
 
 
+APR_INLINE
+APREQ_DECLARE(const char *)apreq_enctype(void *env);
+
 typedef enum { AS_IS, ENCODE, DECODE, QUOTE } apreq_join_t;
 
 APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 

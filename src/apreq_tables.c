@@ -219,20 +219,19 @@ APR_INLINE
 static int search(const apreq_table_entry_t *const o,int *elt, 
                   const char *key)
 {
-    register int idx = *elt;
-    register CS_TYPE csum;
+    int idx = *elt;
+    CS_TYPE csum;
 
     COMPUTE_KEY_CHECKSUM(key, csum);
 
     while (1) {
-        const int direction = (csum > idx[o].checksum) ?  1 :
-                              (csum < idx[o].checksum) ? -1 : 
-                                  strcasecmp(key,idx[o].key);
-
+        const int direction = (csum > idx[o].checksum) ? 1:
+                              (csum < idx[o].checksum) ? -1 :
+                              strcasecmp(key,idx[o].key);
         if (direction < 0 && idx[o].tree[LEFT] >= 0)
-            idx = idx[o].tree[LEFT];
+                idx = idx[o].tree[LEFT];
         else if (direction > 0 && idx[o].tree[RIGHT] >= 0)
-            idx = idx[o].tree[RIGHT];
+                idx = idx[o].tree[RIGHT];
         else {
             *elt = idx;
             return direction;
@@ -452,60 +451,6 @@ static void delete(apreq_table_entry_t *const o, int *root,  const int idx)
     x[o].color = BLACK;
 }
 
-/*
- * Recursive function that combines two trees by root-inserting
- * the elements of the second (b) into the first (a).  Note that 
- * elements of the second tree must also be reindexed since their 
- * origin is n entries away from a's origin (o).
- *
- */
-static int combine(apreq_table_entry_t *o, int a, int b, const int n)
-{
-    int left, right, next;
-
-    if (b < 0)
-        return a;
-
-    b += n;
-
-    left = b[o].tree[LEFT];
-    right = b[o].tree[RIGHT];
-
-    for(next = b; next[o].tree[NEXT] >= 0; next = next[o].tree[NEXT])
-        next[o].tree[NEXT] += n;
-
-    if (a >= 0) {
-        int rv     = a;
-        int parent = a[o].tree[UP];
-
-        if (parent >= 0) {
-            parent[o].tree[LR(a)] =  b;
-            a[o].tree[UP]         = -1;
-        }
-
-        if (insert(o,&a,a,b+o) < 0) /* b is a new element for a's tree */
-            rv = b;
-
-        if (b[o].tree[UP] >= 0)
-            PROMOTE(&a,b);
-
-        b[o].tree[UP]    = parent;
-        b[o].tree[LEFT]  = combine(o, b[o].tree[LEFT],  left,  n);
-        b[o].tree[RIGHT] = combine(o, b[o].tree[RIGHT], right, n);
-
-        return rv;
-    }
-    else {
-        if (b[o].tree[UP] >= 0)
-            b[o].tree[UP] += n;
-        b[o].tree[LEFT]  = combine(o, -1,  left, n);
-        b[o].tree[RIGHT] = combine(o, -1, right, n);
-
-        return b;
-    }
-
-}
-
 
 /*****************************************************************
  *
@@ -585,7 +530,7 @@ APREQ_DECLARE(apr_table_t *)apreq_table_export(apr_pool_t *p,
                                                const apreq_table_t *t)
 {
     int idx;
-    apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
+    apreq_table_entry_t *const o = (apreq_table_entry_t *)t->a.elts;
     apr_table_t *s = apr_table_make(p, t->a.nalloc);
 
     for (idx = 0; idx < t->a.nelts; ++idx) {
@@ -643,6 +588,12 @@ APREQ_DECLARE(int) apreq_table_ghosts(apreq_table_t *t)
 }
 
 APR_INLINE
+APREQ_DECLARE(apr_pool_t *) apreq_table_pool(apreq_table_t *t)
+{
+    return t->a.pool;
+}
+
+APR_INLINE
 APREQ_DECLARE(apreq_value_copy_t *)apreq_table_copier(apreq_table_t *t, 
                                                       apreq_value_copy_t *c)
 {
@@ -669,7 +620,7 @@ APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t)
 {
     apr_status_t status = APR_SUCCESS;
     int idx;
-    apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
+    apreq_table_entry_t *const o = (apreq_table_entry_t *)t->a.elts;
     apreq_value_t *a[APREQ_NELTS];
     apr_array_header_t arr = { t->a.pool, sizeof(apreq_value_t *), 0,
                                APREQ_NELTS, (char *)a };
@@ -716,7 +667,7 @@ APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t)
 
 static int bury_table_entries(apreq_table_t *t, apr_array_header_t *q)
 {
-    apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
+    apreq_table_entry_t *const o = (apreq_table_entry_t *)t->a.elts;
     int j, m, rv=0, *p = (int *)q->elts;
     register int n;
 
@@ -755,7 +706,7 @@ static int bury_table_entries(apreq_table_t *t, apr_array_header_t *q)
 
 APREQ_DECLARE(int) apreq_table_exorcise(apreq_table_t *t)
 {
-    apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
+    apreq_table_entry_t *const o = (apreq_table_entry_t *)t->a.elts;
     int idx;
     int a[APREQ_NELTS];
     apr_array_header_t arr = { t->a.pool, sizeof(int), 0,
@@ -797,7 +748,7 @@ APREQ_DECLARE(apr_status_t) apreq_table_keys(const apreq_table_t *t,
                                              apr_array_header_t *keys)
 {
     int idx;
-    apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
+    apreq_table_entry_t *const o = (apreq_table_entry_t *)t->a.elts;
     if (t->a.nelts == t->ghosts)
         return APR_NOTFOUND;
 
@@ -933,6 +884,7 @@ APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t,
     const int n = t->a.nelts;
     int idx;
     apreq_table_entry_t *o;
+
     if (t->ghosts == n) {
         t->a.nelts = 0;
         t->ghosts = s->ghosts;
@@ -968,13 +920,7 @@ APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t,
             insert(o, &t->root[hash], t->root[hash], idx+o);
     }
 }
-/*
-    else {
-        for (idx = 0; idx < TABLE_HASH_SIZE; ++idx)
-            t->root[idx] = combine(o,t->root[idx],s->root[idx],n);
-    }
-}
-*/
+
 
 APREQ_DECLARE(apreq_table_t *) apreq_table_overlay(apr_pool_t *p,
                                              const apreq_table_t *overlay,
@@ -1163,7 +1109,7 @@ APREQ_DECLARE(int) apreq_table_vdo(apr_table_do_callback_fn_t *comp,
             idx = t->root[TABLE_HASH(*argp)];
             if ( idx >= 0 && search(o,&idx,argp) == 0 )
                 while (idx >= 0) {
-                    rv = (*comp) (rec, idx[o].key, idx[o].val->data);
+                    rv = (*comp) (rec, idx[o].val->name, idx[o].val->data);
                     idx = idx[o].tree[NEXT];
                 }
         }
@@ -1171,7 +1117,7 @@ APREQ_DECLARE(int) apreq_table_vdo(apr_table_do_callback_fn_t *comp,
             for (idx = 0; rv && (idx < t->a.nelts); ++idx)
                 /* if (idx[o].key) */
                 if (! DEAD(idx) )
-                    rv = (*comp) (rec, idx[o].key, idx[o].val->data);
+                    rv = (*comp) (rec, idx[o].val->name, idx[o].val->data);
         }
         if (rv == 0) {
             vdorv = 0;

@@ -61,7 +61,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define dENV struct env_ctx *env = (struct env_ctx *)ctx
+#define dCTX struct env_ctx *ctx = (struct env_ctx *)env
 /* the "warehouse" */
 
 struct env_ctx {
@@ -69,87 +69,89 @@ struct env_ctx {
     apreq_request_t    *req;
     apreq_jar_t        *jar;
     apr_bucket_brigade *bb;
+    int                loglevel;
 };
 
-static const char env_name[] = "CGI";
+const char apreq_env[] = "CGI";
+
 #define CRLF "\015\012"
 
-static apr_pool_t *env_pool(void *ctx)
+
+APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
 {
-    dENV;
-    return env->pool;
+    dCTX;
+    return ctx->pool;
 }
 
-static const char *env_in(void *ctx, const char *name)
+APREQ_DECLARE(const char *)apreq_env_args(void *env)
 {
-    return getenv(name);
+    return getenv("QUERY_STRING");
+}
+APREQ_DECLARE(const char *)apreq_env_header_in(void *env, 
+                                               const char *name)
+{
+    dCTX;
+    char *key = apr_pstrdup(ctx->pool, name);
+    char *k;
+    for (k = key; *k; ++k) {
+        if (*k == '-')
+            *k = '_';
+        else
+            *k = apr_toupper(k);
+    }
+
+
+    return getenv(key);
 }
 
-static apr_status_t env_out(void *ctx, const char *name, char *value)
+APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *ctx, const char *name, 
+                                                char *value)
 {    
     return printf("%s: %s" CRLF, name, value) > 0 ? APR_SUCCESS : APR_EGENERAL;
 }
 
-static const char *env_args(void *ctx)
-{
-    return getenv("QUERY_STRING");
-}
 
-static void *env_jar(void *ctx, void *jar)
+APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar)
 {
-    dENV;
+    dCTX;
     if (jar != NULL) {
-        apreq_jar_t *old_jar = env->jar;
-        env->jar = jar;
+        apreq_jar_t *old_jar = ctx->jar;
+        ctx->jar = jar;
         return old_jar;
     }
 
-    return env->jar;
+    return ctx->jar;
 }
 
-static void *env_request(void *ctx, void *req)
+APREQ_DECLARE(apreq_request_t *)apreq_env_request(void *env,
+                                                  apreq_request_t *req)
 {
-    dENV;
+    dCTX;
 
     if (req != NULL) {
-        apreq_request_t *old_req = env->req;
-        env->req = req;
+        apreq_request_t *old_req = ctx->req;
+        ctx->req = req;
         return old_req;
     }
-    return env->req;
-}
-
-static apreq_cfg_t *env_cfg(void *ctx)
-{
-    /* XXX: not implemented */
-    return NULL;
+    return ctx->req;
 }
 
 
-static int dump_table(void *ctx, const char *key, const char *value)
+APREQ_DECLARE_LOG(env_log)
 {
-    dENV;
-    dAPREQ_LOG;
-    apreq_log(APREQ_DEBUG 0, env, "%s => %s", key, value);
-    return 1;
+    dCTX;
+    va_list vp;
+    if (level < ctx->loglevel)
+        return;
+
+    va_start(vp, fmt);
+    fprintf(stderr, "[%s(%d)] %s\n", file, line, 
+            apr_pvsprintf(ctx->pool,fmt,vp));
+    va_end(vp);
 }
 
-
-APREQ_LOG(env_log)
+APREQ_DECLARE(apr_status_t) apreq_env_read(void *env, apr_read_type_e block,
+                                           apr_off_t bytes)
 {
-
+    return APR_ENOTIMPL;
 }
-
-const struct apreq_env APREQ_ENV =
-{
-    env_name,
-    env_pool,
-    env_in,
-    env_out,
-    env_args,
-    env_jar,
-    env_request,
-    env_cfg,
-    env_log
- };
-

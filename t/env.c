@@ -68,74 +68,57 @@
 static const char env_name[] = "CGI";
 #define CRLF "\015\012"
 
-static apr_pool_t *env_pool(void *ctx)
+apr_bucket_brigade *bb;
+apreq_table_t *table;
+
+APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
 {
     return p;
 }
 
-static const char *env_in(void *ctx, const char *name)
+APREQ_DECLARE(const char *)apreq_env_header_in(void *env, const char *name)
 {
-    return ctx;
+    return env;
 }
 
-static apr_status_t env_out(void *ctx, const char *name, char *value)
+APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, 
+                                                const char *name, 
+                                                char *value)
 {    
     return printf("%s: %s" CRLF, name, value) > 0 ? APR_SUCCESS : APR_EGENERAL;
 }
 
-static const char *env_args(void *ctx)
+APREQ_DECLARE(const char *)apreq_env_args(void *env)
 {
     return NULL;
 }
 
-static void *env_jar(void *ctx, void *jar)
+APREQ_DECLARE(apreq_jar_t *)apreq_env_jar(void *env, apreq_jar_t *jar)
 {
     return NULL;
 }
 
-static void *env_request(void *ctx, void *req)
-{
-    return NULL;
-}
-
-static apreq_cfg_t *env_cfg(void *ctx)
+APREQ_DECLARE(apreq_request_t *)apreq_env_request(void *env, 
+                                                  apreq_request_t *req)
 {
     return NULL;
 }
 
 static int loglevel = 10;
-APREQ_LOG(env_log)
+APREQ_DECLARE_LOG(apreq_log)
 {
     va_list vp;
-
     if (level < loglevel)
         return;
 
     va_start(vp, fmt);
     fprintf(stderr, "[%s(%d)] %s\n", file, line, apr_pvsprintf(p,fmt,vp));
     va_end(vp);
-    
 }
 
-
-static int dump_table(void *ctx, const char *key, const char *value)
+APREQ_DECLARE(apr_status_t) apreq_env_read(void *env, apr_read_type_e block,
+                                           apr_off_t bytes)
 {
-    dAPREQ_LOG;
-    apreq_log(APREQ_DEBUG 0, ctx, "%s => %s", key, value);
-    return 1;
+    return APR_ENOTIMPL;
 }
-
-
-const struct apreq_env APREQ_ENV =
-{
-    env_name,
-    env_pool,
-    env_in,
-    env_out,
-    env_args,
-    env_jar,
-    env_request,
-    env_cfg,
-    env_log
- };
 

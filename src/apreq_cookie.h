@@ -81,7 +81,7 @@ apr_status_t apreq_add_cookie(apreq_jar_t *jar, const apreq_cookie_t *c);
 /**
  * Parse the incoming "Cookie:" headers into a cookie jar.
  * 
- * @param ctx The current context.
+ * @param env The current environment.
  * @param data  String to parse as a HTTP-merged "Cookie" header.
  * @remark "data = NULL" has special semantics.  In this case,
  * apreq_jar_parse will attempt to fetch a cached jar from the
@@ -94,7 +94,7 @@ apr_status_t apreq_add_cookie(apreq_jar_t *jar, const apreq_cookie_t *c);
  */
 
 
-APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx, const char *data);
+APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *data);
 
 /**
  * Returns a new cookie, made from the argument list.
@@ -159,7 +159,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apr_pool_t *p, apreq_cookie_t *c,
  * @param c The cookie.
  */
 APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c, 
-                                              void *ctx);
+                                              void *env);
 
 /* XXX: how about baking whole cookie jars, too ??? */
 
@@ -169,9 +169,9 @@ APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c,
  * @param c The cookie.
  */
 APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c,
-                                               void *ctx);
+                                               void *env);
 
-APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *ctx);
+APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env);
 
 
 #ifdef __cplusplus

@@ -1,11 +1,9 @@
 #ifndef APREQ_ENV_H
 #define APREQ_ENV_H
 
-#include "apreq.h"
-
-#ifdef  __cplusplus
- extern "C" {
-#endif 
+#include "apreq_params.h"
+#include "apreq_cookie.h"
+#include "apreq_parsers.h"
 
 #ifdef HAVE_SYSLOG
 #include <syslog.h>
@@ -13,6 +11,11 @@
 #ifndef LOG_PRIMASK
 #define LOG_PRIMASK 7
 #endif
+
+
+#ifdef  __cplusplus
+ extern "C" {
+#endif 
 
 #define APREQ_LOG_EMERG     LOG_EMERG     /* system is unusable */
 #define APREQ_LOG_ALERT     LOG_ALERT     /* action must be taken immediately */
@@ -46,56 +49,45 @@
 #define APREQ_WARN   APREQ_LOG_MARK, APREQ_LOG_WARNING,
 #define APREQ_ERROR  APREQ_LOG_MARK, APREQ_LOG_ERR,
 
-#define dAPREQ_LOG  APREQ_LOG(*apreq_log) = APREQ_ENV.log
+#define dAPREQ_LOG  /* APREQ_LOG(*apreq_log) = APREQ_ENV.log */
 
-typedef struct apreq_cfg_t {
-    apr_off_t max_len;
-    char     *temp_dir;
-    int       disable_uploads;
-} apreq_cfg_t;
+extern const char apreq_env[];
 
-#define APREQ_LOG(f) void (f)(const char *file, int line, int level, \
-                        apr_status_t status, void *ctx, const char *fmt, ...)
+#define APREQ_DECLARE_LOG(f) APREQ_DECLARE_NONSTD(void)(f)(const char *file, \
+                             int line,  int level, apr_status_t status, \
+                             void *env, const char *fmt, ...)
 
-extern const struct apreq_env {
-    const char          *name;
-    apr_pool_t          *(*pool)(void *ctx);
 
-    /* header access */
-    const char          *(*in)(void *ctx, const char *name);
-    apr_status_t         (*out)(void *ctx, const char *name, char *value);
+APREQ_DECLARE_LOG(apreq_log);
+APREQ_DECLARE(apr_pool_t *) apreq_env_pool(void *env);
 
-    /* raw (unparsed) query_string access */
-    const char          *(*args)(void *ctx);
 
-    /* (get/set) cached core objects */
-    void                *(*jar)(void *ctx, void *jar);
-    void                *(*request)(void *ctx, void *req);
+APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar);
+APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
+                                                   apreq_request_t *req);
 
-    /* environment configuration */
-    apreq_cfg_t         *(*config)(void *ctx);
 
-    /* core logging function */
-    APREQ_LOG            (*log);
+APREQ_DECLARE(const char *) apreq_env_args(void *env);
+APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name);
 
-} APREQ_ENV;
 
-#define apreq_env_name() APREQ_ENV.name
-#define apreq_env_pool(c) APREQ_ENV.pool(c)
+#define apreq_env_content_type(env) apreq_env_header_in(env, "Content-Type")
+#define apreq_env_cookie(env) apreq_env_header_in(env, "Cookie")
+#define apreq_env_cookie2(env) apreq_env_header_in(env, "Cookie2")
 
-#define apreq_env_jar(c,j) APREQ_ENV.jar(c,j)
-#define apreq_env_request(c,r) APREQ_ENV.request(c,r)
 
-#define apreq_env_config(c) APREQ_ENV.config(c)
+APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, 
+                                                const char *name,
+                                                char *val);
 
-#define apreq_env_content_type(c) APREQ_ENV.in(c, "Content-Type")
-#define apreq_env_cookie(c) APREQ_ENV.in(c, "Cookie")
-#define apreq_env_cookie2(c) APREQ_ENV.in(c, "Cookie2")
-#define apreq_env_set_cookie(c,s) APREQ_ENV.out(c,"Set-Cookie",s)
-#define apreq_env_set_cookie2(c,s) APREQ_ENV.out(c,"Set-Cookie2",s)
-#define apreq_env_args(c) APREQ_ENV.args(c)
+#define apreq_env_set_cookie(e,s) apreq_env_header_out(e,"Set-Cookie",s)
+#define apreq_env_set_cookie2(e,s) apreq_env_header_out(e,"Set-Cookie2",s)
 
-#define apreq_env_get_brigade(c,bb) APREQ_ENV.get_brigade(c,bb)
+
+
+APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
+                                           apr_read_type_e block,
+                                           apr_off_t bytes);
 
 
 #ifdef __cplusplus

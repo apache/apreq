@@ -89,88 +89,52 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
     return param;
 }
 
-APR_INLINE
-static const char * enctype(apr_pool_t *p, const char *ct)
-{
-    char *enctype, *semicolon;
-    if (ct == NULL)
-        enctype = NULL;
-    else {
-        enctype = apr_pstrdup(p, ct);
-        semicolon = strchr(enctype, ';');
-        if (semicolon)
-            *semicolon = 0;
-    }
-    return enctype;
-}
-
-APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx, const char *args)
+APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *args)
 {
     apreq_request_t *req;
-    apreq_parser_t *parser;
+    apr_pool_t *p;
     apr_status_t s;
 
     if (args == NULL) {
-        apreq_request_t *old_req = apreq_env_request(ctx,NULL);
-        apr_pool_t *p;
-
+        apreq_request_t *old_req = apreq_env_request(env,NULL);
         if (old_req != NULL)
             return old_req;
 
-        p = apreq_env_pool(ctx);
-        args = apreq_env_args(ctx);
+        p = apreq_env_pool(env);
+        args = apreq_env_args(env);
 
-        req = apr_palloc(p, sizeof(apreq_table_t *) + sizeof *req);
-        req->pool = apreq_env_pool(ctx);
-        *(apreq_table_t **)req->v.data = apreq_make_table(p, APREQ_NELTS);
-        req->v.size   = sizeof(apreq_table_t *);
-        req->v.status = APR_EINIT;
-        req->env      = ctx;
+        req = apr_palloc(p, sizeof *req);
+        req->env      = env;
         req->args     = apreq_make_table(p, APREQ_NELTS);
+        req->cfg      = NULL;
         req->body     = NULL;
-        req->v.name = enctype(p, apreq_env_content_type(ctx));
+        req->parser   = apreq_parser(env, NULL);
+
         /* XXX need to install copy/merge callbacks for apreq_param_t */
-        parser = apreq_make_parser(p, APREQ_URL_ENCTYPE,
-                                   apreq_parse_urlencoded, NULL, req);
-        apreq_register_parser(req, parser);
-        parser = apreq_make_parser(p, APREQ_MFD_ENCTYPE,
-                                   apreq_parse_multipart, NULL, req);
-        apreq_register_parser(req, parser);
 
         /* XXX get/set race condition here wrt apreq_env_request? */
-        old_req = apreq_env_request(ctx, req);
+        old_req = apreq_env_request(env, req);
+
         if (old_req != NULL) {
-            apreq_env_request(ctx, old_req); /* reset old_req */
+            apreq_env_request(env, old_req); /* reset old_req */
             return old_req;
         }
 
     }
     else {
-        apr_pool_t *p = apreq_env_pool(ctx);
+        p = apreq_env_pool(env);
 
-        req = apr_palloc(p, sizeof(apreq_table_t *) + sizeof *req);
-        req->pool = apreq_env_pool(ctx);
-        *(apreq_table_t **)req->v.data = apreq_make_table(p, APREQ_NELTS);
-        req->v.size   = sizeof(apreq_table_t *);
-        req->v.status = APR_EINIT;
-        req->env      = ctx;
+        req = apr_palloc(p, sizeof *req);
+        req->env      = env;
         req->args     = apreq_make_table(p, APREQ_NELTS);
+        req->cfg      = NULL;
         req->body     = NULL;
-        req->v.name = enctype(p, apreq_env_content_type(ctx));
+        req->parser   = apreq_parser(env, NULL);
         /* XXX need to install copy/merge callbacks for apreq_param_t */ 
-        parser = apreq_make_parser(p, APREQ_URL_ENCTYPE,
-                                   apreq_parse_urlencoded, NULL, req);
-        apreq_register_parser(req, parser);
-        parser = apreq_make_parser(p, APREQ_MFD_ENCTYPE,
-                                   apreq_parse_multipart, NULL, req);
-        apreq_register_parser(req, parser);
     }
 
     s = (args == NULL) ? APR_SUCCESS : 
-        apreq_split_params(req->pool, req->args, args);
-
-    if (s == APR_SUCCESS)
-        req->v.status = (req->v.name ? APR_INCOMPLETE : APR_SUCCESS);
+        apreq_split_params(p, req->args, args);
 
     return req;
 }
@@ -179,12 +143,23 @@ APR_INLINE
 APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req, 
                                           const char *name)
 {
-    const char *arg = apreq_table_get(req->args, name);
+    const char *val = apreq_table_get(req->args, name);
 
-    if (arg)
-        return UPGRADE(arg);
-    else
-        return req->body ? UPGRADE(apreq_table_get(req->body, name)) : NULL;
+    if (val)
+        return UPGRADE(val);
+    else if (req->body == NULL)
+        return NULL;
+
+    val = apreq_table_get(req->body, name);
+    if (val == NULL) {
+        apreq_cfg_t *cfg = req->cfg;
+
+        if (cfg && cfg->read_bytes) {
+            apreq_env_read(req->env, APR_NONBLOCK_READ, cfg->read_bytes);
+            val = apreq_table_get(req->body, name);
+        }
+    }
+    return val ? UPGRADE(val) : NULL;
 }
 
 
@@ -303,4 +278,20 @@ APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool,
     v->size += apreq_encode(v->data + v->size, param->v.data, param->v.size);
 
     return v->data;
+}
+
+APREQ_DECLARE(apr_status_t) apreq_parse_request(apreq_request_t *req, 
+                                                apr_bucket_brigade *bb)
+{
+    apreq_cfg_t *cfg = req->cfg;
+
+    if (req->parser == NULL)
+        req->parser = apreq_parser(req->env,NULL);
+    if (req->parser == NULL)
+        return APR_EINIT;
+
+    if (req->body == NULL)
+        req->body = apreq_table_make(apreq_env_pool(req->env),APREQ_NELTS);
+
+    return apreq_run_parser(req->parser, req->cfg, req->body, bb);
 }

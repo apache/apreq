@@ -53,6 +53,7 @@
  */
 
 #include "apreq.h"
+#include "apreq_env.h"
 #include "apr_time.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
@@ -108,6 +109,26 @@ APREQ_DECLARE(apreq_value_t *)apreq_merge_values(apr_pool_t *p,
     if (arr->nelts > 0)
         v->name = a->name;
     return v;
+}
+
+APR_INLINE
+APREQ_DECLARE(const char *)apreq_enctype(void *env)
+{
+    char *enctype;
+    const char *ct = apreq_env_content_type(env), *semicolon;
+
+    if (ct == NULL)
+        return NULL;
+    else {
+        semicolon = strchr(ct, ';');
+        if (semicolon) {
+            enctype = apr_pstrdup(apreq_env_pool(env), ct);
+            enctype[semicolon - ct] = 0;
+            return enctype;
+        }
+        else
+            return ct;
+    }
 }
 
 APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str, 

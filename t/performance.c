@@ -73,6 +73,7 @@ static apreq_table_t *t = NULL;
 static apreq_table_t *s = NULL;
 static apreq_table_t *h = NULL;
 
+#define NELTS 16
 #define LOOP 10000
 #define FAIL(MSG) \
   CuFail(tc, apr_psprintf(p, MSG ": APR = %.3f vs APREQ = %.3f (microseconds)", \
@@ -160,15 +161,15 @@ static void perf_init(CuTest *tc)
 
     apreq_delta = apr_time_now();
     for (i=0; i<LOOP;++i) {
-        apreq_table_t *t = init_apreq(APREQ_NELTS*2);
+        apreq_table_t *t = init_apreq(NELTS);
         apreq_table_normalize(t);
     }
     apreq_delta = apr_time_now() - apreq_delta;
 
     apr_delta = apr_time_now();
     for (i=0; i<LOOP;++i) {
-       apr_table_t *t = apr_table_make(p,APREQ_NELTS*2);
-       apr_table_t *s = init_apr(APREQ_NELTS*2);
+       apr_table_t *t = apr_table_make(p,NELTS);
+       apr_table_t *s = init_apr(NELTS*2);
        apr_table_overlap(t,s,APR_OVERLAP_TABLES_MERGE);
     }
     apr_delta = apr_time_now() - apr_delta;
@@ -201,8 +202,8 @@ static void perf_init(CuTest *tc)
 
 static void perf_get_avg(CuTest *tc)
 {
-    apr_table_t *s = init_apr(APREQ_NELTS);
-    apreq_table_t *t = init_apreq(APREQ_NELTS);
+    apr_table_t *s = init_apr(NELTS);
+    apreq_table_t *t = init_apreq(NELTS);
     apr_time_t apr_delta, apreq_delta;
     int j;
 
@@ -216,36 +217,47 @@ static void perf_get_avg(CuTest *tc)
 
 
 /*
- *                         nontrivial trees
- *                        ------------------ 
- *
+ *                           nontrivial trees
+ *                          ------------------ 
+ * 
  *     (4) Accept-Encoding                     (7) Connection
  *         /        \                              /        \
  * (2) Accept  Accept-Language (3)          (9) Cookie   Content-Type (10)
  *         \                                                /
  *    (5) Accept-Charset                             Content-Length (11)
+ *
+ *    (checksum doesn't help here)           (checksum is a big win except
+ *                                            for the Content-Length path.)
+ *
+ *
+ *        apr_hash:      (0.5 ~ 0.6 microseconds / lookup)
+ *      apreq_table:     (0.3 ~ 0.4 microseconds / entry)
+ *        apr_table:     (0.2 ~ 0.3 microseconds / entry)
  */
 
 
 static void perf_get(CuTest *tc)
 {
     apr_hash_t *h = init_hash();
-    apr_table_t *s = init_apr(APREQ_NELTS);
-    apreq_table_t *t = init_apreq(APREQ_NELTS);
+    apr_table_t *s = init_apr(NELTS);
+    apreq_table_t *t = init_apreq(NELTS);
     apr_time_t apr_delta, apreq_delta;
     int j;
 
-    /* expected apr winners: "Accept", "Connection" "Cookie" */
-    /* expected apreq winners: */
+    /* expected apr winners: "Accept", "Connection", "Cookie" */
+
     RUN_GET("Accept-Encoding","");
-    RUN_GET("Accept-Charset","");
     RUN_GET("Accept-Language","");
+    RUN_GET("Accept-Charset","");
     RUN_GET("Content-Length","");
-    RUN_GET("Content-Type","");   /* apr wins by .05 microseconds now */
+    RUN_GET("Content-Type","");  /* apr typically wins by ~.05 microseconds,
+                                    or ~ 25 clock cycles on my 500Mhz CPU */
 }
 
 
+
 #ifdef footoo
+
 static void table_set(CuTest *tc)
 {
     const char *val;
