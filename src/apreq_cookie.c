@@ -158,29 +158,29 @@ APREQ_DECLARE(apr_status_t)
     case 'p':
         if (alen != 4)
             break;
-        if (!strcasecmp("port", attr)) {
+        if (!strncasecmp("port", attr, 4)) {
             c->port = apr_pstrmemdup(p,val,vlen);
             return APR_SUCCESS;
         }
-        else if (!strcasecmp("path", attr)) {
+        else if (!strncasecmp("path", attr, 4)) {
             c->path = apr_pstrmemdup(p,val,vlen);
             return APR_SUCCESS;
         }
         break;
 
     case 'c':
-        if (alen == 7 && !strcasecmp("comment", attr)) {
-            c->comment = apr_pstrmemdup(p,val,vlen);
+        if (!strncasecmp("commentURL", attr, 10)) {
+            c->commentURL = apr_pstrmemdup(p,val,vlen);
             return APR_SUCCESS;
         } 
-        else if (alen == 10 && !strcasecmp("commentURL", attr)) {
-            c->commentURL = apr_pstrmemdup(p,val,vlen);
+        else if (!strncasecmp("comment", attr, 7)) {
+            c->comment = apr_pstrmemdup(p,val,vlen);
             return APR_SUCCESS;
         }
         break;
 
     case 's':
-        c->secure = (alen == 2 && !strcasecmp(val,"on"));
+        c->secure = (!strncasecmp("on",val,vlen));
         return APR_SUCCESS;
 
     };

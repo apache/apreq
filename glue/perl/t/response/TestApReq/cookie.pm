@@ -21,7 +21,14 @@ sub handler {
     my $test = $apr->param('test');
     my $key  = $apr->param('key');
 
+
     if ($cookies{$key}) {
+        if ($test eq "bake") {
+            $cookies{$key}->bake;
+        }
+        elsif ($test eq "bake2") {
+            $cookies{$key}->bake2;
+        }
         $r->print($cookies{$key}->value);
     }
 

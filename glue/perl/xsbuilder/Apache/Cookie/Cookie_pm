@@ -21,8 +21,10 @@ sub jar {
 
 sub new {
     my ($class, $env, %attrs) = @_;
-    my $name  = delete $attrs{name}  || delete $attrs{-name};
-    my $value = delete $attrs{value} || delete $attrs{-value};
+    my $name  = delete $attrs{name};
+    my $value = delete $attrs{value};
+    $name     = delete $attrs{-name}  unless defined $name;
+    $value    = delete $attrs{-value} unless defined $value;
     return unless defined $name and defined $value;
 
     my $cookie = $class->make($env, $name, $class->freeze($value));
