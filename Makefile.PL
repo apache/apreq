@@ -48,7 +48,7 @@ print "\nskipping test setup...$@" if $@;
 
 # prerequisites
 my %require = (
-    "Apache::Test" => "", # any version will do
+    "Apache::Test" => "1.0",
 );
 
 my $myVERSION = MM->parse_version('Request/Request.pm');
