@@ -1,7 +1,7 @@
 /** @page CHANGES
 
 
-@section v2_03_dev Changes with libapreq2-2.03-dev
+@section v2_03_dev Changes with libapreq2-2.03-dev (released June 12, 2004)
 
 - C API [joes]
   "Objectify" cookie/jar API: s/apreq_(make|serialize)_cookie/apreq_cookie_$1/
