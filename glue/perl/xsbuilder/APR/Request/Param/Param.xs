@@ -118,7 +118,7 @@ static XS(apreq_xs_args)
             XSRETURN_EMPTY;
 
         d.pkg = PARAM_CLASS;
-        d.parent = obj;
+        d.parent = SvRV(obj);
 
         switch (GIMME_V) {
 
@@ -194,7 +194,7 @@ static XS(apreq_xs_body)
             XSRETURN_EMPTY;
 
         d.pkg = PARAM_CLASS;
-        d.parent = obj;
+        d.parent = SvRV(obj);
 
         switch (GIMME_V) {
 
@@ -406,7 +406,7 @@ make(class, pool, name, val)
   PREINIT:
     STRLEN nlen, vlen;
     const char *n, *v;
-    SV *parent = ST(1);
+    SV *parent = SvRV(ST(1));
 
   CODE:
     n = SvPV(name, nlen);

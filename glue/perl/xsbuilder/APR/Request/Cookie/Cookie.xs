@@ -20,12 +20,12 @@ apreq_cookie_t *apreq_xs_sv2cookie(pTHX_ SV *sv)
 }
 
 static APR_INLINE
-SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *handle,
+SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *parent,
                       const char *cookie_class, I32 clen)
 {
     SV *sv = (SV *)newHV();
     SV *rv = sv_setref_pv(newSV(0), class, (void *)t);
-    sv_magic(SvRV(rv), handle, PERL_MAGIC_ext, cookie_class, clen);
+    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, cookie_class, clen);
 
 #if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
 
@@ -117,7 +117,7 @@ static XS(apreq_xs_jar)
             XSRETURN_EMPTY;
 
         d.pkg = COOKIE_CLASS;
-        d.parent = obj;
+        d.parent = SvRV(obj);
 
         switch (GIMME_V) {
 
@@ -359,7 +359,7 @@ make(class, pool, name, val)
   PREINIT:
     STRLEN nlen, vlen;
     const char *n, *v;
-    SV *parent = ST(1);
+    SV *parent = SvRV(ST(1));
 
   CODE:
     n = SvPV(name, nlen);
@@ -367,6 +367,22 @@ make(class, pool, name, val)
     RETVAL = apreq_cookie_make(pool, n, nlen, v, vlen);
     if (SvTAINTED(name) || SvTAINTED(val))
         apreq_cookie_taint_on(RETVAL);
+
+  OUTPUT:
+    RETVAL
+
+SV *
+as_string(c)
+    APR::Request::Cookie c
+  PREINIT:
+    char rv[APREQ_COOKIE_MAX_LENGTH];
+    STRLEN len;
+
+  CODE:
+    len = apreq_cookie_serialize(c, rv, sizeof rv);
+    RETVAL = newSVpvn(rv, len);
+    if (apreq_cookie_is_tainted(c))
+        SvTAINTED_on(RETVAL);
 
   OUTPUT:
     RETVAL

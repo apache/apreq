@@ -35,7 +35,8 @@ sub configure_modperl {
         my $library_dir = $mod_apreq2_dir;
         $cfg->preamble(qq{LoadFile "$library_dir/libapreq2.dll"\n});
     }
-    $cfg->preamble(IfModule => '!mod_apreq.c',
+    $cfg->preamble(IfModule => '!mod_apreq2.c',
                qq(LoadModule apreq_module "$mod_apreq2_dir/mod_apreq2.so"\n));
+
     $self->SUPER::configure_modperl();
 }

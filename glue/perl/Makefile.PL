@@ -554,7 +554,7 @@ EOT
                             OUTPUT => <<'EOT',
     $arg = sv_setref_pv(newSV(0), class, $var);
     if (sv_derived_from($arg, \"${ntype}\")) {
-        SV *parent = ST(1); /* r's SV */
+        SV *parent = SvRV(ST(1)); /* r's SV */
         SV *rv = SvRV($arg);
         sv_magic(rv, parent, PERL_MAGIC_ext, Nullch, -1);
         SvMAGIC(rv)->mg_ptr = (void *)r;
