@@ -237,15 +237,15 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
         if (APR_BUCKET_IS_EOS(e)) {
             s = (ctx->status == URL_NAME) ? APR_SUCCESS : 
                 split_urlword(t, ctx->bb, nlen+1, vlen);
-
             APR_BRIGADE_CONCAT(bb, ctx->bb);
-            ctx->status = URL_COMPLETE;
+            ctx->status = (s == APR_SUCCESS) ? URL_COMPLETE : URL_ERROR;
             return s;
         }
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
-        if ( s != APR_SUCCESS )
+        if ( s != APR_SUCCESS ) {
+            ctx->status = URL_ERROR;
             return s;
-
+        }
     parse_url_bucket:
 
         switch (ctx->status) {
@@ -268,8 +268,10 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
                 case '&':
                 case ';':
                     s = split_urlword(t, ctx->bb, nlen+1, vlen+1);
-                    if (s != APR_SUCCESS)
+                    if (s != APR_SUCCESS) {
+                        ctx->status = URL_ERROR;
                         return s;
+                    }
                     goto parse_url_brigade;
                 default:
                     ++vlen;
