@@ -75,7 +75,7 @@ unless ($apxs) {
 
 my $test = << 'END';
 TEST: $(LIBAPREQ) $(MOD)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(APREQ2_TEST).mak CFG="$(APREQ2_TEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
         set PATH=$(APREQ_HOME)\win32\libs;$(APACHE)\bin;$(PATH)
         cd $(LIBDIR) && $(TESTALL).exe -v
         cd $(APREQ_HOME)
@@ -88,6 +88,8 @@ END
 my $clean = << 'END';
 CLEAN:
         cd $(LIBDIR)
+        $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
+        cd $(TDIR)
         $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
         cd $(APREQ_ENV)
         $(PERL) t\TEST.PL -clean
@@ -389,7 +391,7 @@ END
 __DATA__
 
 LIBAPREQ=libapreq2
-TESTALL=testall
+APREQ2_TEST=apreq2_test
 CGITEST=test_cgi
 MOD=mod_apreq
 
@@ -425,6 +427,7 @@ LIBDIR=$(CFG_HOME)\libs
 PERLGLUE=$(APREQ_HOME)\glue\perl
 APACHE_LIB=$(APACHE)\lib
 APREQ_ENV=$(APREQ_HOME)\env
+TDIR=$(APREQ_HOME)\t
 
 ALL : "$(LIBAPREQ)"
 
