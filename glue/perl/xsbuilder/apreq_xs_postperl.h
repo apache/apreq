@@ -365,7 +365,7 @@ void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func,
 #define APREQ_XS_THROW_ERROR(attr, status, func, errpkg)  do {          \
     if (!sv_derived_from(sv, errpkg)) {                                 \
         HV *hv = newHV();                                               \
-        SV *rv = newRV_inc(SvRV(obj));                                  \
+        SV *rv = newRV_inc(obj);                                        \
         sv_setsv(*hv_fetch(hv, "_" #attr, 2, 1), sv_2mortal(rv));       \
         apreq_xs_croak(aTHX_ hv, status, func, errpkg);                 \
     }                                                                   \

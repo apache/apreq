@@ -243,7 +243,7 @@ void apreq_filter_init_context(ap_filter_t *f)
             }
         }
         else {
-            ctx->status = APREQ_ERROR_NOPARSER;
+            ctx->status = APREQ_ERROR_NOHEADER;
             return;
         }
     }

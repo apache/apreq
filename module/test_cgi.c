@@ -116,7 +116,7 @@ int main(int argc, char const * const * argv)
     }
 
     else { 
-        const apr_table_t *params = apreq_params(pool, req);
+        const apr_table_t *params = apreq_params(req, pool);
         int count = 0;
         apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
 

@@ -38,7 +38,7 @@ static XS(apreq_xs_args)
     IV iv;
 
     if (items == 0 || items > 2 || !SvROK(ST(0))
-        || !sv_derived_from(ST(0), "APR::Request"))
+        || !sv_derived_from(ST(0), HANDLE_CLASS))
         Perl_croak(aTHX_ "Usage: APR::Request::args($req [,$name])");
 
     sv = ST(0);
@@ -80,7 +80,7 @@ static XS(apreq_xs_args)
             XSRETURN_EMPTY;
 
         d.pkg = PARAM_CLASS;
-        d.parent = SvRV(obj);
+        d.parent = obj;
 
         switch (GIMME_V) {
 
@@ -114,12 +114,12 @@ static XS(apreq_xs_body)
     IV iv;
 
     if (items == 0 || items > 2 || !SvROK(ST(0))
-        || !sv_derived_from(ST(0), "APR::Request"))
+        || !sv_derived_from(ST(0),HANDLE_CLASS))
         Perl_croak(aTHX_ "Usage: APR::Request::body($req [,$name])");
 
     sv = ST(0);
     obj = apreq_xs_sv2object(aTHX_ sv, HANDLE_CLASS, 'r');
-    iv = SvIVX(SvRV(obj));
+    iv = SvIVX(obj);
     req = INT2PTR(apreq_handle_t *, iv);
 
 
@@ -156,7 +156,7 @@ static XS(apreq_xs_body)
             XSRETURN_EMPTY;
 
         d.pkg = PARAM_CLASS;
-        d.parent = SvRV(obj);
+        d.parent = obj;
 
         switch (GIMME_V) {
 
@@ -403,3 +403,52 @@ param_class(t, newclass=NULL)
 
   OUTPUT:
     RETVAL
+
+MODULE = APR::Request::Param  PACKAGE = APR::Request
+
+SV*
+param(handle, key)
+    SV *handle
+    char *key
+  PREINIT:
+    SV *obj;
+    IV iv;
+    apreq_handle_t *req;
+    apreq_param_t *param;
+
+  CODE:
+    obj = apreq_xs_sv2object(aTHX_ handle, HANDLE_CLASS, 'r');
+    iv = SvIVX(obj);
+    req = INT2PTR(apreq_handle_t *, iv);
+    param = apreq_param(req, key);
+
+    if (param == NULL)
+        RETVAL = &PL_sv_undef;
+    else
+        RETVAL = apreq_xs_param2sv(aTHX_ param, PARAM_CLASS, obj);
+
+
+  OUTPUT:
+    RETVAL
+
+SV *
+params(handle, pool)
+    SV *handle
+    APR::Pool pool
+  PREINIT:
+    SV *obj;
+    IV iv;
+    apreq_handle_t *req;
+    apr_table_t *t;
+
+  CODE:
+    obj = apreq_xs_sv2object(aTHX_ handle, HANDLE_CLASS, 'r');
+    iv = SvIVX(obj);
+    req = INT2PTR(apreq_handle_t *, iv);
+    t = apreq_params(req, pool);
+    RETVAL = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, 
+                                      PARAM_CLASS, sizeof(PARAM_CLASS)-1);
+
+  OUTPUT:
+    RETVAL
+   

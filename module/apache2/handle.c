@@ -128,9 +128,9 @@ static apr_status_t apache2_header_out(apreq_handle_t *env,
     return APR_SUCCESS;
 }
 
-static apr_status_t apache2_body(apreq_handle_t *env, const apr_table_t **t)
+static apr_status_t apache2_body(apreq_handle_t *req, const apr_table_t **t)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(req);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)

@@ -88,30 +88,28 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
 }
 
 
-APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *env, 
-                                          const char *name)
+APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *req, const char *key)
 {
-    apreq_param_t *param = apreq_args_get(env, name);
+    apreq_param_t *param = apreq_args_get(req, key);
     if (param == NULL)
-        return apreq_body_get(env, name);
+        return apreq_body_get(req, key);
     else
         return param;
 }
 
 
-APREQ_DECLARE(apr_table_t *)apreq_params(apr_pool_t *pool,
-                                         apreq_handle_t *env)
+APREQ_DECLARE(apr_table_t *)apreq_params(apreq_handle_t *req, apr_pool_t *p)
 {
     const apr_table_t *args, *body;
 
-    if (apreq_args(env, &args) == APR_SUCCESS)
-        if (apreq_body(env, &body) == APR_SUCCESS)
-            return apr_table_overlay(pool, args, body);
+    if (apreq_args(req, &args) == APR_SUCCESS)
+        if (apreq_body(req, &body) == APR_SUCCESS)
+            return apr_table_overlay(p, args, body);
         else
-            return apr_table_copy(pool, args);
+            return apr_table_copy(p, args);
     else
-        if (apreq_body(env, &body) == APR_SUCCESS)
-            return apr_table_copy(pool, body);
+        if (apreq_body(req, &body) == APR_SUCCESS)
+            return apr_table_copy(p, body);
         else
             return NULL;
 

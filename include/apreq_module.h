@@ -77,7 +77,8 @@ unsigned char apreq_module_status_is_error(apr_status_t s) {
     case APR_INCOMPLETE:
     case APR_EINIT:
     case APREQ_ERROR_NODATA:
-
+    case APREQ_ERROR_NOPARSER:
+    case APREQ_ERROR_NOHEADER:
         return 0;
     default:
         return 1;
@@ -353,8 +354,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
 APREQ_DECLARE(unsigned)apreq_ua_cookie_version(apreq_handle_t *req);
 
 
-APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *env, 
-                                          const char *name);
+APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *req, const char *key);
 
 #define apreq_cookie(req, name) apreq_jar_get(req, name)
 
@@ -365,12 +365,10 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *env,
  * @req
  * @remark Also parses the request if necessary.
  */
-APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *p,
-                                          apreq_handle_t *req);
+APREQ_DECLARE(apr_table_t *) apreq_params(apreq_handle_t *req, apr_pool_t *p);
 
 
-APREQ_DECLARE(apr_table_t *)apreq_cookies(apr_pool_t *p,
-                                          apreq_handle_t *req);
+APREQ_DECLARE(apr_table_t *)apreq_cookies(apreq_handle_t *req, apr_pool_t *p);
 
 /**
  * Force a complete parse.
