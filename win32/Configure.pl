@@ -77,6 +77,7 @@ TEST: $(LIBAPREQ) $(MOD)
         cd $(LIBDIR) && $(TESTALL).exe -v
         cd $(APREQ_HOME)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
+        if not exist "$(APREQ_ENV)\t\cgi-bin" mkdir "$(APREQ_ENV)\t\cgi-bin"
         copy $(LIBDIR)\test_cgi.exe $(APREQ_ENV)\t\cgi-bin\test_cgi.exe
         cd $(APREQ_HOME)
 END
