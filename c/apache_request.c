@@ -109,8 +109,22 @@ static int util_read(ApacheRequest *req, const char **rbuf)
 char *ApacheRequest_script_name(ApacheRequest *req)
 {
     request_rec *r = req->r;
-    int path_info_start = ap_find_path_info(r->uri, r->path_info);
-    return ap_pstrndup(r->pool, r->uri, path_info_start);
+    char *tmp;
+
+    if (r->path_info && *r->path_info) {
+	int path_info_start = ap_find_path_info(r->uri, r->path_info); 
+	tmp = ap_pstrndup(r->pool, r->uri, path_info_start);
+    }
+    else {
+	tmp = r->uri;
+    }
+
+    return tmp;
+}
+
+char *ApacheRequest_script_path(ApacheRequest *req)
+{
+    return ap_make_dirstr_parent(req->r->pool, ApacheRequest_script_name(req));
 }
 
 const char *ApacheRequest_param(ApacheRequest *req, const char *key)

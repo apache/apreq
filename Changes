@@ -5,7 +5,7 @@ Revision history for Perl extension Apache::Request.
 =item 0.31
 
 Apache::Cookie->new($r)->parse will properly return () instead of
-undef when there is no cookie header, thanks to Ask Bjoern Hansen for
+undef when there is no cookie header, thanks to Nick Tonkin for
 the spot
 
 =item 0.30_04 - May 13, 1999 
