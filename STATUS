@@ -1,7 +1,7 @@
 Last modified at [$Date$]   -*-text-*-
 /** @page apreq_status STATUS
 
-     2.05 in development.
+     2.05-dev in development.
 
 Contributors looking for a mission:
 
@@ -10,28 +10,30 @@ Contributors looking for a mission:
 
 CURRENT RELEASE NOTES:
 
-     - This is the multi-env-unstable branch.  It is a work-in-progress
-       which attempts to refactor our C interfaces to provide a more 
-       robust module API.  This refactoring effort will propagate 
-       into the perl glue as well, once the C API changes settle into 
-       place.
+    - This is the multi-env-unstable branch.  It is a work-in-progress
+      which attempts to refactor our C interfaces to provide a more 
+      robust module API.  This refactoring effort will propagate 
+      into the perl glue as well, once the C API changes settle into 
+      place.
 
+    - This is a developer release, indicated by the "-dev" suffix on the
+      version string. We believe the core interfaces to be stable, but some
+      portions of the API may still need significant modification. Thus,
+      binary/source compatibility may be broken from one developer release to
+      the next. In particular the version numbering rules specified at 
 
-     - joes: I removed apreq_jar_t and apreq_request_t.  The new
-       data structures should be ok, and all the C tests should pass.
-       The docs are in really bad shape now, but it didn't make
-       sense to fix those, at least until "apreq_env.h" is renamed 
-      "apreq_handle.h"  and both the custom & cgi modules have had 
-       time to improve.
+          http://apr.apache.org/versioning.html
+
+      do not apply to developer releases.
 
 
 RELEASE SHOWSTOPPERS:
 
-     - The api docs and perl glue are currently broken.
-     - Remove all "_env" tags, perhaps moving apreq_env.h to apreq_handle.h,
-       or renaming it to apreq.h and moving the original to apreq_common.h.
-     - Improve the APREQ_ERROR related code.
-     - Improve the custom & cgi module code.
+    - The api docs and perl glue are currently broken.
+    - Remove all "_env" tags, renaming apreq_env.h to apreq.h and 
+      moving the original to apreq_util.h.
+    - Improve the APREQ_ERROR related code.
+    - Improve the custom & cgi module code.
 
 
 CURRENT VOTES:
@@ -57,6 +59,11 @@ TODO:
     - Let hooks interrupt parsers via APREQ_ERROR_INTERRUPT.  
       Need a delete_hook method to make interrupts a useful
       way of tuning parser behavior.
+
+      [joes] Interrupts may not be worth the extra effort, so I don't 
+             plan to pursue this.  We have more important issues 
+             to deal with prior to release, and nobody has ever 
+             asked for this feature in apreq2.
 
     - Add a "memory_limit" setting to apreq_parser_t and apreq_module_t, 
       which will control how much pool allocation the parser may use.
