@@ -81,6 +81,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\apreq_parsers.obj" \
         "$(INTDIR)\apreq_version.obj" \
         "$(INTDIR)\apreq_env.obj" \
+        "$(INTDIR)\apreq_env_custom.obj" \
+        "$(INTDIR)\apreq_env_cgi.obj" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
 
@@ -109,6 +111,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\apreq_parsers.obj" \
         "$(INTDIR)\apreq_version.obj" \
         "$(INTDIR)\apreq_env.obj" \
+        "$(INTDIR)\apreq_env_custom.obj" \
+        "$(INTDIR)\apreq_env_cgi.obj" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
 
@@ -185,6 +189,15 @@ SOURCE=$(APREQ_HOME)\src\apreq_env.c
 "$(INTDIR)\apreq_env.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
+SOURCE=$(APREQ_HOME)\src\apreq_env_custom.c
+
+"$(INTDIR)\apreq_env_custom.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+SOURCE=$(APREQ_HOME)\src\apreq_env_cgi.c
+
+"$(INTDIR)\apreq_env_cgi.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 !ENDIF 
 
