@@ -35,10 +35,10 @@ NULL=nul
 
 !IF  "$(CFG)" == "testall - Win32 Release"
 
-OUTDIR=.\Release
-INTDIR=.\Release
+OUTDIR=.\libs
+INTDIR=.\libs
 # Begin Custom Macros
-OutDir=.\Release
+OutDir=.\libs
 # End Custom Macros
 
 ALL : "$(OUTDIR)\testall.exe"
@@ -119,10 +119,10 @@ LINK32_OBJS= \
 
 !ELSEIF  "$(CFG)" == "testall - Win32 Debug"
 
-OUTDIR=.\Debug
-INTDIR=.\Debug
+OUTDIR=.\libs
+INTDIR=.\libs
 # Begin Custom Macros
-OutDir=.\Debug
+OutDir=.\libs
 # End Custom Macros
 
 ALL : "$(OUTDIR)\testall.exe"
