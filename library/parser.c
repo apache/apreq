@@ -333,3 +333,15 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser)
     return APR_SUCCESS;
 }
 
+APREQ_DECLARE_HOOK(apreq_hook_find_param)
+{
+    const char *key = hook->ctx;
+    int is_final = (bb == NULL) || APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(bb));
+    apr_status_t s = (hook->next == NULL)
+        ? APR_SUCCESS : apreq_hook_run(hook->next, param, bb);
+
+    if (is_final && strcasecmp(key, param->v.name) == 0)
+        hook->ctx = param;
+
+    return s;
+}

@@ -179,6 +179,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
     ap_filter_t *f = get_apreq_filter(env);
     struct filter_ctx *ctx;
     const char *val;
+    apreq_hook_t *h;
 
     if (f->ctx == NULL)
         apreq_filter_make_context(f);
@@ -194,35 +195,57 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
             return NULL;
         apreq_filter_prefetch(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
 
+
     case APR_INCOMPLETE:
 
         val = apr_table_get(ctx->body, name);
         if (val != NULL)
             return apreq_value_to_param(val);
 
+        /* Not seen yet, so we need to scan for 
+           param while prefetching the body */
+
+        if (ctx->find_param == NULL)
+            ctx->find_param = apreq_hook_make(f->r->pool, 
+                                              apreq_hook_find_param, 
+                                              NULL, NULL);
+        h = ctx->find_param;
+        h->next = ctx->parser->hook;
+        ctx->parser->hook = h;
+        *(const char **)&h->ctx = name;
+
         do {
-            /* riff on Duff's device */
             apreq_filter_prefetch(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
+            if (h->ctx != name) {
+                ctx->parser->hook = h->next;
+                return h->ctx;
+            }
+        } while (ctx->body_status == APR_INCOMPLETE);
+
+        ctx->parser->hook = h->next;
+        return NULL;
+
 
     case APR_SUCCESS:
 
-            val = apr_table_get(ctx->body, name);
-            if (val != NULL)
-                return apreq_value_to_param(val);
-
-        } while (ctx->body_status == APR_INCOMPLETE);
-
-        break;
+        val = apr_table_get(ctx->body, name);
+        if (val != NULL)
+            return apreq_value_to_param(val);
+        return NULL;
 
     default:
 
-        if (ctx->body != NULL) {
-            val = apr_table_get(ctx->body, name);
-            if (val != NULL)
-                return apreq_value_to_param(val);
-        }
+        if (ctx->body == NULL)
+            return NULL;
+
+        val = apr_table_get(ctx->body, name);
+        if (val != NULL)
+            return apreq_value_to_param(val);
+        return NULL;
+
     }
 
+    /* not reached */
     return NULL;
 }
 

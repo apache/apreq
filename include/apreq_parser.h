@@ -266,6 +266,19 @@ APREQ_DECLARE_HOOK(apreq_hook_disable_uploads);
  */
 APREQ_DECLARE_HOOK(apreq_hook_discard_brigade);
 
+/**
+ * Special purpose utility for locating a parameter
+ * during parsing.  The hook's ctx shoud be initialized
+ * to a const char *, which is a pointer to the desired 
+ * param name.  The hook's ctx will be reassigned to the 
+ * first param found.
+ *
+ * @remarks When used, this should always be the first hook
+ * invoked, so add it manually as parser->hook instead of 
+ * using apreq_parser_add_hook.
+ */
+APREQ_DECLARE_HOOK(apreq_hook_find_param);
+
 
 #ifdef __cplusplus
 }

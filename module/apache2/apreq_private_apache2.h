@@ -23,6 +23,7 @@ struct filter_ctx {
     apr_bucket_brigade *spool; /* copied prefetch data for downstream filters */
     apreq_parser_t     *parser;
     apreq_hook_t       *hook_queue;
+    apreq_hook_t       *find_param;
     apr_table_t        *body;
     apr_status_t        body_status;
     apr_status_t        filter_error;
