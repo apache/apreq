@@ -36,13 +36,25 @@ struct ApacheUpload {
 #define strEQ(s1,s2) (!strcmp(s1,s2))
 #endif
 
+#ifndef strEQN
+#define strEQN(s1,s2,n) (!strncmp(s1,s2,n))
+#endif
+
 #ifndef strcaseEQ
 #define strcaseEQ(s1,s2) (!strcasecmp(s1,s2))
+#endif
+
+#ifndef strcaseEQN
+#define strcaseEQN(s1,s2,n) (!strncasecmp(s1,s2,n))
 #endif
 
 #define DEFAULT_TABLE_NELTS 10
 
 #define DEFAULT_ENCTYPE "application/x-www-form-urlencoded"
+#define DEFAULT_ENCTYPE_LENGTH 33
+
+#define MULTIPART_ENCTYPE "multipart/form-data"
+#define MULTIPART_ENCTYPE_LENGTH 19
 
 #ifdef  __cplusplus
  extern "C" {

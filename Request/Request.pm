@@ -43,7 +43,7 @@ Apache::Request - Methods for dealing with client request data
 I<Apache::Request> is a subclass of the I<Apache> class, which adds methods
 for parsing B<GET> requests and B<POST> requests where I<Content-type>
 is one of I<application/x-www-form-urlencoded> or 
-I<multipart/form-data>.
+I<multipart/form-data>. See the libapreq(3) manpage for more details.
 
 =head1 Apache::Request METHODS
 
@@ -205,6 +205,10 @@ an array context:
     }
 
 =back
+
+=head1 SEE ALSO
+
+libapreq(3)
 
 =head1 CREDITS
 

@@ -193,31 +193,6 @@ ApacheUpload *ApacheUpload_find(ApacheUpload *upload, char *name)
     return NULL;
 }
 
-int ApacheRequest___parse(ApacheRequest *req)
-{
-    request_rec *r = req->r;
-
-    req->parsed = 1;
-
-    if (r->method_number == M_POST) { 
-	const char *ct = ap_table_get(r->headers_in, "Content-type"); 
-	if (ct && *ct == 'a' && strstr(ct, DEFAULT_ENCTYPE)) {
-	    return ApacheRequest_parse_urlencoded(req); 
-	}
-	else if (ct && *ct == 'm' && strstr(ct, "multipart/form-data")) {
-	   return ApacheRequest_parse_multipart(req); 
-	}
-	else {
-	    ap_log_rerror(REQ_ERROR, 
-			  "[libapreq] unknown content-type: `%s'", ct); 
-	    return HTTP_INTERNAL_SERVER_ERROR;
-	}
-    } 
-    else {
-	return ApacheRequest_parse_urlencoded(req); 
-    }
-}
-
 ApacheRequest *ApacheRequest_new(request_rec *r)
 {
     ApacheRequest *req = (ApacheRequest *)
@@ -287,6 +262,36 @@ static void split_to_parms(ApacheRequest *req, const char *data)
 
 }
 
+
+int ApacheRequest___parse(ApacheRequest *req)
+{
+    request_rec *r = req->r;
+
+    req->parsed = 1;
+
+    if (r->args) {
+	split_to_parms(req, r->args);
+    }        
+
+    if (r->method_number == M_POST) { 
+	const char *ct = ap_table_get(r->headers_in, "Content-type"); 
+	if (ct && strcaseEQN(ct, DEFAULT_ENCTYPE, DEFAULT_ENCTYPE_LENGTH)) {
+	    return ApacheRequest_parse_urlencoded(req); 
+	}
+	else if (ct && strcaseEQN(ct, MULTIPART_ENCTYPE, MULTIPART_ENCTYPE_LENGTH)) {
+	   return ApacheRequest_parse_multipart(req); 
+	}
+	else {
+	    ap_log_rerror(REQ_ERROR, 
+			  "[libapreq] unknown content-type: `%s'", ct); 
+	    return HTTP_INTERNAL_SERVER_ERROR;
+	}
+    } 
+    else {
+	return ApacheRequest_parse_urlencoded(req); 
+    }
+}
+
 int ApacheRequest_parse_urlencoded(ApacheRequest *req)
 {
     request_rec *r = req->r; 
@@ -297,7 +302,7 @@ int ApacheRequest_parse_urlencoded(ApacheRequest *req)
 
 	type = ap_table_get(r->headers_in, "Content-Type");
 
-	if (!strcaseEQ(type, DEFAULT_ENCTYPE)) {
+	if (!strcaseEQN(type, DEFAULT_ENCTYPE, DEFAULT_ENCTYPE_LENGTH)) {
 	    return DECLINED;
 	}
 	if ((rc = util_read(req, &data)) != OK) {
@@ -307,10 +312,6 @@ int ApacheRequest_parse_urlencoded(ApacheRequest *req)
 	    split_to_parms(req, data);
 	}
     }
-
-    if (r->args) {
-	split_to_parms(req, r->args);
-    }        
 
     return OK;
 }

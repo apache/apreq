@@ -19,16 +19,14 @@ I<request_rec> structure:
 
 =item int ApacheRequest_parse (ApacheRequest *req)
 
-If the request method is B<GET>, query string arguments, if any will
-be parsed and saved.  If the request method is B<POST> and
-I<Content-type> is I<application/x-www-form-urlencoded> the client
-data will be read, parsed and saved.  If the request method is B<POST>
-and the I<Content-type> is I<multipart/form-data>, the form parameters
-will be parsed and saved, the uploaded file will be written to a
-temporary file which can be accessed with the I<upload> field.
+If the request method is B<GET> or B<POST>, the query string
+arguments and the client form data will be read, parsed and saved.
+In addition, if the request method is B<POST> and the I<Content-type> is
+I<multipart/form-data>, the uploaded files will be written to
+temporary files which can be accessed with the I<upload> field names.
 The return value is B<OK> on success, otherwise an error code that
-your handler should return.  
-  
+your handler should return.
+
 =item const char *ApacheRequest_param (ApacheRequest *req, const char *key)
 
 This function will return the value of the given parameter I<key>:
