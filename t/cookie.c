@@ -24,8 +24,8 @@ static apreq_jar_t *j = NULL;
 
 static void jar_make(CuTest *tc)
 {
-    j = apreq_jar(p,"a=1; foo=bar; fl=left; fr=right; frl=right-left; flr=left-right; fll=left-left; b=2");
-
+    j = apreq_jar(p,"a=1; foo=bar; fl=left; fr=right;bad; ns=foo=1&bar=2,"
+                  "frl=right-left; flr=left-right; fll=left-left; bad");
     CuAssertPtrNotNull(tc, j);
 }
 
@@ -35,8 +35,13 @@ static void jar_table_get(CuTest *tc)
 
     val = apr_table_get(j->cookies,"a");
     CuAssertStrEquals(tc,"1",val);
-    val = apr_table_get(j->cookies,"b");
-    CuAssertStrEquals(tc,"2",val);
+
+    /* ignore wacky cookies that don't have an '=' sign */
+    val = apr_table_get(j->cookies,"bad");
+    CuAssertPtrEquals(tc,NULL,val);
+    /* accept wacky cookies that contain multiple '=' */
+    val = apr_table_get(j->cookies,"ns");
+    CuAssertStrEquals(tc,"foo=1&bar=2",val);
 
     val = apr_table_get(j->cookies,"foo");
     CuAssertStrEquals(tc,"bar",val);

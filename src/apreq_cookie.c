@@ -187,20 +187,29 @@ static apr_status_t get_pair(const char **data,
     const char *d = *data;
     unsigned char in_quotes = 0;
 
+    while(apr_isspace(*d))
+        ++d;
+
     *n = d;
 
-    while (*d != '=' && !apr_isspace(*d)) {
-        if (*d++ == 0)  {
-            /*error: no '=' sign detected */
-            *data = d-1;
-            return APR_EGENERAL;
-        }
-    }
+    while (apr_isalnum(*d))
+        ++d;
 
     *nlen = d - *n;
 
+    while(apr_isspace(*d))
+        ++d;
+
+    if (*d != '=') {
+        *data = d;
+        *v = d;
+        *vlen = 0;
+        return APR_NOTFOUND;
+    }
+
+
     do ++d;
-    while (*d == '=' || apr_isspace(*d));
+    while (apr_isspace(*d));
 
     *v = d;
 
@@ -350,6 +359,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
                 return j;
             }
 
+            ++hdr;
             status = get_pair(&hdr, &name, &nlen, &value, &vlen);
             if (status != APR_SUCCESS) {
                 j->status = status;
@@ -395,6 +405,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
                 apreq_log(APREQ_WARN status, env, 
                           "Skipping bad NAME=VALUE pair: %s", 
                            apr_pstrmemdup(p, name, hdr-name));
+                c = NULL;
             }
         }
     }
