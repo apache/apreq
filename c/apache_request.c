@@ -320,6 +320,7 @@ int ApacheRequest_parse_urlencoded(ApacheRequest *req)
 
 static void remove_tmpfile(void *data) {
     remove((char *) data);
+    free((char *) data);
 }
 
 FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
@@ -342,15 +343,14 @@ FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
     if ( tries == 0  || (fp = ap_pfdopen(r->pool, fd, "w+") ) == NULL ) {
 	ap_log_rerror(REQ_ERROR,
 		      "[libapreq] could not open temp file '%s'", name); 	
-	if ( fd >= 0 ) { remove(name); }
+	if ( fd >= 0 ) { remove(name); free(name); }
 	return NULL;
     }
 
     upload->fp = fp;
-    upload->tempname = ap_pstrdup(r->pool, name);
+    upload->tempname = name;
     ap_register_cleanup(r->pool, (void *)upload->tempname, 
 			remove_tmpfile, ap_null_cleanup);
-
     return fp;
 
 }
