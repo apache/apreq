@@ -2,27 +2,14 @@ use ExtUtils::MakeMaker;
 use strict;
 use 5.005;
 
-use lib qw(Apache-Test/lib);
-use constant HAS_APACHE_TEST => eval {require Apache::Test};
-# enable 'make test|clean'
-if (HAS_APACHE_TEST) {
-    require Apache::TestMM;
-    Apache::TestMM->import(qw(test clean));
-} 
-
+use Apache::test;
+my %params = Apache::test->get_test_params();
+Apache::test->write_httpd_conf(%params, include => join '', <DATA>);
+*MY::test = sub {Apache::test->MM_test(%params)};
 # prerequisites
 my %require = (
-    "Apache::Test" => "", # any version will do
+    "Apache::test" => "", # any version will do
 );
-
-my @scripts = ();
-
-if (HAS_APACHE_TEST) {
-    # accept the configs from command line
-    Apache::TestMM::filter_args();
-    Apache::TestMM::generate_script('t/TEST');
-    push @scripts, 't/TEST';
-}
 
 my $myVERSION = MM->parse_version('Request/Request.pm');
 $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
@@ -72,7 +59,7 @@ WriteMakefile(
 	      );
 
 sub clean_files {
-    return [@scripts];
+    return [qw( t/httpd.conf t/httpd.loc t/error_log t/httpd )];
 }
 
 if ($Is_Win32 and -e $lib) {
@@ -107,5 +94,28 @@ cvs_tag :
 	@echo update the VERSION in Apache/Request.pm now 
 
 EOF
-} 
+}
+__DATA__
+<Perl>
+    push @INC, "blib/arch";
+</Perl>
+PerlModule Apache::PerlRun
+PerlModule Apache::Request
+PerlModule Apache::Cookie
+
+<FilesMatch "\.pl">
+    SetHandler perl-script
+    PerlHandler Apache::PerlRun
+    Options +ExecCGI
+</FilesMatch>
+
+
+
+
+
+
+
+
+
+
 
