@@ -79,6 +79,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\apreq_cookie.obj" \
 	"$(INTDIR)\apreq_params.obj" \
 	"$(INTDIR)\apreq_parsers.obj" \
+        "$(INTDIR)\apreq_version.obj" \
         "$(INTDIR)\apreq_env.obj" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
@@ -106,6 +107,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\apreq_cookie.obj" \
 	"$(INTDIR)\apreq_params.obj" \
 	"$(INTDIR)\apreq_parsers.obj" \
+        "$(INTDIR)\apreq_version.obj" \
         "$(INTDIR)\apreq_env.obj" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
@@ -172,6 +174,11 @@ SOURCE=$(APREQ_HOME)\src\apreq_parsers.c
 "$(INTDIR)\apreq_parsers.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
+
+SOURCE=$(APREQ_HOME)\src\apreq_version.c
+
+"$(INTDIR)\apreq_version.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(APREQ_HOME)\src\apreq_env.c
 
