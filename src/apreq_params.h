@@ -122,12 +122,9 @@ APREQ_DECLARE(apreq_request_t *)apreq_request(void *ctx);
  * @remark Also parses the request as necessary.
  */
 
-APREQ_DECLARE(const char *) apreq_param(const apreq_request_t *req, 
-                                        const char *name); 
-
-APREQ_DECLARE(const char *) apreq_arg(const apreq_request_t *req, 
-                                      const char *name);
-#define apreq_arg(req,k) apreq_table_get((req)->args, k)
+APR_INLINE
+APREQ_DECLARE(apreq_param_t *) apreq_param(const apreq_request_t *req, 
+                                           const char *name); 
 
 /**
  * Returns all parameters for the requested key,
@@ -138,10 +135,10 @@ APREQ_DECLARE(const char *) apreq_arg(const apreq_request_t *req,
  * @remark Also parses the request as necessary.
  */
 
-APREQ_DECLARE(apr_array_header_t *) apreq_params(
-                                            apr_pool_t *p,
-                                            const apreq_request_t *req,
-                                            const char *name);
+APR_INLINE
+APREQ_DECLARE(apreq_table_t *) apreq_params(apr_pool_t *p,
+                                            const apreq_request_t *req);
+
 
 /**
  * Returns a ", " -separated string containing all parameters 

@@ -181,25 +181,31 @@ static void table_overlap(CuTest *tc)
     /* APR_OVERLAP_TABLES_SET had funky semantics, so we ignore it here */
     s = apreq_table_overlap(t1, t2, APR_OVERLAP_TABLES_MERGE);
     CuAssertIntEquals(tc, APR_SUCCESS, s);
-    CuAssertIntEquals(tc, 7, apreq_table_nelts(t1));
-    CuAssertIntEquals(tc, 3, apreq_table_ghosts(t1));
-    CuAssertIntEquals(tc, 9, apreq_table_exorcise(t1));
 
-    val = apreq_table_get(t1, "a");
+    t2 = apreq_table_copy(p,t1);
+    CuAssertIntEquals(tc, 7, apreq_table_nelts(t2));
+    CuAssertIntEquals(tc, 3, apreq_table_ghosts(t2));
+    CuAssertIntEquals(tc, 9, apreq_table_exorcise(t2));
+    CuAssertIntEquals(tc, 0, apreq_table_ghosts(t2));
+
+    val = apreq_table_get(t2, "a");
     CuAssertStrEquals(tc, "0, 1",val);
-    val = apreq_table_get(t1, "b");
+    val = apreq_table_get(t2, "b");
     CuAssertStrEquals(tc, "2, 2.0, 2.",val);
-    val = apreq_table_get(t1, "c");
+    val = apreq_table_get(t2, "c");
     CuAssertStrEquals(tc, "3",val);
-    val = apreq_table_get(t1, "d");
+    val = apreq_table_get(t2, "d");
     CuAssertStrEquals(tc, "4",val);
-    val = apreq_table_get(t1, "e");
+    val = apreq_table_get(t2, "e");
     CuAssertStrEquals(tc, "5",val);
-    val = apreq_table_get(t1, "f");
+    val = apreq_table_get(t2, "f");
     CuAssertStrEquals(tc, "6",val);
-    val = apreq_table_get(t1, "g");
+    val = apreq_table_get(t2, "g");
     CuAssertStrEquals(tc, "7",val);
+
 }
+
+#define APREQ_ELT(a,i) (*(apreq_value_t **)((a)->elts + (i) * (a)->elt_size))
 
 static void table_elts(CuTest *tc)
 {
@@ -207,26 +213,30 @@ static void table_elts(CuTest *tc)
     const apreq_value_t *v;
     const apr_array_header_t *a;
 
+    CuAssertIntEquals(tc, 7, apreq_table_nelts(t1));
+    CuAssertIntEquals(tc, 3, apreq_table_ghosts(t1));
+
     a = apreq_table_elts(t1);
 
     CuAssertIntEquals(tc, 7, apreq_table_nelts(t1));
     CuAssertIntEquals(tc, 0, apreq_table_ghosts(t1));
 
-    v = APREQ_ARRAY_VALUE(a,0);
+    v = APREQ_ELT(a,0);
     CuAssertStrEquals(tc,"0, 1", v->data);
-    v = APREQ_ARRAY_VALUE(a,1);
+    v = APREQ_ELT(a,1);
     CuAssertStrEquals(tc,"7", v->data);
-    v = APREQ_ARRAY_VALUE(a,2);
+    v = APREQ_ELT(a,2);
     CuAssertStrEquals(tc,"2, 2.0, 2.", v->data);
-    v = APREQ_ARRAY_VALUE(a,3);
+    v = APREQ_ELT(a,3);
     CuAssertStrEquals(tc,"3", v->data);
 
-    v = APREQ_ARRAY_VALUE(a,a->nelts-1);
+    v = APREQ_ELT(a,a->nelts-1);
     CuAssertStrEquals(tc,"6", v->data);
-    v = APREQ_ARRAY_VALUE(a,a->nelts-2);
+    v = APREQ_ELT(a,a->nelts-2);
     CuAssertStrEquals(tc,"5", v->data);
-    v = APREQ_ARRAY_VALUE(a,a->nelts-3);
+    v = APREQ_ELT(a,a->nelts-3);
     CuAssertStrEquals(tc,"4", v->data);
+
 }
 
 

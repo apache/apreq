@@ -920,7 +920,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
             const apr_array_header_t *arr;
 
             arr = apreq_table_elts(req->body);
-            param = apreq_value_to_param(APREQ_ARRAY_VALUE(arr,arr->nelts-1));
+            param = apreq_value_to_param(*(apreq_value_t **)
+                       (arr->elts + (arr->elt_size * arr->nelts-1)));
 
             switch (s) {
 

@@ -134,12 +134,14 @@ APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p,
  * Delete all of the elements from a table
  * @param t The table to clear
  */
+APR_INLINE
 APREQ_DECLARE(void) apreq_table_clear(apreq_table_t *t);
 
 /**
  * Return the number of elements within the table.
  * @param t The table to clear
  */
+APR_INLINE
 APREQ_DECLARE(int) apreq_table_nelts(const apreq_table_t *t);
 #define apreq_table_is_empty(t) ( apreq_table_nelts(t) == 0 )
 
@@ -150,7 +152,7 @@ APREQ_DECLARE(int) apreq_table_nelts(const apreq_table_t *t);
  *          a non-NULL value replaces the table's internal copier.
  * @return The original t->copy callback (prior to any assignment).
  */
-
+APR_INLINE
 APREQ_DECLARE(apreq_value_copy_t *) apreq_table_copier(apreq_table_t *t, 
                                            apreq_value_copy_t *c);
 
@@ -161,7 +163,7 @@ APREQ_DECLARE(apreq_value_copy_t *) apreq_table_copier(apreq_table_t *t,
  *          a non-NULL value replaces the table's internal merger.
  * @return The original t->merge callback (prior to any assignment).
  */
-
+APR_INLINE
 APREQ_DECLARE(apreq_value_merge_t *) apreq_table_merger(apreq_table_t *t,
                                            apreq_value_merge_t *m);
 
@@ -196,6 +198,7 @@ APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t);
  *
  * @param t Table.
  */
+APR_INLINE
 APREQ_DECLARE(int) apreq_table_ghosts(apreq_table_t *t);
 
 /**
@@ -235,6 +238,15 @@ APREQ_DECLARE(const char*) apreq_table_get(const apreq_table_t *t,
 APREQ_DECLARE(const char *) apreq_table_cache(apreq_table_t *t,
                                               const char *key);
 
+/**
+ * Return the keys (i.e. value names) in an (char *) array,
+ * preserving their original order.
+ * @param t Table.
+ * @param p Pool used to allocate the resulting array struct.
+ */
+
+APREQ_DECLARE(apr_array_header_t *) apreq_table_keys(apr_pool_t *p,
+                                                     const apreq_table_t *t);
 /**
  * Return the (unique) values in an (apreq_value_t *) array,
  * preserving their original order.
@@ -352,9 +364,23 @@ APREQ_DECLARE(apr_status_t) apreq_table_overlap(apreq_table_t *a,
                                                 const unsigned flags);
 
 /** Iterator API */
+
+/**
+ *  NOTE: elt_size > sizeof(apreq_value_t *) !!!
+ *  So iterating over the values in the array must go something like this:
+ *
+ *  apr_array_header_t *arr = apreq_table_elts(t);
+ *  char *current, *end = arr->elts + arr->elt_size * arr->nelts;
+ *
+ *  for (current = arr->elts; current < end; current += arr->elt_size) {
+ *      apreq_value_t *v = *(apreq_value_t **)current;
+ *
+ *       ... do something with "v" ..
+ *  }
+ */
+
 APR_INLINE
 APREQ_DECLARE(const apr_array_header_t *)apreq_table_elts(apreq_table_t *t);
-
 
 /**
  * Declaration prototype for the iterator callback function of apr_table_do()

@@ -77,9 +77,6 @@ APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p,
 APREQ_DECLARE(apr_ssize_t) apreq_unescape(char *str);
 #define apreq_unescape(str) apreq_decode(str,str,strlen(str))
 
-#define APREQ_ARRAY_VALUE(a,i) (*(apreq_value_t **)( (a)->elts + \
-                                 ((a)->elt_size * (i)) ))
-
 /**
  * Returns an RFC-822 formatted time string. Similar to ap_gm_timestr_822.
  *

@@ -148,23 +148,25 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
     return req;
 }
 
-
-APREQ_DECLARE(const char *)apreq_param(const apreq_request_t *req, 
-                                       const char *name)
+APR_INLINE
+APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req, 
+                                          const char *name)
 {
-    const char *param = apreq_table_get(req->args, name);
-    return  param ? param : 
-        req->body ? apreq_table_get(req->body, name) : NULL;
+    const char *arg = apreq_table_get(req->args, name);
+
+    if (arg)
+        return UPGRADE(arg);
+    else
+        return req->body ? UPGRADE(apreq_table_get(req->body, name)) : NULL;
 }
 
 
-APREQ_DECLARE(apr_array_header_t *) apreq_params(apr_pool_t *pool,
-                                                 const apreq_request_t *req, 
-                                                 const char *name)
+APR_INLINE
+APREQ_DECLARE(apreq_table_t *) apreq_params(apr_pool_t *pool,
+                                            const apreq_request_t *req)
 {
-    apr_array_header_t *arr = apreq_table_values(pool, req->args, name);
-    apr_array_cat(arr, apreq_table_values(pool, req->body, name));
-    return arr;
+    return req->body ? apreq_table_overlay(pool, req->args, req->body) :
+        apreq_table_copy(pool, req->args);
 }
 
 
