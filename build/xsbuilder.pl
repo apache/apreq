@@ -233,36 +233,42 @@ sub write_docs {
 sub pm_text {
     my($self, $module, $isa, $code) = @_;
 
-    return <<EOF;
+    my $text = <<"EOF";
 $self->{noedit_warning_hash}
 
 package $module;
 require DynaLoader ;
-use strict ;
+
+use strict;
+use warnings FATAL => 'all';
+
 use vars qw{\$VERSION \@ISA} ;
 $isa
 push \@ISA, 'DynaLoader' ;
 \$VERSION = '$version';
 bootstrap $module \$VERSION ;
+EOF
 
-# XXX How do we test for the appropriate modperl version?
-# The modperl package isn't necessarily loaded, but Apache2
-# is.  Perhaps Apache2 should always include a VERSION?
+    $text .= <<'EOF';
 
-if (\$ENV{MOD_PERL}) {
+if ($ENV{MOD_PERL}) {
     require mod_perl;
-    if (\$mod_perl::VERSION > 1.99) {
+    my $env = __PACKAGE__->env || '';
+    if ($mod_perl::VERSION > 1.99) {
         die __PACKAGE__ . ": httpd must load mod_apreq.so first"
-               if __PACKAGE__->env ne "Apache::RequestRec";
+               if $env ne "Apache::RequestRec";
     }
-    elsif (\$mod_perl::VERSION > 1.24) {
+    elsif ($mod_perl::VERSION > 1.24) {
         die __PACKAGE__ . ": httpd must load mod_apreq1.so first"
-              if __PACKAGE__->env ne "Apache";
+              if $env ne "Apache";
     }
     else {
-       die "Unrecognized mod_perl version number: \$modperl::VERSION";
+       die "Unrecognized mod_perl version number: $modperl::VERSION";
     }
 }
+EOF
+
+    $text .= <<"EOF";
 
 $code
 
@@ -270,6 +276,7 @@ $code
 __END__
 EOF
 
+        return $text;
 }
 sub makefilepl_text {
     my($self, $class, $deps,$typemap) = @_;

@@ -1,5 +1,3 @@
-use strict;
-use warnings FATAL => 'all';
 
 use APR;
 use APR::Table;
@@ -33,7 +31,7 @@ sub new {
 sub fetch {
     my $self = shift;
     my $jar = $self->jar(@_);
-    return wantarray ? %{scalar $jar->cookie} : $jar->cookie;
+    return wantarray ? %{(scalar $jar->cookie) || {}} : $jar->cookie;
 }
 
 sub freeze {
