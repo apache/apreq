@@ -123,14 +123,8 @@ ApacheCookie *ApacheCookie_new(request_rec *r, ...)
     c->secure = 0;
     c->name = c->expires = NULL;
 
-#ifdef CGI_253
-    /* CGI.pm 2.53 uses these default values */
-    c->domain = (char *)ap_get_server_name(r);
-    c->path = r->uri;
-#else
     c->domain = NULL;
     c->path = ApacheRequest_script_path(&req);
-#endif
 
     va_start(args, r);
     for(;;) {
