@@ -14,7 +14,6 @@
 
 #define APREQ_DECLARE(d)                d
 
-/* default enctypes */
 #define APREQ_URL_ENCTYPE               "application/x-www-form-urlencoded"
 #define APREQ_URL_LENGTH                33
 #define APREQ_MFD_ENCTYPE               "multipart/form-data"
@@ -22,23 +21,16 @@
 #define APREQ_XML_ENCTYPE               "application/xml"
 #define APREQ_XML_ENCTYPE_LENGTH        15
 
-#define APREQ_EXPIRES_HTTP              0
-#define APREQ_EXPIRES_COOKIE            1
+/* defaults */
+#define APREQ_NELTS                     8
+#define APREQ_BUFFER_SIZE               8192
+#define APREQ_BODY_SIZE                (APREQ_BUFFER_SIZE * 1024)
 
-#define APREQ_DEFAULT_POST_MAX         -1 /* XXX: unsafe default ??? */
-#define APREQ_DEFAULT_NELTS             8
-
-/* string match modes:
- * full match: full needle must be found 
- * partial match: allow for partial matches at the end of haystack
- */
-#define APREQ_MATCH_FULL                0
-#define APREQ_MATCH_PART                1
-
-/* status codes */
-#define APREQ_OK                        0
-#define APREQ_CONTINUE                100
-#define APREQ_ERROR                   500
+typedef struct apreq_cfg_t {
+    apr_off_t max_len;
+    char *temp_dir;
+    int run_hooks;
+} apreq_cfg_t;
 
 
 typedef struct apreq_value_t {
@@ -59,10 +51,17 @@ typedef apreq_value_t *(apreq_value_copy_t)(apr_pool_t *p,
 #define apreq_strtoval(ptr)  apreq_char_to_value(ptr)
 #define apreq_strlen(ptr) (apreq_strtoval(ptr)->size)
 
-apreq_value_t *apreq_value_make(apr_pool_t *p, const char *name, 
-                                const char *data, const apr_size_t size);
-apreq_value_t *apreq_value_copy(apr_pool_t *p, const apreq_value_t *val);
-apreq_value_t *apreq_value_merge(apr_pool_t *p, const apr_array_header_t *arr);
+APREQ_DECLARE(apreq_value_t *) apreq_make_value(apr_pool_t *p, 
+                                                const char *name, 
+                                                const char *data, 
+                                                const apr_size_t size);
+
+APREQ_DECLARE(apreq_value_t *) apreq_copy_value(apr_pool_t *p, 
+                                                const apreq_value_t *val);
+
+APREQ_DECLARE(apreq_value_t *) apreq_merge_values(apr_pool_t *p, 
+                                            const apr_array_header_t *arr);
+
 
 typedef enum { AS_IS, ENCODE, DECODE, QUOTE } apreq_join_t;
 APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 
@@ -71,11 +70,15 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
                                        apreq_join_t mode);
 
 /* XXX: should we drop this and replace it with apreq_index ? */
-char *apreq_memmem(char* hay, apr_off_t haylen, 
-                   const char* ndl, apr_off_t ndllen, int part);
+typedef enum {FULL, PARTIAL} apreq_match_t;
 
-apr_off_t apreq_index(const char* hay, apr_off_t haylen, 
-                      const char* ndl, apr_off_t ndllen, int part);
+char *apreq_memmem(char* hay, apr_size_t haylen, 
+                   const char* ndl, apr_size_t ndllen, 
+                   const apreq_match_t type);
+
+apr_ssize_t apreq_index(const char* hay, apr_size_t haylen, 
+                        const char* ndl, apr_size_t ndllen, 
+                        const apreq_match_t type);
 
 /* url-escapes non-alphanumeric characters */
 apr_size_t apreq_quote(char *dest, const char *src, const apr_size_t slen);
@@ -114,3 +117,4 @@ long apreq_atol(const char *s);
 #endif
 
 #endif /* APREQ_H */
+

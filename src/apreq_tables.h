@@ -465,6 +465,7 @@ APREQ_DECLARE(int) apreq_table_vdo(apreq_table_do_callback_fn_t *comp,
                                    const apreq_table_t *t, va_list);
 
 
+
 /** @} */
 #ifdef __cplusplus
 }

@@ -300,7 +300,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
             return j;
         
         data = apreq_env_cookie(ctx);
-        j = apreq_table_make(apreq_env_pool(ctx), APREQ_DEFAULT_NELTS);
+        j = apreq_table_make(apreq_env_pool(ctx), APREQ_NELTS);
 
         /* XXX: potential race condition here 
            between env_jar fetch and env_jar set.  */
@@ -311,7 +311,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
             return j;
     }
     else {
-        j = apreq_table_make(p, APREQ_DEFAULT_NELTS);
+        j = apreq_table_make(p, APREQ_NELTS);
     }
 
     origin = data;
@@ -464,8 +464,8 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
 }
 
 
-APREQ_DECLARE(const char*) apreq_cookie_as_string(apr_pool_t *p,
-                                                  const apreq_cookie_t *c)
+APREQ_DECLARE(char*) apreq_cookie_as_string(apr_pool_t *p,
+                                            const apreq_cookie_t *c)
 
 {
     char s[APREQ_COOKIE_LENGTH];
@@ -479,7 +479,7 @@ APREQ_DECLARE(const char*) apreq_cookie_as_string(apr_pool_t *p,
 
 APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c)
 {
-    const char *s = apreq_cookie_as_string(apreq_env_pool(c->ctx),c);
+    char *s = apreq_cookie_as_string(apreq_env_pool(c->ctx),c);
 
     if (s == NULL) {
         apreq_error(c->ctx, APR_ENAMETOOLONG, "Serialized cookie "
@@ -493,7 +493,7 @@ APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c)
 
 APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c)
 {
-    const char *s = apreq_cookie_as_string(apreq_env_pool(c->ctx),c);
+    char *s = apreq_cookie_as_string(apreq_env_pool(c->ctx),c);
 
     if ( s == NULL ) {
         apreq_error(c->ctx, APR_ENAMETOOLONG, "Serialized cookie "
@@ -546,7 +546,7 @@ APREQ_dDECODE(apreq_cookie_decode)
     if (len <= 0)       /* key size must be > 0 */
         return NULL;
 
-    a = apr_array_make(p, APREQ_DEFAULT_NELTS, sizeof(apreq_value_t));
+    a = apr_array_make(p, APREQ_NELTS, sizeof(apreq_value_t));
     v = (apreq_value_t *)apr_array_push(a);
     v->data = word;
     v->size = len;

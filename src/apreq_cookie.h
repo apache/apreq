@@ -1,11 +1,12 @@
 #ifndef APREQ_COOKIE_H
 #define APREQ_COOKIE_H
 
-#include "apreq_tables.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif 
+
+#include "apreq_tables.h"
 
 typedef struct apreq_table_t apreq_jar_t;
 
@@ -125,8 +126,8 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c,
  * @param c The cookie.
  * @param p The pool.
  */
-APREQ_DECLARE(const char*) apreq_cookie_as_string(apr_pool_t *p,
-                                                  const apreq_cookie_t *c);
+APREQ_DECLARE(char*) apreq_cookie_as_string(apr_pool_t *p,
+                                            const apreq_cookie_t *c);
 
 /**
  * Same functionality as apreq_cookie_as_string.  Stores the string

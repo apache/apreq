@@ -88,11 +88,10 @@ typedef struct apreq_param_t {
 
 
 
-/* XXX this might be better as an ADT */
 typedef struct apreq_request_t {
     apreq_table_t      *args;         /* query_string params */
     apreq_table_t      *body;
-
+    apr_pool_t         *pool;
     void               *ctx;
     apr_status_t        status;
 } apreq_request_t;

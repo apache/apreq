@@ -4,8 +4,10 @@
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 #define MAX(a,b) ( (a) > (b) ? (a) : (b) )
 
-apreq_value_t *apreq_value_make(apr_pool_t *p, const char *name,
-                                const char *d, apr_size_t size)
+APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t *p, 
+                                               const char *name,
+                                               const char *d, 
+                                               apr_size_t size)
 {
     apreq_value_t *v = apr_palloc(p, size + sizeof *v);
     if (d == NULL || v == NULL)
@@ -20,8 +22,8 @@ apreq_value_t *apreq_value_make(apr_pool_t *p, const char *name,
     return v;
 }
 
-apreq_value_t *apreq_value_copy(apr_pool_t *p, 
-                               const apreq_value_t *val)
+APREQ_DECLARE(apreq_value_t *)apreq_copy_value(apr_pool_t *p, 
+                                               const apreq_value_t *val)
 {
     apreq_value_t *v;
     if (val == NULL)
@@ -37,8 +39,8 @@ apreq_value_t *apreq_value_copy(apr_pool_t *p,
     return v;
 }
 
-apreq_value_t *apreq_value_merge(apr_pool_t *p,
-                                 const apr_array_header_t *arr)
+APREQ_DECLARE(apreq_value_t *)apreq_merge_values(apr_pool_t *p,
+                                           const apr_array_header_t *arr)
 {
     apreq_value_t *a = *(apreq_value_t **)(arr->elts);
     apreq_value_t *v = apreq_char_to_value( apreq_join(p, ", ", arr, AS_IS) );
@@ -52,7 +54,7 @@ APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,
 {
     apr_time_t when;
     apr_time_exp_t tms;
-    char sep = (type == APREQ_EXPIRES_HTTP) ? ' ' : '-';
+    char sep = (type == HTTP) ? ' ' : '-';
 
     if (time_str == NULL) {
 	return NULL;
@@ -75,7 +77,8 @@ APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,
 
 /* used for specifying file & byte sizes */
 
-APREQ_DECLARE(apr_int64_t) apreq_atoi64(const char *s) {
+APREQ_DECLARE(apr_int64_t) apreq_atoi64(const char *s)
+{
     apr_int64_t n = 0;
     char *p;
     if (s == NULL)
@@ -138,10 +141,11 @@ APREQ_DECLARE(long) apreq_atol(const char *s)
 */
 
 /* XXX: should we drop this and replace it with apreq_index ? */
-char *apreq_memmem(char* hay, apr_off_t hlen, 
-                   const char* ndl, apr_off_t nlen, int part)
+APREQ_DECLARE(char *) apreq_memmem(char* hay, apr_size_t hlen, 
+                                   const char* ndl, apr_size_t nlen,
+                                   const apreq_match_t type)
 {
-    apr_off_t len = hlen;
+    apr_size_t len = hlen;
     char *end = hay + hlen;
 
     while ( (hay = memchr(hay, ndl[0], len)) ) {
@@ -149,7 +153,7 @@ char *apreq_memmem(char* hay, apr_off_t hlen,
 
 	/* done if matches up to capacity of buffer */
 	if ( memcmp(hay, ndl, MIN(nlen, len)) == 0 ) {
-            if (part == 0 && len < nlen)
+            if (type == FULL && len < nlen)
                 hay = NULL;     /* insufficient room for match */
 	    break;
         }
@@ -160,10 +164,11 @@ char *apreq_memmem(char* hay, apr_off_t hlen,
     return hay;
 }
 
-apr_off_t apreq_index(const char* hay, apr_off_t hlen, 
-                      const char* ndl, apr_off_t nlen, int part)
+APREQ_DECLARE(apr_ssize_t ) apreq_index(const char* hay, apr_size_t hlen, 
+                                        const char* ndl, apr_size_t nlen, 
+                                        const apreq_match_t type)
 {
-    apr_off_t len = hlen;
+    apr_size_t len = hlen;
     const char *end = hay + hlen;
     const char *begin = hay;
 
@@ -172,7 +177,7 @@ apr_off_t apreq_index(const char* hay, apr_off_t hlen,
 
 	/* done if matches up to capacity of buffer */
 	if ( memcmp(hay, ndl, MIN(nlen, len)) == 0 ) {
-            if (part == 0 && len < nlen)
+            if (type == FULL && len < nlen)
                 hay = NULL;     /* insufficient room for match */
 	    break;
         }
@@ -204,7 +209,8 @@ static APR_INLINE char x2c(const char *what)
     return (digit);
 }
 
-apr_ssize_t apreq_decode(char *d, const char *s, const apr_size_t slen)
+APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s, 
+                                        const apr_size_t slen)
 {
     register int badesc = 0;
     char *start = d;
@@ -270,8 +276,8 @@ apr_ssize_t apreq_decode(char *d, const char *s, const apr_size_t slen)
 }
 
 
-apr_size_t apreq_encode(char *dest, const char *src, 
-                        const apr_size_t slen) 
+APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src, 
+                                       const apr_size_t slen) 
 {
     char *d = dest;
     const unsigned char *s = (const unsigned char *)src;
@@ -299,7 +305,8 @@ apr_size_t apreq_encode(char *dest, const char *src,
     return d - dest;
 }
 
-apr_size_t apreq_quote(char *dest, const char *src, const apr_size_t slen) 
+APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src, 
+                                      const apr_size_t slen) 
 {
     char *d = dest;
     const char *s = src;
@@ -468,3 +475,4 @@ APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p,
     rv->size = apreq_encode(rv->data, src, slen);
     return rv->data;
 }
+

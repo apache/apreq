@@ -78,7 +78,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 
     req->status = APR_EINIT;
     req->ctx    = ctx;
-    req->args   = apreq_table_make(p, APREQ_DEFAULT_NELTS);
+    req->args   = apreq_table_make(p, APREQ_NELTS);
     req->body   = NULL;
 
     /* XXX get/set race condition here wrt apreq_env_request.
@@ -95,7 +95,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 #endif
 
     /* XXX need to install copy/merge callbacks for apreq_param_t */
-
+    req->pool = p;
     query_string = apreq_env_args(ctx);
     req->status = (query_string == NULL) ? APR_SUCCESS :
         apreq_split_params(p, req->args, query_string, strlen(query_string));
@@ -242,4 +242,5 @@ APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool,
 
     return v->data;
 }
+
 

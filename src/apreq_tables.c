@@ -78,8 +78,6 @@
 #endif
 #include "apr_signal.h"
 
-
-
 /********************* table_entry structure ********************/
 
 /* private struct */
@@ -542,8 +540,8 @@ APREQ_DECLARE(apreq_table_t *) apreq_table_make(apr_pool_t *p, int nelts)
     memset(t->root, -1, TABLE_HASH_SIZE * sizeof(int));
 
     t->cmp    = strcasecmp;
-    t->merge  = apreq_value_merge;
-    t->copy   = apreq_value_copy;
+    t->merge  = apreq_merge_values;
+    t->copy   = apreq_copy_value;
     t->flags  = 0;
     t->ghosts = 0;
     return t;
@@ -596,7 +594,7 @@ APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p,
                                                  const apr_table_t *s, 
                                                  const unsigned f) 
 {
-    apreq_table_t *t = apreq_table_make(p,APREQ_DEFAULT_NELTS);
+    apreq_table_t *t = apreq_table_make(p,APREQ_NELTS);
     const apr_array_header_t *a = apr_table_elts(s);
     const apr_table_entry_t *e = (const apr_table_entry_t *)a->elts;
     const apr_table_entry_t *end = e + a->nelts;
@@ -605,7 +603,7 @@ APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p,
 
     for ( ; e < end; e++) {
         apreq_value_t *v = e->val ? 
-            apreq_value_make(p,e->key,e->val,strlen(e->val)) : 
+            apreq_make_value(p,e->key,e->val,strlen(e->val)) : 
             NULL;
         apreq_table_add(t, v);
     }
@@ -677,9 +675,9 @@ APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t)
         apr_status_t status = APR_SUCCESS;
         int idx;
         apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
-        apreq_value_t *a[APREQ_DEFAULT_NELTS];
+        apreq_value_t *a[APREQ_NELTS];
         apr_array_header_t arr = { t->a.pool, sizeof(apreq_value_t *), 0,
-                                         APREQ_DEFAULT_NELTS, (char *)a };
+                                         APREQ_NELTS, (char *)a };
         
         for (idx = 0; idx < t->a.nelts; ++idx) {
             int j = idx[o].tree[NEXT];
@@ -847,7 +845,7 @@ APREQ_DECLARE(apr_array_header_t *) apreq_table_values(apr_pool_t *p,
 {
     int idx;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
-    apr_array_header_t *a = apr_array_make(p, key ? APREQ_DEFAULT_NELTS : 
+    apr_array_header_t *a = apr_array_make(p, key ? APREQ_NELTS : 
                                                     t->a.nelts - t->ghosts,
                                                     sizeof(apreq_value_t *));
 
@@ -935,9 +933,9 @@ APREQ_DECLARE(apr_status_t) apreq_table_merge(apreq_table_t *t,
 
     if (idx >= 0 && search(t->cmp,o,&idx,val->name) == 0) {
         int n;
-        apreq_value_t *a[APREQ_DEFAULT_NELTS];
+        apreq_value_t *a[APREQ_NELTS];
         apr_array_header_t arr = { t->a.pool, sizeof(apreq_value_t *), 0,
-                                         APREQ_DEFAULT_NELTS, (char *)a };
+                                         APREQ_NELTS, (char *)a };
 
         *(const apreq_value_t **)apr_array_push(&arr) = idx[o].val;
 
