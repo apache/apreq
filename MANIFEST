@@ -18,10 +18,6 @@ Request/Request.xs
 ToDo
 acinclude.m4
 aclocal.m4
-autom4te-2.53.cache/output.0
-autom4te-2.53.cache/requests
-autom4te-2.53.cache/traces.0
-c/.cvsignore
 c/Makefile.PL
 c/Makefile.am
 c/Makefile.in
