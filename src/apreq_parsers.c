@@ -976,13 +976,19 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 ctx->status = MFD_PARAM;
             } 
             else {
+                apr_array_header_t *arr;
+                apr_table_entry_t e = {NULL};
                 apreq_param_t *param = apreq_make_param(pool, name, nlen, 
                                                         filename, flen);
                 param->info = ctx->info;
                 param->bb = apr_brigade_create(pool, 
                                                apr_bucket_alloc_create(pool));
                 param->v.status = APR_INCOMPLETE;
-                apr_table_addn(t, param->v.name, param->v.data);
+                arr = (apr_array_header_t *)apr_table_elts(t);
+                e.key = (char *)param->v.name;
+                e.val = param->v.data;
+                *(apr_table_entry_t *)(apr_array_push(arr)) = e;
+                arr->nelts--;
                 ctx->status = MFD_UPLOAD;
                 goto mfd_parse_brigade;
             }
@@ -1045,21 +1051,23 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
     case MFD_UPLOAD:
         {
             apreq_param_t *param;
-            const apr_array_header_t *arr;
+            apr_array_header_t *arr;
             apr_table_entry_t *e;
 
             s = split_on_bdry(ctx->bb, ctx->in, ctx->pattern, ctx->bdry);
-            arr = apr_table_elts(t);
+            arr = (apr_array_header_t *)apr_table_elts(t);
             e = (apr_table_entry_t *)arr->elts;
-            param = apreq_value_to_param(apreq_strtoval(e[arr->nelts-1].val));
+            param = apreq_value_to_param(apreq_strtoval(e[arr->nelts].val));
 
             switch (s) {
 
             case APR_INCOMPLETE:
                 if (parser->hook) {
                     s = APREQ_RUN_HOOK(parser->hook, env, param, ctx->bb);
-                    if (s != APR_INCOMPLETE && s != APR_SUCCESS)
+                    if (s != APR_INCOMPLETE && s != APR_SUCCESS) {
+                        ctx->status = MFD_ERROR;
                         return s;
+                    }
                 }
                 APREQ_BRIGADE_SETASIDE(ctx->bb, pool);
                 APREQ_BRIGADE_SETASIDE(ctx->in, pool);
@@ -1072,16 +1080,17 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     APR_BRIGADE_INSERT_TAIL(ctx->bb, eos);
                     s = APREQ_RUN_HOOK(parser->hook, env, param, ctx->bb);
                     apr_bucket_delete(eos);
-                    if (s != APR_SUCCESS)
+                    if (s != APR_SUCCESS) {
+                        ctx->status = MFD_ERROR;
                         return s;
+                    }
                 }
-
+                apr_table_addn(t, param->v.name, param->v.data);
                 APREQ_BRIGADE_SETASIDE(ctx->bb, pool);
-                param->v.status = apreq_brigade_concat(env,
-                                                       param->bb, ctx->bb);
+                s = apreq_brigade_concat(env, param->bb, ctx->bb);
 
-                if (param->v.status != APR_SUCCESS)
-                    return param->v.status;
+                if (s != APR_SUCCESS)
+                    return s;
 
                 ctx->status = MFD_NEXTLINE;
                 goto mfd_parse_brigade;
@@ -1099,4 +1108,9 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
     }
 
     return APR_INCOMPLETE;
+}
+
+APREQ_DECLARE_HOOK(apreq_hook_disable_uploads)
+{
+    return APR_EGENERAL;
 }

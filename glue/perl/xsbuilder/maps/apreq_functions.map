@@ -2,8 +2,6 @@
 
 MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
  apreq_request | apreq_xs_request | const char *:class, void *:env, const char *:qs=NULL
-! apreq_parse_request
-! apreq_params
  apreq_param | apreq_xs_request_get |
 
 MODULE=Apache::Request PACKAGE=Apache::Request

@@ -380,6 +380,12 @@ APREQ_DECLARE(void) apreq_add_hook(apreq_parser_t *p,
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env,
                                             apreq_hook_t *hook);
 
+/**
+ * Returns APR_EGENERAL.  Effectively disables mfd parser
+ * if a file-upload field is present.
+ *
+ */
+APREQ_DECLARE_HOOK(apreq_hook_disable_uploads);
 #ifdef __cplusplus
 }
 #endif

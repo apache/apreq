@@ -24,20 +24,20 @@ query parameters. The main differences are
 object as (second) argument.  Newer versions of CGI.pm also accept
 this syntax within modperl.
 
-=item * The query parameters are stored as Apache::Table objects,
+=item * The query parameters are stored in APR::Table derived objects,
 and are therefore parsed using case-insensitive keys.
 
-=item * The query string is always parsed, even for POST requests.
+=item * The query string is always parsed first, even for POST requests.
 
 =back
 
 =head2 new  
 
-creates a new I<Apache::Request> object with an environment object $r:
+creates a new C<Apache::Request> object with an environment object $r:
 
     my $req = Apache::Request->new($r);
 
-With mod_perl2, the environment object must be an I<Apache::RequestRec>
+With mod_perl2, the environment object must be an C<Apache::RequestRec>
 object.  All methods from the environment class are inherited.
 
 The following attributes are optional:
@@ -58,16 +58,19 @@ Sets the directory where upload files are spooled.  On a *nix-like
 that supports link(2), the TEMP_DIR should be located on the same
 file system as the final destination file:
 
+ use Apache::Upload;
  my $req = Apache::Request->new($r, TEMP_DIR => "/home/httpd/tmp");
  my $upload = $req->upload('file');
  $upload->link("/home/user/myfile") || warn "link failed: $!";
 
-=item HOOK_DATA [TODO]
+For more details on C<link>, see the L<Apache:Upload> manpage.
+
+=item HOOK_DATA (requires L<Apache::Upload>)
 
 Extra configuration info passed to an upload hook.
-See the description for the next item, I<UPLOAD_HOOK>.
+See the description for the next item, C<UPLOAD_HOOK>.
 
-=item UPLOAD_HOOK (requires Apache::Upload) [TODO]
+=item UPLOAD_HOOK (requires L<Apache::Upload>)
 
 Sets up a callback to run whenever file upload data is read. This
 can be used to provide an upload progress meter during file uploads.
@@ -75,7 +78,7 @@ Apache will automatically continue writing the original data to
 $upload->fh after the hook exits.
 
  my $transparent_hook = sub {
-   my ($upload, $bb, $hook_data, $next_hook) = @_;
+   my ($upload, $data, $hook_data) = @_;
    warn "$hook_data: got $len bytes for " . $upload->name;
  };
 
@@ -86,7 +89,7 @@ $upload->fh after the hook exits.
 
 =back
 
-=head2 instance [DEPRECATED]
+=head2 C<instance> [DEPRECATED]
 
 The default (and only) behavior of I<Apache::Request> is to intelligently
 cache B<POST> data for the duration of the request.  Thus there is no longer
@@ -97,21 +100,35 @@ I<Apache::Request> object created during the request's lifetime.
 However an C<instance()> method is aliased to C<new()> in this release
 to ease the pain of porting from 1.X to 2.X.
 
-=head2 param
+=head2 C<param>
 
-Get or set (TODO) the request parameters (using case-insensitive keys) by
-mimicing the OO interface of C<CGI::param>.  WIth a single
+Get the request parameters (using case-insensitive keys) by
+mimicing the OO interface of C<CGI::param>.
 
     # similar to CGI.pm
 
-    my $value = $req->param('foo');
-    my @values = $req->param('foo');
-    my @params = $req->param;
+    my $foo_value   = $req->param('foo');
+    my @foo_values  = $req->param('foo');
+    my @param_names = $req->param;
 
     # the following differ slightly from CGI.pm
 
-    # returns ref to APR::Table object representing all (args + body) params
+    # returns ref to Apache::Request::Table object representing 
+    # all (args + body) params
     my $table = $req->param;
+
+In list context, or when invoked with a single argument, 
+C<param> always induces libapreq2 to read and parse all 
+remaining data in the request body.  However, C<scalar $req->param("foo")> 
+is lazy: libapreq2 will only read=parse more data if
+
+    1) no "foo" param appears in the query string arguments, AND
+    2) no "foo" param appears in the previously parsed POST data.
+
+In this circumstance libapreq2 will read and parse additional
+blocks of the incoming request body until it has found the
+the "foo" param.
+
 
 =head2 parms, params [DEPRECATED]
 

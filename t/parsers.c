@@ -83,7 +83,7 @@ static void parse_multipart(CuTest *tc)
     CuAssertPtrNotNull(tc, req);
     CuAssertStrEquals(tc, req->env, apreq_env_content_type(req->env));
 
-    /* strlen(form_data) == 317 */
+    /* strlen(form_data) == 319 */
     for (j = 0; j <= strlen(form_data); ++j) {
         apr_bucket *e = apr_bucket_immortal_create(form_data,
                                                    strlen(form_data),
@@ -126,6 +126,43 @@ static void parse_multipart(CuTest *tc)
         CuAssertStrEquals(tc, "text/plain", val);
     }
 }
+static void parse_disable_uploads(CuTest *tc)
+{
+    const char *val;
+    apr_table_t *t;
+    apr_status_t rv;
+    apreq_request_t *req = apreq_request(APREQ_MFD_ENCTYPE
+                         "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"" ,"");
+    apr_bucket_brigade *bb = apr_brigade_create(p, 
+                                   apr_bucket_alloc_create(p));
+    apr_bucket *e = apr_bucket_immortal_create(form_data,
+                                                   strlen(form_data),
+                                                   bb->bucket_alloc);
+
+    CuAssertPtrNotNull(tc, req);
+    CuAssertStrEquals(tc, req->env, apreq_env_content_type(req->env));
+
+    APR_BRIGADE_INSERT_HEAD(bb, e);
+    APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
+
+    req->body = NULL;
+    req->parser = apreq_parser(req->env, apreq_make_hook(p, 
+                                 apreq_hook_disable_uploads, NULL, NULL));
+
+    rv = apreq_parse_request(req,bb);
+    CuAssertIntEquals(tc, APR_EGENERAL, rv);
+    CuAssertPtrNotNull(tc, req->body);
+    CuAssertIntEquals(tc, 1, apr_table_elts(req->body)->nelts);
+
+    val = apr_table_get(req->body,"field1");
+    CuAssertStrEquals(tc, "Joe owes =80100.", val);
+    t = apreq_value_to_param(apreq_strtoval(val))->info;
+    val = apr_table_get(t, "content-transfer-encoding");
+    CuAssertStrEquals(tc,"quoted-printable", val);
+
+    val = apr_table_get(req->body, "pics");
+    CuAssertPtrEquals(tc, NULL, val);
+}
 
 
 CuSuite *testparser(void)
@@ -133,6 +170,7 @@ CuSuite *testparser(void)
     CuSuite *suite = CuSuiteNew("Parsers");
     SUITE_ADD_TEST(suite, parse_urlencoded);
     SUITE_ADD_TEST(suite, parse_multipart);
+    SUITE_ADD_TEST(suite, parse_disable_uploads);
     return suite;
 }
 

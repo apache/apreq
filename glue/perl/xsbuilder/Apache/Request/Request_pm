@@ -1,6 +1,4 @@
 use APR::Table;
-use APR::Bucket;
-use APR::Brigade;
 
 package Apache::Request::Table;
 push our(@ISA), "APR::Table";

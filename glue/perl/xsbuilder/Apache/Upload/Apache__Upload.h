@@ -310,3 +310,117 @@ static XS(apreq_xs_upload_fh)
     ST(0) = f2g(aTHX_ file, bb->p, APR_PERLIO_HOOK_READ);
     XSRETURN(1);
 }
+
+struct hook_ctx {
+    SV                  *hook_data;
+    SV                  *hook;
+    SV                  *upload;
+    SV                  *bucket_data;
+    PerlInterpreter     *perl;
+};
+
+#ifdef IMPLEMENT_UPLOAD_HOOKS
+
+#define DEREF(slot) if (ctx->slot) SvREFCNT_dec(ctx->slot)
+
+static void upload_hook_cleanup(void *ctx_)
+{
+    struct hook_ctx *ctx = ctx_;
+
+#ifdef USE_ITHREADS
+    dTHXa(ctx->perl);
+#endif
+
+    DEREF(hook_data);
+    DEREF(hook);
+    DEREF(upload);
+    DEREF(bucket_data);
+}
+
+
+APR_INLINE
+static void eval_upload_hook(pTHX_ SV *hook, SV* upload, 
+                             SV *bucket_data, SV* hook_data)
+{
+    dSP;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 3);
+    ENTER;
+    SAVETMPS;
+
+    PUSHs(upload);
+    PUSHs(bucket_data);
+    PUSHs(hook_data);
+
+    PUTBACK;
+    perl_call_sv(hook, G_EVAL|G_DISCARD);
+    FREETMPS;
+    LEAVE;
+}
+
+
+static
+APREQ_DECLARE_HOOK(apreq_xs_hook_wrapper)
+{
+    struct hook_ctx *ctx = hook->ctx; /* set ctx during config */
+    apr_bucket *e;
+    apr_status_t s = APR_SUCCESS;
+
+#ifdef USE_ITHREADS
+    dTHXa(ctx->perl);
+#endif
+
+    if (hook->next) {
+        s = APREQ_RUN_HOOK(hook->next, env, param, bb);
+        if (s != APR_SUCCESS)
+            return s;
+    }
+
+    for (e = APR_BRIGADE_FIRST(bb); e!= APR_BRIGADE_SENTINEL(bb);
+         e = APR_BUCKET_NEXT(e))
+    {
+        apr_off_t len;
+        const char *data;
+
+        if (APR_BUCKET_IS_EOS(e)) {
+            /*last call */
+            eval_upload_hook(aTHX_ ctx->hook, ctx->upload, 
+                             &PL_sv_undef, ctx->hook_data);
+
+            if (SvTRUE(ERRSV)) {
+                /*XXX: handle error */
+                s = APR_EGENERAL;
+            }
+
+            break;
+        }
+
+        s = apr_bucket_read(e, &data, &len, APR_BLOCK_READ);
+        if (s != APR_SUCCESS)
+            break;
+
+        SvPVX(ctx->bucket_data) = (char *)data;
+        SvCUR(ctx->bucket_data) = (STRLEN)len;
+
+        eval_upload_hook(aTHX_ ctx->hook, ctx->upload, ctx->bucket_data, 
+                         ctx->hook_data);
+
+        if (SvTRUE(ERRSV)) {
+            /*XXX: handle error */
+            s = APR_EGENERAL;
+            break;
+        }
+
+    }
+
+    return s;
+}
+
+static XS(apreq_xs_upload_hook)
+{
+    /*this needs to initialize hook_ctx (bucket_data must be CONSTANT with LEN=-1)*/
+
+}
+
+#endif
