@@ -129,7 +129,7 @@ END
 }
 
 close $make;
-generate_defs();
+# generate_defs();
 
 print << "END";
 
@@ -422,8 +422,8 @@ INSTALL: $(LIBAPREQ)
 !IF EXIST("$(LIBDIR)\$(LIBAPREQ).lib")
 	copy "$(LIBAPREQ).lib" "$(APACHE_LIB)\$(LIBAPREQ).lib"
 !ENDIF
-!IF EXIST("$(LIBDIR)\$(CGI).lib")
-	copy "$(CGI).lib" "$(APACHE_LIB)\$(CGI).lib"
+!IF EXIST("$(LIBDIR)\$(LIBAPREQ).dll")
+        copy "$(LIBAPREQ).dll" "$(APACHE)\bin\$(LIBAPREQ).dll"
 !ENDIF
         cd $(APREQ_HOME)
 
