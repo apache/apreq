@@ -129,3 +129,6 @@ L<Apache::Cookie>, L<Apache::Upload>, L<APR::Table>
 =head1 MISSING DOCS
 
  Apache::Upload::Table.
+
+=for testing
+ok 1;

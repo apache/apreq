@@ -1,0 +1,347 @@
+=head1 NAME
+
+
+Apache::Cookie - HTTP Cookies Class
+
+
+=for testing
+  use Apache2;
+  use Apache::Cookie;
+  use APR::Pool;
+  $r = APR::Pool->new;
+  $j = Apache::Cookie::Jar->new($r);
+  $j->cookies->{foo} = Apache::Cookie->new($r, name => "foo", value => "1");
+  $j->cookies->add( Apache::Cookie->new($r, name => "bar", value => "2") );
+  # We must disable bake and bake2 in the api tests, 
+  # since they write directly to fd 1 via apr_file_write().
+  *Apache::Cookie::bake = *Apache::Cookie::bake2 = *Apache::Cookie::as_string;
+
+
+
+
+=head1 SYNOPSIS
+
+
+=for example begin
+
+    use Apache::Cookie;
+
+    $j = Apache::Cookie::Jar->new($r);
+    $c_in = $j->cookies("foo");      # get cookie from request headers
+
+    $c_out = Apache::Cookie->new($r, 
+                                  -name => "mycookie",
+                                  -value => $c_in->name );
+    $c_out->set_attr(path => "/bar");
+    $c_out->bake;                       # send cookie in response headers
+
+=for example end
+
+=for example_testing
+    ok "foo bar" eq join " ", keys %{$j->cookies};
+    ok $c_out->as_string eq "mycookie=foo; path=/bar";
+    ok $c_in->value == 1;
+
+
+
+
+=head1 DESCRIPTION
+
+
+The new Apache::Cookie module is based on the original 1.X versions, which mimic 
+the CGI::Cookie API.  The current version of this module includes several packages 
+and methods which are patterned after Apache::Request, yet remain largely 
+backwards-compatible with the original 1.X API (see the L<PORTING> section 
+below for known issues).
+
+This manpage documents the Apache::Cookie and Apache::Cookie::Jar packages.  
+Apache::Cookie::Error, Apache::Cookie::Jar::Error and Apache::Cookie::Table
+are also provided by this module but documented elsewhere (related manpages
+listed in L<SEE ALSO>).
+
+
+
+
+=head1 Apache::Cookie::Jar
+
+XXX Dump __PACKAGE__->env inheritance (doesn't work in CGI context) XXX
+
+
+=head2 new($env [,VALUE_CLASS => $cookie_class])
+
+
+Class method that retrieves the parsed cookie jar from the current 
+environment.
+
+
+=for example begin
+     {
+        package FOO;
+        @ISA= 'Apache::Cookie';
+     }
+        my $jar = Apache::Cookie::Jar->new($r, VALUE_CLASS => "FOO");
+
+=for example end
+
+=for example_testing
+        ok $jar->isa("Apache::Cookie::Jar");
+        ok $jar->cookies("foo")->isa("FOO");
+        ok $jar->cookies->{foo}->isa("FOO");
+
+
+
+=head2 cookies($key)
+
+Retrieve cookies named $key with from the jar object.  In scalar
+context the first such cookie is returned, and in list context the
+full list of such cookies are returned.
+
+If the $key argument is omitted, C<< scalar $jar->cookies() >> will 
+return a reference to a tied Apache::Cookie::Table containing all the 
+cookies in the jar.  Modifications to the returned table will affect
+the jar's internal I<cookies> table in C<apreq_jar_t>, so their impact 
+will be noticed by all libapreq2 applications during this request.
+
+In list context C<< $jar->cookies() >> returns the list of names 
+for all the cookies in the jar.  The order corresponds to the 
+order in which the cookies appeared in the incoming "Cookie" header.
+
+This method will throw an Apache::Cookie::Jar::Error object into $@ if
+the returned value(s) may be unreliable.  In particular, note that 
+C<< scalar $jar->cookies("foo") >> will not croak if it can locate
+the a "foo" cookie within the jar's parsed cookie table, even if the 
+cookie parser has failed (the cookies are parsed in the same order
+as they appeared in the "Cookie" header). In all other circumstances 
+C<cookies> will croak if the parser failed to successfully parse the 
+"Cookie" header.
+
+
+=for example begin
+
+     $j->cookies->add(Apache::Cookie->new($r, name => "foo", value => 3));
+
+     $cookie = $j->cookies("foo");  # first foo cookie
+     @cookies = $j->cookies("foo"); # all foo cookies
+     @names = $j->cookies();        # all cookie names
+
+=for example end
+
+
+=for example_testing
+     ok @cookies == 2;
+     ok $_ -> name eq "foo" for $cookie, @cookies;
+     ok $cookies[0]->value eq $cookie->value;
+     ok $cookies[0]->value == 1;
+     ok $cookies[1]->value == 3;
+     ok "foo bar foo" eq "@names";
+
+
+=head2 status
+
+Reports the final I<APR> status code of the cookie parser:
+APR_SUCCESS on success, error otherwise.  May be reset
+to a new value by passing it as an additional argument.
+
+=for example begin
+
+   $j->status(-1);
+   ok $j->status == -1;
+   eval { @cookies = $j->cookies("foo") };   # croaks
+   ok $@->isa("Apache::Cookie::Jar::Error");
+   $j->status(0);
+   ok $j->status == 0;
+
+=for example end
+
+=head2 env
+
+As a class method C<< Apache::Cookie::Jar->env >> returns
+the environment class associated with Apache::Cookie::Jar. 
+As an object method, C<< $jar->env >> returns the environment 
+object which first created the $jar (via C<new>).
+
+=for example
+   ok Apache::Cookie::Jar->env eq ref $j->env;
+
+
+=head2 pool
+
+The pool associated with the current environment.
+
+=for example
+  ok $j->pool->isa("APR::Pool");
+
+
+
+
+=head1 Apache::Cookie
+
+
+
+
+=head2 new
+
+Just like CGI::Cookie::new, but requires an I<Apache> request object:
+
+        my $cookie = Apache::Cookie->new($r,
+                             -name    =>  'foo', 
+                             -value   =>  'bar', 
+                             -expires =>  '+3M', 
+                             -domain  =>  '.capricorn.com', 
+                             -path    =>  '/cgi-bin/database',
+                             -secure  =>  1 
+                            ); 
+
+The C<-value> attribute may be either an arrayref, a hashref, or
+an object with a C<freeze> method.  The <freeze> method must serialize
+the object in a manner compatible with the "value" portion of the 
+Cookie specs. Specifically, it must take care to avoid header tokens [;,=] 
+and whitespace characters in its output.
+
+
+=head2 as_string
+
+Format the cookie object as a string:
+
+ #same as $cookie->bake
+ $r->headers_out->add("Set-Cookie" => $cookie->as_string);
+
+
+=head2 name
+
+Get the name of the cookie:
+
+ my $name = $cookie->name;
+
+=head2 value
+
+Get the value of the cookie:
+
+ my $value = $cookie->value;
+ my @values = $cookie->value;
+
+Note: if the cookie's value was serialized from an object possessing a 
+C<freeze> method, one way to reconstitute the object is by subclassing 
+Apache::Cookie with a package that provides the associated C<thaw> sub:
+
+  package My::Cookie;
+  use base 'Apache::Cookie';
+  sub thaw { ... }
+  bless $cookie, __PACKAGE__;
+
+  my $obj = $cookie->value;  # same as $cookie->thaw($cookie->raw_value);
+
+=head2 raw_value
+
+Gets the raw (opaque) value string as it appears in the incoming
+"Cookie" header.
+
+
+
+=head2 bake
+
+Add a I<Set-Cookie> header to the outgoing headers table.
+
+    $cookie->bake;
+
+
+=head2 bake2
+
+Add a I<Set-Cookie2> header to the outgoing headers table.
+
+    $cookie->bake2;
+
+
+=head2 domain
+
+Get or set the domain for the cookie:
+
+ my $domain = $cookie->domain;
+ $cookie->domain(".cp.net");
+
+=head2 path
+
+Get or set the path for the cookie:
+
+ my $path = $cookie->path;
+ $cookie->path("/");
+
+=head2 expires
+
+Get or set the expire time for the cookie:
+
+ my $expires = $cookie->expires;
+ $cookie->expires("+3h");
+
+=head2 secure
+
+Get or set the secure flag for the cookie:
+
+ my $secure = $cookie->secure;
+ $cookie->secure(1);
+
+
+=head2 fetch
+
+Fetch and parse the incoming I<Cookie> header:
+
+=for example begin
+
+    my $cookies = Apache::Cookie->fetch($r); #hash ref
+
+    my %cookies = Apache::Cookie->fetch($r);
+
+=for example end
+
+=for example_testing
+#    ok "foobar" eq join "", keys %$cookies;
+#    ok 12 == join "", sort map {$_->value} values %cookies;
+
+
+
+
+
+
+=head1 PORTING
+
+Changes to the 1.X API:
+
+=over 4
+
+=item * C<Apache::Cookie::fetch> requires an C<$r> object as (second) argument.
+
+=item * C<Apache::Cookie::parse> is gone.
+
+=item * C<Apache::Cookie::new> can take an object as its -value arg, assuming
+        the object has a valid C<freeze> method.
+
+=item * C<name> and <value> no longer accept a "set" argument. In other words,
+        neither a cookie's name, nor its value, may be modified.  A new cookie
+        should be made instead.
+
+=back
+
+
+
+=head1 SEE ALSO
+
+CGI::Cookie(3), Apache::Cookie::Error(3), Apache::Cookie::Jar::Error(3),
+Apache::Cookie::Table(3), Apache::Request(3), APR(3).
+
+
+=head1 COPYRIGHT
+
+  Copyright 2003-2004  The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+

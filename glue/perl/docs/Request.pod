@@ -300,3 +300,6 @@ This interface is based on the original pure Perl version by Lincoln Stein.
 
 $req->config, Apache::Request::Table
 
+=for testing
+ok 1;
+

@@ -1,0 +1,2 @@
+=for testing
+ok 1;

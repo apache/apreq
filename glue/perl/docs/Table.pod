@@ -1,0 +1,21 @@
+=begin testing
+    use Apache2;
+    use Apache::Request;
+    use APR::Pool;
+
+=end testing
+
+=for example begin
+
+    my $table = Apache::Request::Table->new(APR::Pool->new);
+    $table->{test} = 1;
+    $table->{foo} = "bar1";
+    $table->add(foo => "bar2");
+            # TABLE DO TESTS
+            {
+                my $do_data = "";
+                $table->do( sub { $do_data .= "@_"; 1 } );
+                ok $do_data eq "test 1foo bar1foo bar2";
+            }
+
+=for example end
