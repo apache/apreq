@@ -2,6 +2,15 @@
 
 @section v2_01_dev Changes with libapreq2-2.01-dev
 
+- November 7, 2003 - C API mod_apreq.c [joes]
+
+Parser errors were creeping into the return value of apreq_filter,
+which breaks the "transparent tee" paradigm.  This caused bogus
+"400 Bad Request" responses (first reported by Vladimir Dudo) 
+to occur when libapreq2 was used by an output filter during a GET 
+request (handled by apache2's default handler).  The test suite 
+has been updated accordingly.
+
 - October 26, 2003 - C API [joes]
 
 Incorporate libapreq_cgi into libapreq2 as the default environment,
