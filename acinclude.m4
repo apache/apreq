@@ -36,12 +36,13 @@ AC_DEFUN([AC_APREQ], [
         else
                 APACHE2_INCLUDES=-I`$APACHE2_APXS -q INCLUDEDIR`
                 APACHE2_HTTPD=`$APACHE2_APXS -q SBINDIR`/httpd
-                if test -z "`$APACHE2_APXS -q APR_VERSION`"; then
+                APR_MAJOR_VERSION=`$APACHE2_APXS -q APR_VERSION | cut -d. -f 1`
+                if test ${APR_MAJOR_VERSION:=0} -eq 0; then
                     APR_CONFIG=apr-config
                     APU_CONFIG=apu-config 
                 else
-                    APR_CONFIG=apr-1-config
-                    APU_CONFIG=apu-1-config
+                    APR_CONFIG=apr-$APR_MAJOR_VERSION-config
+                    APU_CONFIG=apu-$APR_MAJOR_VERSION-config
                 fi
                 APR_CONFIG=`$APACHE2_APXS -q APR_BINDIR`/$APR_CONFIG
                 APU_CONFIG=`$APACHE2_APXS -q APU_BINDIR`/$APU_CONFIG
