@@ -909,22 +909,22 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 
 
         }
-        break;
+        break;  /* not reached */
 
     case MFD_UPLOAD:
         {
             apr_bucket *eos;
             apr_status_t s = split_on_bdry(pool, ctx->bb, bb, ctx->bdry);
             apreq_param_t *param;
-            const apreq_value_t *v;
-            int dummy;
+            apreq_table_iter_t ti;
+
+            ti.t = req->body;
+            apreq_table_last(&ti);
+            param = apreq_value_to_param(ti.v);
 
             switch (s) {
 
             case APR_INCOMPLETE:
-                apreq_table_last(req->body, &v, &dummy);
-                param = apreq_value_to_param(v);
-
                 if (parser->hook)
                     return parser->hook(pool, param->bb, ctx->bb, parser);
                 else {
@@ -933,9 +933,6 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
                 }
 
             case APR_SUCCESS:
-                apreq_table_last(req->body, &v, &dummy);
-                param = apreq_value_to_param(v);
-
                 eos = apr_bucket_eos_create(ctx->bb->bucket_alloc);
                 APR_BRIGADE_INSERT_TAIL(ctx->bb, eos);
 
@@ -955,7 +952,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
             }
 
         }
-        break;
+        break;  /* not reached */
 
     case MFD_ERROR:
         return APR_EGENERAL;

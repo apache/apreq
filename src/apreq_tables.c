@@ -146,7 +146,8 @@ struct apreq_table_t {
 
 #define DEAD(idx)     ( (idx)[o].key == NULL )
 #define KILL(t,idx) do { (idx)[o].key = NULL; \
-                         (t)->ghosts++; } while (0)
+                         if (idx ==(t)->a.nelts-1) (t)->a.nelts--; \
+                         else                      (t)->ghosts++; } while (0)
 #define RESURRECT(t,idx) do { (idx)[o].key = (idx)[o].val->name; \
                               (t)->ghosts--; } while (0)
 
@@ -767,11 +768,8 @@ APREQ_DECLARE(int) apreq_table_exorcise(apreq_table_t *t)
     if (t->ghosts < t->a.nelts) {
         apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
-        /* first eliminate trailing ghosts */
-        while (DEAD(t->a.nelts - 1)) {
-            t->a.nelts--;
-            t->ghosts--;
-        }
+        /* trailing ghosts cannot occur; IOW t->a.nelts-1 is 
+           always alive */
 
         /* bury any remaining ghosts */
         if (t->ghosts) {
@@ -812,8 +810,8 @@ APREQ_DECLARE(const char *) apreq_table_get(const apreq_table_t *t,
     return v2c(idx[o].val);
 }
 
-APREQ_DECLARE(const char *) apreq_table_get_cached(apreq_table_t *t,
-                                                   const char *key)
+APREQ_DECLARE(const char *) apreq_table_cache(apreq_table_t *t,
+                                              const char *key)
 {
     int *root = &t->root[TABLE_HASH(key)];
     int idx = *root;
@@ -1151,98 +1149,76 @@ APREQ_DECLARE(apr_status_t) apreq_table_overlap(apreq_table_t *a,
 
 /********************* iterators ********************/
 
-APREQ_DECLARE(apr_status_t) apreq_table_fetch(const apreq_table_t *t,
-                                              const apreq_value_t **val,
-                                              int *off)
+APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_fetch(apreq_table_iter_t *ti, int idx)
 {
-    int idx = *off;
+    const apreq_table_t *t = ti->t;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
     if (idx < 0 || idx >= t->a.nelts - t->ghosts) {
-        *val = NULL;
+        ti->v = NULL;
+        ti->i = -1;
         return APR_EGENERAL;
     }
 
-    if (t->ghosts) {   /* count ghosts: O(N) */
-        int n;
-
-        for (n=0; n <= idx; ++n)
-            if ( DEAD(n) )
-                ++idx;
-
-        *off = idx;
+    if (t->ghosts) {
+        if (idx == t->a.nelts - t->ghosts - 1)
+            ti->i = t->a.nelts - 1;
+        else
+            for (ti->i = 0; ti->i <= idx; ti->i++)
+                if ( DEAD(ti->i) )
+                    ++idx;
     }
+    else
+        ti->i = idx;
 
-    *val = idx[o].val;
+    ti->v = idx[o].val;
 
     return APR_SUCCESS;
 }
 
-APREQ_DECLARE(apr_status_t) apreq_table_first(const apreq_table_t *t,
-                                              const apreq_value_t **val,
-                                              int *off)
+APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_next(apreq_table_iter_t *ti)
 {
-    *off = -1;
-    return apreq_table_next(t,val,off);
-}
-
-APREQ_DECLARE(apr_status_t) apreq_table_next(const apreq_table_t *t,
-                                             const apreq_value_t **val,
-                                             int *off)
-{
-    int idx = *off;
+    const apreq_table_t *t = ti->t;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
-    if (idx < -1 || idx >= t->a.nelts) {
-        *val = NULL;
+    if (ti->i < 0 || ti->i >= t->a.nelts) {
+        ti->v = NULL;
+        ti->i = -1;
         return APR_EGENERAL;
     }
 
-    do { 
-        if (++idx == t->a.nelts) {
-            *off = idx;
-            *val = NULL;
-            return APR_EGENERAL;
-        }
-    } while ( DEAD(idx) );
+    if (ti->i == t->a.nelts - 1) {
+        ti->v = NULL;
+        ti->i = -1;
+        return APR_SUCCESS;
+    }
 
-    *off = idx;
-    *val = idx[o].val;
+    while (DEAD(++ti->i))
+        ;       /* skip dead elements */
+
+    ti->v = ti->i[o].val;
     return APR_SUCCESS;
 }
 
-APREQ_DECLARE(apr_status_t) apreq_table_last(const apreq_table_t *t, 
-                                             const apreq_value_t **val, 
-                                             int *off)
-{
-    *off = t->a.nelts;
-    return apreq_table_prev(t,val,off);
-}
 
-APREQ_DECLARE(apr_status_t) apreq_table_prev(const apreq_table_t *t, 
-                                             const apreq_value_t **val,
-                                             int *off)
+APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_prev(apreq_table_iter_t *ti)
 {
-    int idx = *off;
+    const apreq_table_t *t = ti->t;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
-    if (idx <= 0 || idx > t->a.nelts) {
-        *val = NULL;
+    if (ti->i < 0 || ti->i >= t->a.nelts) {
+        ti->v = NULL;
+        ti->i = -1;
         return APR_EGENERAL;
     }
 
-    do { 
-        if (--idx == -1) {
-            *off = idx;
-            *val = NULL;
-            return APR_EGENERAL;
-        }
-    } while ( DEAD(idx) );
+    while (--ti->i >= 0 && DEAD(ti->i))
+        ; /* skip dead elements */
 
-    *off = idx;
-    *val = idx[o].val;
+    ti->v = (ti->i == -1) ? NULL : ti->i[o].val;
     return APR_SUCCESS;
 }
+
 
 /* And now for something completely abstract ...
 
@@ -1287,8 +1263,8 @@ APREQ_DECLARE(apr_status_t) apreq_table_prev(const apreq_table_t *t,
  *
  * So to make mod_file_cache easier to maintain, it's a good thing
  */
-APREQ_DECLARE(int) apreq_table_do(apreq_table_do_callback_fn_t *comp,
-                                  void *rec, const apreq_table_t *t, ...)
+APREQ_DECLARE_NONSTD(int) apreq_table_do(apreq_table_do_callback_fn_t *comp,
+                                         void *rec, const apreq_table_t *t, ...)
 {
     int rv;
 

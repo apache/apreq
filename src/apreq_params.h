@@ -59,12 +59,13 @@
 #ifndef APREQ_PARAM_H
 #define APREQ_PARAM_H
 
+#include "apreq_tables.h"
+#include "apr_buckets.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-#include "apreq_tables.h"
-#include "apr_buckets.h"
 
 /***************************************************
  * API: apreq_params.c

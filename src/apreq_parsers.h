@@ -1,13 +1,12 @@
 #ifndef APREQ_PARSERS_H
 #define APREQ_PARSERS_H
 
+#include "apreq_params.h"
+#include "apr_buckets.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif 
-
-#include "apreq_params.h"
-#include "apr_buckets.h"
 
 /* parsers: single copy paradigm */
 

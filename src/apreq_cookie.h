@@ -1,12 +1,11 @@
 #ifndef APREQ_COOKIE_H
 #define APREQ_COOKIE_H
 
+#include "apreq_tables.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif 
-
-#include "apreq_tables.h"
 
 typedef struct apreq_table_t apreq_jar_t;
 

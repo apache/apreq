@@ -232,8 +232,8 @@ APREQ_DECLARE(const char*) apreq_table_get(const apreq_table_t *t,
  * function may deactivate the tree-balancing algorithm if
  * necessary.
  */
-APREQ_DECLARE(const char *) apreq_table_get_cached(apreq_table_t *t,
-                                                   const char *key);
+APREQ_DECLARE(const char *) apreq_table_cache(apreq_table_t *t,
+                                              const char *key);
 
 /**
  * Return the (unique) values in an (apreq_value_t *) array,
@@ -353,64 +353,18 @@ APREQ_DECLARE(apr_status_t) apreq_table_overlap(apreq_table_t *a,
 
 /** Iterator API */
 
-/**
- * Fetch a table entry using a specific index.
- * @param t   Table.
- * @param val Location of resulting value.
- * @param off Index of desired value. Upon success, off will be updated
- *            to reflect the actual offset of the value sought.  Any
- *            difference reflects the presence of earlier ghosts in 
- *            the table.
- */
-APREQ_DECLARE(apr_status_t) apreq_table_fetch(const apreq_table_t *t,
-                                              const apreq_value_t **val,
-                                              int *off);
+typedef struct apreq_table_iter_t {
+    const apreq_table_t *t;
+    const apreq_value_t *v;
+    int                  i;
+} apreq_table_iter_t;
 
-/**
- * Locate the first value in the table.
- * @param t   Table.
- * @param val Location of resulting value.
- * @param off Index of first value.  The offset will count
- *            the number of ghosts before the first value.
- */
-APREQ_DECLARE(apr_status_t) apreq_table_first(const apreq_table_t *t,
-                                              const apreq_value_t **val,
-                                              int *off);
+APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_fetch(apreq_table_iter_t *ti, int idx);
+#define apreq_table_first(ti) apreq_table_fetch(ti,0)
+#define apreq_table_last(ti) apreq_table_fetch(ti,apreq_table_nelts((ti)->t)-1)
 
-/**
- * Locate the next value in the table.
- * @param t   Table.
- * @param val Location of resulting value.
- * @param off (Internal) Index of next value.  On success, the offset
- *            will be 1 + the number of ghosts between the current offset
- *            and the new one.
- */
-APREQ_DECLARE(apr_status_t) apreq_table_next(const apreq_table_t *t,
-                                             const apreq_value_t **val,
-                                             int *off);
-/**
- * Locate the last value in the table.
- * @param t   Table.
- * @param val Location of the final value.
- * @param off (Internal) Index of last value.  The offset will be one
- *            less than the number of entries (including ghosts)
- *            occupying the table.
- */
-APREQ_DECLARE(apr_status_t) apreq_table_last(const apreq_table_t *t, 
-                                             const apreq_value_t **val, 
-                                             int *off);
-
-/**
- * Locate the previous value in the table.
- * @param t   Table.
- * @param val Location of previous value.
- * @param off (Internal) Index of previous value.  On success, the 
- *            offset will be 1 + the number of ghosts between the 
- *            current offset and the new one.
- */
-APREQ_DECLARE(apr_status_t) apreq_table_prev(const apreq_table_t *t, 
-                                             const apreq_value_t **val,
-                                             int *off);
+APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_next(apreq_table_iter_t *ti);
+APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_prev(apreq_table_iter_t *ti);
 
 /**
  * Declaration prototype for the iterator callback function of apr_table_do()
@@ -441,9 +395,9 @@ typedef int (apreq_table_do_callback_fn_t)(void *ctx, const char *key,
  *            iterations returned non-zero
  * @see apreq_table_do_callback_fn_t
  */
-APREQ_DECLARE(int) apreq_table_do(apreq_table_do_callback_fn_t *comp,
-                                  void *ctx,
-                                  const apreq_table_t *t, ...);
+APREQ_DECLARE_NONSTD(int) apreq_table_do(apreq_table_do_callback_fn_t *comp,
+                                         void *ctx,
+                                         const apreq_table_t *t, ...);
 
 /** 
  * Iterate over a table running the provided function once for every

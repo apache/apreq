@@ -1,16 +1,16 @@
 #ifndef APREQ_H
 #define APREQ_H
 
+#include "apr_tables.h" 
+#include <stddef.h>
+
 #ifdef  __cplusplus
  extern "C" {
 #endif 
 
-#include "apr_tables.h" 
-
-#include <stddef.h>
 
 #define APREQ_DECLARE(d)                d
-
+#define APREQ_DECLARE_NONSTD(d)         d
 #define APREQ_URL_ENCTYPE               "application/x-www-form-urlencoded"
 #define APREQ_MFD_ENCTYPE               "multipart/form-data"
 #define APREQ_XML_ENCTYPE               "application/xml"
