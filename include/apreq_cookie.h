@@ -68,7 +68,7 @@ apreq_cookie_t *apreq_value_to_cookie(const char *val)
     union { const char *in; char *out; } deconst;
 
     deconst.in = val;
-    return apreq_attr_to_type(apreq_cookie_t, v, 
+    return apreq_attr_to_type(apreq_cookie_t, v,
            apreq_attr_to_type(apreq_value_t, data, deconst.out));
 }
 
