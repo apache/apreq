@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/04/19 16:06:03 $]
+Last modified at [$Date: 2003/04/19 17:49:44 $]
 
      2.0.0  in development
 
@@ -48,12 +48,27 @@ TODO:
         tables.c needs tests for "balanced" tables
 
     * Populate the glue/ directory (perl, tcl, etc.).
-    
+
+    * add XForms logic to the mfd parser.
+
 
 OPEN ISSUES:
 
   Documentation system.
 
+  Should we bundle an apr-based "application/xml" parser?  
+  If so, how should we parse the xml data into an apreq_table?
+
 
 BUGS:
 
+  XXX
+
+
+WISH LIST:
+
+    * Build system (.dsp files?) for Win32.  I'm assuming 
+
+           % ./buildconf && configure... 
+
+      doesn't work on Windows. [joes]
