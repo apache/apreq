@@ -50,7 +50,7 @@ Apache::*::Error - Exception classes for Apache::Request, Apache::Upload, Apache
 =head1 DESCRIPTION
 
 This manpage documents the Apache::*::Error classes provided by 
-the Apache::Request, Apache::Upload, or Apache::Cookie modules.
+the Apache::Request, Apache::Upload, and Apache::Cookie modules.
 Error classes are all derived from APR::Error and the class
 which first produced the error.  Unlike the object that created it, 
 an Error object will not itself throw an error by calling its methods.

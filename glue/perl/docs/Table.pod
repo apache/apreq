@@ -53,6 +53,7 @@ be safely embedded in a value without truncating it.
 
 
 =for example begin
+
     my $table = Apache::Request::Table->new($r);
     my $value = "bar\0quux";
     $table->{foo} = $value;
