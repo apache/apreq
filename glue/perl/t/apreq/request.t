@@ -22,7 +22,7 @@ my $location = "/TestApReq__request";
 {
     # upload a string as a file
     my $test  = 'upload';
-    my $value = 'data upload';
+    my $value = 'dataUpload' x 100_000;
     ok t_cmp($value,
              UPLOAD_BODY("$location?test=$test", content => $value),
              "basic upload");

@@ -65,7 +65,7 @@
 #define UPGRADE(s) apreq_value_to_param(apreq_char_to_value(s))
 
 static const apreq_cfg_t default_cfg = {
-    1024 * 1024, 
+    1024 * 1024, /* 1MB */
     8192 * 2, 
     200, 
     8192 * 8
