@@ -9,7 +9,7 @@ void | VOID
 void * | PTR
 const void * | PTR
 unsigned | UV
-apreq_cookie_version_t | APREQ_COOKIE_VERSION
+#apreq_cookie_version_t | APREQ_COOKIE_VERSION
 
 #data structure stuff
 struct apr_pool_t           | APR::Pool | T_POOLOBJ
@@ -20,7 +20,6 @@ struct apr_bucket_brigade   | APR::Brigade
 #struct apr_hash_t           | APR::Hash
 #apr_hash_index_t            | APR::HashIndex
 
-struct apreq_param_t        | Apache::Upload
-struct apreq_request_t      | Apache::Request           | T_APREQ_REQUEST
-struct apreq_jar_t          | Apache::Cookie::Jar       | T_APREQ_JAR
-struct apreq_cookie_t       | Apache::Cookie
+struct apreq_param_t        | APR::Request::Param
+struct apreq_cookie_t       | APR::Request::Cookie
+struct apreq_handle_t       | APR::Request::Handle

@@ -20,6 +20,9 @@
 /* avoid namespace collisions from perl's XSUB.h */
 #include "modperl_perl_unembed.h"
 
+/* required for modperl's T_HASHOBJ (typemap) */
+#include "modperl_common_util.h"
+
 /* backward compatibility macros support */
 #include "ppport.h"
 
@@ -242,7 +245,7 @@ static XS(apreq_xs_make_##type)                                         \
     val = SvPVbyte(ST(3), vlen);                                        \
     t = apreq_make_##type(pool, key, klen, val, vlen);                  \
     XSprePUSH;                                                          \
-    XPUSHs(sv_2mortal(apreq_xs_##type##2sv(t,class,SvRV(ST(1)))));             \
+    XPUSHs(sv_2mortal(apreq_xs_##type##2sv(t,class,SvRV(ST(1)))));      \
     XSRETURN(1);                                                        \
 }  
 
