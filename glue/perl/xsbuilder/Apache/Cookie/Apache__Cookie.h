@@ -135,7 +135,7 @@ static XS(apreq_xs_cookie_expires)
 
     if (c->version == NETSCAPE) {
         char expires[APR_RFC822_DATE_LEN] = {0};
-        apreq_rfc_822_date(expires, c->max_age + apr_time_now());
+        apr_rfc_822_date(expires, c->max_age + apr_time_now());
         expires[7] = '-';
         expires[11] = '-';
         XSRETURN_PV(expires);
