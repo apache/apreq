@@ -13,7 +13,8 @@
 !   v
 </apreq_param_t>
 
-#<apreq_handle_t MODULE=APR::Request::Handle>
+<apreq_handle_t MODULE=APR::Request::Handle>
+! module
 #!   args
 #!   body
 #!   parser
@@ -21,7 +22,7 @@
 #!  env
 #   args_status
 #   body_status
-#</apreq_handle_t>
+</apreq_handle_t>
 
 <apreq_cookie_t MODULE=APR::Request::Cookie>
   version
@@ -32,6 +33,7 @@
   comment
   commentURL
 ! max_age
+! flags
 !  v
 </apreq_cookie_t>
 
@@ -47,3 +49,6 @@
 !  hook
 > ctx
 </apreq_parser_t>
+
+<apr_table_t MODULE=APR::Request::Table>
+</apr_table_t>

@@ -26,6 +26,10 @@
 /* backward compatibility macros support */
 #include "ppport.h"
 
+/* ExtUtils::XSBuilder::ParseSoure trickery... */
+typedef apreq_handle_t apreq_handle_cgi_t;
+typedef apreq_handle_t apreq_handle_apache2_t;
+
 /**
  * @file apreq_xs_postperl.h
  * @brief XS include file for making Cookie.so and Request.so

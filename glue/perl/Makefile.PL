@@ -105,9 +105,9 @@ my $mp2_typemaps = Apache::Build->new->typemaps;
 package My::ParseSource;
 use base qw/ExtUtils::XSBuilder::ParseSource/;
 use constant WIN32 => ($^O =~ /Win32/i);
-my @dirs = ("$base_dir/include");
-sub package {'Apache::libapreq2'}
-sub unwanted_includes {[qw/apreq_tables.h apreq_config.h/]}
+my @dirs = ("$base_dir/include", "$base_dir/module/apache2");
+sub package {'APR::Request'}
+sub unwanted_includes {[qw/apreq_config.h apreq_private_apache2.h/]}
 
 # ParseSource.pm v 0.23 bug: line 214 should read
 # my @dirs = @{$self->include_dirs};
@@ -256,11 +256,104 @@ sub h_filename_prefix {'apreq_xs_'}
 sub my_xs_prefix {'apreq_xs_'}
 sub xs_include_dir { $xs_dir }
 
+sub mod_xs {
+    my($self, $module, $complete) = @_;
+    my $dirname = $self->class_dirname($module);
+    my @parts = split '::', $module;
+    my $mod_xs = "$dirname/$parts[-1].xs";
+
+    for ($self -> xs_include_dir, @{ $self->{glue_dirs} }) {
+        my $file = "$_/$mod_xs";
+		$mod_xs = $file if $complete;
+        return $mod_xs if -e $file;
+    }
+
+    undef;
+}
+
+#inline mod_xs directly, so we can put XS directives there
+
+sub write_xs {
+    my($self, $module, $functions) = @_;
+
+    my $fh = $self->open_class_file($module, '.xs');
+    print $fh "$self->{noedit_warning_c}\n";
+
+    my @includes = @{ $self->includes };
+
+    if (my $mod_h = $self->mod_h($module)) {
+        push @includes, $mod_h;
+    }
+
+    for (@includes) {
+        print $fh qq{\#include "$_"\n\n};
+    }
+
+    if (my $mod_xs = $self->mod_xs($module, 1)) {
+        open my $file, $mod_xs or die "can't open $mod_xs: $!";
+        print $fh $_ while <$file>;
+        print $fh "\n\n";
+    }
+
+    my $last_prefix = "";
+    my $fmap = $self -> typemap -> {function_map} ;
+    my $myprefix = $self -> my_xs_prefix ;
+
+    for my $func (@$functions) {
+        my $class = $func->{class};
+        if ($class)
+            {
+            my $prefix = $func->{prefix};
+            $last_prefix = $prefix if $prefix;
+
+            if ($func->{name} =~ /^$myprefix/o) {
+                #e.g. mpxs_Apache__RequestRec_
+                my $class_prefix = $fmap -> class_c_prefix($class);
+                if ($func->{name} =~ /$class_prefix/) {
+                    $prefix = $fmap -> class_xs_prefix($class);
+                }
+            }
+
+            $prefix = $prefix ? "  PREFIX = $prefix" : "";
+            print $fh "MODULE = $module    PACKAGE = $class $prefix\n\n";
+            }
+
+        print $fh $func->{code};
+    }
+
+    if (my $destructor = $self->typemap->destructor($last_prefix)) {
+        my $arg = $destructor->{argspec}[0];
+
+        print $fh <<EOF;
+void
+$destructor->{name}($arg)
+    $destructor->{class} $arg
+
+EOF
+    }
+
+    print $fh "PROTOTYPES: disabled\n\n";
+    print $fh "BOOT:\n";
+    print $fh $self->boot($module);
+    print $fh "    items = items; /* -Wall */\n\n";
+
+    if (my $newxs = $self->{newXS}->{$module}) {
+        for my $xs (@$newxs) {
+            print $fh qq{   cv = newXS("$xs->[0]", $xs->[1], __FILE__);\n};
+            print $fh qq{   GvSHARED_on(CvGV(cv));\n} if ExtUtils::XSBuilder::WrapXS::XSGvSHARED();
+        }
+    }
+
+    close $fh;
+}
+
+
+
 sub mod_pod {
     my($self, $module, $complete) = @_;
     my $dirname = $self->class_dirname($module);
     my @parts = split '::', $module;
-    my $mod_pod = "$dirname/$parts[-1]_pod";
+    my $mod_pod = "$dirname/$parts[-1].pod";
     for ($self -> xs_incsrc_dir, @{ $self->{glue_dirs} }) {
         my $file = "$_/$mod_pod";
         $mod_pod = $file if $complete;
@@ -436,17 +529,29 @@ sub typemap_code
                             OUTPUT => '$arg = apreq_xs_param2sv($var);',
                             c2perl => 'apreq_xs_param2sv(ptr)',
                            },
-        T_APREQ_REQUEST => {
-                            INPUT  => '$var = apreq_xs_sv2(request,$arg)',
-                            perl2c => 'apreq_xs_sv2(request,sv)',
-                            OUTPUT => '$arg = apreq_xs_2sv($var,\"${ntype}\");',
-                            c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
+        T_APREQ_HANDLE => {
+                            INPUT  => '$var = apreq_xs_perl2c(aTHX_ $arg, "r")',
+                            perl2c => 'apreq_xs_perl2c(aTHX_ sv, "r")',
+                            c2perl => 'sv_setref_pv(newSV(0), class, ptr)',
+                            OUTPUT => <<'EOT',
+    $arg = sv_setref_pv($arg, class, $var);
+    if (!sv_derived_from($arg, \"${ntype}\"))
+        Perl_croak(aTHX_ \"Usage: target class %s isn't derived from ${ntype}\", class);
+EOT
                            },
-        T_APREQ_JAR     => {
-                            INPUT  => '$var = apreq_xs_sv2(jar,$arg)',
-                            perl2c => 'apreq_xs_sv2(jar,sv)',
-                            OUTPUT => '$arg = apreq_xs_2sv($var,\"${ntype}\");',
-                            c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
+        T_APREQ_HANDLE_APACHE2 => {
+                            INPUT  => '$var = apreq_xs_perl2c(aTHX_ $arg, "r")',
+                            OUTPUT => <<'EOT',
+    $arg = sv_setref_pv($arg, class, $var);
+    if (sv_derived_from($arg, \"${ntype}\")) {
+        SV *parent = ST(1); /* r's SV */
+        SV *rv = SvRV($arg);
+        sv_magic(rv, parent, PERL_MAGIC_ext, Nullch, -1);
+        SvMAGIC(rv)->mg_ptr = (void *)r;
+    }
+    else
+        Perl_croak(aTHX_ \"Usage: target class %s isn't derived from ${ntype}\", class);
+EOT
                            },
  T_APREQ_COOKIE_VERSION => {
                             INPUT  => '$var = ((apreq_cookie_version_t)SvTRUE($arg))',

@@ -103,5 +103,17 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
 # apreq_expires
 
 
-MODULE=APR::Request  PACKAGE=APR::Request::Handle PREFIX=apreq_
-apreq_jar
+#################### APR::Request stuff ####################
+
+MODULE=APR::Request  PACKAGE=APR::Request
+#DEFINE_jar | apreq_xs_jar |
+#DEFINE_args | apreq_xs_args |
+#DEFINE_body | apreq_xs_body |
+#DEFINE_param | apreq_xs_param |
+
+MODULE=APR::Request::Apache2 PACKAGE=APR::Request::Apache2
+apreq_handle_apache2_t *:DEFINE_new | apreq_handle_apache2 (r) | const char *:class, request_rec *:r
+
+MODULE=APR::Request::CGI PACKAGE=APR::Request::CGI
+apreq_handle_cgi_t *:DEFINE_new | apreq_handle_cgi (p) | const char *:class, apr_pool_t *:p
+
