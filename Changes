@@ -4,6 +4,8 @@ Revision history for libapreq-1
 
 =item 1.33
 
+MacOSX docs tweaks [David Wheeler <david kineticode.com>]
+
 fix Makefile.PL to properly skip the test suite if A-T requirements
 weren't satisfied [Stas]
 
