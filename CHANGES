@@ -1,6 +1,15 @@
 /** @page CHANGES
 
+
 @section v2_03_dev Changes with libapreq2-2.03-dev
+
+
+- December 31, 2003 - C API [Swen Schillig, joes]
+
+Fixed bug in calculation of Netscape cookie expiration dates.
+apr_time_t is measured in microseconds, not seconds, which
+threw off the arithmetic; apr_time_from_sec was needed for
+the conversion.
 
 - December 11, 2003 - C API [Max Kellermann]
 
@@ -16,6 +25,7 @@ first reported to modperl list by Wolfgang Kubens.
 
 
 @section v2_01_dev Changes with libapreq2-2.01-dev
+
 
 - November 7, 2003 - build system [joes]
 
@@ -39,7 +49,9 @@ and add apreq_env_t and initializer apreq_env_module() to manage the
 environment at runtime (determining the environment at load-time
 was problematic on non-ELF systems).
 
+
 @section v2_0_0 Changes with libapreq2-2.00-dev
+
 
 - October 24, 2003 - C API: libapreq_cgi.c [randyk, joes]
 
@@ -93,7 +105,6 @@ gets passed along to the subrequest handler(s).
 If the source and destination strings are represented by the same
 pointer - e.g. if called as apreq_unescape(s) - string s is modified
 incorrectly in general.  Patch includes new unit test.
-
 
 - July 16, 2003 - Perl API [joes]
 

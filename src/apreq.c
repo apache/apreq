@@ -143,7 +143,7 @@ APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,
 
     when = apr_time_now();
     if (strcasecmp(time_str,"now")) 
-        when += apreq_atoi64t(time_str);
+        when += apr_time_from_sec(apreq_atoi64t(time_str));
 
     if ( apr_time_exp_gmt(&tms, when) != APR_SUCCESS )
         return NULL;

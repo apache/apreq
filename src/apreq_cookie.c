@@ -89,7 +89,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
     if (!strcasecmp(time_str, "now"))
         c->max_age = 0;
     else
-        c->max_age = apreq_atoi64t(time_str);
+        c->max_age = apr_time_from_sec(apreq_atoi64t(time_str));
 }
 
 static int has_rfc_cookie(void *ctx, const char *key, const char *val)
@@ -478,7 +478,7 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
     return apr_snprintf(buf, len, format, c->v.name, c->v.data, c->version,
                         NULL2EMPTY(c->path), NULL2EMPTY(c->domain), 
                         NULL2EMPTY(c->port), NULL2EMPTY(c->comment), 
-                        NULL2EMPTY(c->commentURL), c->max_age);
+                        NULL2EMPTY(c->commentURL), apr_time_sec(c->max_age));
 }
 
 
