@@ -110,9 +110,10 @@ static void rfc_cookie(dAT)
     AT_str_eq(apreq_cookie_as_string(c,p),"rfc=out; Version=1");
 
     c->domain = apr_pstrdup(p, "example.com");
+
+#ifndef WIN32
     AT_str_eq(apreq_cookie_as_string(c,p),
               "rfc=out; Version=1; domain=\"example.com\"");
-
     c->path = apr_pstrdup(p, "/quux");
     AT_str_eq(apreq_cookie_as_string(c,p),
               "rfc=out; Version=1; path=\"/quux\"; domain=\"example.com\"");
@@ -123,6 +124,13 @@ static void rfc_cookie(dAT)
                        "domain=\"example.com\"; max-age=%ld",
                        expires);
     AT_str_eq(apreq_cookie_as_string(c,p), val);
+
+#else
+    (void)val;
+    (void)expires;
+    AT_skip(3, "VC++ preprocessor error C2107: illegal escape sequence");
+#endif
+
 }
 
 static void ua_version(dAT)

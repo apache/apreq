@@ -25,10 +25,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <setjmp.h>
-
-#ifdef WIN32
-#define snprintf _snprintf
-#endif
+#include "apr_strings.h"
 
 typedef struct at_t at_t;
 typedef struct at_report_t at_report_t;
@@ -141,7 +138,6 @@ void at_trace(at_t *t, const char *fmt, ...) {
 }
 
 
-
 /* These are "checks". */
 
 static APR_INLINE
@@ -249,6 +245,19 @@ void at_check(at_t *t, int is_ok, const char *label, const char *file,
 #define AT_NE(a, b, fmt) at_check(AT, ((a) != (b)), #a " != " #b,\
                                   __FILE__, __LINE__, fmt, a, b)
 
+
+static APR_INLINE
+void at_skip(at_t *t, int n, const char *reason, const char *file, int line) {
+    char buf[256];
+    while (n-- > 0) {
+        ++t->current;
+        apr_snprintf(buf, 256, "not ok %d - %s (%d) #skipped: %s (%s:%d)", 
+                     t->current + t->prior, t->name, t->current, reason, file, line);
+        at_report(t, buf);
+    }
+}
+
+#define AT_skip(n, reason) at_skip(AT, n, reason, __FILE__, __LINE__)
 
 
 /* Report utilities. */
