@@ -263,8 +263,6 @@ APREQ_DECLARE(apr_status_t) apreq_parse_urlencoded(apr_pool_t *pool,
         apr_status_t s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
 
         if (APR_BUCKET_IS_EOS(e)) {
-            apreq_log(APREQ_DEBUG s, req->env,
-                      "got eos bucket: %d, %d", nlen, vlen);
             return parser->v.status == URL_NAME ? APR_SUCCESS : 
                 split_urlword(pool, t, bb, nlen+1, vlen);
         }
@@ -297,8 +295,6 @@ APREQ_DECLARE(apr_status_t) apreq_parse_urlencoded(apr_pool_t *pool,
                 switch (data[off++]) {
                 case '&':
                 case ';':
-                    apreq_log(APREQ_DEBUG 0, req->env,
-                              "got word: %d, %d", nlen, vlen);
                     s = split_urlword(pool, t, bb, nlen+1, vlen+1);
                     if (s != APR_SUCCESS)
                         return s;

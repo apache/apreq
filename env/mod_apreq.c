@@ -62,6 +62,7 @@
 
 #include "apreq.h"
 #include "apreq_env.h"
+#include "apreq_params.h"
 #include "apreq_parsers.h"
 #include "apreq_cookie.h"
 
@@ -236,8 +237,10 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         APR_BRIGADE_CONCAT(bb, ctx->bb_in);
     }
 
-    apreq_log(APREQ_DEBUG rv, r, "dump body:");
-    apreq_table_do(dump_table, r, ctx->req->body, NULL);
+    if (ctx->req->body) {
+        apreq_log(APREQ_DEBUG rv, r, "dump body:");
+        apreq_table_do(dump_table, r, ctx->req->body, NULL);
+    }
 
     return rv;
 }

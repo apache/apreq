@@ -1,3 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src env
-EXTRA_DIST = libapreq.pod
+EXTRA_DIST = README
+
+test:	check
