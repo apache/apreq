@@ -16,7 +16,7 @@ sub handler {
 
     my $req = bless { r => $r };
     $req->printf("method => %s\n", $req->method);
-    $req->printf("cookie => %s\n", $req->cookies("apache")->as_string);
+    $req->printf("cookie => %s\n", $req->cookies->{"apache"}->as_string);
     return 0;
 }
 

@@ -141,6 +141,14 @@ APR_INLINE
 static SV *apreq_xs_param2sv(pTHX_ apreq_param_t *p, 
                               const char *class, SV *parent)
 {
+    if (class == NULL) {
+        SV *rv = newSVpvn(p->v.data, p->v.size);
+        if (apreq_param_is_tainted(p))
+            SvTAINTED_on(rv);
+        /*XXX add charset fixups */
+        return rv;
+    }
+
     return apreq_xs_object2sv(aTHX_ p, class, parent, PARAM_CLASS);
 }
 
@@ -148,6 +156,14 @@ APR_INLINE
 static SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c, 
                               const char *class, SV *parent)
 {
+    if (class == NULL) {
+        SV *rv = newSVpvn(c->v.data, c->v.size);
+        if (apreq_cookie_is_tainted(c))
+            SvTAINTED_on(rv);
+        /*XXX add charset fixups? */
+        return rv;
+    }
+
     return apreq_xs_object2sv(aTHX_ c, class, parent, COOKIE_CLASS);
 }
 
@@ -158,11 +174,13 @@ static SV *apreq_xs_sv2object(pTHX_ SV *sv, const char *class, const char attr)
     SV *obj;
     MAGIC *mg;
     sv = apreq_xs_find_obj(aTHX_ sv, attr);
+
+    /* XXX sv_derived_from is expensive; how to optimize it? */
     if (sv_derived_from(sv, class)) {
         return SvRV(sv);
     }
 
-    /* check if parent (mg->mg_obj) is a handle */
+    /* else check if parent (mg->mg_obj) is the right object type */
     if ((mg = mg_find(SvRV(sv), PERL_MAGIC_ext)) != NULL
         && (obj = mg->mg_obj) != NULL
         && SvOBJECT(obj))

@@ -48,7 +48,7 @@ static XS(apreq_xs_jar)
     if (items == 2 && GIMME_V == G_SCALAR) {
         apreq_cookie_t *c = apreq_jar_get(req, SvPV_nolen(ST(1)));
         if (c != NULL) {
-            ST(0) = apreq_xs_cookie2sv(aTHX_ c, COOKIE_CLASS, obj);
+            ST(0) = apreq_xs_cookie2sv(aTHX_ c, NULL, obj);
             sv_2mortal(ST(0));
             XSRETURN(1);
         }
@@ -76,7 +76,7 @@ static XS(apreq_xs_jar)
         if (t == NULL)
             XSRETURN_EMPTY;
 
-        d.pkg = COOKIE_CLASS;
+        d.pkg = NULL;
         d.parent = obj;
 
         switch (GIMME_V) {

@@ -7,12 +7,12 @@ sub param {
     return &APR::Request::args, &APR::Request::body
         if wantarray;
 
-    my ($req, $key) = @_;
+   return &APR::Request::param
+       if @_ == 2;
 
-    return APR::Request::params($req, $req->pool)
-        if @_ == 1;
+    my $req = shift;
+    return APR::Request::params($req, $req->pool);
 
-    return APR::Request::param($req, $key);
 }
 
 

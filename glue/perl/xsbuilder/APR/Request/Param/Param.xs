@@ -1,7 +1,6 @@
 #include "apreq_xs_tables.h"
 #define TABLE_CLASS "APR::Request::Param::Table"
 
-
 static int apreq_xs_table_keys(void *data, const char *key, const char *val)
 {
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
@@ -51,7 +50,7 @@ static XS(apreq_xs_args)
         apreq_param_t *p = apreq_args_get(req, SvPV_nolen(ST(1)));
 
         if (p != NULL) {
-            ST(0) = apreq_xs_param2sv(aTHX_ p, PARAM_CLASS, obj);
+            ST(0) = apreq_xs_param2sv(aTHX_ p, NULL, obj);
             sv_2mortal(ST(0));
             XSRETURN(1);
         }
@@ -79,7 +78,7 @@ static XS(apreq_xs_args)
         if (t == NULL)
             XSRETURN_EMPTY;
 
-        d.pkg = PARAM_CLASS;
+        d.pkg = NULL;
         d.parent = obj;
 
         switch (GIMME_V) {
@@ -95,8 +94,8 @@ static XS(apreq_xs_args)
             return;
 
         case G_SCALAR:
-            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, 
-                                      PARAM_CLASS, sizeof(PARAM_CLASS)-1);
+            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj,
+                                      PARAM_CLASS, sizeof(PARAM_CLASS) -1);
             sv_2mortal(ST(0));
             XSRETURN(1);
 
@@ -127,7 +126,7 @@ static XS(apreq_xs_body)
         apreq_param_t *p = apreq_body_get(req, SvPV_nolen(ST(1)));
 
         if (p != NULL) {
-            ST(0) = apreq_xs_param2sv(aTHX_ p, PARAM_CLASS, obj);
+            ST(0) = apreq_xs_param2sv(aTHX_ p, NULL, obj);
             sv_2mortal(ST(0));
             XSRETURN(1);
         }
@@ -155,7 +154,7 @@ static XS(apreq_xs_body)
         if (t == NULL)
             XSRETURN_EMPTY;
 
-        d.pkg = PARAM_CLASS;
+        d.pkg = NULL;
         d.parent = obj;
 
         switch (GIMME_V) {
@@ -447,7 +446,7 @@ params(handle, pool)
     req = INT2PTR(apreq_handle_t *, iv);
     t = apreq_params(req, pool);
     RETVAL = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, 
-                                      PARAM_CLASS, sizeof(PARAM_CLASS)-1);
+                               PARAM_CLASS, sizeof(PARAM_CLASS)-1);
 
   OUTPUT:
     RETVAL
