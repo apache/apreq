@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/23 07:21:14 $]   -*-text-*-
+Last modified at [$Date: 2004/07/23 17:22:53 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -49,13 +49,6 @@ CURRENT VOTES:
             -1:
 
 TODO:
-
-    - use of APR_DELONCLOSE in apreq_file_mktemp, to delete
-      temp files after they're done, requires on Win32 use of
-      open $fh, "<:APR", ..., rather than just open $fh, "<", ...
-      when opening such files. Should remove APR_DELONCLOSE
-      in apreq_file_mktemp, and instead use a pool cleanup to
-      delete the temp file.
 
     - in glue/perl/t/apreq/cgi.t on Win32, printing to the error log
       hangs if the strings involved are about 10000 in size.

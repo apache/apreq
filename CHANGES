@@ -4,6 +4,16 @@
 
 @section v2_04_dev Changes with libapreq2-2.04-dev
 
+- C API [Markus Wichitill, randyk, joes]
+  Drop APR_DELONCLOSE from apreq_file_mktemp implementation and install
+  apreq_file_cleanup. When passed to apr_file_open on Win32, APR_DELONCLOSE 
+  sets the FILE_SHARED_DELETE flag, which is, unfortunately, a property that
+  is preserved across NTFS "hard" links.  This breaks apps that link() 
+  the temp file to a permanent location, and subsequently expect to open it 
+  without FILE_SHARED_DELETE before the original tempfile is closed+deleted. 
+  In fact, even Apache::Upload does this, so it is a common enough event that
+  the apreq_file_cleanup workaround is necessary.
+
 - C API [Ken Burcham, joes]
   Fix bug in url parser that occurs when a %XX-encoded sequence
   is split across multiple buckets.  Added apreq_decode_decodev

@@ -736,6 +736,30 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
     return APR_SUCCESS;
 }
 
+
+
+static apr_status_t apreq_file_cleanup(void *f)
+{
+    apr_file_t *file = f;
+    apr_finfo_t finfo;
+
+    apr_file_info_get(&finfo, APR_FINFO_NAME, file);
+
+    apr_file_close(file); /*deregister any other pool cleanups */
+    return apr_file_remove(finfo.fname, finfo.pool);
+}
+
+/*
+ * The reason we need the above cleanup is because on Windows, APR_DELONCLOSE
+ * forces applications to open the file with FILE_SHARED_DELETE
+ * set, which is, unfortunately, a property that is preserved 
+ * across NTFS "hard" links.  This breaks apps that link() the temp 
+ * file to a permanent location, and subsequently expect to open it 
+ * before the original tempfile is closed+deleted. In fact, even
+ * Apache::Upload does this, so it is a common enough event that the
+ * apreq_file_cleanup workaround is necessary.
+ */
+
 APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
                                               apr_pool_t *pool,
                                               const char *path)
@@ -754,9 +778,17 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
     if (rc != APR_SUCCESS)
         return rc;
     
-    return apr_file_mktemp(fp, tmpl,
+    rc = apr_file_mktemp(fp, tmpl, /* NO APR_DELONCLOSE! see comment above */
                            APR_CREATE | APR_READ | APR_WRITE
-                           | APR_EXCL | APR_DELONCLOSE | APR_BINARY, pool);
+                           | APR_EXCL | APR_BINARY, pool);
+
+    /* cleanups are LIFO, so this one will run first, thus removing the 
+       one just set by mktemp */
+    apr_pool_cleanup_register(pool, (void *)(*fp), 
+                              apreq_file_cleanup, apreq_file_cleanup);
+
+
+    return rc;
 }
 
 

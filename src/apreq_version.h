@@ -61,7 +61,7 @@ extern "C" {
 #define APREQ_MINOR_VERSION       0
 
 /** patch level */
-#define APREQ_PATCH_VERSION      16
+#define APREQ_PATCH_VERSION      17
 
 /** 
  *  This symbol is defined for internal, "development" copies of libapreq.
