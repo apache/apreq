@@ -24,6 +24,11 @@
 #undef lstat
 #endif
 
+#ifdef isnan
+#define apache_isnan isnan
+#undef isnan
+#endif
+
 #ifdef sleep
 #define apache_sleep sleep
 #undef sleep
@@ -46,6 +51,12 @@
 #ifdef apache_gid_t
 #define gid_t apache_gid_t
 #undef apache_gid_t
+#endif
+
+#ifdef apache_isnan
+#undef isnan
+#define isnan apache_isnan
+#undef apache_isnan
 #endif
 
 #ifdef apache_lstat
