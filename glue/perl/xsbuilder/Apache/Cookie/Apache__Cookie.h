@@ -134,7 +134,7 @@ static XS(apreq_xs_cookie_expires)
     dXSARGS;
     apreq_cookie_t *c;
 
-    if (items == 0 || items > 1 || !SvROK(ST(0)))
+    if (items == 0 || items > 2 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $cookie->expires([$amount])");
 
     c = apreq_xs_sv2(cookie,ST(0));
@@ -142,6 +142,7 @@ static XS(apreq_xs_cookie_expires)
     if (items > 1) {
         const char *s = SvPV_nolen(ST(1));
         apreq_cookie_expires(c, s);
+        XSRETURN(0);
     }
 
     if (c->max_age == -1)

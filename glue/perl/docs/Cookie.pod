@@ -1,8 +1,6 @@
 =head1 NAME
 
-
 Apache::Cookie - HTTP Cookies Class
-
 
 =for testing
     use Apache2;
@@ -64,14 +62,14 @@ listed in L<SEE ALSO>).
 
 =head1 Apache::Cookie::Jar
 
-XXX Dump __PACKAGE__->env inheritance (doesn't work in CGI context) XXX
 
 
-=head2 new($env [,VALUE_CLASS => $cookie_class])
+
+=head2 new($env, %settings)
 
 
 Class method that retrieves the parsed cookie jar from the current 
-environment.  The optional VALUE_CLASS => $cookie_class instructs
+environment.  The optional VALUE_CLASS => $cookie_class setting instructs
 the jar to bless any returned cookies into $cookie_class, instead
 of Apache::Cookie.  This feature could be most useful in situations 
 where C<Apache::Cookie::thaw> is unable to correctly interpret an incoming
@@ -96,7 +94,8 @@ and pass that subclass's name in the VALUE_CLASS argument.
 
 
 
-=head2 cookies($key)
+
+=head2 cookies(), cookies($key)
 
 Retrieve cookies named $key with from the jar object.  In scalar
 context the first such cookie is returned, and in list context the
@@ -121,7 +120,6 @@ as they appeared in the "Cookie" header). In all other circumstances
 C<cookies> will croak if the parser failed to successfully parse the 
 "Cookie" header.
 
-
 =for example begin
 
      $j->cookies->add(Apache::Cookie->new($r, name => "foo", value => 3));
@@ -141,11 +139,12 @@ C<cookies> will croak if the parser failed to successfully parse the
      ok "foo bar foo" eq "@names";
 
 
-=head2 status
 
-Reports the final I<APR> status code of the cookie parser:
-APR_SUCCESS on success, error otherwise.  May be reset
-to a new value by passing it as an additional argument.
+
+=head2 status(), status($set)
+
+Get or set the I<APR> status code of the cookie parser:
+APR_SUCCESS on success, error otherwise.
 
 =for example begin
 
@@ -158,10 +157,14 @@ to a new value by passing it as an additional argument.
 =for example end
 
 =for example_testing
-   @cookies = $j->cookies("foo");
    ok $j->status == 0;
+   @cookies = $j->cookies("foo");
+   ok @cookies == 2;
 
-=head2 env
+
+
+
+=head2 env()
 
 As a class method C<< Apache::Cookie::Jar->env >> returns
 the environment class associated with Apache::Cookie::Jar. 
@@ -185,9 +188,9 @@ object which first created the $jar (via C<new>).
 
 
 
-=head2 new
+=head2 new($env, %attributes)
 
-Just like CGI::Cookie::new, but requires an I<Apache> request object:
+Just like CGI::Cookie::new, but requires an environment argument $r:
 
 =for example begin
 
@@ -203,47 +206,68 @@ Just like CGI::Cookie::new, but requires an I<Apache> request object:
 =for example end
 
 =for example_testing
-     ok $cookie->name eq "foo";
-     ok $cookie->value eq "bar";
-     ok $cookie->domain eq ".capricorn.com";
-     ok $cookie->path eq "/cgi-bin/database";
-     ok $cookie->secure == 1;
+    ok $cookie->name eq "foo";
+    ok $cookie->value eq "bar";
+    ok $cookie->domain eq ".capricorn.com";
+    ok $cookie->path eq "/cgi-bin/database";
+    ok $cookie->secure == 1;
 
 The C<-value> attribute may be either an arrayref, a hashref, or
 an object with a C<freeze> method.  The <freeze> method must serialize
 the object in a manner compatible with the "value" portion of the 
-Cookie specs. Specifically, it must take care to avoid header tokens [;,=] 
+Cookie specs. Specifically, it must take care to avoid header tokens [;,] 
 and whitespace characters in its output.
 
 
-=head2 as_string
+
+
+=head2 as_string()
 
 Format the cookie object as a string:
 
 =for example begin
 
- print $cookie->as_string;
+    print $cookie->as_string;
 
-
-=end example begin
+=for example end
 
 =for example_testing
-     ok substr($_STDOUT_, 0, 8) eq "foo=bar;";
+    ok substr($_STDOUT_, 0, 8) eq "foo=bar;";
 
 
-=head2 name
+
+
+=head2 name()
 
 Get the name of the cookie:
 
- my $name = $cookie->name;
+=for example begin
+
+    my $name = $cookie->name;
+
+=for example end
+
+=for example_testing
+    ok $name eq "foo";
 
 
-=head2 value
 
-Get the value of the cookie:
 
- my $value = $cookie->value;
- my @values = $cookie->value;
+=head2 value()
+
+Get the (unswizzled) value of the cookie:
+
+=for example begin
+
+    my $value = $cookie->value;
+    my @values = $cookie->value;
+
+=for example end
+
+=for example_testing
+    ok @values == 1;
+    ok $value eq "bar";
+    ok $values[0] eq "bar";
 
 Note: if the cookie's value was serialized from an object possessing a 
 C<freeze> method, one way to reconstitute the object is by subclassing 
@@ -264,7 +288,8 @@ Apache::Cookie with a package that provides the associated C<thaw> sub:
 
 
 
-=head2 raw_value
+
+=head2 raw_value()
 
 Gets the raw (opaque) value string as it appears in the incoming
 "Cookie" header.  The quote-operator for Apache::Cookie is 
@@ -281,21 +306,27 @@ overloaded to run this method whenever a cookie appears in quotes.
    # run the example, don't just compile it
 
 
-=head2 bake
+
+
+=head2 bake()
 
 Adds a I<Set-Cookie> header to the outgoing headers table.
 
     $cookie->bake;
 
 
-=head2 bake2
+
+
+=head2 bake2()
 
 Adds a I<Set-Cookie2> header to the outgoing headers table.
 
     $cookie->bake2;
 
 
-=head2 domain
+
+
+=head2 domain, domain($set)
 
 Get or set the domain for the cookie:
 
@@ -311,7 +342,9 @@ Get or set the domain for the cookie:
     ok $cookie->domain eq ".cp.net";
 
 
-=head2 path
+
+
+=head2 path(), path($set)
 
 Get or set the path for the cookie:
 
@@ -327,16 +360,48 @@ Get or set the path for the cookie:
     ok $cookie->path eq "/";
 
 
-=head2 expires
 
-Get or set the expire time for the cookie:
+
+=head2 version(), version($set)
+
+Get or set the cookie version for this cookie.
+Netscape spec cookies have version = 0; 
+RFC-compliant cookies have version = 1.
 
 =for example begin
 
- my $expires = $cookie->expires;
- $cookie->expires("+3h");
+    ok $cookie->version == 0;
+    $cookie->version(1);
+    ok $cookie->version == 1;
 
 =for example end
+
+=for example_testing
+   # run the example tests
+
+
+
+
+=head2 expires(), expires($set)
+
+Get or set the future expire time for the cookie.  When
+assigning, the new value ($set) should match /^\+?(\d+)([YMDhms]?)$/
+$2 qualifies the number in $1 as representing "Y"ears, "M"onths,
+"D"ays, "h"ours, "m"inutes, or "s"econds (if the qualifier is
+omitted, the number is interpreted as representing seconds).
+As a special case, $set = "now" is equivalent to $set = "0".
+
+=for example begin
+
+    my $expires = $cookie->expires;
+    $cookie->expires("+3h"); # cookie is set to expire in 3 hours
+
+=for example end
+
+=for example_testing
+     ok $cookie->expires == 3 * 3600;
+
+
 
 
 =head2 secure
@@ -345,10 +410,17 @@ Get or set the secure flag for the cookie:
 
 =for example begin
 
- my $secure = $cookie->secure;
- $cookie->secure(1);
+    $cookie->secure(1);
+    $is_secure = $cookie->secure;
+    $cookie->secure(0);
 
 =for example end
+
+=for example_testing
+     ok $is_secure;
+     ok (not $cookie->secure);
+
+
 
 
 =head2 fetch
@@ -365,10 +437,9 @@ Fetch and parse the incoming I<Cookie> header:
 
 =for example_testing
     ok "foobarfoo" eq join "", keys %$cookies;
+    ok 123 == join "", map "$_", values %$cookies;
     ok "barfoo" eq join "", sort keys %cookies; # %cookies lost original foo cookie
     ok 23 == join "", sort map "$_", values %cookies;
-
-
 
 
 
@@ -394,10 +465,13 @@ Changes to the 1.X API:
 
 
 
+
 =head1 SEE ALSO
 
 CGI::Cookie(3), Apache::Cookie::Error(3), Apache::Cookie::Jar::Error(3),
 Apache::Cookie::Table(3), Apache::Request(3), APR(3).
+
+
 
 
 =head1 COPYRIGHT
