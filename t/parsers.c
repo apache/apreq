@@ -109,6 +109,8 @@ static void parse_urlencoded(CuTest *tc)
 static void parse_multipart(CuTest *tc)
 {
     const char *val;
+    apr_size_t dummy;
+    apreq_table_t *t;
     apreq_request_t *r = apreq_request(APREQ_MFD_ENCTYPE
                          "; boundary=\"AaB03x\"" ,"");
     apr_bucket_brigade *bb = apr_brigade_create(p, 
@@ -132,8 +134,18 @@ static void parse_multipart(CuTest *tc)
 
     val = apreq_table_get(r->body,"field1");
     CuAssertStrEquals(tc, "Joe owes =80100.", val);
-    val = apreq_table_get(r->body,"pics");
+    t = apreq_value_to_param(apreq_strtoval(val))->info;
+    val = apreq_table_get(t, "content-transfer-encoding");
+    CuAssertStrEquals(tc,"quoted-printable", val);
+
+    val = apreq_table_get(r->body, "pics");
     CuAssertStrEquals(tc, "file1.txt", val);
+    t = apreq_value_to_param(apreq_strtoval(val))->info;
+    bb = apreq_value_to_param(apreq_strtoval(val))->bb;
+    apr_brigade_pflatten(bb, (char **)&val, &dummy, p);
+    CuAssertStrEquals(tc,"... contents of file1.txt ...", val);
+    val = apreq_table_get(t, "content-type");
+    CuAssertStrEquals(tc, "text/plain", val);
 }
 
 

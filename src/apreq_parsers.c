@@ -310,6 +310,10 @@ APREQ_DECLARE(apr_status_t) apreq_parse_urlencoded(apr_pool_t *pool,
     return APR_INCOMPLETE;
 }
 
+
+/********************* header parsing utils ********************/
+
+
 static apr_status_t split_header(apr_pool_t *pool, apreq_table_t *t, 
                                  apr_bucket_brigade *bb,
                                  const apr_size_t nlen, 
@@ -748,8 +752,6 @@ static apr_status_t nextval(const char **line, const char *name,
 }
 
 
-static const char crlf[] = CRLF; 
-
 APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
                                                   apr_bucket_brigade *bb,
                                                   apreq_parser_t *parser)
@@ -813,7 +815,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
     case MFD_NEXTLINE:
         {
             apr_status_t s;
-            s = split_on_bdry(pool, ctx->bb, bb, NULL, crlf);
+            s = split_on_bdry(pool, ctx->bb, bb, NULL, CRLF);
             if (s != APR_SUCCESS)
                 return s;
 
