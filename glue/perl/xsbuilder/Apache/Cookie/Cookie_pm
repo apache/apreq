@@ -12,7 +12,6 @@ use base 'APR::Table';
 
 
 package Apache::Cookie;
-use Devel::Peek;
 
 sub jar {
     my $self = shift;

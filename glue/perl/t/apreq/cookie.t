@@ -7,10 +7,17 @@ use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 use HTTP::Cookies;
 
-plan tests => 5;
+plan tests => 6;
 
 my $location = "/TestApReq__cookie";
 
+{
+    my $test  = 'new';
+    my $value = 'bar';
+    ok t_cmp($value,
+             GET_BODY("$location?test=new"),
+             $test);
+}
 {
     my $test  = 'netscape';
     my $key   = 'apache';

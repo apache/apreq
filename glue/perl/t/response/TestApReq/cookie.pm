@@ -11,7 +11,6 @@ use Apache::Connection;
 use Apache::Cookie ();
 use Apache::Request ();
 
-
 sub handler {
     my $r = shift;
     my $req = Apache::Request->new($r);
@@ -29,6 +28,17 @@ sub handler {
             $cookies{$key}->bake2;
         }
         $r->print($cookies{$key}->value);
+    }
+    else {
+        my $cookie = Apache::Cookie->new($r, name => "foo",
+                                            value => "bar");
+        if ($test eq "bake") {
+            $cookie->bake;
+        }
+        elsif ($test eq "bake2") {
+            $cookie->bake2;
+        }
+        $r->print($cookie->value);
     }
 
 
