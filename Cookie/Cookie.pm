@@ -20,6 +20,7 @@ Apache::Cookie - HTTP Cookies Class
 =head1 SYNOPSIS
 
     use Apache::Cookie ();
+    my $r = Apache->request;
     my $cookie = Apache::Cookie->new($r, ...);
 
 =head1 DESCRIPTION
@@ -30,9 +31,10 @@ module.
 
 =head1 METHODS
 
-This interface is identical the to I<CGI::Cookie> interface with one 
-exception noted below.  Refer the to I<CGI::Cookie> documentation while
-these docs are "under construction."
+I<Apache::Cookie> does not export any symbols to the caller's namespace.
+Except for the request object passed to C<Apache::Cookie::new>, the OO
+interface is identical to I<CGI::Cookie>.  Please consult the L<CGI::Cookie>
+documentation for more details.
 
 =over 4
 
@@ -94,7 +96,7 @@ Get or set the name of the cookie:
 
 Get or set the values of the cookie:
 
- my $value = $cookie->value; 
+ my $value = $cookie->value;
  my @values = $cookie->value;
 
  $cookie->value("string");
@@ -130,10 +132,20 @@ Get or set the secure flag for the cookie:
 
 =back
 
+=head1 BUGS
+
+=over 4
+
+=item RFC 2964-5 are not fully implemented.
+
+=item C<value> should also accept a hash ref as argument.
+
+=back
+
 =head1 SEE ALSO
 
-Apache(3), Apache::Request(3)
+Apache(3), Apache::Request(3), CGI::Cookie(3)
 
 =head1 AUTHOR
 
-Doug MacEachern
+Doug MacEachern, updated for v1.0 by Joe Schaefer

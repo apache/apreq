@@ -22,7 +22,7 @@ NOOP = $(SHELL) -c true
 .c$(OBJ_EXT):
 	$(CCCMD) -c $(CFLAGS) -I$(INCDIR) $(DEFINE) $*.c
 
-OBJECT = apache_request$(OBJ_EXT) apache_cookie$(OBJ_EXT) multipart_buffer$(OBJ_EXT)
+OBJECT = apache_request$(OBJ_EXT) apache_cookie$(OBJ_EXT) apache_multipart_buffer$(OBJ_EXT)
 LDFROM = $(OBJECT)
 
 INST_STATIC  = $(BASEEXT)$(LIB_EXT)

@@ -63,12 +63,12 @@ Sets the directory where upload files are spooled.
 
 Redirects upload data to be processed by the hook.
 
-  req->hook_data = (void *) some_struct_pointer;
-  req->upload_hook = (int(*)(void*,char*,int,const ApacheUpload*)) some_function;
+  req->hook_data = (void *) data;
+  req->upload_hook = (int(*)(void*,char*,int,ApacheUpload*)) func;
 
 In this case 
 
-  some_function(req->hookdata,buffer,bufsize,upload);
+  func(req->hook_data,buffer,bufsize,upload);
 
 will be called repeatedly during the file upload instead of writing the 
 data to a temp file.
@@ -339,5 +339,5 @@ This library is based on Perl modules by Lincoln Stein.
 
 =head1 AUTHOR
 
-Doug MacEachern
+Doug MacEachern, updated for v1.0 by Joe Schaefer
 

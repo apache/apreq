@@ -10,20 +10,6 @@ o multipart_buffer_headers punts on headers more than 5k (which could
 o should probably handle Apache::Request->param http://blah.com/?foo
   like CGI.pm does (turn it into a param named "keywords")
 
-o Perl's FILE* typemap leaks!
-
 o libapreq.so
 
 o mmap upload files
-
-o investigate USE_MY_TMPNAME more
-
-o ApacheHTML?
-
-o for mod_dtcl, it may be good to allow a callback function for
-  storing file uploads (since it is configurable to store the
-  uploads in memory instead of to disk)
-
-o allow the directory for temporary files to be specified? we
-  currently use tmpfile(), though, and we'd have to do a secure
-  temp-file-creating function to do this.

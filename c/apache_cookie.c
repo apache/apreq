@@ -62,16 +62,15 @@ char *ApacheCookie_expires(ApacheCookie *c, char *time_str)
     char *expires;
 
     expires = ApacheUtil_expires(c->r->pool, time_str, EXPIRES_COOKIE);
-    if (expires) {
+    if (expires)
 	c->expires = expires;
-    }
 
     return c->expires;
 }
 
 #define cookie_get_set(thing,val) \
-retval = thing; \
-if(val) thing = ap_pstrdup(c->r->pool, val)
+    retval = thing; \
+    if(val) thing = ap_pstrdup(c->r->pool, val)
 
 char *ApacheCookie_attr(ApacheCookie *c, char *key, char *val)
 {
@@ -130,9 +129,9 @@ ApacheCookie *ApacheCookie_new(request_rec *r, ...)
     for(;;) {
 	char *key, *val;
 	key = va_arg(args, char *);
-	if (key == NULL) {
+	if (key == NULL)
 	    break;
-	}
+
 	val = va_arg(args, char *);
 	(void)ApacheCookie_attr(c, key, val);
     }
@@ -147,35 +146,36 @@ ApacheCookieJar *ApacheCookie_parse(request_rec *r, const char *data)
     ApacheCookieJar *retval =
 	ap_make_array(r->pool, 1, sizeof(ApacheCookie *));
 
-    if (!data) {
-	if (!(data = ap_table_get(r->headers_in, "Cookie"))) {
+    if (!data)
+	if (!(data = ap_table_get(r->headers_in, "Cookie")))
 	    return retval;
-	}
-    }
 
     while (*data && (pair = ap_getword(r->pool, &data, ';'))) {
 	const char *key, *val;
 	ApacheCookie *c;
 
-	while (ap_isspace(*data)) {
+	while (ap_isspace(*data))
 	    ++data;
-	}
+
 	key = ap_getword(r->pool, &pair, '=');
 	ap_unescape_url((char *)key);
 	c = ApacheCookie_new(r, "-name", key, NULL);
-	if (c->values) {
+
+	if (c->values)
 	    c->values->nelts = 0;
-	}
-	else {
+	else
 	    c->values = ap_make_array(r->pool, 4, sizeof(char *));
-	}
 
-	if (!*pair) {
+	if (!*pair)
 	    ApacheCookieAdd(c, "");
-	}
 
-	while (*pair && (val = ap_getword(r->pool, &pair, '&'))) {
+
+	while (*pair && (val = ap_getword_nulls(r->pool, &pair, '&'))) {
 	    ap_unescape_url((char *)val);
+#ifdef DEBUG
+	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r, 
+                          "[apache_cookie] added (%s)", val);
+#endif
 	    ApacheCookieAdd(c, val);
 	}
 	ApacheCookieJarAdd(retval, c);
@@ -188,7 +188,7 @@ ApacheCookieJar *ApacheCookie_parse(request_rec *r, const char *data)
     *(char **)ap_push_array(arr) = (char *)val
 
 #define cookie_push_named(arr, name, val) \
-    if(val) { \
+    if(val && strlen(val) > 0) { \
         cookie_push_arr(arr, ap_pstrcat(p, name, "=", val, NULL)); \
     }
 
@@ -198,6 +198,7 @@ static char * escape_url(pool *p, char *val)
   char *end = result + strlen(result);
   char *seek;
 
+  /* touchup result to ensure that special chars are escaped */
   for ( seek = end-1; seek >= result; --seek) {
     char *ptr, *replacement;
 
@@ -215,10 +216,8 @@ static char * escape_url(pool *p, char *val)
 	continue; /* next for() */
     }
 
-
-    for (ptr = end; ptr > seek; --ptr) {
-      ptr[2] = ptr[0];
-    }
+    for (ptr = end; ptr > seek; --ptr)
+        ptr[2] = ptr[0];
 
     strncpy(seek, replacement, 3);
     end += 2;
@@ -234,9 +233,8 @@ char *ApacheCookie_as_string(ApacheCookie *c)
     char *cookie, *retval;
     int i;
 
-    if (!c->name) {
+    if (!c->name)
 	return "";
-    }
 
     values = ap_make_array(p, 6, sizeof(char *));
     cookie_push_named(values, "domain",  c->domain);
@@ -250,7 +248,7 @@ char *ApacheCookie_as_string(ApacheCookie *c)
     for (i=0; i<c->values->nelts; i++) {
 	cookie = ap_pstrcat(p, cookie,
 			    escape_url(p, ((char**)c->values->elts)[i]),
-			    (i < (c->values->nelts-1) ? "&" : NULL),
+			    (i < (c->values->nelts -1) ? "&" : NULL),
 			    NULL);
     }
 
