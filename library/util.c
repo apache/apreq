@@ -109,7 +109,7 @@ APREQ_DECLARE(apr_ssize_t ) apreq_index(const char* hay, apr_size_t hlen,
     return hay ? hay - begin : -1;
 }
 
-static const char c2x_table[] = "0123456789abcdef"; /* XXX uppercase a-f ? */
+static const char c2x_table[] = "0123456789ABCDEF";
 static APR_INLINE char x2c(const char *what)
 {
     register char digit;

@@ -89,7 +89,7 @@ static void string_decoding_in_place(dAT)
     apreq_unescape(s2);
     AT_str_eq(s2,"dandy >dons");
     s3 = apreq_escape(p, s2, 11);
-    AT_str_eq(s3,"dandy+%3edons");
+    AT_str_eq(s3,"dandy+%3Edons");
     apreq_unescape(s3);
     AT_str_eq(s3,"dandy >dons"); 
 }
@@ -150,7 +150,7 @@ static void make_param(dAT)
     AT_str_eq(param->v.data, val);
 
     encode = apreq_param_encode(p, param);
-    AT_str_eq(encode, "foo=bar+%3e+alpha");
+    AT_str_eq(encode, "foo=bar+%3E+alpha");
 
     s = apreq_param_decode(&decode, p, encode, nlen, vlen+2);
     AT_int_eq(s, APR_SUCCESS);
