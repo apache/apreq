@@ -36,7 +36,7 @@ these docs are "under construction."
 
 =over 4
 
-=item new
+=head2 new
 
 Just like CGI::Cookie::new, but requires an I<Apache> request object:
 
@@ -49,14 +49,14 @@ Just like CGI::Cookie::new, but requires an I<Apache> request object:
                              -secure  =>  1 
                             ); 
 
-=item bake
+=head2 bake
 
 Put cookie in the oven to bake. 
 (Add a I<Set-Cookie> header to the outgoing headers table.) 
 
     $cookie->bake;
 
-=item parse
+=head2 parse
 
 This method parses the given string if present, otherwise, the incoming 
 I<Cookie> header:
@@ -67,7 +67,7 @@ I<Cookie> header:
 
     my %cookies = $cookie->parse($cookie_string);
 
-=item fetch
+=head2 fetch
 
 Fetch and parse the incoming I<Cookie> header:
 
@@ -75,14 +75,14 @@ Fetch and parse the incoming I<Cookie> header:
 
     my %cookies = Apache::Cookie->fetch;
 
-=item as_string
+=head2 as_string
 
 Format the cookie object as a string:
 
  #same as $cookie->bake
  $r->err_headers_out->add("Set-Cookie" => $cookie->as_string);
 
-=item name
+=head2 name
 
 Get or set the name of the cookie:
 
@@ -90,7 +90,7 @@ Get or set the name of the cookie:
 
  $cookie->name("Foo");
 
-=item value
+=head2 value
 
 Get or set the values of the cookie:
 
@@ -100,28 +100,28 @@ Get or set the values of the cookie:
  $cookie->value("string");
  $cookie->value(\@array);
 
-=item domain
+=head2 domain
 
 Get or set the domain for the cookie:
 
  my $domain = $cookie->domain;
  $cookie->domain(".cp.net");
 
-=item path
+=head2 path
 
 Get or set the path for the cookie:
 
  my $path = $cookie->path;
  $cookie->path("/");
 
-=item expires
+=head2 expires
 
 Get or set the expire time for the cookie:
 
  my $expires = $cookie->expires;
  $cookie->expires("+3h");
 
-=item secure
+=head2 secure
 
 Get or set the secure flag for the cookie:
 

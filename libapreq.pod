@@ -10,42 +10,6 @@ libapreq - Apache Request C Library
 
 =over 4
 
-=item ApacheRequest *ApacheRequest_new (request_rec *r)
-
-This function creates a new I<ApacheRequest> object using the given
-I<request_rec> structure:
-
- ApacheRequest *req = ApacheRequest_new(r);
-
-=item int ApacheRequest_parse (ApacheRequest *req)
-
-If the request method is B<GET> or B<POST>, the query string
-arguments and the client form data will be read, parsed and saved.
-In addition, if the request method is B<POST> and the I<Content-type> is
-I<multipart/form-data>, the uploaded files will be written to
-temporary files which can be accessed with the I<upload> field names.
-The return value is B<OK> on success, otherwise an error code that
-your handler should return.
-
-=item const char *ApacheRequest_param (ApacheRequest *req, const char *key)
-
-This function will return the value of the given parameter I<key>:
-
- const char *value = ApacheRequest_param(req, "Key");
-
-=item array_header *ApacheRequest_params (ApacheRequest *req, const char *key)
-
-This function will return an I<array_header> of values for the given
-parameter I<key>: 
-
- array_header *values = ApacheRequest_params(req, "Key");
-
-=item char *ApacheRequest_params_as_string (ApacheRequest *req, const char *key)
-
-This function will format multi-value parmeters into a comma delimited string.
-
- char *list = ApacheRequest_params_as_string(req, "Key");
-
 =item req->parms
 
 This field is an Apache I<table> that holds the parsed contents of
@@ -85,15 +49,51 @@ error code if a file upload is attempted:
      return status;
  }
 
-=item ApacheUpload *upload = ApacheRequest_upload (ApacheRequest *req)
+=back
+
+=head2 ApacheRequest *ApacheRequest_new (request_rec *r)
+
+This function creates a new I<ApacheRequest> object using the given
+I<request_rec> structure:
+
+ ApacheRequest *req = ApacheRequest_new(r);
+
+=head2 int ApacheRequest_parse (ApacheRequest *req)
+
+If the request method is B<GET> or B<POST>, the query string
+arguments and the client form data will be read, parsed and saved.
+In addition, if the request method is B<POST> and the I<Content-type> is
+I<multipart/form-data>, the uploaded files will be written to
+temporary files which can be accessed with the I<upload> field names.
+The return value is B<OK> on success, otherwise an error code that
+your handler should return.
+
+=head2 const char *ApacheRequest_param (ApacheRequest *req, const char *key)
+
+This function will return the value of the given parameter I<key>:
+
+ const char *value = ApacheRequest_param(req, "Key");
+
+=head2 array_header *ApacheRequest_params (ApacheRequest *req, const char *key)
+
+This function will return an I<array_header> of values for the given
+parameter I<key>: 
+
+ array_header *values = ApacheRequest_params(req, "Key");
+
+=head2 char *ApacheRequest_params_as_string (ApacheRequest *req, const char *key)
+
+This function will format multi-value parmeters into a comma delimited string.
+
+ char *list = ApacheRequest_params_as_string(req, "Key");
+
+=head2 ApacheUpload *upload = ApacheRequest_upload (ApacheRequest *req)
 
 If the request I<Content-type> was that of I<multipart/form-data>,
 this will return an I<ApacheUpload> pointer containing the upload data,
- B<NULL> otherwise.  See I<ApacheUpload>.
+B<NULL> otherwise.  See I<ApacheUpload>.
 
  ApacheUpload *upload = ApacheRequest_upload(req);
-
-=back
 
 =head1 ApacheUpload
 
@@ -146,32 +146,32 @@ uploaded:
 	...
     }
 
-=item ApacheUpload *ApacheUpload_find (ApacheUpload *upload, char *name)
+=back
+
+=head2 ApacheUpload *ApacheUpload_find (ApacheUpload *upload, char *name)
 
 Returns the I<ApacheUpload> pointer associated with I<name> or
 B<NULL> if I<name> is not found in the list:
 
  ApacheUpload *upload = ApacheUpload_find(upload, name);
 
-=item const char *ApacheUpload_info (ApacheUpload *upload, char *key)
+=head2 const char *ApacheUpload_info (ApacheUpload *upload, char *key)
 
 Shortcut for accessing the I<info> table:
 
  const char *type = ApacheUpload_info(upload, "Content-Type");
 
-=item const char *ApacheUpload_type (ApacheUpload *upload)
+=head2 const char *ApacheUpload_type (ApacheUpload *upload)
 
 Shortcut for accessing the uploaded file I<Content-Type>:
 
  const char *type = ApacheUpload_type(upload);
 
-=back
-
 =head1 ApacheCookie
 
 =over 4
 
-=item ApacheCookie *ApacheCookie_new (request_rec *r, ...) 
+=head2 ApacheCookie *ApacheCookie_new (request_rec *r, ...) 
 
 This function creates a new I<ApacheCookie> object, using the given
 I<request_request> and optional attribute arguments which are as follows:
@@ -222,7 +222,7 @@ Example:
                         NULL); 
 
 
-=item char *ApacheCookie_attr (ApacheCookie *c, char *key, char *val) 
+=head2 char *ApacheCookie_attr (ApacheCookie *c, char *key, char *val) 
 
 This function is used to get or set a cookie attribute pair, accepting
 the same attributes as the list above.  Example:
@@ -230,7 +230,7 @@ the same attributes as the list above.  Example:
  char *name = ApacheCookie_attr(c, "-name"); /* same as c->name */
  (void *)ApacheCookie_attr(c, "-expires", "+3h");
 
-=item ApacheCookieJar *ApacheCookie_parse (request_rec *r, const char *data) 
+=head2 ApacheCookieJar *ApacheCookie_parse (request_rec *r, const char *data) 
 
 This function parses the given I<data> string or the incoming
 I<Cookie> header, returning an I<ApacheCookieJar> of I<ApacheCookie>
@@ -250,31 +250,31 @@ Example:
      }
  }
 
-=item int ApacheCookieItems (ApacheCookie *c)
+=head2 int ApacheCookieItems (ApacheCookie *c)
 
 The number of values for the given cookie.
 
-=item char *ApacheCookieFetch (ApacheCookie *c, int n)
+=head2 char *ApacheCookieFetch (ApacheCookie *c, int n)
 
 The I<n>th value for the given cookie.
 
-=item void ApacheCookieAdd (ApacheCookie *c, char *value)
+=head2 void ApacheCookieAdd (ApacheCookie *c, char *value)
 
 Add a new value to the cookie.
 
-=item int ApacheCookieJarItems (ApacheCookieJar *cookies)
+=head2 int ApacheCookieJarItems (ApacheCookieJar *cookies)
 
 The number of cookies in the given cookie jar.
 
-=item ApacheCookie *ApacheCookieJarFetch (ApacheCookieJar *cookies, int n)
+=head2 ApacheCookie *ApacheCookieJarFetch (ApacheCookieJar *cookies, int n)
 
 The I<n>th cookie in the given cookie jar.
 
-=item void ApacheCookieJarAdd (ApacheCookieJar *cookies, ApacheCookie *c)
+=head2 void ApacheCookieJarAdd (ApacheCookieJar *cookies, ApacheCookie *c)
 
 Add a new cookie to the cookie jar.
 
-=item char *ApacheCookie_expires (ApacheCookie *c, char *time_str) 
+=head2 char *ApacheCookie_expires (ApacheCookie *c, char *time_str) 
 
 This function gets or sets the expiration date for cookie.
 The following forms are all valid for the I<time_str> parmeter:
@@ -288,14 +288,14 @@ The following forms are all valid for the I<time_str> parmeter:
         +10y                              in ten years time 
         Thursday, 25-Apr-1999 00:40:33 GMT  at the indicated time & date 
 
-=item void ApacheCookie_bake (ApacheCookie *c)
+=head2 void ApacheCookie_bake (ApacheCookie *c)
 
 Put cookie in the oven to bake.
 (Add a I<Set-Cookie> header to the outgoing headers table.)
 
  ApacheCookie_bake(c);
 
-=item char *ApacheCookie_as_string (ApacheCookie *c)  
+=head2 char *ApacheCookie_as_string (ApacheCookie *c)  
 
 Returns a string version of the cookie:
 

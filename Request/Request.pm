@@ -60,7 +60,7 @@ I<multipart/form-data>. See the libapreq(3) manpage for more details.
 
 =over 4
 
-=item new
+=head2 new
 
 Create a new I<Apache::Request> object with an I<Apache> request_rec object:
 
@@ -102,7 +102,7 @@ error code if a file upload is attempted:
 
 =back
 
-=item instance
+=head2 instance
 
 The instance() class method allows Apache::Request to be a singleton.
 This means that whenever you call Apache::Request->instance() within a
@@ -128,7 +128,7 @@ Also note that it is unwise to use the C<parse()> method when using
 C<instance()> because you may end up trying to call it twice, and
 detecting errors where there are none.
 
-=item parse
+=head2 parse
 
 The I<parse> method does the actual work of parsing the request.
 It is called for you by the accessor methods, so it is not required but
@@ -144,7 +144,7 @@ occur:
 	return $status; 
     } 
 
-=item param
+=head2 param
 
 Get or set request parameters:
 
@@ -153,7 +153,7 @@ Get or set request parameters:
     my @params = $apr->param;
     $apr->param('foo' => [qw(one two three)]);
 
-=item upload
+=head2 upload
 
 Returns a single I<Apache::Upload> object in a scalar context or
 all I<Apache::Upload> objects in an array context: 
@@ -177,19 +177,19 @@ object associated with the given name:
 
 =over 4
 
-=item name
+=head2 name
 
 The name of the filefield parameter:
 
     my $name = $upload->name;
 
-=item filename
+=head2 filename
 
 The filename of the uploaded file:
 
     my $filename = $upload->filename;
 
-=item fh
+=head2 fh
 
 The filehandle pointing to the uploaded file:
 
@@ -198,13 +198,13 @@ The filehandle pointing to the uploaded file:
 	...
     }
 
-=item size
+=head2 size
 
 The size of the file in bytes:
 
     my $size = $upload->size;
 
-=item info
+=head2 info
 
 The additional header information for the uploaded file.
 Returns a hash reference tied to the I<Apache::Table> class.
@@ -218,7 +218,7 @@ a given header rather than a hash reference.  Examples:
 
     my $val = $upload->info("Content-type");
 
-=item type
+=head2 type
 
 Returns the I<Content-Type> for the given I<Apache::Upload> object:
 
@@ -226,7 +226,7 @@ Returns the I<Content-Type> for the given I<Apache::Upload> object:
     #same as
     my $type = $upload->info("Content-Type");
 
-=item next
+=head2 next
 
 As an alternative to using the I<Apache::Request> I<upload> method in
 an array context:
