@@ -3,6 +3,11 @@
 
 @section v2_04_dev Changes with libapreq2-2.04-dev
 
+- C API [joes]
+  Restrict all apr_status_t codes to APR_SUCCESS, APR_INCOMPLETE,
+  APR_EGENERAL, APR_EINIT, APR_ENOTIMPL, since any others will
+  generate confusing error messages from apr_strerror.
+
 - Perl API [joes]
   Added $upload->io with a TIEHANDLE API layered over APR::Brigade.   $upload->fh
   remains implemented as an APR::PerlIO object, which is seekable but less efficient 

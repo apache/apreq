@@ -146,7 +146,7 @@ static struct {
 
 
 #define APREQ_MODULE_NAME         "CGI"
-#define APREQ_MODULE_MAGIC_NUMBER 20040619
+#define APREQ_MODULE_MAGIC_NUMBER 20040705
 
 static apr_pool_t *cgi_pool(void *env)
 {
@@ -266,8 +266,13 @@ static apr_status_t cgi_read(void *env,
         ctx.in = apr_brigade_split(bb, e);
         ctx.bytes_read += bytes;
         if (ctx.max_body >= 0) {
-            if (ctx.bytes_read > ctx.max_body)
-                return ctx.status = APR_ENOSPC;
+            if (ctx.bytes_read > ctx.max_body) {
+                apreq_log(APREQ_ERROR APR_EGENERAL, env,
+                          "Bytes read (%" APR_OFF_T_FMT 
+                          ") exceeds configured limit (%" APR_OFF_T_FMT ")",
+                          ctx.bytes_read, ctx.max_body);
+                return ctx.status = APR_EGENERAL;
+            }
         }
         ctx.status = apreq_parse_request(req, bb);
         apr_brigade_cleanup(bb);
@@ -281,8 +286,13 @@ static apr_status_t cgi_read(void *env,
             return ctx.status = s;
         ctx.bytes_read += len;
         if (ctx.max_body >= 0) {
-            if (ctx.bytes_read > ctx.max_body)
-                return ctx.status = APR_ENOSPC;
+            if (ctx.bytes_read > ctx.max_body) {
+                apreq_log(APREQ_ERROR APR_EGENERAL, env,
+                          "Bytes read (%" APR_OFF_T_FMT 
+                          ") exceeds configured limit (%" APR_OFF_T_FMT ")",
+                          ctx.bytes_read, ctx.max_body);
+                return ctx.status = APR_EGENERAL;
+            }
         }
         ctx.status = apreq_parse_request(req, bb);
         apr_brigade_cleanup(bb);

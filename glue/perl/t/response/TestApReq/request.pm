@@ -16,7 +16,8 @@ use File::Spec;
 sub handler {
     my $r = shift;
     my $temp_dir = $r->server->server_root_relative('logs');
-    my $req = Apache::Request->new($r, TEMP_DIR => $temp_dir);
+    my $req = Apache::Request->new($r, POST_MAX => 1_000_000,
+                                       TEMP_DIR => $temp_dir);
 
     $req->content_type('text/plain');
 

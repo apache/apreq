@@ -87,7 +87,7 @@ APREQ_DECLARE(apr_status_t)
                       const char *val, apr_size_t vlen)
 {
     if (alen < 2)
-        return APR_BADARG;
+        return APR_EGENERAL;
 
     if ( attr[0] ==  '-' || attr[0] == '$' ) {
         ++attr;
@@ -103,7 +103,7 @@ APREQ_DECLARE(apr_status_t)
     case 'v': /* version */
         while (!apr_isdigit(*val)) {
             if (vlen == 0)
-                return APR_BADARG;
+                return APR_EGENERAL;
             ++val;
             --vlen;
         }
@@ -193,7 +193,7 @@ static apr_status_t get_pair(const char **data,
         if (*d++ == 0)  {
             /*error: no '=' sign detected */
             *data = d-1;
-            return APR_NOTFOUND;
+            return APR_EGENERAL;
         }
     }
 
@@ -222,7 +222,7 @@ static apr_status_t get_pair(const char **data,
             else {  /* shouldn't end on a sour note */
                 *vlen = d - *v;
                 *data = d;
-                return APR_BADCH;
+                return APR_EGENERAL;
             }
 
         case '"':
@@ -237,7 +237,7 @@ static apr_status_t get_pair(const char **data,
     *data = d;
 
     if (in_quotes)
-        return APR_BADARG;
+        return APR_EGENERAL;
 
     return APR_SUCCESS;
 }
@@ -336,14 +336,14 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
 
         case '$':
             if (c == NULL) {
-                j->status = APR_BADCH;
+                j->status = APR_EGENERAL;
                 apreq_log(APREQ_ERROR j->status, env,
                       "Saw RFC attribute, was expecting NAME=VALUE cookie pair: %s",
                           hdr);
                 return j;
             }
             else if (version == NETSCAPE) {
-                j->status = APR_EMISMATCH;
+                j->status = APR_EGENERAL;
                 apreq_log(APREQ_ERROR j->status, env, 
                           "Saw RFC attribute in a Netscape Cookie header: %s", 
                           hdr);
@@ -495,10 +495,10 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
     char *s = apreq_cookie_as_string(c,apreq_env_pool(env));
 
     if (s == NULL) {
-        apreq_log(APREQ_ERROR APR_ENAMETOOLONG, env, 
+        apreq_log(APREQ_ERROR APR_EGENERAL, env, 
                   "Serialized cookie exceeds APREQ_COOKIE_MAX_LENGTH = %d", 
                     APREQ_COOKIE_MAX_LENGTH);
-        return APR_ENAMETOOLONG;
+        return APR_EGENERAL;
     }
 
     return apreq_env_set_cookie(env, s);
@@ -510,15 +510,15 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
     char *s = apreq_cookie_as_string(c,apreq_env_pool(env));
 
     if ( s == NULL ) {
-        apreq_log(APREQ_ERROR APR_ENAMETOOLONG, env,
+        apreq_log(APREQ_ERROR APR_EGENERAL, env,
                   "Serialized cookie exceeds APREQ_COOKIE_MAX_LENGTH = %d", 
                     APREQ_COOKIE_MAX_LENGTH);
-        return APR_ENAMETOOLONG;
+        return APR_EGENERAL;
     }
     else if ( c->version == NETSCAPE ) {
-        apreq_log(APREQ_ERROR APR_EMISMATCH, env,
+        apreq_log(APREQ_ERROR APR_EGENERAL, env,
                   "Cannot bake2 a Netscape cookie: %s", s);
-        return APR_EMISMATCH;
+        return APR_EGENERAL;
     }
 
     return apreq_env_set_cookie2(env, s);

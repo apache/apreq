@@ -72,7 +72,7 @@ struct filter_ctx {
     request_rec        *r;     /* request that originally created this filter */
     apr_bucket_brigade *bb;    /* input brigade that's passed to the parser */
     apr_bucket_brigade *spool; /* copied prefetch data for downstream filters */
-    apr_status_t        status;/* APR_SUCCESS, APR_COMPLETE, or parse error */
+    apr_status_t        status;/* APR_SUCCESS, APR_INCOMPLETE, or parse error */
     unsigned            saw_eos;      /* Has EOS bucket appeared in filter? */
     apr_off_t           bytes_read;   /* Total bytes read into this filter. */
 };
@@ -131,7 +131,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
  * <TR class="odd"><TD>APREQ_MaxBody</TD><TD>directory</TD><TD>-1 (Unlimited)</TD><TD>
  * Maximum number of bytes mod_apreq will send off to libapreq for parsing.  
  * mod_apreq will log this event and remove itself from the filter chain.
- * The APR_ENOSPC (XXX) error will be reported to libapreq2 users via the return 
+ * The APR_EGENERAL error will be reported to libapreq2 users via the return 
  * value of apreq_env_read().
  * </TD></TR>
  * <TR><TD>APREQ_MaxBrigade</TD><TD>directory</TD><TD> #APREQ_MAX_BRIGADE_LEN </TD><TD>
@@ -157,7 +157,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME               "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER       20040623
+#define APREQ_MODULE_MAGIC_NUMBER       20040705
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -310,9 +310,9 @@ static void apreq_filter_make_context(ap_filter_t *f)
             apr_int64_t content_length = apr_strtoi64(cl,&dummy,0);
 
             if (dummy == NULL || *dummy != 0) {
-                apreq_log(APREQ_ERROR APR_BADARG, r, 
-                      "invalid Content-Length header (%s)", cl);
-                ctx->status = APR_BADARG;
+                apreq_log(APREQ_ERROR APR_EGENERAL, r, 
+                      "Invalid Content-Length header (%s)", cl);
+                ctx->status = APR_EGENERAL;
             }
             else if (content_length > (apr_int64_t)cfg->max_body) {
                 apreq_log(APREQ_ERROR APR_EINIT, r,
@@ -554,7 +554,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                 ctx->bytes_read += len;
 
                 if (cfg->max_body >= 0 && ctx->bytes_read > cfg->max_body) {
-                    ctx->status = APR_ENOSPC;
+                    ctx->status = APR_EGENERAL;
                     apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (" APR_OFF_T_FMT
                               ") exceeds configured max_body limit (" APR_OFF_T_FMT ")",
                               ctx->bytes_read, cfg->max_body);
@@ -621,7 +621,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         ctx->bytes_read += total_read;
 
         if (cfg->max_body >= 0 && ctx->bytes_read > cfg->max_body) {
-            ctx->status = APR_ENOSPC;
+            ctx->status = APR_EGENERAL;
             apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (%" APR_OFF_T_FMT
                       ") exceeds configured max_body limit (%" APR_OFF_T_FMT ")",
                       ctx->bytes_read, cfg->max_body);
