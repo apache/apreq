@@ -2,7 +2,16 @@ Revision history for libapreq
 
 =over 4
 
-=item 1.15 - July 13, 2003
+=item 1.2 - July 19, 2003
+
+libapreq-1.2 released.
+
+=item 1.16 - July 19, 2003
+
+Updated INSTALL & README documents to explain how to configure the tests.
+Apache::Test v1.03 is now a prerequisite for libapreq.
+
+=item 1.15 - June 13, 2003
 
 Experimental support for SFIO is withdrawn.
 
