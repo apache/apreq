@@ -462,7 +462,6 @@ sub typemap_code
                            },
         T_HASHOBJ       => {
                             INPUT => <<'EOT', # '$var = modperl_hash_tied_object(aTHX_ \"${ntype}\", $arg)'
-
     if (sv_derived_from($arg, \"${ntype}\")) {
         if (SVt_PVHV == SvTYPE(SvRV($arg))) {
             SV *hv = SvRV($arg);
@@ -488,7 +487,7 @@ sub typemap_code
     else {
         Perl_croak(aTHX_
                    \"argument is not a blessed reference \"
-                   \"(expecting an %s derived object)\", "\${ntype}\");
+                   \"(expecting an %s derived object)\", \"${ntype}\");
     }
 EOT
 
