@@ -124,6 +124,20 @@ module AP_MODULE_DECLARE_DATA apreq_module;
  * to read the data.  In other words, <code>r->input_filters</code> will
  * always point to the active APREQ filter for the request.
  *
+ * If you want to use other input filters to transform the incoming HTTP
+ * request data, is important to register those filters with Apache
+ * as having type AP_FTYPE_RESOURCE.  Due to limitations in Apache's 
+ * current input filter design, the other possibly relevant filter types - 
+ * AP_FTYPE_CONTENT_SET or AP_FTYPE_PROTOCOL - may not work properly
+ * whenever the apreq filter is active.
+ *
+ * This is especially true when a content handler uses libapreq2 to parse 
+ * some of the post data before doing an internal redirect.  Any input filter
+ * subsequently added to the redirected request will bypass the original apreq 
+ * filter (and therefore lose access to some of the original post data), unless 
+ * its type is AP_FTYPE_RESOURCE.
+ *
+ *
  * <h2>Server Configuration Directives</h2>
  *
  * <TABLE class="qref"><CAPTION>Per-directory commands for mod_apreq</CAPTION>
@@ -157,7 +171,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME               "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER       20040808
+#define APREQ_MODULE_MAGIC_NUMBER       20040809
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -255,9 +269,6 @@ static ap_filter_t *get_apreq_filter(request_rec *r)
 
     if (cfg->f == r->input_filters)
        return cfg->f;
-
-    if (strcmp(r->input_filters->frec->name, filter_name) == 0)
-        return cfg->f = r->input_filters;
 
     cfg->f = ap_add_input_filter(filter_name, NULL, r, r->connection);
 
@@ -500,14 +511,16 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
              in = in->next)
         {
             if (f == in) {
-                if (strcmp(r->input_filters->frec->name, filter_name) == 0) {
-                    /* this intermediate apreq filter is superfluous- remove it */
+                if (strcasecmp(r->input_filters->frec->name, filter_name) == 0) {
+                    apreq_log(APREQ_DEBUG 0, r, 
+                              "removing intermediate apreq filter");
                     if (cfg->f == f)
                         cfg->f = r->input_filters;
                     ap_remove_input_filter(f);
                 }
                 else {
-                    /* move to top and register it */
+                    apreq_log(APREQ_DEBUG 0, r, 
+                              "relocating intermediate apreq filter");
                     apreq_filter_relocate(f);
                     cfg->f = f;
                 }
