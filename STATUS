@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/23 17:22:53 $]   -*-text-*-
+Last modified at [$Date: 2004/07/26 22:07:43 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -66,7 +66,9 @@ TODO:
 
     - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
 
-    - Bring Perl documentation up to speed.
+    - Bring Perl documentation up to speed: Request.pod, Table.pod, and Error.pod.
+      These docs either need to be written, or they require Test::Inline tests to 
+      verify their API.
 
     - Write parser/hook API documentation, and add perl glue for the API.
 
