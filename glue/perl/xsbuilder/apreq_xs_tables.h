@@ -178,7 +178,7 @@ struct apreq_xs_table_key_magic {
 ** if perl still chokes on key magic
 ** Need 5.8.1 or higher for PERL_MAGIC_vstring
 */
-#define APREQ_XS_TABLE_USE_KEY_MAGIC 0
+#define APREQ_XS_TABLE_USE_KEY_MAGIC (PERL_VERSION == 8 && PERL_SUBVERSION > 0)
 
 #if APREQ_XS_TABLE_USE_KEY_MAGIC
 
@@ -267,6 +267,7 @@ static int apreq_xs_##attr##_table_values(void *data, const char *key,  \
     PUTBACK;                                                            \
     return 1;                                                           \
 }                                                                       \
+                                                                        \
 static XS(apreq_xs_##attr##_get)                                        \
 {                                                                       \
     dXSARGS;                                                            \
@@ -290,7 +291,6 @@ static XS(apreq_xs_##attr##_get)                                        \
     XSprePUSH;                                                          \
     switch (GIMME_V) {                                                  \
         apreq_##type##_t *RETVAL;                                       \
-        IV idx;                                                         \
         MAGIC *mg;                                                      \
     case G_ARRAY:                                                       \
         PUTBACK;                                                        \
@@ -304,23 +304,6 @@ static XS(apreq_xs_##attr##_get)                                        \
                 XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class,obj)));     \
             PUTBACK;                                                    \
             break;                                                      \
-        }                                                               \
-        else if ((idx = SvCUR(obj)) > 0) {                              \
-            const apr_array_header_t *arr = apr_table_elts(             \
-                                   apreq_xs_##attr##_sv2table(obj));    \
-            apr_table_entry_t *te = (apr_table_entry_t *)arr->elts;     \
-                                                                        \
-            if (idx <= arr->nelts && !strcasecmp(key, te[idx-1].key))   \
-            {                                                           \
-                RETVAL = apreq_value_to_##type(                         \
-                               apreq_strtoval(te[idx-1].val));          \
-                if (COND) {                                             \
-                    XPUSHs(sv_2mortal(apreq_xs_##type##2sv(             \
-                                          RETVAL,subclass,obj)));       \
-                    PUTBACK;                                            \
-                    break;                                              \
-               }                                                        \
-            }                                                           \
         }                                                               \
         if (SvMAGICAL(ST(1))                                            \
             && (mg = mg_find(ST(1),PERL_MAGIC_vstring))                 \
@@ -339,7 +322,6 @@ static XS(apreq_xs_##attr##_get)                                        \
             }                                                           \
         }                                                               \
                                                                         \
-                                                                        \
         RETVAL = apreq_xs_##attr##_##type(obj, key);                    \
                                                                         \
         if (RETVAL && (COND))                                           \
@@ -351,6 +333,49 @@ static XS(apreq_xs_##attr##_get)                                        \
     }                                                                   \
     apreq_xs_##attr##_error_check;                                      \
 }
+
+#define APREQ_XS_DEFINE_TABLE_FETCH(attr,type,subclass)         \
+static XS(apreq_xs_##attr##_FETCH)                              \
+{                                                               \
+    dXSARGS;                                                    \
+    SV *sv, *obj;                                               \
+    IV idx;                                                     \
+    const char *key;                                            \
+    const char *val;                                            \
+    apr_table_t *t;                                             \
+    const apr_array_header_t *arr;                              \
+    apr_table_entry_t *te;                                      \
+    void *env;                                                  \
+                                                                \
+    if (items != 2 || !SvROK(ST(0)) || !SvPOK(ST(1)))           \
+        Perl_croak(aTHX_ "Usage: $table->get($key)");           \
+                                                                \
+    sv  = ST(0);                                                \
+    obj = apreq_xs_find_obj(aTHX_ sv, #attr);                   \
+    key = SvPV_nolen(ST(1));                                    \
+    idx = SvCUR(obj);                                           \
+    t   = apreq_xs_##attr##_sv2table(obj);                      \
+    arr = apr_table_elts(t);                                    \
+    te  = (apr_table_entry_t *)arr->elts;                       \
+    env = apreq_xs_##attr##_sv2env(obj);                        \
+                                                                \
+    if (idx > 0 && idx <= arr->nelts                            \
+        && !strcasecmp(key, te[idx-1].key))                     \
+        val = te[idx-1].val;                                    \
+    else                                                        \
+        val = apr_table_get(t, key);                            \
+                                                                \
+    if (val != NULL) {                                          \
+        apreq_##type##_t *RETVAL = apreq_value_to_##type(       \
+                                          apreq_strtoval(val)); \
+        sv = apreq_xs_##type##2sv(RETVAL, subclass, obj);       \
+        ST(0) = sv_2mortal(sv);                                 \
+        XSRETURN(1);                                            \
+    }                                                           \
+    else                                                        \
+        XSRETURN_UNDEF;                                         \
+}
+
 
 #define APREQ_XS_DEFINE_TABLE_NEXTKEY(attr)                     \
 static XS(apreq_xs_##attr##_NEXTKEY)                            \
@@ -376,7 +401,6 @@ static XS(apreq_xs_##attr##_NEXTKEY)                            \
     }                                                           \
     idx = SvCUR(obj)++;                                         \
     sv = newSVpv(te[idx].key, 0);                               \
-    APREQ_XS_TABLE_ADD_KEY_MAGIC(arr->pool,sv,obj,te[idx].val); \
     ST(0) = sv_2mortal(sv);                                     \
     XSRETURN(1);                                                \
 }

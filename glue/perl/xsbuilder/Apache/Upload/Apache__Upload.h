@@ -105,6 +105,8 @@ static int apreq_xs_request_upload_table_keys(void *data, const char *key,
 
 APREQ_XS_DEFINE_TABLE_GET(request_upload, UPLOAD_TABLE, param, UPLOAD_PKG, RETVAL->bb);
 APREQ_XS_DEFINE_TABLE_GET(upload_table, UPLOAD_TABLE, param, UPLOAD_PKG, 1);
+APREQ_XS_DEFINE_TABLE_FETCH(upload_table, param, UPLOAD_PKG);
+
 APREQ_XS_DEFINE_ENV(upload);
 
 APREQ_XS_DEFINE_POOL(upload_table);

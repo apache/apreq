@@ -146,6 +146,8 @@ sub handler {
             $args->add("foo" => "bar2");
             my $test_string = "";
 
+            # TIEHASH ITERATOR TESTS
+
             $test_string .= "$a=$b;" while ($a, $b) = each %$args;
             die "each test failed: '$test_string'" unless
                 $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
@@ -154,19 +156,22 @@ sub handler {
             die "values test failed: '$test_string'" unless
                 $test_string eq "disable_uploads:bar1:bar2";
 
-#            $test_string = "";
-#            $test_string .= "$_=" . $args->get($_) . ";" for $args->get;
-#            die "get test failed: '$test_string'" unless
-#                $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
-
-#            $test_string = "";
-#            $test_string .= "$_=" . $args->get($_) . ";" for @_ = $args->get;
-#            die "get test2 failed: '$test_string'" unless
-#                $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
-
             $test_string = join ":", %$args;
             die "list deref test failed: '$test_string'" unless
                 $test_string eq "test:disable_uploads:foo:bar1:foo:bar2";
+
+            # MAGIC KEY TESTS
+
+            $test_string = "";
+            $test_string .= "$_=" . $args->get($_) . ";" for $args->get;
+            die "get test failed: '$test_string'" unless
+                $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
+
+            $test_string = "";
+            $test_string .= "$_=" . $args->get($_) . ";" for @_ = $args->get;
+            die "get test2 failed: '$test_string'" unless
+                $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
+
 
             $@->print("ok");
         }

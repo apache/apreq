@@ -136,6 +136,7 @@ APREQ_XS_DEFINE_TABLE_GET(request,         PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_TABLE_GET(request_args,    PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_TABLE_GET(request_body,    PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_TABLE_GET(table,           PARAM_TABLE, param, NULL, 1);
+APREQ_XS_DEFINE_TABLE_FETCH(table, param, NULL);
 
 APREQ_XS_DEFINE_TABLE_NEXTKEY(table);
 
