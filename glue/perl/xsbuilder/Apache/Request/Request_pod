@@ -9,9 +9,14 @@ Apache::Request - Methods for dealing with client request data
 
 =head1 DESCRIPTION
 
-I<Apache::Request> adds methods for parsing B<GET> requests and B<POST> 
-requests where I<Content-type> is one of I<application/x-www-form-urlencoded> or 
-I<multipart/form-data>.
+C<Apache::Request> adds methods for parsing B<GET> requests and B<POST> 
+requests where I<Content-type> is one of I<application/x-www-form-urlencoded>
+or I<multipart/form-data>.
+
+=head1 VERSION
+
+This is Version @PACKAGE_VERSION@ of C<Apache::Request>, based on
+lib@APREQ_LIBNAME@ Version @APREQ_DOTTED_VERSION@. 
 
 =head1 Apache::Request METHODS
 
@@ -155,7 +160,7 @@ parameter associated with the given name:
    my $param = $req->body($name);
 
 
-=head2 upload
+=head2 upload (requires Apache::Upload)
 
 With no arguments, this returns an I<Apache::Upload::Table> object in 
 scalar context, or the names of all I<Apache::Upload> objects in
@@ -182,85 +187,10 @@ Apache::Request object to delegate to.)  For example:
 		return bless { r => Apache::Request->new(@args) }, $class;
 	}
 
-=head1 Apache::Upload METHODS
-
-=head2 name
-
-The name of the filefield parameter:
-
-    my $name = $upload->name;
-
-=head2 filename
-
-The filename of the uploaded file:
-
-    my $filename = $upload->filename;
-
-=head2 bb [replaces fh]
-
-The APR::Brigade containing the contents of the uploaded file.
-
-=head2 size [TODO]
-
-The size of the file in bytes:
-
-    my $size = $upload->size;
-
-=head2 info
-
-The additional header information for the uploaded file.
-Returns a hash reference tied to the I<Apache::Table> class.
-An optional I<key> argument can be passed to return the value of 
-a given header rather than a hash reference.  Examples:
-
-    my $info = $upload->info;
-    while (my($key, $val) = each %$info) {
-	...
-    }
-
-    my $val = $upload->info("Content-type");
-
-=head2 type [TODO]
-
-Returns the I<Content-Type> for the given I<Apache::Upload> object:
-
-    my $type = $upload->type;
-    #same as
-    my $type = $upload->info("Content-Type");
-
-=head2 tempname [XXX- Does this mesh with brigade API?]
-
-Provides the name of the spool file. This method is reserved for
-debugging purposes, and is possibly subject to change in a future
-version of Apache::Request.
-
-=head2 link
-
-To avoid recopying the upload's internal tempfile brigade on a 
-*nix-like system, I<link> will create a hard link to it:
-
-  my $upload = $apr->upload('file');
-  $upload->link("/path/to/newfile") or
-      die sprintf "link from '%s' failed: $!", $upload->tempname;
-
-Typically the new name must lie on the same file system as the
-brigade's tempfile. Check your system's link(2) manpage for details.
-
-=head2 slurp
-
-Reads the full contents of a file upload into the scalar argument.
-The return value is currently an APR status code (0 on success, error otherwise),
-but this may change in a future release (to bring this function
-in line with similar read-type functions in mp2).
-
-  # print out the upload file
-  my $contents;
-  print $contents if $upload->slurp($contents) == 0;
-
 
 =head1 SEE ALSO
 
-APR::Table(3)
+Apache::Cookie(3), Apache::Upload(3), APR::Table(3)
 
 =head1 CREDITS
 
@@ -272,5 +202,5 @@ Doug MacEachern, Joe Schaefer, Steve Hay.
 
 =head1 MISSING DOCS
 
-$req->config, Apache::Request::Table, Apache::Upload::Table.
+$req->config, Apache::Request::Table
 

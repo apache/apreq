@@ -29,8 +29,22 @@ sub new {
 }
 
 sub fetch {
-    my $self = shift;
-    my $jar = $self->jar(@_);
+    my $class = shift;
+    my $env = shift;
+    unless (defined $env) {
+        my $usage = 'Usage: Apache::Cookie->fetch($r): missing argument $r';
+
+        if ($class->env eq "Apache::RequestRec") { # mp2
+            $env = eval {Apache->request} or die <<EOD;
+$usage: attempt to fetch global Apache->request failed: $@.
+EOD
+            # warn $usage;
+        }
+        else {
+            die $usage;
+        }
+    }
+    my $jar = $class->jar($env, @_);
     return wantarray ? %{(scalar $jar->cookie) || {}} : $jar->cookie;
 }
 
