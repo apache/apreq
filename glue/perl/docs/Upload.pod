@@ -348,6 +348,9 @@ linefeeds (the '\012' character), but we may eventually use C<$/> instead.
 
 =over 4
 
+=item * C<< $upload->next() >> is no longer available;  please use the 
+C<< Apache::Upload::Table >> API when iterating over upload entries.
+
 =item * C<info($header_name)> is replaced by C<info($set)>.
 
 =item * C<type()> returns only the MIME-type portion of the Content-Type header.
