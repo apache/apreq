@@ -76,7 +76,7 @@
 #if APR_HAVE_STRINGS_H
 #include <strings.h>
 #endif
-
+#include "apr_signal.h"
 
 
 
@@ -85,11 +85,11 @@
 /* private struct */
 
 typedef struct apreq_table_entry_t {
-    const char    *key;
-    apreq_value_t *val;
+    const char          *key;   /* = val->name : saves a ptr deref */
+    const apreq_value_t *val;
 
-    enum { RED, BLACK } color;
-    int tree[4];              /* LEFT RIGHT PARENT NEXT */
+    enum { RED, BLACK }  color;
+    int                  tree[4];  /* LEFT RIGHT PARENT NEXT */
 } apreq_table_entry_t;
 
 /* LEFT & RIGHT must satisfy !LEFT==RIGHT , !RIGHT==LEFT */
@@ -110,6 +110,10 @@ typedef struct apreq_table_entry_t {
 /* this one is strcasecmp compatible */
 #define TABLE_HASH(key)  (TABLE_INDEX_MASK & *(unsigned char *)(key))
 
+
+/* XXX: apreq_tables need to be signal( thread? )safe; currently
+   these LOCK* macros indicate some unsafe locations in the code. */
+
 /* coarse locking (maybe API worthy) */
 #define LOCK_TABLE(t)
 #define UNLOCK_TABLE(t)
@@ -120,26 +124,28 @@ typedef struct apreq_table_entry_t {
 #define UNLOCK_TREE(t,n)
 #define TREE_IS_LOCKED(t,n)
 
+
 /* This may someday become public, but has hash+tree harmony embedded. */
 typedef int (apreq_table_cmp_t)(const char *, const char *);
 
-#define TF_LOCK      1
-#define TF_BALANCE   8
-#define TF_PROMOTE  16
+#define TF_MERGE     1
+#define TF_BALANCE   2
+#define TF_LOCK      4
 
 
 struct apreq_table_t {
-    apr_array_header_t a;
-    int ghosts;
+    apr_array_header_t   a;
+    int                  ghosts;
 
     apreq_table_cmp_t   *cmp;
-    apreq_value_merge_t *merge;
+
     apreq_value_copy_t  *copy;
+    apreq_value_merge_t *merge;
 
-    int root[TABLE_HASH_SIZE];
-    unsigned long locks;
+    int                  root[TABLE_HASH_SIZE];
+    unsigned long        locks; /* XXX ??? */
 
-    unsigned char flags;
+    unsigned char        flags;
 
 #ifdef MAKE_TABLE_PROFILE
     int creator; /* XXX Is this the right type ??? */
@@ -150,13 +156,13 @@ struct apreq_table_t {
 /***************************** tree macros ****************************/
 
 
-/* NEVER KILL AN ENTRY THAT'S STILL WITHIN THE FOREST */
-#define KILL_ENTRY(t,idx) do { (idx)[o].tree[PARENT] = idx; \
+#define DEAD(idx)     ( (idx)[o].key == NULL )
+#define KILL_ENTRY(t,idx) do { (idx)[o].key = NULL; \
                                (t)->ghosts++; } while (0)
-#define IS_DEAD(idx)     ( idx[o].tree[PARENT] == idx )
-#define IN_FOREST(t,idx) ( (idx[o].tree[PARENT] >= 0 && ! IS_DEAD(idx))\
-                         || idx == (t)->root[TABLE_HASH(idx[o].key)] )
 
+/* NEVER KILL AN ENTRY THAT'S STILL WITHIN THE FOREST */
+#define IN_FOREST(t,idx) ( (idx)[o].tree[PARENT] >= 0 || \
+                           (idx) == t->root[TABLE_HASH((idx)[o].key)] )
 
 /********************* (internal) tree operations ********************/
 
@@ -480,6 +486,8 @@ static int combine(apreq_table_cmp_t *cmp,
 
 static void *apr_array_push_noclear(apr_array_header_t *arr)
 {
+    /* XXX: this function is not reentrant */
+
     if (arr->nelts == arr->nalloc) {
         int new_size = (arr->nalloc <= 0) ? 1 : arr->nalloc * 2;
         char *new_data;
@@ -512,17 +520,12 @@ static apreq_table_entry_t *table_push(apreq_table_t *t)
 /********************* table ctors ********************/
 
 
-static apreq_value_t *collapse(apr_pool_t *p,
+static apreq_value_t *collapse(apr_pool_t *p, 
                                const apr_array_header_t *arr)
 {
     apreq_value_t **a = (apreq_value_t **)arr->elts;
-
-    if (arr->nelts == 0)
-        return NULL;
-    else 
-        return a[arr->nelts - 1];
-}             
-
+    return (arr->nelts == 0) ? NULL : a[arr->nelts - 1];
+}
 
 APREQ_DECLARE(apreq_table_t *) apreq_table_make(apr_pool_t *p, int nelts)
 {
@@ -536,9 +539,9 @@ APREQ_DECLARE(apreq_table_t *) apreq_table_make(apr_pool_t *p, int nelts)
     /* XXX: is memset(*,-1,*) portable ??? */
     memset(t->root, -1, TABLE_HASH_SIZE * sizeof(int));
 
-    t->cmp    = &strcasecmp;
-    t->merge  = &apreq_value_merge;
-    t->copy   = &apreq_value_copy;
+    t->cmp    = strcasecmp;
+    t->merge  = apreq_value_merge;
+    t->copy   = apreq_value_copy;
     t->flags  = 0;
     t->ghosts = 0;
     return t;
@@ -570,24 +573,26 @@ APREQ_DECLARE(apreq_table_t *) apreq_table_copy(apr_pool_t *p,
     return new;
 }
 
-APREQ_DECLARE(apr_table_t *)apreq_table_export(apreq_table_t *t, apr_pool_t *p)
+APREQ_DECLARE(apr_table_t *)apreq_table_export(const apreq_table_t *t, 
+                                               apr_pool_t *p)
 {
     int idx;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
     apr_table_t *s = apr_table_make(p, t->a.nelts);
 
     for (idx = 0; idx < t->a.nelts; ++idx) {
-        if (! IS_DEAD(idx))
-            apr_table_addn(s, apr_pstrdup(p,idx[o].key), 
-                              t->copy(p,idx[o].val)->data);
+        if (! DEAD(idx)) {
+            const apreq_value_t *v = idx[o].val; 
+            apr_table_addn(s, v->name, v->data);
+        }
     }
 
     return s;
 }
 
 APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p, 
-                                                 apr_table_t *s, 
-                                                 unsigned f) 
+                                                 const apr_table_t *s, 
+                                                 const unsigned f) 
 {
     apreq_table_t *t = apreq_table_make(p,APREQ_DEFAULT_NELTS);
     const apr_array_header_t *a = apr_table_elts(s);
@@ -596,11 +601,12 @@ APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p,
 
     t->flags = f;
 
-    for ( ; e < end; e++)
-        apreq_table_addv(t, apr_pstrdup(p,e->key), 
-                         e->val ? apreq_value_make(p, e->val, strlen(e->val)) 
-                                : NULL);
-
+    for ( ; e < end; e++) {
+        apreq_value_t *v = e->val ? 
+            apreq_value_make(p,e->key,e->val,strlen(e->val)) : 
+            NULL;
+        apreq_table_add(t, v);
+    }
     return t;
 }
 
@@ -614,6 +620,7 @@ APREQ_DECLARE(void) apreq_table_clear(apreq_table_t *t)
 {
     memset(t->root,-1,TABLE_HASH_SIZE * sizeof(int));
     t->a.nelts = 0;
+    t->ghosts = 0;
 }
 
 APREQ_DECLARE(int) apreq_table_nelts(const apreq_table_t *t)
@@ -623,7 +630,7 @@ APREQ_DECLARE(int) apreq_table_nelts(const apreq_table_t *t)
 
 APREQ_DECLARE(int) apreq_is_empty_table(const apreq_table_t *t)
 {
-    return t != NULL && t->a.nelts > t->ghosts;
+    return t->a.nelts > t->ghosts;
 }
 
 
@@ -643,13 +650,6 @@ APREQ_DECLARE(apreq_value_merge_t *)apreq_table_merger(apreq_table_t *t,
     return t->merge;
 }
 
-APREQ_DECLARE(void) apreq_table_cache_lookups(apreq_table_t *t, const int on)
-{
-    if (on)
-        t->flags |=  TF_PROMOTE;
-    else
-        t->flags &= ~TF_PROMOTE;
-}
 
 APREQ_DECLARE(void) apreq_table_balance(apreq_table_t *t, const int on)
 {
@@ -664,7 +664,6 @@ APREQ_DECLARE(void) apreq_table_balance(apreq_table_t *t, const int on)
             insert(t->cmp, o, &t->root[TABLE_HASH(idx[o].key)], -1, &idx[o], 
                    TF_BALANCE | TREE_PUSH);
 
-        t->flags &= ~TF_PROMOTE;
         t->flags |= TF_BALANCE;
     }
     else {
@@ -672,9 +671,9 @@ APREQ_DECLARE(void) apreq_table_balance(apreq_table_t *t, const int on)
     }
 }
 
-APREQ_DECLARE(void) apreq_table_normalize(apreq_table_t *t)
+APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t)
 {
-    if (t->merge) {
+    if (t->flags & TF_MERGE) {
         int idx;
         apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
         apr_array_header_t *a = apr_array_make(t->a.pool, APREQ_DEFAULT_NELTS,
@@ -689,10 +688,10 @@ APREQ_DECLARE(void) apreq_table_normalize(apreq_table_t *t)
 
                 idx[o].tree[NEXT] = -1;
                 a->nelts = 0;
-                *(apreq_value_t **)apr_array_push(a) = idx[o].val;
+                *(const apreq_value_t **)apr_array_push(a) = idx[o].val;
 
                 for ( ; j >= 0; j = j[o].tree[NEXT]) {
-                    *(apreq_value_t **)apr_array_push(a) = j[o].val;
+                    *(const apreq_value_t **)apr_array_push(a) = j[o].val;
                     KILL_ENTRY(t,j);
                 }
 
@@ -701,7 +700,10 @@ APREQ_DECLARE(void) apreq_table_normalize(apreq_table_t *t)
                 UNLOCK_TABLE(t);
             }
         }
+        return APR_SUCCESS;
     }
+    else
+        return APR_EGENERAL;
 }
 
 static int bury_table_entries(apreq_table_t *t, apr_array_header_t *q)
@@ -762,7 +764,7 @@ APREQ_DECLARE(int) apreq_table_exorcise(apreq_table_t *t)
         apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
         /* first eliminate trailing ghosts */
-        while (IS_DEAD(t->a.nelts - 1)) {
+        while (DEAD(t->a.nelts - 1)) {
             t->a.nelts--;
             t->ghosts--;
         }
@@ -774,7 +776,7 @@ APREQ_DECLARE(int) apreq_table_exorcise(apreq_table_t *t)
                                                    t->ghosts + 1, 
                                                    sizeof(int));
             for (idx = 0; idx < t->a.nelts; ++idx)
-                if (IS_DEAD(idx))
+                if (DEAD(idx))
                     *(int *)apr_array_push(a) = idx;
 
             rv = bury_table_entries(t,a);
@@ -794,8 +796,20 @@ APREQ_DECLARE(int) apreq_table_exorcise(apreq_table_t *t)
 
 
 
-APREQ_DECLARE(const char *) apreq_table_get(apreq_table_t *t, 
-                                            const char *key)
+APREQ_DECLARE(const char *) apreq_table_get(const apreq_table_t *t,
+                                             const char *key)
+{
+    int idx = t->root[TABLE_HASH(key)];
+    apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
+
+    if ( idx < 0 || search(t->cmp,o,&idx,key) )
+	return NULL;
+
+    return v2c(idx[o].val);
+}
+
+APREQ_DECLARE(const char *) apreq_table_get_cached(apreq_table_t *t,
+                                                   const char *key)
 {
     int *root = &t->root[TABLE_HASH(key)];
     int idx = *root;
@@ -804,8 +818,8 @@ APREQ_DECLARE(const char *) apreq_table_get(apreq_table_t *t,
     if ( idx < 0 || search(t->cmp,o,&idx,key) )
 	return NULL;
 
-    if (t->flags & TF_PROMOTE && idx != *root) {
-        /* modifies tree, which is why t isn't declared as const */
+    if (idx != *root) {
+        t->flags &= ~TF_BALANCE;
         PROMOTE(o,root,idx);
     }
     return v2c(idx[o].val);
@@ -826,33 +840,26 @@ APREQ_DECLARE(apr_array_header_t *) apreq_table_keys(const apreq_table_t *t,
     return a;
 }
 
-APREQ_DECLARE(apr_array_header_t *) apreq_table_values(apreq_table_t *t,
-                                                       const char *key,
-                                                       apr_pool_t *p)
+APREQ_DECLARE(apr_array_header_t *) apreq_table_values(const apreq_table_t *t,
+                                                       apr_pool_t *p,
+                                                       const char *key)
 {
-    int i;
+    int idx;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
     apr_array_header_t *a = apr_array_make(p, key ? APREQ_DEFAULT_NELTS : 
                                                     t->a.nelts - t->ghosts,
                                                     sizeof(apreq_value_t *));
 
     if (key == NULL) {  /* fetch all values */
-        for (i = 0; i < t->a.nelts; ++i)
-            if (IN_FOREST(t,i))
-                *(apreq_value_t **)apr_array_push(a) = i[o].val;
+        for (idx = 0; idx < t->a.nelts; ++idx)
+            if (IN_FOREST(t,idx))
+                *(const apreq_value_t **)apr_array_push(a) = idx[o].val;
     }
     else {
-        i = t->root[TABLE_HASH(key)];
-        if ( i>=0 && search(t->cmp,o,&i,key) == 0 )
-           for ( ; i>=0; i = i[o].tree[NEXT] )
-                *(apreq_value_t **)apr_array_push(a) = i[o].val;
-
-        if (t->flags & TF_PROMOTE && i != t->root[TABLE_HASH(key)]) {
-            /* modifies tree, so t cannot be declared const */
-            int *root = &t->root[TABLE_HASH(key)];
-            PROMOTE(o,root,i);
-        }
-
+        idx = t->root[TABLE_HASH(key)];
+        if ( idx>=0 && search(t->cmp,o,&idx,key) == 0 )
+           for ( ; idx>=0; idx = idx[o].tree[NEXT] )
+                *(const apreq_value_t **)apr_array_push(a) = idx[o].val;
     }
 
     return a;
@@ -863,42 +870,9 @@ APREQ_DECLARE(apr_array_header_t *) apreq_table_values(apreq_table_t *t,
 /********************* table_set* & table_unset ********************/
 
 
-
-APREQ_DECLARE(void) apreq_table_set(apreq_table_t *t, const char *key, 
-                                  const char *val)
+APREQ_DECLARE(void) apreq_table_set(apreq_table_t *t, const apreq_value_t *val)
 {
-    if (key && val)
-        apreq_table_setb(t, key, strlen(key), val, strlen(val));
-    else if (key != NULL)
-        apreq_table_setb(t, key, strlen(key), val, 0);
-}
-
-APREQ_DECLARE(void) apreq_table_setb(apreq_table_t *t, 
-                                   const char *key, int klen,
-                                   const char *val, int vlen)
-{
-    apreq_value_t *k, *v;
-    apr_pool_t *p = t->a.pool;
-
-    if (key == NULL)
-        return;
-
-    k = apreq_value_make(p, key, klen);
-    v = (val == NULL) ? NULL : apreq_value_make(p, val, vlen);
-    apreq_table_setv(t, k->data, v);
-}
-
-APREQ_DECLARE(void) apreq_table_setn(apreq_table_t *t, 
-                                   const char *key,
-                                   const char *val)
-{
-    apreq_table_setv(t,key,apreq_char_to_value(val));
-}
-
-APREQ_DECLARE(void) apreq_table_setv(apreq_table_t *t, 
-                                     const char *key,
-                                     apreq_value_t *val)
-{
+    const char *key = val->name;
     int idx = t->root[TABLE_HASH(key)];
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
@@ -956,79 +930,41 @@ APREQ_DECLARE(void) apreq_table_unset(apreq_table_t *t, const char *key)
 
 /********************* table_merge* *********************/
 
-
-
 APREQ_DECLARE(void) apreq_table_merge(apreq_table_t *t,
-                                    const char *key,
-                                    const char *val)
+                                      const apreq_value_t *val)
 {
-    if (key && val)
-        apreq_table_mergeb(t, key, strlen(key), val, strlen(val));
-    else if (key != NULL)
-        apreq_table_mergeb(t, key, strlen(key), val, 0);
-}
-
-APREQ_DECLARE(void) apreq_table_mergeb(apreq_table_t *t,
-                                     const char *key, int klen,
-                                     const char *val, int vlen)
-{
-    apreq_value_t *k, *v;
-    apr_pool_t *p = t->a.pool;
-
-    if (key == NULL)
-        return;
-
-    k = apreq_value_make(p, key, klen);
-    v = (val == NULL) ? NULL : apreq_value_make(p, val, vlen);
-    apreq_table_mergev(t, k->data, v);
-}
-
-
-APREQ_DECLARE(void) apreq_table_mergen(apreq_table_t *t,
-                                     const char *key,
-                                     const char *val)
-{
-    apreq_table_mergev(t,key,apreq_char_to_value(val));
-}
-
-APREQ_DECLARE(void) apreq_table_mergev(apreq_table_t *t,
-                                       const char *key,
-                                       apreq_value_t *val)
-{
+    const char *key = val->name;
     int idx = t->root[TABLE_HASH(key)];
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
 #ifdef POOL_DEBUG
     {
-	if (!apr_pool_is_ancestor(apr_pool_find(key), t->a.pool)) {
-	    fprintf(stderr, "table_set: key not in ancestor pool of t\n");
-	    abort();
-	}
 	if (!apr_pool_is_ancestor(apr_pool_find(val), t->a.pool)) {
-	    fprintf(stderr, "table_set: key not in ancestor pool of t\n");
+            /* XXX */
+	    fprintf(stderr, "apreq_table_merge: val not in ancestor pool of t\n");
 	    abort();
 	}
     }
 #endif
 
-    if (t->merge && idx >= 0 && search(t->cmp,o,&idx,key) == 0) {
+    if (t->merge && idx >= 0 && search(t->cmp,o,&idx,val->name) == 0) {
         int n;
         apr_array_header_t *arr = apr_array_make(t->a.pool, 
                                                  APREQ_DEFAULT_NELTS, 
                                                  sizeof(apreq_value_t *));
 
         if (idx[o].val)
-            *(apreq_value_t **)apr_array_push(arr) = idx[o].val;
+            *(const apreq_value_t **)apr_array_push(arr) = idx[o].val;
 
         for (n = idx[o].tree[NEXT]; n >= 0; n = n[o].tree[NEXT]) {
             KILL_ENTRY(t,n);
 
             if (n[o].val)
-                *(apreq_value_t **)apr_array_push(arr) = n[o].val;
+                *(const apreq_value_t **)apr_array_push(arr) = n[o].val;
         }
 
         if (val)
-            *(apreq_value_t **)apr_array_push(arr) = val;
+            *(const apreq_value_t **)apr_array_push(arr) = val;
 
         if (arr->nelts > 1)
             idx[o].val = t->merge(t->a.pool, arr);
@@ -1036,7 +972,7 @@ APREQ_DECLARE(void) apreq_table_mergev(apreq_table_t *t,
 
     else { /* not found */
         apreq_table_entry_t *e = table_push(t);
-        e->key = key;
+        e->key = val->name;
         e->val = val;
         e->tree[NEXT] = -1;
         insert(t->cmp,o,&t->root[TABLE_HASH(key)],idx,e,TREE_PUSH);
@@ -1044,47 +980,12 @@ APREQ_DECLARE(void) apreq_table_mergev(apreq_table_t *t,
 }
 
 
-
 /********************* table_add* *********************/
 
-
-
 APREQ_DECLARE(void) apreq_table_add(apreq_table_t *t, 
-                                   const char *key, 
-                                   const char *val)
+                                    const apreq_value_t *val)
 {
-    if (key && val)
-        apreq_table_addb(t, key, strlen(key), val, strlen(val));
-    else if (key != NULL)
-        apreq_table_addb(t, key, strlen(key), val, 0);
-}
-
-APREQ_DECLARE(void) apreq_table_addb(apreq_table_t *t, 
-                                   const char *key, int klen, 
-                                   const char *val, int vlen)
-{
-    apreq_value_t *k, *v;
-    apr_pool_t *p = t->a.pool;
-
-    if (key == NULL)
-        return;
-
-    k = apreq_value_make(p, key, klen);
-    v = (val == NULL) ? NULL : apreq_value_make(p, val, vlen);
-    apreq_table_addv(t, k->data, v);
-}
-
-APREQ_DECLARE(void) apreq_table_addn(apreq_table_t *t, 
-                                   const char *key, 
-                                   const char *val)
-{
-    apreq_table_addv(t, key, apreq_char_to_value(val));
-}
-
-APREQ_DECLARE(void) apreq_table_addv(apreq_table_t *t, 
-                                   const char *key, 
-                                   apreq_value_t *val)
-{
+    const char *key = val->name;
     apreq_table_entry_t *elt = table_push(t);
     int *root = &t->root[TABLE_HASH(key)];
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
@@ -1102,7 +1003,7 @@ APREQ_DECLARE(void) apreq_table_addv(apreq_table_t *t,
     }
 #endif
 
-    elt->key = key;
+    elt->key = val->name;
     elt->val = val;
     elt->tree[NEXT] = -1;
     insert(t->cmp, o, root, *root, elt,TREE_PUSH);
@@ -1249,7 +1150,6 @@ APREQ_DECLARE(void) apreq_table_overlap(apreq_table_t *a,
 /********************* iterators ********************/
 
 APREQ_DECLARE(apr_status_t) apreq_table_fetch(const apreq_table_t *t,
-                                              const char **key,
                                               const apreq_value_t **val,
                                               int *off)
 {
@@ -1257,7 +1157,6 @@ APREQ_DECLARE(apr_status_t) apreq_table_fetch(const apreq_table_t *t,
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
     if (idx < 0 || idx >= t->a.nelts - t->ghosts) {
-        *key = NULL;
         *val = NULL;
         return APR_EGENERAL;
     }
@@ -1266,29 +1165,26 @@ APREQ_DECLARE(apr_status_t) apreq_table_fetch(const apreq_table_t *t,
         int n;
 
         for (n=0; n <= idx; ++n)
-            if ( IS_DEAD(n) )
+            if ( DEAD(n) )
                 ++idx;
 
         *off = idx;
     }
 
-    *key = idx[o].key;
     *val = idx[o].val;
 
     return APR_SUCCESS;
 }
 
 APREQ_DECLARE(apr_status_t) apreq_table_first(const apreq_table_t *t,
-                                              const char **key,
                                               const apreq_value_t **val,
                                               int *off)
 {
     *off = -1;
-    return apreq_table_next(t,key,val,off);
+    return apreq_table_next(t,val,off);
 }
 
 APREQ_DECLARE(apr_status_t) apreq_table_next(const apreq_table_t *t,
-                                             const char **key, 
                                              const apreq_value_t **val,
                                              int *off)
 {
@@ -1296,7 +1192,6 @@ APREQ_DECLARE(apr_status_t) apreq_table_next(const apreq_table_t *t,
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
     if (idx < -1 || idx >= t->a.nelts) {
-        *key = NULL;
         *val = NULL;
         return APR_EGENERAL;
     }
@@ -1304,29 +1199,25 @@ APREQ_DECLARE(apr_status_t) apreq_table_next(const apreq_table_t *t,
     do { 
         if (++idx == t->a.nelts) {
             *off = idx;
-            *key = NULL;
             *val = NULL;
             return APR_EGENERAL;
         }
-    } while ( IS_DEAD(idx) );
+    } while ( DEAD(idx) );
 
     *off = idx;
-    *key = idx[o].key;
     *val = idx[o].val;
     return APR_SUCCESS;
 }
 
 APREQ_DECLARE(apr_status_t) apreq_table_last(const apreq_table_t *t, 
-                                             const char **key,
                                              const apreq_value_t **val, 
                                              int *off)
 {
     *off = t->a.nelts;
-    return apreq_table_prev(t,key,val,off);
+    return apreq_table_prev(t,val,off);
 }
 
 APREQ_DECLARE(apr_status_t) apreq_table_prev(const apreq_table_t *t, 
-                                             const char **key, 
                                              const apreq_value_t **val,
                                              int *off)
 {
@@ -1334,7 +1225,6 @@ APREQ_DECLARE(apr_status_t) apreq_table_prev(const apreq_table_t *t,
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
     if (idx <= 0 || idx > t->a.nelts) {
-        *key = NULL;
         *val = NULL;
         return APR_EGENERAL;
     }
@@ -1342,14 +1232,12 @@ APREQ_DECLARE(apr_status_t) apreq_table_prev(const apreq_table_t *t,
     do { 
         if (--idx == -1) {
             *off = idx;
-            *key = NULL;
             *val = NULL;
             return APR_EGENERAL;
         }
-    } while ( IS_DEAD(idx) );
+    } while ( DEAD(idx) );
 
     *off = idx;
-    *key = idx[o].key;
     *val = idx[o].val;
     return APR_SUCCESS;
 }
@@ -1461,7 +1349,7 @@ APREQ_DECLARE(int) apreq_table_vdo(apr_table_do_callback_fn_t *comp,
         else {          /* Scan the entire table */
             for (idx = 0; rv && (idx < t->a.nelts); ++idx)
                 /* if (idx[o].key) */
-                if (! IS_DEAD(idx) )
+                if (! DEAD(idx) )
                     rv = (*comp) (rec, idx[o].key, v2c(idx[o].val));
         }
         if (rv == 0) {

@@ -17,8 +17,8 @@
 #define APREQ_URL_LENGTH                33
 #define APREQ_MFD_ENCTYPE               "multipart/form-data"
 #define APREQ_MFD_ENCTYPE_LENGTH        19
-#define APREQ_XML_ENCTYPE               "text/xml"
-#define APREQ_XML_ENCTYPE_LENGTH        8
+#define APREQ_XML_ENCTYPE               "application/xml"
+#define APREQ_XML_ENCTYPE_LENGTH        15
 
 #define APREQ_EXPIRES_HTTP              1
 #define APREQ_EXPIRES_NSCOOKIE          2
@@ -39,17 +39,21 @@
 #define APREQ_QUOTE                     3
 
 /* status codes */
-#define APREQ_OK                  0
-#define APREQ_CONTINUE          100
-#define APREQ_ERROR             500
+#define APREQ_OK                        0
+#define APREQ_CONTINUE                100
+#define APREQ_ERROR                   500
+
 
 typedef struct apreq_value_t {
+    const char          *name;
     apr_ssize_t          size;
-    unsigned char        flags; /* ??? */
+    unsigned             flags;
     char                 data[1];
 } apreq_value_t;
 
-
+typedef apreq_value_t *(apreq_value_make_t)(apr_pool_t *p, const char *name,
+                                            const char *data,
+                                            const apr_ssize_t size);
 typedef apreq_value_t *(apreq_value_merge_t)(apr_pool_t *p,
                                              const apr_array_header_t *a);
 typedef apreq_value_t *(apreq_value_copy_t)(apr_pool_t *p,
@@ -58,8 +62,11 @@ typedef apreq_value_t *(apreq_value_copy_t)(apr_pool_t *p,
 #define apreq_attr_to_type(T,A,P) ( (T*) ((char*)(P)-offsetof(T,A)) )
 #define apreq_char_to_value(ptr)  apreq_attr_to_type(apreq_value_t, data, ptr)
 
-apreq_value_t *apreq_value_make(apr_pool_t *p, const char *str, 
-                                const apr_ssize_t size);
+#define apreq_strtoval(ptr)  apreq_char_to_value(ptr)
+#define apreq_strlen(ptr) (apreq_strtoval(ptr)->size)
+
+apreq_value_t *apreq_value_make(apr_pool_t *p, const char *name, 
+                                const char *data, const apr_ssize_t size);
 apreq_value_t *apreq_value_copy(apr_pool_t *p, const apreq_value_t *val);
 apreq_value_t *apreq_value_merge(apr_pool_t *p, const apr_array_header_t *arr);
 
@@ -69,11 +76,12 @@ char *apreq_pvcat(apr_pool_t *p,
                   const char *sep, 
                   int mode);
 
-char *apreq_memmem(char* h, apr_off_t hlen, 
-                   const char* n, apr_off_t nlen, int part);
+/* XXX: should we drop this and replace it with apreq_index ? */
+char *apreq_memmem(char* hay, apr_off_t haylen, 
+                   const char* ndl, apr_off_t ndllen, int part);
 
-apr_off_t apreq_index(char* h, apr_off_t hlen, 
-                      const char* n, apr_off_t nlen, int part);
+apr_off_t apreq_index(const char* hay, apr_off_t haylen, 
+                      const char* ndl, apr_off_t ndllen, int part);
 
 /* url-escapes non-alphanumeric characters */
 char *apreq_escape(apr_pool_t *p, char *s);
@@ -88,16 +96,8 @@ apr_int64_t apreq_atol(const char *s);
 /* "duration" strings (YMDhms) to seconds */
 apr_int64_t apreq_atod(const char *s);
 
-/* r->uri, omitting path info */
-
-
-/*
-char *apreq_script_name(void *r);
-char *(apreq_script_path)(void *r);
-#define apreq_script_path(r) ap_make_dirstr_parent(r->pool,apreq_script_name(r))
-*/
 #ifdef __cplusplus
  }
 #endif
 
-#endif
+#endif /* APREQ_H */

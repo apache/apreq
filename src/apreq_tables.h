@@ -105,11 +105,12 @@ APREQ_DECLARE(apreq_table_t *) apreq_table_copy(apr_pool_t *p,
                                             const apreq_table_t *t);
 
 
-APREQ_DECLARE(apr_table_t *)apreq_table_export(apreq_table_t *t, 
-                                             apr_pool_t *p);
+APREQ_DECLARE(apr_table_t *)apreq_table_export(const apreq_table_t *t, 
+                                               apr_pool_t *p);
+
 APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p, 
-                                               apr_table_t *s, 
-                                               unsigned f);
+                                                 const apr_table_t *s, 
+                                                 const unsigned f);
 
 
 /**
@@ -130,7 +131,7 @@ APREQ_DECLARE(void) apreq_table_cache_lookups(apreq_table_t *t,
                                               const int on);
 
 APREQ_DECLARE(void) apreq_table_balance(apreq_table_t *t, const int on);
-APREQ_DECLARE(void) apreq_table_normalize(apreq_table_t *t);
+APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t);
 
 APREQ_DECLARE(int) apreq_table_ghosts(apreq_table_t *t);
 APREQ_DECLARE(int) apreq_table_exorcise(apreq_table_t *t);
@@ -143,17 +144,18 @@ APREQ_DECLARE(int) apreq_table_exorcise(apreq_table_t *t);
  * @param key The key to search for
  * @return The value associated with the key
  */
-APREQ_DECLARE(const char*) apreq_table_get(apreq_table_t *t, 
+APREQ_DECLARE(const char*) apreq_table_get(const apreq_table_t *t, 
                                            const char *key);
 
+APREQ_DECLARE(const char *) apreq_table_get_cached(apreq_table_t *t,
+                                                   const char *key);
 
-APREQ_DECLARE(apr_array_header_t *) apreq_table_keys(const 
-                                                     apreq_table_t *t,
+APREQ_DECLARE(apr_array_header_t *) apreq_table_keys(const apreq_table_t *t,
                                                      apr_pool_t *p);
 
-APREQ_DECLARE(apr_array_header_t *) apreq_table_values(apreq_table_t *t,
-                                                       const char *key,
-                                                       apr_pool_t *p);
+APREQ_DECLARE(apr_array_header_t *) apreq_table_values(const apreq_table_t *t,
+                                                       apr_pool_t *p,
+                                                       const char *key);
 
 
 /**
@@ -165,28 +167,7 @@ APREQ_DECLARE(apr_array_header_t *) apreq_table_values(apreq_table_t *t,
  * @remark When adding data, this function makes a copy of both the key and the
  *         value.
  */
-APREQ_DECLARE(void) apreq_table_set(apreq_table_t *t, const char *key, 
-                                  const char *val);
-
-APREQ_DECLARE(void) apreq_table_setb(apreq_table_t *t, const char *key, 
-                                     int klen, const char *val, int vlen);
-
-/**
- * Add a key/value pair to a table, if another element already exists with the
- * same key, this will over-write the old data.
- * @param t The table to add the data to.
- * @param key The key to use
- * @param val The value to add
- * @warning When adding data, this function does not make a copy of the key or 
- *          the value, so care should be taken to ensure that the values will 
- *          not change after they have been added..
- */
-APREQ_DECLARE(void) apreq_table_setn(apreq_table_t *t, const char *key, 
-                                     const char *val);
-
-APREQ_DECLARE(void) apreq_table_setv(apreq_table_t *t, const char *key, 
-                                     apreq_value_t *val);
-
+APREQ_DECLARE(void) apreq_table_set(apreq_table_t *t, const apreq_value_t *v);
 
 /**
  * Remove data from the table
@@ -204,27 +185,8 @@ APREQ_DECLARE(void) apreq_table_unset(apreq_table_t *t, const char *key);
  * @remark If the key is not found, then this function acts like apr_table_add
  */
 
-APREQ_DECLARE(void) apreq_table_merge(apreq_table_t *t, const char *key, 
-                                      const char *val);
-
-APREQ_DECLARE(void) apreq_table_mergeb(apreq_table_t *t,
-                                       const char *key, int klen,
-                                       const char *val, int vlen);
-
-/**
- * Add data to a table by merging the value with data that has already been 
- * stored
- * @param t The table to search for the data
- * @param key The key to merge data for
- * @param val The data to add
- * @remark If the key is not found, then this function acts like apr_table_addn
- */
-APREQ_DECLARE(void) apreq_table_mergen(apreq_table_t *t, const char *key,
-                                     const char *val);
-
-APREQ_DECLARE(void) apreq_table_mergev(apreq_table_t *t,
-                                       const char *key,
-                                       apreq_value_t *val);
+APREQ_DECLARE(void) apreq_table_merge(apreq_table_t *t, 
+                                      const apreq_value_t *v);
 
 /**
  * Add data to a table, regardless of whether there is another element with the
@@ -235,29 +197,8 @@ APREQ_DECLARE(void) apreq_table_mergev(apreq_table_t *t,
  * @remark When adding data, this function makes a copy of both the key and the
  *         value.
  */
-APREQ_DECLARE(void) apreq_table_add(apreq_table_t *t, 
-                                    const char *key, const char *val);
-APREQ_DECLARE(void) apreq_table_addb(apreq_table_t *t, 
-                                     const char *key, int klen, 
-                                     const char *val, int vlen);
+APREQ_DECLARE(void) apreq_table_add(apreq_table_t *t, const apreq_value_t *v);
 
-/**
- * Add data to a table, regardless of whether there is another element with the
- * same key.
- * @param t The table to add to
- * @param key The key to use
- * @param val The value to add.
- * @remark When adding data, this function does not make a copy of the key or the
- *         value, so care should be taken to ensure that the values will not 
- *         change after they have been added..
- */
-APREQ_DECLARE(void) apreq_table_addn(apreq_table_t *t, const char *key, 
-                                     const char *val);
-APREQ_DECLARE(void) apreq_table_addv(apreq_table_t *t, 
-                                     const char *key, 
-                                     apreq_value_t *val);
-
-APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t, const apreq_table_t *s);
 /**
  * Merge two tables into one new table
  * @param p The pool to use for the new table
@@ -265,9 +206,12 @@ APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t, const apreq_table_t *s);
  * @param under The table to add at the end of the new table
  * @return A new table containing all of the data from the two passed in
  */
+
 APREQ_DECLARE(apreq_table_t *) apreq_table_overlay(apr_pool_t *p,
                                                    const apreq_table_t *over,
                                                    const apreq_table_t *under);
+
+APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t, const apreq_table_t *s);
 
 /**
  * For each element in table b, either use setn or mergen to add the data
@@ -310,32 +254,25 @@ APREQ_DECLARE(void) apreq_table_overlap(apreq_table_t *a,
                                         const apreq_table_t *b,
                                         const unsigned flags);
 
-
-
-/* iterator API */
+/** Iterator API */
 
 APREQ_DECLARE(apr_status_t) apreq_table_fetch(const apreq_table_t *t,
-                                              const char **key,
                                               const apreq_value_t **val,
                                               int *off);
 
-
 APREQ_DECLARE(apr_status_t) apreq_table_first(const apreq_table_t *t,
-                                              const char **key,
                                               const apreq_value_t **val,
                                               int *off);
 APREQ_DECLARE(apr_status_t) apreq_table_next(const apreq_table_t *t,
-                                             const char **key, 
                                              const apreq_value_t **val,
                                              int *off);
 APREQ_DECLARE(apr_status_t) apreq_table_last(const apreq_table_t *t, 
-                                             const char **key,
                                              const apreq_value_t **val, 
                                              int *off);
 APREQ_DECLARE(apr_status_t) apreq_table_prev(const apreq_table_t *t, 
-                                             const char **key, 
                                              const apreq_value_t **val,
                                              int *off);
+
 /**
  * Declaration prototype for the iterator callback function of apr_table_do()
  * and apr_table_vdo().
@@ -346,7 +283,7 @@ APREQ_DECLARE(apr_status_t) apreq_table_prev(const apreq_table_t *t,
  * To export the callback function for apr_table_[v]do() it must be declared 
  * in the _NONSTD convention.
  */
-typedef int (apreq_table_do_callback_fn_t)(void *rec, const char *key, 
+typedef int (apreq_table_do_callback_fn_t)(void *ctx, const char *key, 
                                            const char *val);
 
 /** 

@@ -1,17 +1,18 @@
 #include "apreq.h"
 #include "apr_time.h"
-#include "apr_file_info.h"
 
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 #define MAX(a,b) ( (a) > (b) ? (a) : (b) )
 
-apreq_value_t *apreq_value_make(apr_pool_t *p, const char *str, 
-                                const apr_ssize_t size)
+apreq_value_t *apreq_value_make(apr_pool_t *p, const char *n,
+                                const char *d, const apr_ssize_t s)
 {
-    apreq_value_t *v = apr_palloc(p, size + sizeof *v);
-    memcpy(v->data,str,size);
-    v->size = size;
-    v->data[size] = 0;
+    apreq_value_t *v = apr_palloc(p, s + sizeof *v);
+    memcpy(v->data, d, s);
+    v->flags = 0;
+    v->name = n;
+    v->size = s;
+    v->data[s] = 0;
     return v;
 }
 
@@ -69,8 +70,9 @@ apreq_value_t *apreq_value_merge(apr_pool_t *p,
         memcpy(rv->data, a[j]->data, a[j]->size);
         rv->size += a[j]->size;
     }
-
-    rv->data[rv->size] = 0; /* nul-terminate rv->data */
+    rv->flags = 0;              /* XXX */
+    rv->name = a[0]->name;
+    rv->data[rv->size] = 0;     /* nul-terminate rv->data */
     return rv;
 }
 
@@ -163,6 +165,7 @@ apr_int64_t apreq_atod(const char *s)
   returns NULL if not found, or a pointer to the start of the first match.
 */
 
+/* XXX: should we drop this and replace it with apreq_index ? */
 char *apreq_memmem(char* hay, apr_off_t hlen, 
                    const char* ndl, apr_off_t nlen, int part)
 {
@@ -185,12 +188,12 @@ char *apreq_memmem(char* hay, apr_off_t hlen,
     return hay;
 }
 
-apr_off_t apreq_index(char* hay, apr_off_t hlen, 
-                   const char* ndl, apr_off_t nlen, int part)
+apr_off_t apreq_index(const char* hay, apr_off_t hlen, 
+                      const char* ndl, apr_off_t nlen, int part)
 {
     apr_off_t len = hlen;
-    char *end = hay + hlen;
-    char *begin = hay;
+    const char *end = hay + hlen;
+    const char *begin = hay;
 
     while ( (hay = memchr(hay, ndl[0], len)) ) {
 	len = end - hay;
@@ -296,29 +299,6 @@ char *apreq_escape(apr_pool_t *p, char *str)
     *d = 0;
     return esc;
 }
-
-/*
-
-char *apreq_script_name(request_rec *r)
-{
-    char *tmp;
-
-    if(r->path_info && *r->path_info) {
-        int pi_start = ap_find_path_info(r->uri,r->path_info);
-        tmp = apr_pstrndup(r->pool,r->uri,pi_start);
-    }
-    else {
-        tmp = r->uri;
-    }
-
-    return tmp;
-}
-char *(apreq_script_path)(request_rec *r)
-{
-    return apreq_script_path(r);
-}
-
-*/
 
 static char *apreq_array_pstrcat(apr_pool_t *p,
                                  const apr_array_header_t *arr,
