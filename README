@@ -34,6 +34,30 @@ The Perl API includes a test suite based on Apache::Test.
 Type "make test" to run the tests, and be sure Apache::Test
 is installed prior to running "perl Makefile.PL".
 
+IMPORTANT NOTE:  The test suite in libapreq-1.1 was based
+on Apache::test, which is now in the process of being phased
+out of mod_perl-1.X.  During the transition period, some 
+platforms may have difficulty running our new test suite.  
+Users that have successfully installed libapreq in the past 
+may wish to ignore the test results and install anyway, but this
+is not recommended.  Please upgrade to the newest version of 
+mod_perl-1.X and pull the latest version of Apache::Test 
+off of CPAN.
+
+Also, if you have more than one apache+modperl installation on your 
+system, Apache::Test might need help in determining which build
+to use for the tests.  One way to do this is to pass an -apxs 
+or -httpd argument to MakeMaker:
+
+        % perl Makefile.PL -apxs /path/to/apache/bin/apxs
+   or
+        % perl Makefile.PL -httpd /path/to/apache/bin/httpd
+
+        % make && make test
+
+Please read the INSTALL file and Apache::Test documentation 
+for more details.
+
 Portions of the C code are based on examples from:
      Writing Apache Modules with Perl and C,
      Lincoln Stein & Doug MacEachern,
