@@ -23,8 +23,6 @@ CURRENT RELEASE NOTES:
         typedef struct apreq_env_module_t {
             const char *name;
             apr_uint32_t magic_number;
-            apr_pool_t *(*pool)(apreq_env_handle_t *);
-            apr_bucket_alloc_t *(*bucket_alloc)(apreq_env_handle_t *);
 
             apr_status_t (*jar)(apreq_env_handle_t *, const apr_table_t **);
             apr_status_t (*args)(apreq_env_handle_t *, const apr_table_t **);
@@ -48,12 +46,18 @@ CURRENT RELEASE NOTES:
             void (*log)(const char *,int,int,apr_status_t,apreq_env_handle_t *,
                  const char *,va_list);
 
+            apr_pool_t *(*pool)(apreq_env_handle_t *);
+            apr_bucket_alloc_t *(*bucket_alloc)(apreq_env_handle_t *);
+
             const char *(*temp_dir)(apreq_env_handle_t *, const char *);
             apr_off_t (*max_body)(apreq_env_handle_t *,apr_off_t);
             apr_ssize_t (*max_brigade)(apreq_env_handle_t *, apr_ssize_t);
 
         If possible the log calls inside libapreq2 should be replaced by 
         error codes that either libapreq2 apps or modules can log (or not).
+        The pool and bucket_alloc functions should become simple pointers 
+        in apreq_parser_t; env() doesn't need to provide them.
+
         The rest are controls (temp_dir, max_body, max_brigade) that
         users will need to configure, and libapreq2 parsers will need
         to look at.  However these APIs are missing status codes, for 
