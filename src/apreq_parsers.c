@@ -143,8 +143,8 @@ static apr_status_t split_urlword(apr_table_t *t,
 
     ((struct iovec *)arr.elts)[arr.nelts - 1].iov_len--; /* drop '=' sign */
 
-    s = apreq_decodev((char *)v->name, (struct iovec *)arr.elts, 
-                      arr.nelts, &v->size);
+    s = apreq_decodev((char *)v->name, &v->size,
+                      (struct iovec *)arr.elts, arr.nelts);
     if (s != APR_SUCCESS)
         return s;
 
@@ -170,7 +170,8 @@ static apr_status_t split_urlword(apr_table_t *t,
     if (end != APR_BRIGADE_SENTINEL(bb))
         ((struct iovec *)arr.elts)[arr.nelts - 1].iov_len--; /* drop '=' sign */
 
-    s = apreq_decodev(v->data, (struct iovec *)arr.elts, arr.nelts, &v->size);
+    s = apreq_decodev(v->data, &v->size,
+                      (struct iovec *)arr.elts, arr.nelts);
     if (s != APR_SUCCESS)
         return s;
 

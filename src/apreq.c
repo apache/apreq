@@ -399,41 +399,41 @@ APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s,
 }
 
 
-APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, struct iovec *v, int nelts, 
-                                          apr_size_t *bytes_written)
+APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
+                                          struct iovec *v, int nelts)
 {
     apr_status_t status = APR_SUCCESS;
     int n = 0;
 
-    *bytes_written = 0;
+    *dlen = 0;
     for (n = 0; n < nelts; ++n) {
-        apr_size_t slen, dlen;
+        apr_size_t slen, len;
 
     start_decodev:
 
         slen = v[n].iov_len;
-        switch (status = url_decode(d,&dlen,v[n].iov_base, &slen)) {
+        switch (status = url_decode(d,&len,v[n].iov_base, &slen)) {
 
         case APR_SUCCESS:
-            d += dlen;
-            *bytes_written += dlen;
+            d += len;
+            *dlen += len;
             continue;
 
         case APR_INCOMPLETE:
-            d += dlen;
-            *bytes_written += dlen;
+            d += len;
+            *dlen += len;
 
             if (++n == nelts)
                 return APR_INCOMPLETE;
 
-            dlen = v[n-1].iov_len - slen;
-            memcpy(d + dlen, v[n].iov_base, v[n].iov_len);
-            v[n].iov_len += dlen;
+            len = v[n-1].iov_len - slen;
+            memcpy(d + len, v[n].iov_base, v[n].iov_len);
+            v[n].iov_len += len;
             v[n].iov_base = d;
             goto start_decodev;
 
         default:
-            *bytes_written = dlen;
+            *dlen = len;
             return status;
         }
     }

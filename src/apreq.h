@@ -246,15 +246,15 @@ APREQ_DECLARE(apr_ssize_t) apreq_decode(char *dest, const char *src, apr_size_t 
  * Url-decodes an iovec array.
  * @param dest Location of url-encoded result string. Caller must ensure dest is
  *             large enough to hold the encoded string and trailing null character.
+ * @param dlen  Resultant length of dest.
  * @param v Array of iovecs that represent the source string
  * @param nelts Number of iovecs in the array.
- * @param bytes_written  Resultant length of successfully decoded data.
  * @return APR_SUCCESS on success, APR_INCOMPLETE if the iovec ends in the
  * middle of an %XX escape sequence, error otherwise.
  */
 
-APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, struct iovec *v, 
-                                          int nelts, apr_size_t *bytes_written);
+APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
+                                          struct iovec *v, int nelts);
 
 /**
  * Returns an url-encoded copy of a string.
