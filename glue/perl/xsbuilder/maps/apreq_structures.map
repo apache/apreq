@@ -1,0 +1,80 @@
+##########  APREQ structures  ##########
+
+<apreq_cfg_t MODULE=Apache::Request>
+  temp_dir
+  max_len
+  read_bytes
+  disable_uploads
+</apreq_cfg_t>
+
+<apreq_value_t MODULE=Apache::Request>
+   name
+   status
+   size
+!   data[1]
+</apreq_value_t>
+
+<apreq_param_t MODULE=Apache::Request>
+!  charset
+!  language
+   info
+   bb
+!   v
+</apreq_param_t>
+
+<apreq_request_t>
+   args
+   body
+!   parser
+!   cfg
+!  env
+</apreq_request_t>
+
+<apreq_cookie_t>
+!  version
+  path
+  domain
+  port
+!  secure
+!  comment
+!  commentURL
+!  time
+!  v
+</apreq_cookie_t>
+
+<apreq_jar_t MODULE=Apache::Cookie>
+  cookies
+> pool
+> env
+</apreq_jar_t>
+
+
+
+!<apreq_hook_t MODULE=Apache::Request>
+  hook
+  next
+  ctx
+</apreq_hook_t>
+
+<apreq_parser_t MODULE=Apache::Request>
+  parser
+  content_type
+  hook
+> ctx
+</apreq_parser_t>
+
+
+!<apr_array_header_t>
+>  pool
+>  elt_size
+   nelts
+>  nalloc
+   elts
+</apr_array_header_t>
+
+!<apr_table_entry_t>
+   key
+   val
+>  key_checksum
+</apr_table_entry_t>
+

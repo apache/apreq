@@ -1,0 +1,49 @@
+##########  APREQ Functions  ##########
+MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
+ apreq_request
+ apreq_parse_request
+ apreq_param
+ apreq_params
+
+MODULE=Apache::Request  PACKAGE=Apache::Request::Value PREFIX=apreq_
+ apreq_make_value
+ apreq_copy_value
+ apreq_merge_values
+
+MODULE=Apache::Request PACKAGE=Apache::Request::Parser PREFIX=apreq_
+ apreq_parser
+ apreq_make_parser
+
+MODULE=Apache::Request PACKAGE=Apache::Request::Param PREFIX=apreq_
+ apreq_make_param
+ apreq_decode_param
+ apreq_encode_param
+
+MODULE=Apache::Cookie PACKAGE=Apache::Cookie PREFIX=apreq_
+ apreq_make_cookie
+ apreq_cookie_as_string
+ apreq_serialize_cookie
+ apreq_bake_cookie
+ apreq_bake2_cookie
+ apreq_cookie_expires
+
+MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar PREFIX=apreq_
+ apreq_jar
+ apreq_cookie
+ apreq_add_cookie
+
+
+MODULE=Apache::Request PACKAGE=Apache::Request::Utils PREFIX=apreq_
+ apreq_log
+ apreq_join
+ apreq_index
+ apreq_encode
+ apreq_decode
+ apreq_expires
+
+
+
+
+
+
+
