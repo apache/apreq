@@ -1,11 +1,22 @@
-o what should Apache::Request->param return if attr has no value,
-e.g. http://blah.com?foo
+o look for 'XXX' in the source, they mark some bits of code that need work
+
+o port to apache 2.0
+
+o multipart_buffer_headers punts on headers more than 5k (which could
+  happen with a really long form input name, for example). better than
+  the old behavior of locking up, but we could be clever and actually
+  handle this.
+
+o should probably handle Apache::Request->param http://blah.com/?foo
+  like CGI.pm does (turn it into a param named "keywords")
 
 o win32 port
-
-o better Makefile.noperl
+  - randy kobes has patches for this. requires some patches to
+    be applied to mod_perl itself to reduce the changes necessary
+    here
 
 o Perl's FILE* typemap leaks!
+  - randy's win32 patch changes FILE * to PerlIO *. related?
 
 o libapreq.so
 
@@ -14,3 +25,11 @@ o mmap upload files
 o investigate USE_MY_TMPNAME more
 
 o ApacheHTML?
+
+o for mod_dtcl, it may be good to allow a callback function for
+  storing file uploads (since it is configurable to store the
+  uploads in memory instead of to disk)
+
+o allow the directory for temporary files to be specified? we
+  currently use tmpfile(), though, and we'd have to do a secure
+  temp-file-creating function to do this.
