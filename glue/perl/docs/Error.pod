@@ -3,17 +3,57 @@
 Apache::*::Error - Exception classes for Apache::Request, Apache::Upload, Apache::Cookie::Jar and Apache::Cookie
 
 =for testing
-ok 1;
+    use POSIX;
+    use Apache2;
+    use Apache::Upload;
+    use Apache::Cookie;
+    use APR::Error;
+    use APR::Pool;
+    $r = APR::Pool->new;
+    $req = Apache::Request->new($r);
+    eval { POSIX::close(0); $req->parse };
+    $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
+    $req->body->add($u);
+    $jar = Apache::Cookie::Jar->new($r);
+    $c = Apache::Cookie->new($r, name => "foo", value => "1");
+    $jar->cookies->add($c);
 
 
 
 
 =head1 SYNOPSIS
 
+=for example begin
+
+    $req = Apache::Request->new($r);
+    $jar = Apache::Cookie::Jar->new($r);
+
+    $req->args_status(1); # artificial error status = 1 for I<query-string> parser
+    $jar->status(2);      # artificial error status = 2 for I<Cookie> header parser
+
+    eval {$req->parse };
+    ok $@->isa("Apache::Request::Error");
+    ok $@ == 1;
+    eval { @cookies = $jar->cookies };
+    ok $@->isa("Apache::Cookie::Jar::Error");
+    ok $@ == 2;
+    @cookies = $@->cookies; # same method does not fail on Error object
+
+=for example end
+
+=for example_testing
+    ok @cookies == 1;
+
 
 
 
 =head1 DESCRIPTION
+
+This manpage documents the Apache::*::Error classes provided by 
+the Apache::Request, Apache::Upload, or Apache::Cookie modules.
+Error classes are all derived from APR::Error and the class
+which first produced the error.  Unlike the object that created it, 
+an Error object will not itself throw an error by calling its methods.
 
 
 
@@ -23,10 +63,28 @@ ok 1;
 detects param parsing errors
 
 
+=for example begin
+
+
+
+=for example end
+
+=for example_testing
+
+
 
 =head1 Apache::Upload::Error
 
 detects errors during interaction with the filesystem.
+
+
+=for example begin
+
+
+
+=for example end
+
+=for example_testing
 
 
 
@@ -35,10 +93,31 @@ detects errors during interaction with the filesystem.
 detects cookie parsing errors
 
 
+=for example begin
+
+
+
+=for example end
+
+=for example_testing
+
+
+
 
 =head1 Apache::Cookie::Error
 
 detects bad cookies (usually during bake or bake2).
+
+
+=for example begin
+
+
+
+=for example end
+
+=for example_testing
+
+
 
 
 =head1 SEE ALSO
