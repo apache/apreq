@@ -82,8 +82,8 @@ my $test = << 'END';
 TEST: $(LIBAPREQ) $(MOD)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(APREQ2_TEST).mak CFG="$(APREQ2_TEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
         set PATH=$(APREQ_HOME)\win32\libs;$(APACHE)\bin;$(PATH)
-        cd $(LIBDIR) && $(TESTALL).exe -v
-        cd $(APREQ_HOME)
+        $(PERL) "-MExtUtils::Command::MM" "-e" "test_harness()" $(TEST_FILES)
+	cd $(APREQ_HOME)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
         if not exist "$(APREQ_ENV)\t\cgi-bin" mkdir "$(APREQ_ENV)\t\cgi-bin"
         copy $(LIBDIR)\test_cgi.exe $(APREQ_ENV)\t\cgi-bin\test_cgi.exe
