@@ -28,6 +28,13 @@ sub check_compat {
     }
 }
 
+sub MY::pasthru {
+     my $self = shift;
+    chomp(my $str = $self->MM::pasthru);
+    join $/, "$str\\", 
+     "\t".'DEFINE="$(DEFINE)"', 
+    "";   
+}
 sub MY::postamble { 
     return <<'EOF'; 
 

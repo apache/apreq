@@ -4,6 +4,8 @@ Revision history for Perl extension Apache::Request.
 
 =item 0.31
 
+CGI.pm 2.53's path/domain defaults will be used with -DDEFINE=CGI_253
+
 Apache::Cookie->new($r)->parse will properly return () instead of
 undef when there is no cookie header, thanks to Nick Tonkin for
 the spot
