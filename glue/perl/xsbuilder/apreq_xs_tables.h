@@ -25,8 +25,10 @@ static int apreq_xs_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv,
 {
     /* prefetch the object */
     MAGIC *tie_magic = mg_find(nsv, PERL_MAGIC_tiedelem);
-    Perl_magic_getpack(aTHX_ nsv, tie_magic);
-    return -1;
+    SV *obj = SvRV(tie_magic->mg_obj);
+    if (SvCUR(obj))
+        Perl_magic_getpack(aTHX_ nsv, tie_magic);
+    return 0;
 }
 
 static const MGVTBL apreq_xs_table_magic = {0, 0, 0, 0, 0, 
