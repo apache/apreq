@@ -19,3 +19,9 @@ o Fix our Apache::Test-based test suite
 o Document build/install process for OS X.
 
 o optional build/link of libapreq.a directly into httpd?
+
+o solve the memory leak for:
+  my $r = shift;
+  $r = Apache::Request->new($r);
+  as discussed at:
+  http://marc.theaimsgroup.com/?t=102615343600005&r=1&w=2
