@@ -16,6 +16,7 @@ Cookie/Cookie.pm
 Cookie/Cookie.xs
 Cookie/Makefile.PL
 c/Makefile.noperl
+c/Makefile.PL
 c/apache_request.h
 c/apache_request.c
 c/apache_cookie.h
