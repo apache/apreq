@@ -58,7 +58,10 @@ END
 
 print $make $_ while (<DATA>);
 
-my $apxs = dirname(which('apxs')) || fetch_apxs();
+my $apxs = which('apxs');
+unless ($apxs) {
+    $apxs = fetch_apxs() ? which('apxs') : '';
+}
 
 my $test = << 'END';
 TEST: $(LIBAPREQ) $(MOD)
@@ -83,13 +86,13 @@ END
 if ($apxs) {
     $test .= << "END";
         cd env
-        $^X t/TEST.PL -apxs $apxs/apxs
+        \$(PERL) t/TEST.PL -apxs $apxs
         cd \$(APREQ_HOME)
 END
-    $clean .= << "END";
+    $clean .= << 'END';
         cd env
-        $^X t/TEST.PL -clean
-        cd \$(APREQ_HOME)
+        $(PERL) t/TEST.PL -clean
+        cd $(APREQ_HOME)
 END
 }
 
@@ -165,38 +168,23 @@ END
 
 sub search {
     my $apache;
-  SEARCH: {
-        my $candidate;
-        if (my $bin = which('Apache')) {
-            ($candidate = $bin) =~ s!bin$!!;
-            if (-d $candidate and check($candidate)) {
-                $apache = $candidate;
-                last SEARCH;
-            }
-        }
-        my @drives = drives();
-        last SEARCH unless (@drives > 0);
-        for my $drive (@drives) {
-            for ('Apache2', 'Program Files/Apache2',
-                 'Program Files/Apache Group/Apache2') {
-                $candidate = File::Spec->catpath($drive, $_);
-                if (-d $candidate and check($candidate)) {
-                    $apache = $candidate;
-                    last SEARCH;
-                }
-            }
+    if (my $bin = which('Apache')) {
+       (my $candidate = dirname($bin)) =~ s!bin$!!;
+        if (-d $candidate and check($candidate)) {
+            $apache = $candidate;
         }
     }
-    unless (-d $apache) {
+    unless ($apache and -d $apache) {
         $apache = prompt("Please give the path to your Apache2 installation:",
                          $apache);
     }
     die "Can't find a suitable Apache2 installation!" 
-        unless (-d $apache and check($apache));
+        unless ($apache and -d $apache and check($apache));
     
     $apache = Win32::GetShortPathName($apache);
     $apache =~ s!\\!/!g;
-    my $ans = prompt(qq{Use "$apache" for your Apache2 directory?}, 'yes');
+    $apache =~ s!/$!!;
+    my $ans = prompt(qq{\nUse "$apache" for your Apache2 directory?}, 'yes');
     unless ($ans =~ /^y/i) {
         die <<'END';
 
@@ -205,7 +193,6 @@ the --with-apache2=C:\Path\to\Apache2 option to specify
 the desired top-level Apache2 directory.
 
 END
-
     }
     return $apache;
 }
@@ -250,14 +237,27 @@ sub path_ext {
 
 sub which {
     my $program = shift;
-    return undef unless $program;
-    my @a = map {File::Spec->catfile($_, $program) } File::Spec->path();
+    return unless $program;
+    my @extras = ();
+    my @drives = drives();
+    if (@drives > 0) {
+        for my $drive (@drives) {
+            for ('Apache2', 'Program Files/Apache2',
+                 'Program Files/Apache Group/Apache2') {
+                my $bin = File::Spec->catpath($drive, $_, 'bin');
+                push @extras, $bin if (-d $bin);
+            }
+        }
+    }
+    my @a = map {File::Spec->catfile($_, $program) } 
+        (File::Spec->path(), @extras);
     for my $base(@a) {
         return $base if -x $base;
         for my $ext (@path_ext) {
             return "$base.$ext" if -x "$base.$ext";
         }
     }
+    return;
 }
 
 sub generate_defs {
@@ -333,7 +333,7 @@ END
     rmtree($dir, 1, 1) or warn "rmtree of $dir failed: $!";
     print "unlink $file\n";
     unlink $file or warn "unlink of $file failed: $!";
-    return "$apache/bin";
+    return 1;
 }
 
 __DATA__
