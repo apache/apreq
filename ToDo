@@ -10,13 +10,7 @@ o multipart_buffer_headers punts on headers more than 5k (which could
 o should probably handle Apache::Request->param http://blah.com/?foo
   like CGI.pm does (turn it into a param named "keywords")
 
-o win32 port
-  - randy kobes has patches for this. requires some patches to
-    be applied to mod_perl itself to reduce the changes necessary
-    here
-
 o Perl's FILE* typemap leaks!
-  - randy's win32 patch changes FILE * to PerlIO *. related?
 
 o libapreq.so
 
