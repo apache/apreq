@@ -28,7 +28,7 @@
  */
 
 /**
- * @defgroup apreq_ext Language Bindings
+ * @defgroup apreq_lang Language Bindings
  * @brief libapreq2 APIs for programming languages other than C
  *
  * XXX
@@ -52,7 +52,7 @@
 /**
  * @defgroup apreq_xs Perl
  * @brief XS Modules
- * @ingroup apreq_ext
+ * @ingroup apreq_lang
 @manonly 
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"

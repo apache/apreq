@@ -26,7 +26,8 @@ query parameters. The main differences are
 =over 4
 
 =item * C<Apache::Request::new> takes an environment-specific
-object as (second) argument.
+object as (second) argument.  Newer versions of CGI.pm also accept
+this syntax within modperl.
 
 =item * The query parameters are stored as Apache::Table objects,
 and are therefore parsed using case-insensitive keys.
