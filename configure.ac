@@ -3,6 +3,11 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.53)
 AC_INIT(libapreq - Apache Request Library, 2.03-dev, apreq-dev@httpd.apache.org, libapreq2)
 
+# debian woody's archaic auto* tools don't set PACKAGE/VERSION correctly via 
+# AC_INIT above, so we do it manually here.
+AC_SUBST(PACKAGE,libapreq2)
+AC_SUBST(VERSION,2.03-dev)
+
 dnl this:
 dnl AC_CONFIG_AUX_DIR(build)
 dnl causes problems on certain platforms
