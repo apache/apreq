@@ -4,6 +4,8 @@ Revision history for Perl extension Apache::Request.
 
 =item 0.30_02
 
+always parse the query string (if present), including POST requests
+
 fixed another bug related to path_info
 
 fixed Apache::Cookie->path bug spotted by Jeffrey W. Baker
