@@ -20,23 +20,8 @@
 /* backward compatibility macros support */
 #include "ppport.h"
 
-/* Need to override unsafe methods from APR: 
- *      make set, add, STORE
- * don't bother supporting merge, overlap, compress
- */
 
 #define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
-/*
-APR_INLINE
-static apr_table_t * apreq_xs_sv2table(pTHX_ SV *sv)
-{
-    MAGIC *mg = mg_find(SvRV(sv), PERL_MAGIC_tied);
-    if (mg == NULL || !SvROK(mg->mg_obj))
-        Perl_croak(aTHX_ "Can't find tied table");
-
-    return (apr_table_t *) SvIVX(SvRV(mg->mg_obj));
-}
-*/
 #define apreq_xs_table2sv(t,class,parent)                               \
                   apreq_xs_table_c2perl(aTHX_ t, env, class, parent)
 
