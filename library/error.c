@@ -45,17 +45,11 @@ static const char *apreq_error_string(apr_status_t statcode)
     case APREQ_ERROR_BADDATA:
         return "Malformed input data";
 
-    case APREQ_ERROR_BADSEQ:
-        return "Invalid byte sequence";
-
     case APREQ_ERROR_BADCHAR:
         return "Invalid character";
 
-    case APREQ_ERROR_NOTOKEN:
-        return "Expected token not present";
-
-    case APREQ_ERROR_BADTOKEN:
-        return "Invalid token";
+    case APREQ_ERROR_BADSEQ:
+        return "Invalid byte sequence";
 
     case APREQ_ERROR_BADATTR:
         return "Unrecognized attribute";
@@ -68,6 +62,9 @@ static const char *apreq_error_string(apr_status_t statcode)
 
     case APREQ_ERROR_NODATA:
         return "Missing input data";
+
+    case APREQ_ERROR_NOTOKEN:
+        return "Expected token not present";
 
     case APREQ_ERROR_NOATTR:
         return "Missing attribute";
@@ -85,7 +82,7 @@ static const char *apreq_error_string(apr_status_t statcode)
         return "Conflicting information";
 
     case APREQ_ERROR_OVERLIMIT:
-        return "Exceeds configured limit";
+        return "Exceeds configured maximum limit";
 
     case APREQ_ERROR_NOTEMPTY:
         return "Setting already configured";

@@ -230,8 +230,8 @@ apr_status_t get_pair(apr_pool_t *p, const char **data,
                 break;
             }
         }
-        /* bad attr: no terminating quote found */
-        return APREQ_ERROR_BADCHAR;
+        /* bad sequence: no terminating quote found */
+        return APREQ_ERROR_BADSEQ;
     }
     else {
         /* value is not wrapped in quotes */
@@ -318,7 +318,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
 
         case '$':
             if (c == NULL) {
-                return APREQ_ERROR_BADSEQ;
+                return APREQ_ERROR_BADCHAR;
             }
             else if (version == NETSCAPE) {
                 return APREQ_ERROR_MISMATCH;
