@@ -179,8 +179,9 @@ static void parse_multipart(CuTest *tc)
             apr_size_t len;
             apr_table_t *t, *body;
             apreq_parser_t *parser;
-            apr_bucket_brigade *bb, *vb;
+            apr_bucket_brigade *bb, *vb, *tail;
             apr_status_t rv;
+            apr_bucket *e, *f;
 
             bb = apr_brigade_create(p, ba);
             body = apr_table_make(p, APREQ_DEFAULT_NELTS);
@@ -190,11 +191,9 @@ static void parse_multipart(CuTest *tc)
                                        apreq_parse_multipart,
                                        1000, NULL, NULL, NULL);
 
-            apr_bucket *e = apr_bucket_immortal_create(form_data,
-                                                       strlen(form_data),
-                                                       bb->bucket_alloc);
-            apr_bucket *f;
-            apr_bucket_brigade *tail;
+            e = apr_bucket_immortal_create(form_data,
+                                           strlen(form_data),
+                                           bb->bucket_alloc);
             APR_BRIGADE_INSERT_HEAD(bb, e);
             APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
