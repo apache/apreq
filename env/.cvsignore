@@ -1,0 +1,6 @@
+.deps
+.libs
+Makefile
+Makefile.in
+mod_apreq.la
+mod_apreq.lo
