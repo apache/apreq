@@ -62,17 +62,18 @@
 
 #include "apreq.h"
 #include "apreq_env.h"
-#include "apreq_params.h"
+#include "apreq_parsers.h"
 #include "apreq_cookie.h"
 
 #define dR  request_rec *r = (request_rec *)ctx
 
 /* the "warehouse" */
 
-struct env_note {
+struct env_ctx {
     apreq_request_t *req;
     apreq_jar_t *jar;
-    apr_bucket_brigade *bb;
+    apr_bucket_brigade *bb_in;
+    apr_bucket_brigade *bb_parse;
 };
 
 static const char env_name[] = "APACHE2";
@@ -93,7 +94,7 @@ static const char *env_in(void *ctx, const char *name)
 static apr_status_t env_out(void *ctx, const char *name, char *value)
 {
     dR;
-    apr_table_add(r->headers_in, name, value);
+    apr_table_add(r->headers_out, name, value);
     return APR_SUCCESS;
 }
 
@@ -103,45 +104,45 @@ static const char *env_args(void *ctx)
     return r->args;
 }
 
-static APR_INLINE struct env_note *apreq_note(request_rec *r)
+static APR_INLINE struct env_ctx *apreq_note(request_rec *r)
 {
-    struct env_note *n = (struct env_note *)
+    struct env_ctx *ctx = (struct env_ctx *)
         apr_table_get(r->notes, filter_name);
 
-    if (n == NULL) {
-        n = apr_palloc(r->pool, sizeof *n);
-        n->req = NULL;
-        n->jar = NULL;
-        n->bb = NULL;
-        apr_table_add(r->notes, filter_name, (char *)n);
+    if (ctx == NULL) {
+        ctx = apr_palloc(r->pool, sizeof *ctx);
+        ctx->req = NULL;
+        ctx->jar = NULL;
+        ctx->bb_in = ctx->bb_parse = NULL;
+        apr_table_add(r->notes, filter_name, (char *)ctx);
     }
-    return n;
+    return ctx;
 }
 
 static void *env_jar(void *ctx, void *jar)
 {
     dR;
-    struct env_note *n = apreq_note(r);
+    struct env_ctx *c = apreq_note(r);
 
     if (jar != NULL) {
-        apreq_jar_t *oldjar = n->jar;
-        n->jar = (apreq_jar_t *)jar;
+        apreq_jar_t *oldjar = c->jar;
+        c->jar = (apreq_jar_t *)jar;
         return oldjar;
     }        
-    return n->jar;
+    return c->jar;
 }
 
 static void *env_request(void *ctx, void *req)
 {
     dR;
-    struct env_note *n = apreq_note(r);
+    struct env_ctx *c = apreq_note(r);
 
     if (req != NULL) {
-        apreq_request_t *oldreq = n->req;
-        n->req = (apreq_request_t *)req;
+        apreq_request_t *oldreq = c->req;
+        c->req = (apreq_request_t *)req;
         return oldreq;
     }
-    return n->req;
+    return c->req;
 }
 
 static apreq_cfg_t *env_cfg(void *ctx)
@@ -150,30 +151,69 @@ static apreq_cfg_t *env_cfg(void *ctx)
     return NULL;
 }
 
-static apr_status_t env_get_brigade(void *ctx, apr_bucket_brigade **bb)
-{
-    dR;
-    struct env_note *n = apreq_note(r);
-
-    if (n->bb == NULL)
-        n->bb = apr_brigade_create(r->pool, 
-                                   apr_bucket_alloc_create(r->pool));
-
-    /* XXX: do something here to populate n->bb */
-
-    *bb = n->bb;
-    return APR_SUCCESS;
-}
-
 static apr_status_t apreq_filter(ap_filter_t *f,
                                  apr_bucket_brigade *bb,
                                  ap_input_mode_t mode,
                                  apr_read_type_e block,
                                  apr_off_t readbytes)
 {
-    /* XXX ... */
+    request_rec *r = f->r;
+    struct env_ctx *ctx;
 
-	return APR_SUCCESS;
+    apr_status_t rv;
+
+    /* just get out of the way of things we don't want. */
+    if (mode != AP_MODE_READBYTES) {
+        return ap_get_brigade(f->next, bb, mode, block, readbytes);
+    }
+
+    if (f->ctx == NULL) {
+        ctx = apreq_note(r);
+        f->ctx = ctx;
+        if (ctx->bb_in == NULL)
+            ctx->bb_in = apr_brigade_create(r->pool, f->c->bucket_alloc);
+        if (ctx->bb_parse == NULL)
+            ctx->bb_parse = apr_brigade_create(r->pool, f->c->bucket_alloc);
+
+    }
+    else
+        ctx = (struct env_ctx *)f->ctx;
+
+    /* XXX configure filter & parser here */
+
+    rv = ap_get_brigade(f->next, ctx->bb_in, AP_MODE_READBYTES,
+                        block, readbytes);
+
+
+    if (ctx->req->v.status == APR_INCOMPLETE) {
+        int saw_eos = 0;
+
+        while (! APR_BRIGADE_EMPTY(ctx->bb_in)) {
+            apr_bucket *e, *f = APR_BRIGADE_FIRST(bb);
+            apr_bucket_copy(f, &e);
+            apr_bucket_setaside(e, r->pool);
+
+            APR_BUCKET_REMOVE(f);
+            APR_BRIGADE_INSERT_TAIL(ctx->bb_parse, e);
+            APR_BRIGADE_INSERT_TAIL(bb, f);
+
+            if (APR_BUCKET_IS_EOS(e)) {
+                saw_eos = 1;
+                break;
+            }
+        }
+
+        rv = apreq_parse(ctx->req, ctx->bb_parse);
+
+        if (rv == APR_INCOMPLETE && saw_eos == 1)
+            return APR_EGENERAL;        /* parser choked on EOS */
+    }
+
+    else {
+        APR_BRIGADE_CONCAT(bb, ctx->bb_in);
+    }
+
+    return rv;
 }
 
 
@@ -187,10 +227,6 @@ static void register_hooks (apr_pool_t *p)
 
 module AP_MODULE_DECLARE_DATA apreq_module =
 {
-	// Only one callback function is provided.  Real
-	// modules will need to declare callback functions for
-	// server/directory configuration, configuration merging
-	// and other tasks.
 	STANDARD20_MODULE_STUFF,
 	NULL,
 	NULL,
@@ -200,7 +236,7 @@ module AP_MODULE_DECLARE_DATA apreq_module =
 	register_hooks,			/* callback for registering hooks */
 };
 
-const struct apreq_env APREQ_ENV = (struct apreq_env)
+const struct apreq_env APREQ_ENV =
 {
     env_name,
     env_pool,
@@ -210,7 +246,6 @@ const struct apreq_env APREQ_ENV = (struct apreq_env)
     env_jar,
     env_request,
     env_cfg,
-    env_get_brigade,
-    ap_log_rerror
+    (APREQ_LOG(*))ap_log_rerror
  };
 

@@ -70,7 +70,8 @@ APREQ_DECLARE(apr_status_t) apreq_copy_parser(apr_pool_t *p,
 APREQ_DECLARE(apr_status_t) apreq_merge_parsers(apr_pool_t *p,
                                                 const apr_array_header_t *a);
 
-APREQ_DECLARE(apr_status_t)apreq_parse(apreq_request_t *req);
+APREQ_DECLARE(apr_status_t)apreq_parse(apreq_request_t *req, 
+                                       apr_bucket_brigade *bb);
 
 
 #ifdef __cplusplus

@@ -107,7 +107,8 @@ APREQ_DECLARE(apr_status_t) apreq_register_parser(apreq_request_t *req,
 }
 
 
-APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req)
+APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req, 
+                                        apr_bucket_brigade *bb)
 {
 
     if (req->v.name == NULL)
@@ -129,15 +130,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req)
     }
 
     if (req->v.status == APR_INCOMPLETE && req->body != NULL) {
-        apreq_parser_t *p;
-        apr_bucket_brigade *bb;
-        apr_status_t s;
-        p = (apreq_parser_t *)req->v.data;
-
-        s = apreq_env_get_brigade(req->env, &bb);
-        if (s != APR_SUCCESS)
-            return s;
-
+        apreq_parser_t *p = (apreq_parser_t *)req->v.data;
         req->v.status = p->parser(req->pool, bb, p);
     }
 

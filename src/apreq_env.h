@@ -76,9 +76,6 @@ extern const struct apreq_env {
     /* environment configuration */
     apreq_cfg_t         *(*config)(void *ctx);
 
-    /* the brass tacks */
-    apr_status_t  (*get_brigade)(void *ctx, apr_bucket_brigade **bb);
-
     /* core logging function */
     APREQ_LOG            (*log);
 
