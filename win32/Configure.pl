@@ -30,17 +30,13 @@ $apreq_home =~ s!/!\\!g;
 my $doxygen = which('doxygen');
 my $cfg = $debug ? 'Debug' : 'Release';
 
-unless ($no_perl) {
-    eval {require ExtUtils::XSBuilder;};
-    if ($@) {
-        warn "ExtUtils::XSBuilder must be installed for Perl glue\n";
-    }
-    else {
-        my @args = ($^X, "$apreq_home/build/xsbuilder.pl", 'run', 'run');
-        chdir "$apreq_home/glue/perl";
-        system(@args) == 0 or die "($apreq_home ) system @args failed: $?";
-        chdir $apreq_home;
-    }
+check_depends();
+
+if (not $no_perl and $] >= 5.008) {
+    my @args = ($^X, "$apreq_home/build/xsbuilder.pl", 'run', 'run');
+    chdir "$apreq_home/glue/perl";
+    system(@args) == 0 or die "system @args failed: $?";
+    chdir $apreq_home;
 }
 
 open(my $make, '>Makefile') or die qq{Cannot open Makefile: $!};
@@ -294,6 +290,28 @@ END
     print $def $preamble;
     print $def $_, "\n" for (sort keys %fns);
     close $def;
+}
+
+sub check_depends {
+    my $rep = $] < 5.008 ? 
+        'http://theoryx5.uwinnipeg.ca/ppmpackages' :
+            'http://theoryx5.uwinnipeg.ca/ppms';
+    for my $mod (qw(ExtUtils::XSBuilder Apache::Test)) {
+        eval "require $mod";
+        if ($@) {
+            if ($] < 5.008 and $mod eq 'ExtUtils::XSBuilder') {
+                warn "Perl 5.8 or higher is required for the Perl glue\n";
+                next;
+            }
+            print "I could not find $mod. ";
+            my $ans = prompt('Would you like to install it?', 'yes');
+            next unless $ans =~ /^y/i;
+            (my $ppd = $mod) =~ s!(\w+)::(\w+)!$1-$2.ppd!;
+            my @args = ('ppm', 'install', "$rep/$ppd");
+            system(@args) == 0
+                or warn "system @args failed: $?";
+        }
+    }
 }
 
 sub fetch_apxs {
