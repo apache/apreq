@@ -10,3 +10,12 @@ Unix build, where libtool/automake/autoconf works:
 
 
 Win32 build:
+  C:\httpd-apreq-2> cd win32
+  C:\httpd-apreq-2\win32> perl Configure.pl
+  C:\httpd-apreq-2\win32> nmake
+  C:\httpd-apreq-2\win32> nmake test
+  C:\httpd-apreq-2\win32> nmake mod_apreq
+  C:\httpd-apreq-2\win32> cd ..\glue\perl
+  C:\httpd-apreq-2\glue\perl> perl Makefile.PL
+  C:\httpd-apreq-2\glue\perl> nmake
+  C:\httpd-apreq-2\glue\perl> nmake test
