@@ -65,6 +65,7 @@ sub win32_setup {
   $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
   my @objs = qw(apache_request.o apache_cookie.o apache_multipart_buffer.o);
   WriteMakefile('NAME' => 'libapreq',
+		'TYPEMAPS' => [ "$ENV{MP_INC}/typemap" ],
 		'VERSION' => $myVERSION,
 		'OBJECT' => "@objs",
 		'INC'  => qq{ -I"$ENV{AP_INC}" -I"$ENV{MP_INC}" },

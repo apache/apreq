@@ -15,7 +15,7 @@ if ($Is_Win32) {
   }
   use Cwd;
   my $cwd = cwd;
-  $cwd =~ s !\\!/!g;
+  $cwd =~ s#\\#/#g;
   my $root = "$cwd/blib/arch/auto";
   use File::Path qw(mkpath);
   mkpath $root, 1, 0755 unless -d $root;
@@ -30,11 +30,12 @@ if ($Is_Win32) {
   $ENV{MP_INC} = $Apache::MyConfig::Setup{MODPERL_INC};
   $ENV{AP_LIB} = $Apache::MyConfig::Setup{APACHE_LIB};
   $ENV{MP_LIB} = $Apache::MyConfig::Setup{MODPERL_LIB};
-  unless (-d $ENV{MP_INC} and -f "$ENV{MP_LIB}/mod_perl.so") {
-    die "Please build mod_perl first";
+  unless (-f "$ENV{MP_LIB}/mod_perl.so") {
+    die "Cannot find mod_perl.so in $ENV{MP_LIB}. Please build mod_perl first";
   }
-  unless (-d $ENV{AP_INC} and -f "$ENV{AP_LIB}/ApacheCore.lib") {
-    die "Please build Apache first";
+  unless (-f "$ENV{AP_LIB}/ApacheCore.lib") {
+    die "Cannot find ApacheCore.lib in $ENV{AP_LIB}. Please build apache first
+    .";
   }
 }
 
