@@ -17,6 +17,7 @@
 #include "apr_strings.h"
 #include "apreq_module.h"
 #include "apreq_error.h"
+#include "apreq_util.h"
 
 #define READ_BYTES (64 * 1024)
 
@@ -34,6 +35,7 @@ struct custom_handle {
     apr_uint64_t                 read_limit;
     apr_uint64_t                 bytes_read;
     apr_bucket_brigade          *in;
+    apr_bucket_brigade          *tmpbb;
 };
 
 
@@ -47,11 +49,10 @@ static apr_status_t custom_parse_brigade(apreq_handle_t *env, apr_uint64_t bytes
         return handle->body_status;
 
     switch (s = apr_brigade_partition(handle->in, bytes, &e)) {
-        apr_bucket_brigade *bb;
         apr_uint64_t len;
 
     case APR_SUCCESS:
-        bb = apr_brigade_split(handle->in, e);
+        apreq_brigade_move(handle->tmpbb, handle->in, e);
         handle->bytes_read += bytes;
 
         if (handle->bytes_read > handle->read_limit) {
@@ -60,15 +61,14 @@ static apr_status_t custom_parse_brigade(apreq_handle_t *env, apr_uint64_t bytes
         }
 
         handle->body_status = 
-            apreq_parser_run(handle->parser, handle->body, handle->in);
+            apreq_parser_run(handle->parser, handle->body, handle->tmpbb);
 
-        apr_brigade_cleanup(handle->in);
-        APR_BRIGADE_CONCAT(handle->in, bb);
+        apr_brigade_cleanup(handle->tmpbb);
         break;
 
     case APR_INCOMPLETE:
-        bb = apr_brigade_split(handle->in, e);
-        s = apr_brigade_length(handle->in, 1, &len);
+        apreq_brigade_move(handle->tmpbb, handle->in, e);
+        s = apr_brigade_length(handle->tmpbb, 1, &len);
         if (s != APR_SUCCESS) {
             handle->body_status = s;
             break;
@@ -80,10 +80,9 @@ static apr_status_t custom_parse_brigade(apreq_handle_t *env, apr_uint64_t bytes
             break;
         }
         handle->body_status = 
-            apreq_parser_run(handle->parser, handle->body, handle->in);
+            apreq_parser_run(handle->parser, handle->body, handle->tmpbb);
 
-        apr_brigade_cleanup(handle->in);
-        APR_BRIGADE_CONCAT(handle->in, bb);
+        apr_brigade_cleanup(handle->tmpbb);
         break;
 
     default:
@@ -321,6 +320,7 @@ APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
     }
 
     if (in != NULL) {
+        handle->tmpbb = apr_brigade_create(in->p, in->bucket_alloc);
         handle->body = apr_table_make(pool, APREQ_DEFAULT_NELTS);
         handle->body_status = APR_INCOMPLETE;
     }

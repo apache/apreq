@@ -409,10 +409,10 @@ apr_status_t apreq_filter(ap_filter_t *f,
         }
 
         if (!APR_BRIGADE_EMPTY(ctx->spool)) {
-            APR_BRIGADE_PREPEND(bb, ctx->spool);
+            APR_BRIGADE_CONCAT(ctx->spool, bb);
             if (mode == AP_MODE_READBYTES) {
                 apr_bucket *e;
-                rv = apr_brigade_partition(bb, readbytes, &e);
+                rv = apr_brigade_partition(ctx->spool, readbytes, &e);
                 if (rv != APR_SUCCESS && rv != APR_INCOMPLETE) {
                     ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, 
                                  "partition failed");
@@ -420,7 +420,7 @@ apr_status_t apreq_filter(ap_filter_t *f,
                 }
                 if (APR_BUCKET_IS_EOS(e))
                     e = APR_BUCKET_NEXT(e);
-                ctx->spool = apr_brigade_split(bb, e);
+                apreq_brigade_move(bb, ctx->spool, e);
                 apreq_brigade_setaside(ctx->spool, r->pool);
             }
         }

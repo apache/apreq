@@ -303,6 +303,36 @@ void apreq_brigade_copy(apr_bucket_brigade *d, apr_bucket_brigade *s) {
     }
 }
 
+/**
+ * Move the front of a brigade.
+ *
+ * @param d (destination) Append buckets to this brigade.
+ * @param s (source) Brigade to take buckets from.
+ * @param e First bucket of s after the move.  All buckets
+ *          before e are appended to d.
+ *
+ * @remarks This moves all buckets when e == APR_BRIGADE_SENTINEL(s).
+ */
+
+static APR_INLINE
+void apreq_brigade_move(apr_bucket_brigade *d, apr_bucket_brigade *s,
+                        apr_bucket *e)
+{
+    apr_bucket *f;     
+
+    if (e != APR_BRIGADE_SENTINEL(s)) {
+        f = APR_RING_FIRST(&s->list);
+        APR_RING_UNSPLICE(f, e, link);
+        APR_RING_SPLICE_HEAD(&d->list, f, e, apr_bucket, link);
+    }
+    else {
+        APR_BRIGADE_CONCAT(d, s);
+    }
+
+    APR_BRIGADE_CHECK_CONSISTENCY(s);
+    APR_BRIGADE_CHECK_CONSISTENCY(d);
+}
+
 
 /**
  * Search a header string for the value of a particular named attribute.

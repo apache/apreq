@@ -20,6 +20,7 @@
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_env.h"
+#include "apreq_util.h"
 
 #define USER_DATA_KEY "apreq"
 
@@ -60,6 +61,7 @@ struct cgi_handle {
     apr_uint64_t                 bytes_read;
 
     apr_bucket_brigade          *in;
+    apr_bucket_brigade          *tmpbb;
 
 };
 
@@ -255,6 +257,7 @@ static void init_body(apreq_handle_t *env)
 
     handle->hook_queue = NULL;
     handle->in         = apr_brigade_create(pool, ba);
+    handle->tmpbb      = apr_brigade_create(pool, ba);
 
     apr_file_open_stdin(&file, pool); // error status?    
     pipe = apr_bucket_pipe_create(file, ba);
@@ -281,13 +284,11 @@ static apr_status_t cgi_read(apreq_handle_t *env,
 
 
     switch (s = apr_brigade_partition(handle->in, bytes, &e)) {
-        apr_bucket_brigade *bb;
         apr_off_t len;
 
     case APR_SUCCESS:
 
-        bb = handle->in;
-        handle->in = apr_brigade_split(bb, e);
+        apreq_brigade_move(handle->tmpbb, handle->in, e);
         handle->bytes_read += bytes;
 
         if (handle->bytes_read > handle->read_limit) {
@@ -300,16 +301,15 @@ static apr_status_t cgi_read(apreq_handle_t *env,
         }
 
         handle->body_status =
-            apreq_parser_run(handle->parser, handle->body, bb);
-        apr_brigade_destroy(bb);
+            apreq_parser_run(handle->parser, handle->body, handle->tmpbb);
+        apr_brigade_cleanup(handle->tmpbb);
         break;
 
 
     case APR_INCOMPLETE:
 
-        bb = handle->in;
-        handle->in = apr_brigade_split(bb, e);
-        s = apr_brigade_length(bb, 1, &len);
+        apreq_brigade_move(handle->tmpbb, handle->in, e);
+        s = apr_brigade_length(handle->tmpbb, 1, &len);
 
         if (s != APR_SUCCESS) {
             handle->body_status = s;
@@ -328,8 +328,8 @@ static apr_status_t cgi_read(apreq_handle_t *env,
         }
 
         handle->body_status =
-            apreq_parser_run(handle->parser, handle->body, bb);
-        apr_brigade_destroy(bb);
+            apreq_parser_run(handle->parser, handle->body, handle->tmpbb);
+        apr_brigade_cleanup(handle->tmpbb);
         break;
 
     default:
