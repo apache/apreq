@@ -5,9 +5,10 @@ use Apache::Test;
 
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY);
-use HTTP::Cookies;
 
 plan tests => 1, &need_lwp;
+
+require HTTP::Cookies;
 
 my $location = "/TestApReq__cookie";
 
