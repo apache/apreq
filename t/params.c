@@ -56,6 +56,9 @@ static void request_args_get(CuTest *tc)
 static void params_as(CuTest *tc)
 {
     const char *val;
+    apr_array_header_t *arr;
+    arr = apreq_params_as_array(p,r,"a");
+    CuAssertIntEquals(tc,2,arr->nelts);
     val = apreq_params_as_string(p,r,"a",APREQ_JOIN_AS_IS);
     CuAssertStrEquals(tc,"1, 2", val);
 }
