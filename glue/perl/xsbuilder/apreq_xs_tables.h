@@ -51,7 +51,7 @@ static int apreq_xs_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv,
 }
 
 static const MGVTBL apreq_xs_table_magic = {0, 0, 0, 0, 0, 
-                                            apreq_xs_table_magic_copy};
+                                            apreq_xs_table_magic_copy, 0, 0, 0, apreq_xs_table_magic_copy};
 
 #endif
 

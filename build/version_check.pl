@@ -57,7 +57,8 @@ my %perl_glue = (
          "Apache::Test" => { version => "1.04",    test => \&a_t_version,
                              comment => "Win32 requires version 1.06"    },
   "ExtUtils::XSBuilder" => { version => "0.23",    test => \&xsb_version },
-              mod_perl  => { version => "1.99_15", test => \&mp2_version },
+                 # mp2 does not contain "_" in its reported version number
+              mod_perl  => { version => "1.9915", test => \&mp2_version },
   "ExtUtils::MakeMaker" => { version => "6.15",    test => \&mm_version  },
                 );
 
