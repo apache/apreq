@@ -289,7 +289,7 @@ int multipart_buffer_read(multipart_buffer *self, char *buf, int bytes)
 	/* copy the data */
 	memcpy(buf, self->buf_begin, len);
 	buf[len] = 0;
-	if(bound && len > 0 && buf[len-1] == '\r') buf[len--] = 0;
+	if(bound && len > 0 && buf[len-1] == '\r') buf[--len] = 0;
 
 	/* update the buffer */
 	self->bytes_in_buffer -= len;
