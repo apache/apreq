@@ -78,38 +78,46 @@ static void parse_multipart(CuTest *tc)
                          "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"" ,"");
     apr_bucket_brigade *bb = apr_brigade_create(p, 
                                    apr_bucket_alloc_create(p));
+    int j;
 
     CuAssertPtrNotNull(tc, req);
     CuAssertStrEquals(tc, req->env, apreq_env_content_type(req->env));
 
-    APR_BRIGADE_INSERT_HEAD(bb,
-        apr_bucket_immortal_create(form_data,strlen(form_data), 
-                                   bb->bucket_alloc));
-    APR_BRIGADE_INSERT_TAIL(bb,
-           apr_bucket_eos_create(bb->bucket_alloc));
+    for (j = 0; j < strlen(form_data); ++j) {
+        apr_bucket *e = apr_bucket_immortal_create(form_data,
+                                                   strlen(form_data),
+                                                   bb->bucket_alloc);
+        apr_bucket_brigade *tail;
+        APR_BRIGADE_INSERT_HEAD(bb, e);
+        APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
-    do rv = apreq_parse_request(req,bb);
-    while (rv == APR_INCOMPLETE);
+        apr_bucket_split(e,j);
+        tail = apr_brigade_split(bb,e);
+        req->body = NULL;
+        req->parser = NULL;
+        rv = apreq_parse_request(req,bb);
+        CuAssertIntEquals(tc, APR_INCOMPLETE, rv);
+        rv = apreq_parse_request(req, tail);        
+        CuAssertIntEquals(tc, APR_SUCCESS, rv);
+        CuAssertPtrNotNull(tc, req->body);
+        CuAssertIntEquals(tc, 2, apr_table_elts(req->body)->nelts);
 
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    CuAssertPtrNotNull(tc, req->body);
-    CuAssertIntEquals(tc, 2, apr_table_elts(req->body)->nelts);
+        val = apr_table_get(req->body,"field1");
+        CuAssertStrEquals(tc, "Joe owes =80100.", val);
+        t = apreq_value_to_param(apreq_strtoval(val))->info;
+        val = apr_table_get(t, "content-transfer-encoding");
+        CuAssertStrEquals(tc,"quoted-printable", val);
 
-    val = apr_table_get(req->body,"field1");
-    CuAssertStrEquals(tc, "Joe owes =80100.", val);
-    t = apreq_value_to_param(apreq_strtoval(val))->info;
-    val = apr_table_get(t, "content-transfer-encoding");
-    CuAssertStrEquals(tc,"quoted-printable", val);
-
-    val = apr_table_get(req->body, "pics");
-    CuAssertStrEquals(tc, "file1.txt", val);
-    t = apreq_value_to_param(apreq_strtoval(val))->info;
-    bb = apreq_value_to_param(apreq_strtoval(val))->bb;
-    apr_brigade_pflatten(bb, (char **)&val, &len, p);
-    CuAssertIntEquals(tc,strlen("... contents of file1.txt ..."), len);
-    CuAssertStrNEquals(tc,"... contents of file1.txt ...", val, len);
-    val = apr_table_get(t, "content-type");
-    CuAssertStrEquals(tc, "text/plain", val);
+        val = apr_table_get(req->body, "pics");
+        CuAssertStrEquals(tc, "file1.txt", val);
+        t = apreq_value_to_param(apreq_strtoval(val))->info;
+        bb = apreq_value_to_param(apreq_strtoval(val))->bb;
+        apr_brigade_pflatten(bb, (char **)&val, &len, p);
+        CuAssertIntEquals(tc,strlen("... contents of file1.txt ..."), len);
+        CuAssertStrNEquals(tc,"... contents of file1.txt ...", val, len);
+        val = apr_table_get(t, "content-type");
+        CuAssertStrEquals(tc, "text/plain", val);
+    }
 }
 
 
