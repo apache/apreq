@@ -69,14 +69,19 @@ TEST: $(LIBAPREQ) $(MOD) $(CGI)
         set PATH=%PATH%;$(APACHE)\bin
         cd $(LIBDIR) && $(TESTALL).exe -v
         cd $(APREQ_HOME)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTCGI).mak CFG="$(TESTCGI) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
-        copy $(LIBDIR)\test_cgi.exe $(APREQ_HOME)\env\t\cgi-bin\test_cgi.exe
+	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
+        copy $(LIBDIR)\cgi_test.exe $(APREQ_CGI)\t\cgi-bin\cgi_test.exe
+        cd $(APREQ_CGI)
+        $(PERL) t\TEST.PL
+        cd $(APREQ_HOME)
 END
 
 my $clean = << 'END';
 CLEAN:
         cd $(LIBDIR)
         $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
+        cd $(APREQ_CGI)
+        $(PERL) t\TEST.PL -clean
         cd $(APREQ_HOME)
 !IF EXIST("$(PERLGLUE)\Makefile")
         cd $(PERLGLUE)
@@ -87,13 +92,13 @@ END
 
 if ($apxs) {
     $test .= << "END";
-        cd env
-        \$(PERL) t/TEST.PL -apxs $apxs
+        cd \$(APREQ_ENV)
+        \$(PERL) t\\TEST.PL -apxs $apxs
         cd \$(APREQ_HOME)
 END
     $clean .= << 'END';
-        cd env
-        $(PERL) t/TEST.PL -clean
+        cd $(APREQ_ENV)
+        $(PERL) t\TEST.PL -clean
         cd $(APREQ_HOME)
 END
 }
@@ -345,7 +350,7 @@ __DATA__
 
 LIBAPREQ=libapreq
 TESTALL=testall
-TESTCGI=test_cgi
+CGITEST=cgi_test
 MOD=mod_apreq
 CGI=libapreq_cgi
 
@@ -380,6 +385,8 @@ CFG_HOME=$(APREQ_HOME)\win32
 LIBDIR=$(CFG_HOME)\libs
 PERLGLUE=$(APREQ_HOME)\glue\perl
 APACHE_LIB=$(APACHE)\lib
+APREQ_ENV=$(APREQ_HOME)\env
+APREQ_CGI=$(APREQ_ENV)\cgi_test
 
 ALL : "$(LIBAPREQ)"
 
