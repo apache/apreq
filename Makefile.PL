@@ -2,6 +2,28 @@ use ExtUtils::MakeMaker;
 use strict;
 use 5.005;
 
+use lib qw(Apache-Test/lib);
+use constant HAS_APACHE_TEST => eval {require Apache::Test};
+# enable 'make test|clean'
+if (HAS_APACHE_TEST) {
+    require Apache::TestMM;
+    Apache::TestMM->import(qw(test clean));
+} 
+
+# prerequisites
+my %require = (
+    "Apache::Test" => "", # any version will do
+);
+
+my @scripts = ();
+
+if (HAS_APACHE_TEST) {
+    # accept the configs from command line
+    Apache::TestMM::filter_args();
+    Apache::TestMM::generate_script('t/TEST');
+    push @scripts, 't/TEST';
+}
+
 my $myVERSION = MM->parse_version('Request/Request.pm');
 $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
 my $Is_Win32 = ($^O eq "MSWin32") || $ENV{WIN32_TEST}; 
@@ -43,7 +65,15 @@ WriteMakefile(
 	      'NAME'	 => 'libapreq',
 	      'VERSION' => $myVERSION,
 	      'DIR' => [qw(c Request Cookie)], 
+              PREREQ_PM => \%require,
+              clean     => {
+                            FILES => "@{ clean_files() }",
+                           },
 	      );
+
+sub clean_files {
+    return [@scripts];
+}
 
 if ($Is_Win32 and -e $lib) {
   unlink $lib or die "Cannot unlink $lib: $!\n";

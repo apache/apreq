@@ -47,4 +47,11 @@ eg/c/testapreq/Makefile.tmpl
 eg/c/testapreq/Makefile.apxs
 eg/perl/cookie.pl
 eg/perl/file_upload.pl
+t/TEST.PL
+t/response/TestApReq/big_input.pm
+t/response/TestApReq/cookie.pm
+t/response/TestApReq/request.pm
+t/apreq/big_input.t
+t/apreq/request.t
+t/apreq/cookie.t
 
