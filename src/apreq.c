@@ -673,7 +673,9 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
     int n = 0;
     *wlen = 0;
 
-    APR_BRIGADE_FOREACH(e,bb) {
+    for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
+         e = APR_BUCKET_NEXT(e)) 
+    {
         apr_size_t len;
         if (n == APREQ_NELTS) {
             s = apreq_fwritev(f, v, &n, &len);
@@ -744,7 +746,9 @@ APREQ_DECLARE(apr_bucket_brigade *)
     apr_bucket *e;
 
     copy = apr_brigade_create(bb->p, bb->bucket_alloc);
-    APR_BRIGADE_FOREACH(e,bb) {
+    for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
+         e = APR_BUCKET_NEXT(e))
+    {
         apr_bucket *c;
         apr_bucket_copy(e, &c);
         APR_BRIGADE_INSERT_TAIL(copy, c);

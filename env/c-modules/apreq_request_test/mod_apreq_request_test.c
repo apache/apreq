@@ -97,7 +97,9 @@ static int apreq_request_test_handler(request_rec *r)
         s = ap_get_brigade(r->input_filters, bb, AP_MODE_READBYTES,
                            APR_BLOCK_READ, HUGE_STRING_LEN);
 
-        APR_BRIGADE_FOREACH(e,bb) {
+        for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
+             e = APR_BUCKET_NEXT(e))
+        {
             if (APR_BUCKET_IS_EOS(e)) {
                 saw_eos = 1;
                 break;
