@@ -1,0 +1,2 @@
+No httpd header dependencies in src/; those go in env/apache2.
+Only APR is used here.
