@@ -88,7 +88,6 @@ static XS(apreq_xs_upload_link)
     dXSARGS;
     MAGIC *mg;
     void *env;
-    apr_status_t s;
     const char *name, *fname;
     apr_bucket_brigade *bb;
     apr_file_t *f;
@@ -106,20 +105,23 @@ static XS(apreq_xs_upload_link)
     f = apreq_brigade_spoolfile(bb);
     if (f == NULL) {
         apr_off_t len;
+        apr_status_t s;
         s = apr_file_open(&f, name, APR_CREATE | APR_EXCL | APR_WRITE |
                           APR_READ | APR_BINARY | APR_BUFFERED, 
                           APR_OS_DEFAULT,
                           apreq_env_pool(env));
-        if (s != APR_SUCCESS)
-            XSRETURN_IV(s);
-        s = apreq_brigade_fwrite(f, &len, bb);
-        XSRETURN_IV(s);
+        if (s != APR_SUCCESS || 
+            apreq_brigade_fwrite(f, &len, bb) != APR_SUCCESS)
+            XSRETURN_UNDEF;
+    
+        XSRETURN_YES;
     }
-    s = apr_file_name_get(&fname, f);
-    if (s != APR_SUCCESS)
-        XSRETURN_IV(s);
+    if (apr_file_name_get(&fname, f) != APR_SUCCESS)
+        XSRETURN_UNDEF;
 
-    s = PerlLIO_link(fname, name);
-    XSRETURN_IV(s ? APR_EGENERAL : APR_SUCCESS);
+    if (PerlLIO_link(fname, name) >= 0)
+        XSRETURN_YES;
+
+    XSRETURN_UNDEF;
 }
 
