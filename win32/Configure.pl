@@ -76,7 +76,7 @@ unless ($apxs) {
 my $test = << 'END';
 TEST: $(LIBAPREQ) $(MOD)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
-        set PATH=%PATH%;$(APACHE)\bin;$(APREQ_HOME)\win32\libs
+        set PATH=$(APREQ_HOME)\win32\libs;$(APACHE)\bin;$(PATH)
         cd $(LIBDIR) && $(TESTALL).exe -v
         cd $(APREQ_HOME)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
@@ -445,6 +445,7 @@ PERL_TEST: $(MOD)
 !IF !EXIST("$(PERLGLUE)\Makefile")
 	$(PERL) Makefile.PL
 !ENDIF
+        set PATH=$(APREQ_HOME)\win32\libs;$(APACHE)\bin;$(PATH)
         $(MAKE) /nologo test
         cd $(APREQ_HOME)
 
