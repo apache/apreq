@@ -15,7 +15,7 @@ sub handler {
     my $j = Apache::Cookie->jar($r->env);
     my $req = bless { r => $r, j => $j };
     $req->printf("method => %s\n", $req->method);
-    $req->printf("cookie => %s\n", $req->cookie("apache")->as_string);
+    $req->printf("cookie => %s\n", $req->cookies("apache")->as_string);
     return 0;
 }
 
