@@ -1,5 +1,5 @@
 #AUTHOR: Peter Tillemans <pti@MAIL.NET4ALL.BE>
-# adapated for libapreq by Randy Kobes  <randy@theoryx5.uwinnipeg.ca>
+# adapated for libapreq by Randy Kobes <randy@theoryx5.uwinnipeg.ca>
 
 use strict;
 use Cwd;
@@ -13,8 +13,12 @@ my $apache = 'apache';
 my $fullapache;
 SEARCH: {
     for my $drive ('C'..'G') {
-	for my $p ("program files/apache", "apache") { 
-	    last SEARCH if -e ($fullapache = "$drive:/$p/apache.exe");
+      for my $p ('Apache', 'Program Files/Apache', 
+		 'Program Files/Apache Group/Apache') {
+	    if (-e "$drive:/$p/Apache.exe") {
+	       $fullapache = "$drive:/$p/Apache.exe";
+	       last SEARCH;
+	    }
 	}
     }
 }
@@ -22,10 +26,14 @@ SEARCH: {
 unless (-e $fullapache) {
     require ExtUtils::MakeMaker;
     ExtUtils::MakeMaker->import('prompt');
-    $fullapache = prompt("Where is your apache.exe located ?", $fullapache);
+    $fullapache = prompt("Where is your apache.exe located?", $fullapache);
 }
 
 die "Can't find apache.exe!" unless -e $fullapache;
+
+my $vers = qx{"$fullapache" -v};
+die qq{"$fullapache" does not appear to be version 1.3}
+      unless $vers =~ m!Apache/1.3!;
 
 my $ap_path = dirname $fullapache;
 $ENV{PATH} = join ";", $ap_path, $ENV{PATH};
