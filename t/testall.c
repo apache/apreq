@@ -78,36 +78,8 @@ static const struct testlist {
     const char *testname;
     CuSuite *(*func)(void);
 } tests[] = {
-/*    {"teststr", teststr},
-    {"testtime", testtime},
-    {"testvsn", testvsn},
-    {"testipsub", testipsub},
-    {"testmmap", testmmap},
-    {"testud", testud}, */
     {"tables", testtable},
-/*    {"testhash", testhash},
-    {"testsleep", testsleep},
-    {"testpool", testpool},
-    {"testfmt", testfmt},
-    {"testfile", testfile},
-    {"testfileinfo", testfileinfo},
-    {"testpipe", testpipe},
-    {"testdup", testdup},
-    {"testdir", testdir},
-    {"testrand", testrand},
-    {"testdso", testdso},
-    {"testoc", testoc},
-    {"testsockets", testsockets},
-    {"testsockopt", testsockopt},
-    {"testproc", testproc},
-    {"testpoll", testpoll},
-    {"testlock", testlock},
-    {"testthread", testthread},
-    {"testargs", testgetopt},
-    {"testnames", testnames},
-    {"testuser", testuser},
-    {"testpath", testpath},
-    {"testenv", testenv}, */
+    {"cookies", testcookie},
     {"LastTest", NULL}
 };
 

@@ -110,10 +110,27 @@ static void table_add(CuTest *tc)
 {
     const char *val;
 
-    apreq_table_add(t1, V("addkey", "bar"));
-    apreq_table_add(t1, V("addkey", "foo"));
-     val = apreq_table_get(t1, "addkey");
+    apreq_table_add(t1, V("add", "bar"));
+    apreq_table_add(t1, V("add", "foo"));
+    val = apreq_table_get(t1, "add");
     CuAssertStrEquals(tc, "bar", val);
+    apreq_table_add(t1, V("fl", "left"));
+    apreq_table_add(t1, V("fr", "right"));
+    apreq_table_add(t1, V("fll", "left-left"));
+    apreq_table_add(t1, V("frr", "right-right"));
+    apreq_table_add(t1, V("frl", "right-left"));
+    apreq_table_add(t1, V("flr", "left-right"));
+    apreq_table_add(t1, V("b", "bah"));
+    val = apreq_table_get(t1, "foo");
+    CuAssertStrEquals(tc, "bar", val);
+    val = apreq_table_get(t1, "fl");
+    CuAssertStrEquals(tc, "left", val);
+    val = apreq_table_get(t1, "fr");
+    CuAssertStrEquals(tc, "right", val);
+    val = apreq_table_get(t1, "fll");
+    CuAssertStrEquals(tc, "left-left", val);
+    val = apreq_table_get(t1, "frl");
+    CuAssertStrEquals(tc, "right-left", val);
 
 }
 

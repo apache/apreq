@@ -392,6 +392,8 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
             if (status == APR_SUCCESS) {
                 c = apreq_make_cookie(ctx, version, name, nlen, 
                                       value, vlen);
+                apreq_log(APREQ_DEBUG status, ctx, 
+                          "adding cookie: %s => %s", c->v.name, c->v.data);
                 apreq_add_cookie(j, c);
             }
             else {
@@ -404,6 +406,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
     /* NOT REACHED */
     return j;
 }
+
 
 APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
                                           const apreq_cookie_t *c)
@@ -424,25 +427,29 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
     
 #define ADD_ATTR(name) do { strcpy(f,c->name ? "; " #name "=%s" : \
                                     "%.0s"); f+= strlen(f); } while (0)
+#define NONNULL(attr) (attr ? attr : "")
+
 
     if (c->version == NETSCAPE) {
-
+        
         ADD_ATTR(path);
         ADD_ATTR(domain);
 
-        strcpy(f, c->time.expires ? "; expires=%s" : "%.0s");
+        strcpy(f, c->time.expires ? "; expires=%s" : "");
         f += strlen(f);
 
         if (c->secure)
             strcpy(f, "; secure");
 
         return apr_snprintf(buf, len, format, c->v.name, c->v.data,
-                           c->path, c->domain, c->time.expires);
+            NONNULL(c->path), NONNULL(c->domain), c->time.expires);
     }
 
     /* c->version == RFC */
 
-    ADD_ATTR(version);
+    strcpy(f,"; Version=%d");
+    f += strlen(f);
+
     ADD_ATTR(path);
     ADD_ATTR(domain);
     ADD_ATTR(port);
@@ -451,13 +458,7 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
 
 #undef ADD_ATTR
 
-    /* "%.0s" very hackish, but it should be safe.  max_age is
-     * the last va_arg, and we're not actually printing it in 
-     * the "%.0s" case. Should check the apr_snprintf implementation
-     * just for certainty though.
-     */
-
-    strcpy(f, c->time.max_age >= 0 ? "; max-age=%ld" : "%.0s");
+    strcpy(f, c->time.max_age >= 0 ? "; max-age=%ld" : "");
 
     f += strlen(f);
 
@@ -465,8 +466,9 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
         strcpy(f, "; secure");
 
     return apr_snprintf(buf, len, format, c->v.name, c->v.data,
-                        c->version, c->path, c->domain, c->port,
-                        c->comment, c->commentURL, c->time.max_age);
+                        c->version, NONNULL(c->path), NONNULL(c->domain), 
+                        NONNULL(c->port), NONNULL(c->comment), 
+                        NONNULL(c->commentURL), c->time.max_age);
 }
 
 

@@ -60,9 +60,8 @@
 
 #include "apr_lib.h"
 #include "apr_strings.h"
-
 #include <stdlib.h>
-#include <stdio.h>
+#include "test_apreq.h"
 
 #define dENV struct env_ctx *env = (struct env_ctx *)ctx
 
@@ -80,8 +79,7 @@ static const char env_name[] = "CGI";
 
 static apr_pool_t *env_pool(void *ctx)
 {
-    dENV;
-    return env->pool;
+    return p;
 }
 
 static const char *env_in(void *ctx, const char *name)
@@ -128,6 +126,20 @@ static apreq_cfg_t *env_cfg(void *ctx)
     return NULL;
 }
 
+static int loglevel = 10;
+APREQ_LOG(env_log)
+{
+    va_list vp;
+
+    if (level < loglevel)
+        return;
+
+    va_start(vp, fmt);
+    fprintf(stderr, "[%s(%d)] %s\n", file, line, apr_pvsprintf(p,fmt,vp));
+    va_end(vp);
+    
+}
+
 
 static int dump_table(void *ctx, const char *key, const char *value)
 {
@@ -148,6 +160,6 @@ const struct apreq_env APREQ_ENV =
     env_jar,
     env_request,
     env_cfg,
-    NULL
+    env_log
  };
 
