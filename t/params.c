@@ -119,6 +119,9 @@ static void header_attributes(CuTest *tc)
     CuAssertIntEquals(tc, 2, vlen);
     CuAssertStrNEquals(tc, "20", val, 2);
 
+    s = apreq_header_attribute(hdr, "age", 3, &val, &vlen);
+    CuAssertIntEquals(tc, APR_EGENERAL, s);
+
     s = apreq_header_attribute(hdr, "no-quote", 8, &val, &vlen);
     CuAssertIntEquals(tc, APR_EGENERAL, s);
 

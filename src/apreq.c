@@ -828,14 +828,25 @@ APREQ_DECLARE(apr_status_t)
         }
 
  finish:
-        if (strncasecmp(key, name, nlen) == 0 
-            && (key == hdr || !apr_isalnum(key[-1])))
-        {
+        if (strncasecmp(key, name, nlen) == 0) {
             *vlen = v - *val;
-            return APR_SUCCESS;
+            if (key > hdr) {
+                /* ensure preceding character isn't a token, per rfc2616, s2.2 */
+                switch (key[-1]) {
+                case '(': case ')': case '<': case '>': case '@':
+                case ',': case ';': case ':': case '\\': case '"':
+                case '/': case '[': case ']': case '?': case '=':
+                case '{': case '}': case ' ': case '\t':
+                    return APR_SUCCESS;
+                default:
+                    if (apr_iscntrl(key[-1]))
+                        return APR_SUCCESS;
+                }
+            }
+            else
+                return APR_SUCCESS;
         }
-        else
-            hdr = v;
+        hdr = v;
     }
 
     return APR_NOTFOUND;
