@@ -78,6 +78,19 @@
  * @verbinclude README
  */
 
+/** 
+ * @page LICENSE 
+ * @verbinclude LICENSE
+ */
+/** 
+ * @page INSTALL 
+ * @verbinclude INSTALL
+ */
+/**
+ * @page CHANGES
+ * @verbinclude CHANGES
+ */
+
 /**
  * The objects in apreq.h are used in various contexts:
  *

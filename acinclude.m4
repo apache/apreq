@@ -7,10 +7,13 @@ AC_DEFUN(AC_APREQ, [
 		[  --with-perl  path to perl executable],
 		[PERL=$withval],
 		[PERL="perl"])
-
+        APU_CONFIG=`$APACHE2_APXS -q BINDIR`/apu-config
+        APR_CONFIG=`$APACHE2_APXS -q BINDIR`/apr-config
 	APACHE2_INCLUDES=`$APACHE2_APXS -q INCLUDEDIR`
         APACHE2_MODULES=`$APACHE2_APXS -q LIBEXECDIR`
         APACHE2_LIBS=`$APACHE2_APXS -q LIBDIR`
+        AC_SUBST(APU_CONFIG)
+        AC_SUBST(APR_CONFIG)
         AC_SUBST(APACHE2_APXS)
 	AC_SUBST(APACHE2_INCLUDES)
         AC_SUBST(APACHE2_MODULES)
