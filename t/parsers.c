@@ -24,8 +24,9 @@
 
 static char url_data[] = "alpha=one&beta=two;omega=last%2";
 static char form_data[] = 
-"--AaB03x" CRLF
-"content-disposition: form-data; name=\"field1\"" CRLF
+"--AaB03x" CRLF                                           /* 10 chars
+ 012345678901234567890123456789012345678901234567890123456789 */
+"content-disposition: form-data; name=\"field1\"" CRLF    /* 47 chars */
 "content-type: text/plain;charset=windows-1250" CRLF
 "content-transfer-encoding: quoted-printable" CRLF CRLF
 "Joe owes =80100." CRLF
@@ -80,64 +81,75 @@ static void parse_urlencoded(CuTest *tc)
 
 static void parse_multipart(CuTest *tc)
 {
-    const char *val;
-    apr_size_t len;
-    apr_table_t *t;
     apr_status_t rv;
-    const char *enctype;
-    apreq_request_t *req = apreq_request(APREQ_MFD_ENCTYPE
-                         "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"" ,"");
-    apr_bucket_brigade *bb = apr_brigade_create(p, 
-                                   apr_bucket_alloc_create(p));
-    apr_size_t j;
+    apr_size_t i, j;
 
-    CuAssertPtrNotNull(tc, req);
-    CuAssertStrEquals(tc, req->env, apreq_env_content_type(req->env));
-
-    enctype = apreq_enctype(req->env);
-    CuAssertStrEquals(tc, APREQ_MFD_ENCTYPE, enctype);
-
-    /* strlen(form_data) == 319 */
     for (j = 0; j <= strlen(form_data); ++j) {
-        apr_bucket *e = apr_bucket_immortal_create(form_data,
-                                                   strlen(form_data),
-                                                   bb->bucket_alloc);
-        apr_bucket_brigade *tail;
-        APR_BRIGADE_INSERT_HEAD(bb, e);
-        APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
+        const char *enctype;
+        apr_bucket_brigade *bb;
+        apreq_request_t *req = apreq_request(APREQ_MFD_ENCTYPE
+                         "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"" ,"");
 
-        /* Split e into two buckets, leaving e with the first j bytes. 
-         * Then put all the buckets after e into the tail brigade,
-         * drop any existing parser data (from a previous pass through
-         * the loop) and run the parser tests.
-         */
-        apr_bucket_split(e,j);
-        tail = apr_brigade_split(bb, APR_BUCKET_NEXT(e));
-        req->body = NULL;
-        req->parser = NULL;
-        req->body_status = APR_EINIT;
-        rv = apreq_parse_request(req,bb);
-        CuAssertIntEquals(tc, (j < strlen(form_data)) ? APR_INCOMPLETE : APR_SUCCESS, rv);
-        rv = apreq_parse_request(req, tail);
-        CuAssertIntEquals(tc, APR_SUCCESS, rv);
-        CuAssertPtrNotNull(tc, req->body);
-        CuAssertIntEquals(tc, 2, apr_table_elts(req->body)->nelts);
+        CuAssertPtrNotNull(tc, req);
+        CuAssertStrEquals(tc, req->env, apreq_env_content_type(req->env));
 
-        val = apr_table_get(req->body,"field1");
-        CuAssertStrEquals(tc, "Joe owes =80100.", val);
-        t = apreq_value_to_param(apreq_strtoval(val))->info;
-        val = apr_table_get(t, "content-transfer-encoding");
-        CuAssertStrEquals(tc,"quoted-printable", val);
+        enctype = apreq_enctype(req->env);
+        CuAssertStrEquals(tc, APREQ_MFD_ENCTYPE, enctype);
 
-        val = apr_table_get(req->body, "pics");
-        CuAssertStrEquals(tc, "file1.txt", val);
-        t = apreq_value_to_param(apreq_strtoval(val))->info;
-        bb = apreq_value_to_param(apreq_strtoval(val))->bb;
-        apr_brigade_pflatten(bb, (char **)&val, &len, p);
-        CuAssertIntEquals(tc,strlen("... contents of file1.txt ..." CRLF), len);
-        CuAssertStrNEquals(tc,"... contents of file1.txt ..." CRLF, val, len);
-        val = apr_table_get(t, "content-type");
-        CuAssertStrEquals(tc, "text/plain", val);
+        bb = apr_brigade_create(p, apr_bucket_alloc_create(p));
+
+        for (i = 0; i <= strlen(form_data); ++i) {
+            const char *val;
+            apr_size_t len;
+            apr_table_t *t;
+
+            apr_bucket *e = apr_bucket_immortal_create(form_data,
+                                                       strlen(form_data),
+                                                       bb->bucket_alloc);
+            apr_bucket *f;
+            apr_bucket_brigade *tail;
+            APR_BRIGADE_INSERT_HEAD(bb, e);
+            APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
+
+            /* Split e into three buckets */
+            apr_bucket_split(e, j);
+            f = APR_BUCKET_NEXT(e);
+            if (i < j)
+                apr_bucket_split(e, i);
+            else
+                apr_bucket_split(f, i - j);
+
+            tail = apr_brigade_split(bb, f);
+            req->body = NULL;
+            req->parser = NULL;
+            req->body_status = APR_EINIT;
+            rv = apreq_parse_request(req,bb);
+            CuAssertIntEquals(tc, (j < strlen(form_data)) ? APR_INCOMPLETE : APR_SUCCESS, rv);
+            rv = apreq_parse_request(req, tail);
+            CuAssertIntEquals(tc, APR_SUCCESS, rv);
+            CuAssertPtrNotNull(tc, req->body);
+            CuAssertIntEquals(tc, 2, apr_table_elts(req->body)->nelts);
+
+            val = apr_table_get(req->body,"field1");
+
+            CuAssertStrEquals(tc, "Joe owes =80100.", val);
+            t = apreq_value_to_param(apreq_strtoval(val))->info;
+            val = apr_table_get(t, "content-transfer-encoding");
+            CuAssertStrEquals(tc,"quoted-printable", val);
+
+            val = apr_table_get(req->body, "pics");
+            CuAssertStrEquals(tc, "file1.txt", val);
+            t = apreq_value_to_param(apreq_strtoval(val))->info;
+            bb = apreq_value_to_param(apreq_strtoval(val))->bb;
+            apr_brigade_pflatten(bb, (char **)&val, &len, p);
+            CuAssertIntEquals(tc,strlen("... contents of file1.txt ..." CRLF), len);
+            CuAssertStrNEquals(tc,"... contents of file1.txt ..." CRLF, val, len);
+            val = apr_table_get(t, "content-type");
+            CuAssertStrEquals(tc, "text/plain", val);
+            apr_brigade_cleanup(bb);
+        }
+
+        apr_pool_clear(p);
     }
 }
 static void parse_disable_uploads(CuTest *tc)

@@ -746,13 +746,14 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(void *env,
 
     if (! APR_BUCKET_IS_FILE(last)) {
         apr_file_t *file;
-        apr_off_t len, max_brigade = apreq_env_max_brigade(env,-1);
+        apr_off_t len;
+        apr_ssize_t max_brigade = apreq_env_max_brigade(env,-1);
 
         s = apr_brigade_length(out, 1, &len);
         if (s != APR_SUCCESS)
             return s;
 
-        if (max_brigade >= 0 && len < max_brigade) {
+        if (max_brigade < 0 || len < max_brigade) {
             APR_BRIGADE_CONCAT(out, in);
             return APR_SUCCESS;
         }
