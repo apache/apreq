@@ -78,7 +78,7 @@ static int dump_table(void *count, const char *key, const char *value)
     return 1;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char const * const * argv)
 {
     env_ctx *ctx;
     apr_pool_t *pool;
