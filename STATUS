@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/06/14 02:19:58 $]   -*-text-*-
+Last modified at [$Date: 2004/06/19 20:03:59 $]   -*-text-*-
 /** @page STATUS
 
      2.04-dev under development
@@ -60,7 +60,16 @@ CURRENT VOTES:
 
 TODO:
 
-    - Include perl glue for CGI environment.
+    - CuTest needs va_arg to print comments for a failed unit test.
+
+    - Eliminate useless "status" field from apreq_value_t.  The only behavioral
+      change required is the mfd parser - it should wait until the upload has
+      finished before adding it to the r->body table.
+
+    - Add FAQ file.
+
+    - Fix perl glue for CGI environment on Win32.  Add a note to
+      version_check.pl that the minimum mp2 version for CGI support is 1.99_15?
 
     - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
 
@@ -68,12 +77,20 @@ TODO:
 
     - Write parser/hook API documentation, and add perl glue for the API.
 
+    - Implement DISABLE_UPLOADS as an upload hook.
+
+    - Implement $upload->fh using APR::PerlIO.
+
     - Add XForms logic to the mfd parser.
 
     - symbol exports files:
       -# aix needs .exp files
 
-    - Add basic ssl tests to env/t and glue/perl/t.
+    - Get doxygen to generate manpages for libapreq2, and install both the 
+      html documentation and the manpages during "make install".
+
+    - Rework glue/perl build system to use apreq2-config instead of
+      relying on paths like "../../src".
 
 
 OPEN ISSUES:
@@ -90,6 +107,7 @@ BUGS:
     - The current API does not handle failed query_string parsing
       adequately (apreq_request does log an error message, but 
       there's no status code in the struct for users to interrogate).
+
 
 WISH LIST:
 

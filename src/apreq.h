@@ -44,6 +44,10 @@
  * @page INSTALL 
  * @verbinclude INSTALL
  */
+/** 
+ * @page FAQ
+ * @include FAQ
+ */
 /**
  * @defgroup XS Perl
  * @ingroup GLUE
@@ -68,6 +72,11 @@
  * @defgroup XS_Request Apache::Request
  * @ingroup XS
  * @htmlinclude Request.html
+ */
+/** 
+ * @defgroup XS_Upload Apache::Upload
+ * @ingroup XS
+ * @htmlinclude Upload.html
  */
 /** 
  * @defgroup XS_Cookie Apache::Cookie

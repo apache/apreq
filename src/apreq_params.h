@@ -14,8 +14,8 @@
 **  limitations under the License.
 */
 
-#ifndef APREQ_PARAM_H
-#define APREQ_PARAM_H
+#ifndef APREQ_PARAMS_H
+#define APREQ_PARAMS_H
 
 #include "apreq.h"
 
@@ -29,7 +29,8 @@ extern "C" {
  * @brief Request and param stuff.
  */
 /**
- * @defgroup params Request params
+ * @defgroup APREQ_PARAMS_H Request params
+ * @brief Foo
  * @ingroup LIBRARY
  * @{
  */
@@ -274,7 +275,12 @@ struct apreq_parser_t {
 
 
 /**
- * Parse the incoming brigade into a table.
+ * Parse the incoming brigade into a table.  Parsers normally
+ * consume all the buckets of the brigade during parsing. However
+ * parsers may leave "rejected" data in the brigade, even during a
+ * successful parse, so callers may need to clean up the brigade
+ * themselves (in particular, rejected buckets should not be 
+ * passed back to the parser again).
  */
 #define APREQ_RUN_PARSER(psr,env,t,bb) (psr)->parser(psr,env,t,bb)
 
@@ -301,7 +307,9 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(void *env,
 
 
 /**
- * Rfc822 Header parser.
+ * Rfc822 Header parser. It will reject all data
+ * after the first CRLF CRLF sequence (an empty line).
+ * See #APREQ_RUN_PARSER for more info on rejected data.
  */
 APREQ_DECLARE_PARSER(apreq_parse_headers);
 
@@ -311,7 +319,10 @@ APREQ_DECLARE_PARSER(apreq_parse_headers);
 APREQ_DECLARE_PARSER(apreq_parse_urlencoded);
 
 /**
- * Rfc2388 multipart/form-data parser.
+ * Rfc2388 multipart/form-data parser. It will reject
+ * any buckets representing preamble and postamble text
+ * (this is normal behavior, not an error condition).
+ * See #APREQ_RUN_PARSER for more info on rejected data.
  */
 APREQ_DECLARE_PARSER(apreq_parse_multipart);
 
@@ -379,7 +390,7 @@ APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env,
 #endif
 
 
-#endif /* APREQ_PARAM_H */
+#endif /* APREQ_PARAMS_H */
 
 
 

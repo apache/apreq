@@ -145,7 +145,7 @@ static struct {
 
 
 #define APREQ_MODULE_NAME         "CGI"
-#define APREQ_MODULE_MAGIC_NUMBER 20040324
+#define APREQ_MODULE_MAGIC_NUMBER 20040619
 
 static apr_pool_t *cgi_pool(void *env)
 {
@@ -268,7 +268,9 @@ static apr_status_t cgi_read(void *env,
             if (ctx.bytes_read > ctx.max_body)
                 return ctx.status = APR_ENOSPC;
         }
-        return ctx.status = apreq_parse_request(req, bb);
+        ctx.status = apreq_parse_request(req, bb);
+        apr_brigade_cleanup(bb);
+        break;
 
     case APR_INCOMPLETE:
         bb = ctx.in;
@@ -281,11 +283,15 @@ static apr_status_t cgi_read(void *env,
             if (ctx.bytes_read > ctx.max_body)
                 return ctx.status = APR_ENOSPC;
         }
-        return ctx.status = apreq_parse_request(req, bb);
+        ctx.status = apreq_parse_request(req, bb);
+        apr_brigade_cleanup(bb);
+        break;
 
     default:
-        return ctx.status = s;
+        ctx.status = s;
     }
+
+    return ctx.status;
 }
 
 
