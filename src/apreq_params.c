@@ -148,13 +148,13 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params_as_array(apr_pool_t *p,
     apr_array_header_t *arr = apr_array_make(p, apr_table_elts(req->args)->nelts,
                                              sizeof(apreq_param_t *));
 
-    apr_table_do(param_push, arr, req->args, key);
+    apr_table_do(param_push, arr, req->args, key, NULL);
 
     do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
     while (s == APR_INCOMPLETE);
 
     if (req->body)
-        apr_table_do(param_push, arr, req->body, key);
+        apr_table_do(param_push, arr, req->body, key, NULL);
 
     return arr;
 }
