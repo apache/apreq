@@ -2,8 +2,6 @@ use ExtUtils::MakeMaker;
 
 use 5.005;
 
-use lib qw(/home/joe/src/apache/httpd-test/perl-framework/Apache-Test/lib);
-
 use Apache::Test5005compat;
 
 use Apache::TestMM qw(test clean);
