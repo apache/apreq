@@ -21,6 +21,7 @@ my $cwd = WIN32 ?
 $cwd =~ m{^(.+)/glue/perl$} or die "Can't find base directory";
 my $base_dir = $1;
 my $inc_dir = "$base_dir/include";
+my $mod_dir = "$base_dir/module";
 my $xs_dir = "$base_dir/glue/perl/xsbuilder";
 
 sub slurp($$)
@@ -62,7 +63,7 @@ sub c_macro
 
 package My::ParseSource;
 use constant WIN32 => ($^O =~ /Win32/i);
-my @dirs = ("$base_dir/include", "$base_dir/glue/perl/xsbuilder");
+my @dirs = ("$inc_dir", "$mod_dir/apache2/", "$base_dir/glue/perl/xsbuilder");
 use base qw/ExtUtils::XSBuilder::ParseSource/;
 
 
@@ -73,8 +74,8 @@ system("touch $base_dir/glue/perl/xsbuilder") == 0
     unless WIN32;
 
 
-sub package {'Apache::libapreq2'}
-sub unwanted_includes {[qw/apreq_tables.h apreq_config.h/]}
+sub package {'APR::Request'}
+sub unwanted_includes {[qw/apreq_config.h apreq_private_apache2.h/]}
 
 # ParseSource.pm v 0.23 bug: line 214 should read
 # my @dirs = @{$self->include_dirs};
