@@ -87,8 +87,17 @@ apr_size_t apreq_quote(char *dest, const char *src, const apr_size_t slen);
 apr_size_t apreq_escape(char *dest, const char *src, const apr_size_t slen);
 apr_ssize_t apreq_unescape(char *dest, const char *src, apr_size_t slen);
 
+/**
+ * Returns an RFC-822 formatted time string. Similar to ap_gm_timestr_822.
+ *
+ * @param req The current apreq_request_t object.
+ * @param ts  YMDhms time units (from now) until expiry.
+ *            Understands "now".
+ */
+
 /* returns date string, (time_str is offset from "now") formatted
  * either as an NSCOOKIE or HTTP date */
+
 char *apreq_expires(apr_pool_t *p, const char *time_str, const int type);
 
 /* file sizes (KMG) to bytes */

@@ -87,6 +87,33 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
         c->time.max_age = apreq_atol(time_str);
 }
 
+static int has_rfc_cookie(void *ctx, const char *key, const char *val)
+{
+    const apreq_cookie_t *c = apreq_value_to_cookie(
+                      apreq_char_to_value(val));
+
+    return c->version == NETSCAPE; /* 0 -> found, stop.
+                                      1 -> not found, keep going. */
+}
+
+APREQ_DECLARE(apreq_cookie_version_t) apreq_cookie_ua_version(void *ctx)
+{
+    if (apreq_env_cookie2(ctx) == NULL) {
+        apreq_jar_t *j = apreq_jar_parse(ctx, NULL);
+
+        if (j == NULL || apreq_jar_nelts(j) == 0) 
+            return APREQ_COOKIE_VERSION;
+
+        else if (apreq_table_do(has_rfc_cookie, NULL, j) == 1)
+            return NETSCAPE;
+
+        else
+            return RFC;
+    }
+    else
+        return RFC;
+}
+
 APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c, 
                                               char *attr, char *val)
 {
@@ -374,6 +401,10 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar_parse(void *ctx,
     return j;
 }
 
+APREQ_DECLARE(apreq_jar_t *) (apreq_jar)(void *ctx)
+{
+    return apreq_jar(ctx);
+}
 
 APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c, 
                                           char *buf, apr_size_t len)

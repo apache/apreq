@@ -43,6 +43,15 @@ typedef struct apreq_cookie_t {
 #define apreq_cookie_name(c)  ((c)->v.name)
 #define apreq_cookie_value(c) ((c)->v.data)
 
+
+/**
+ * returns the current context jar.
+ *
+ *
+ */
+APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx);
+#define apreq_jar(r) apreq_jar_parse(r,NULL)
+
 /**
  * Returns the number of cookies in the jar.
  *
@@ -52,6 +61,7 @@ typedef struct apreq_cookie_t {
 
 int apreq_jar_items(apreq_jar_t *jar);
 #define apreq_jar_items(j) apreq_table_nelts(j)
+#define apreq_jar_nelts(j) apreq_table_nelts(j)
 
 /**
  * Fetches a cookie from the jar
@@ -158,7 +168,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
  *
  * @param c The cookie.
  */
-apr_status_t apreq_cookie_bake(apreq_cookie_t *c);
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake(apreq_cookie_t *c);
 
 /* XXX: how about baking whole cookie jars, too ??? */
 
@@ -167,7 +177,10 @@ apr_status_t apreq_cookie_bake(apreq_cookie_t *c);
  *
  * @param c The cookie.
  */
-apr_status_t apreq_cookie_bake2(apreq_cookie_t *c);
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(apreq_cookie_t *c);
+
+APREQ_DECLARE(apreq_cookie_version_t) apreq_cookie_ua_version(void *ctx);
+
 
 #ifdef __cplusplus
  }

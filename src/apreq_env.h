@@ -5,25 +5,31 @@
  extern "C" {
 #endif 
 
+#include "apreq.h"
 /* ctx ~ request_rec */
 
 struct apreq_request_env {
-    int foo;
-    apr_status_t (*init)(void *ctx, void *cfg);
-    void        *(*make)(void *ctx);
-    apr_status_t (*parse)(void *ctx);
+    void      *(*request)(void *ctx);
+
+    apr_status_t (*setup)(void *ctx,
+                          void *parser, 
+                          void *cfg);
+
+    apr_status_t (*parse)(void *req);
 };
 
 struct apreq_cookie_env {
-    const char *(*in)(void *ctx);
-    const char *(*in2)(void *ctx);
-
     void        *(*jar)(void *ctx, void *j);
+
+    const char  *(*in)(void *ctx);
+    const char  *(*in2)(void *ctx);
+
     apr_status_t (*out)(void *ctx, const char *c);
     apr_status_t (*out2)(void *ctx, const char *c);
 };
 
 extern const struct apreq_env {
+    const char              *name;
     struct apreq_request_env r;
     struct apreq_cookie_env  c;
 
@@ -38,6 +44,10 @@ extern const struct apreq_env {
 
 APREQ_DECLARE(void) apreq_log(const char *file, int line, int level, 
                               apr_status_t status, void *ctx, const char *fmt, ...);
+
+APREQ_DECLARE(void *) apreq_env_request(void *ctx, void *r);
+APREQ_DECLARE(char *) apreq_env_args(void *ctx);
+APREQ_DECLARE(apr_status_t) apreq_env_parse(void *req);
 
 APREQ_DECLARE(void *) apreq_env_jar(void *ctx, void *j);
 APREQ_DECLARE(const char *) apreq_env_cookie(void *ctx);

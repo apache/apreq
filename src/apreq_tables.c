@@ -980,24 +980,39 @@ APREQ_DECLARE(apr_status_t) apreq_table_merge(apreq_table_t *t,
 
 /********************* table_add* *********************/
 
-APREQ_DECLARE(void) apreq_table_add(apreq_table_t *t, 
-                                    const apreq_value_t *val)
+APREQ_DECLARE(apr_status_t) apreq_table_add(apreq_table_t *t, 
+                                            const apreq_value_t *val)
 {
-    const char *key = val->name;
-    apreq_table_entry_t *elt = table_push(t);
-    int *root = &t->root[TABLE_HASH(key)];
-    apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
+    if (val == NULL || val->name == NULL)
+        return APR_EGENERAL;
+
+    switch (val->status) {
+    case APR_SUCCESS:
+    case APR_EINPROGRESS:
+    {
+        const char *key = val->name;
+        apreq_table_entry_t *elt = table_push(t);
+        int *root = &t->root[TABLE_HASH(key)];
+        apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
 #ifdef POOL_DEBUG
-    {
+        {
         /* XXX */
-    }
+        }
 #endif
+        elt->key = val->name;
+        elt->val = val;
+        elt->tree[NEXT] = -1;
+        insert(t->cmp, o, root, *root, elt,TREE_PUSH);
+        return APR_SUCCESS;
+    }
 
-    elt->key = val->name;
-    elt->val = val;
-    elt->tree[NEXT] = -1;
-    insert(t->cmp, o, root, *root, elt,TREE_PUSH);
+    default:
+        return val->status;
+    }
+
+    /* NOT REACHED */
+    return APR_SUCCESS;
 }
 
 

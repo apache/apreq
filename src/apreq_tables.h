@@ -284,7 +284,8 @@ APREQ_DECLARE(apr_status_t) apreq_table_merge(apreq_table_t *t,
  * @param val The value to add.
  * @remark This function does not make copies.
  */
-APREQ_DECLARE(void) apreq_table_add(apreq_table_t *t, const apreq_value_t *v);
+APREQ_DECLARE(apr_status_t) apreq_table_add(apreq_table_t *t, 
+                                            const apreq_value_t *v);
 
 /**
  * Merge two tables into one new table
