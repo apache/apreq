@@ -133,6 +133,9 @@ int main(int argc, char const * const * argv)
             char *dest = apr_pcalloc(pool, cookie->v.size + 1);
             if (apreq_decode(dest, cookie->v.data, cookie->v.size) >= 0)
                 printf("%s", dest);
+            else
+                apreq_log(APREQ_DEBUG 0, pool, "Bad cookie encoding: %s", 
+                          cookie->v.data);
         }
     }
 

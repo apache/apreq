@@ -56,6 +56,7 @@
 #include <stdlib.h>
 
 #include "test_apreq.h"
+#include "apreq_env.h"
 
 /* Top-level pool which can be used by tests. */
 apr_pool_t *p;
@@ -86,6 +87,67 @@ static const struct testlist {
     {"LastTest", NULL}
 };
 
+
+/* rigged environent for unit tests */
+
+#define APREQ_MODULE_NAME "TEST"
+#define APREQ_MODULE_MAGIC_NUMBER 20031025
+
+#define CRLF "\015\012"
+
+apr_bucket_brigade *bb;
+apr_table_t *table;
+
+static apr_pool_t *test_pool(void *env)
+{
+    return p;
+}
+
+static const char *test_header_in(void *env, const char *name)
+{
+    return env;
+}
+
+static apr_status_t test_header_out(void *env, 
+                                    const char *name, 
+                                    char *value)
+{    
+    return printf("%s: %s" CRLF, name, value) > 0 ? APR_SUCCESS : APR_EGENERAL;
+}
+
+static const char *test_query_string(void *env)
+{
+    return env;
+}
+
+static apreq_jar_t *test_jar(void *env, apreq_jar_t *jar)
+{
+    return NULL;
+}
+
+static apreq_request_t *test_request(void *env, apreq_request_t *req)
+{
+    return NULL;
+}
+
+static void test_log(const char *file, int line, int level, 
+                     apr_status_t status, void *env, const char *fmt,
+                     va_list vp)
+{
+    if (level < APREQ_LOG_DEBUG)
+        fprintf(stderr, "[%s(%d)] %s\n", file, line, apr_pvsprintf(p,fmt,vp));
+}
+
+static apr_status_t test_read(void *env, apr_read_type_e block, 
+                              apr_off_t bytes)
+{
+    return APR_ENOTIMPL;
+}
+
+static APREQ_ENV_MODULE(test, APREQ_MODULE_NAME,
+                       APREQ_MODULE_MAGIC_NUMBER);
+
+
 int main(int argc, char *argv[])
 {
     CuSuiteList *alltests = NULL;
@@ -95,6 +157,7 @@ int main(int argc, char *argv[])
 
     apr_initialize();
     atexit(apr_terminate);
+    apreq_env_module(&test_module);
 
     CuInit(argc, argv);
 

@@ -82,8 +82,9 @@
  * @{
  */
 
-const char apreq_env_name[] = "APACHE2"; /**< internal name of module */
-const unsigned int apreq_env_magic_number = 20031023; /**< ABI version */
+
+#define APREQ_MODULE_NAME "APACHE2"
+#define APREQ_MODULE_MAGIC_NUMBER 20031025
 
 /** The warehouse. */
 struct env_config {
@@ -103,31 +104,29 @@ struct filter_ctx {
 static const char filter_name[] = "APREQ";
 module AP_MODULE_DECLARE_DATA apreq_module;
 
-/** request logger */
-APREQ_DECLARE_LOG(apreq_log)
+static void apache2_log(const char *file, int line, int level, 
+                        apr_status_t status, void *env, const char *fmt,
+                        va_list vp)
 {
     dR;
-    va_list args;
-    va_start(args,fmt);
-    ap_log_rerror(file, line, level, status, r, "%s",
-                  apr_pvsprintf(r->pool, fmt, args));
-    va_end(args);
+    ap_log_rerror(file, line, level, status, r, 
+                  "%s", apr_pvsprintf(r->pool, fmt, vp));
 }
 
 
-APREQ_DECLARE(const char*)apreq_env_query_string(void *env)
+static const char *apache2_query_string(void *env)
 {
     dR;
     return r->args;
 }
 
-APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
+static apr_pool_t *apache2_pool(void *env)
 {
     dR;
     return r->pool;
 }
 
-APREQ_DECLARE(const char *)apreq_env_header_in(void *env, const char *name)
+static const char *apache2_header_in(void *env, const char *name)
 {
     dR;
     return apr_table_get(r->headers_in, name);
@@ -138,8 +137,8 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env, const char *name)
  * @bug Sending a Set-Cookie header on a 304
  * requires a different header table.
  */
-APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, const char *name, 
-                                                 char *value)
+static apr_status_t apache2_header_out(void *env, const char *name, 
+                                       char *value)
 {
     dR;
     apr_table_addn(r->headers_out, name, value);
@@ -159,7 +158,7 @@ static struct env_config *get_cfg(request_rec *r)
     return cfg;
 }
 
-APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar)
+static apreq_jar_t *apache2_jar(void *env, apreq_jar_t *jar)
 {
     dR;
     struct env_config *c = get_cfg(r);
@@ -202,8 +201,8 @@ static ap_filter_t *get_apreq_filter(request_rec *r)
     return cfg->f;
 }
 
-APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env, 
-                                                   apreq_request_t *req)
+static apreq_request_t *apache2_request(void *env, 
+                                        apreq_request_t *req)
 {
     dR;
     struct env_config *c = get_cfg(r);
@@ -237,9 +236,9 @@ static void apreq_filter_make_context(ap_filter_t *f)
  * Reads data directly into the parser.
  */
 
-APREQ_DECLARE(apr_status_t) apreq_env_read(void *env, 
-                                           apr_read_type_e block,
-                                           apr_off_t bytes)
+static apr_status_t apache2_read(void *env, 
+                                 apr_read_type_e block,
+                                 apr_off_t bytes)
 {
     dR;
     ap_filter_t *f = get_apreq_filter(r);
@@ -433,9 +432,13 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     return (ctx->status == APR_INCOMPLETE) ? APR_SUCCESS : ctx->status;
 }
 
+static APREQ_ENV_MODULE(apache2, APREQ_MODULE_NAME,
+                        APREQ_MODULE_MAGIC_NUMBER);
 
 static void register_hooks (apr_pool_t *p)
 {
+    const apreq_env_t *old_env;
+    old_env = apreq_env_module(&apache2_module);
     ap_register_input_filter(filter_name, apreq_filter, apreq_filter_init,
                              AP_FTYPE_CONTENT_SET);
 }

@@ -64,10 +64,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define dP apr_pool_t *p = (apr_pool_t *)env
 
 /**
- * @file libapreq_cgi.c
+ * @file apreq_env.c
  * @brief Source for libapreq_cgi.a.
  */
 
@@ -81,14 +80,82 @@
  * @{
  */
 
+static const apreq_env_t *apreq_env;
+
+APREQ_DECLARE(const apreq_env_t *) apreq_env_module(const apreq_env_t *mod)
+{
+    if (mod != NULL) {
+        const apreq_env_t *old_mod = apreq_env;
+        apreq_env = mod;
+        return old_mod;
+    }
+    return apreq_env;
+}
+
+
+APREQ_DECLARE_NONSTD(void) apreq_log(const char *file, int line,
+                                     int level, apr_status_t status,
+                                     void *env, const char *fmt, ...)
+{
+    va_list vp;
+    va_start(vp, fmt);
+    apreq_env->log(file,line,level,status,env,fmt,vp);
+    va_end(vp);
+}
+
+APREQ_DECLARE(apr_pool_t *) apreq_env_pool(void *env)
+{
+    return apreq_env->pool(env);
+}
+
+APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar)
+{
+    return apreq_env->jar(env,jar);
+}
+
+APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
+                                                   apreq_request_t *req)
+{
+    return apreq_env->request(env,req);
+}
+
+APREQ_DECLARE(const char *) apreq_env_query_string(void *env)
+{
+    return apreq_env->query_string(env);
+}
+
+APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name)
+{
+    return apreq_env->header_in(env, name);
+}
+
+APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, 
+                                                const char *name,
+                                                char *val)
+{
+    return apreq_env->header_out(env,name,val);
+}
+
+APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
+                                           apr_read_type_e block,
+                                           apr_off_t bytes)
+{
+    return apreq_env->read(env,block,bytes);
+}
+
+
+/** Default CGI module extracted from libapreq_cgi */
+
+#define APREQ_MODULE_NAME         "CGI"
+#define APREQ_MODULE_MAGIC_NUMBER 20031025
+
+#define dP apr_pool_t *p = (apr_pool_t *)env
+
 static struct {
     apreq_request_t    *req;
     apreq_jar_t        *jar;
     apr_status_t        status;
 } ctx;
-
-const char apreq_env_name[] = "CGI";
-const unsigned int apreq_env_magic_number = 20031024;
 
 #define CRLF "\015\012"
 
@@ -100,12 +167,12 @@ const unsigned int apreq_env_magic_number = 20031024;
          }                                                              \
      } while (0)
 
-APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
+static apr_pool_t *cgi_pool(void *env)
 {
     return (apr_pool_t *)env;
 }
 
-APREQ_DECLARE(const char *)apreq_env_query_string(void *env)
+static const char *cgi_query_string(void *env)
 {
     dP;
     char *value = NULL, qs[] = "QUERY_STRING";
@@ -113,8 +180,8 @@ APREQ_DECLARE(const char *)apreq_env_query_string(void *env)
     return value;
 }
 
-APREQ_DECLARE(const char *)apreq_env_header_in(void *env, 
-                                               const char *name)
+static const char *cgi_header_in(void *env, 
+                                 const char *name)
 {
     dP;
     char *key = apr_pstrcat(p, "HTTP_", name, NULL);
@@ -127,8 +194,8 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
     }
 
     if (!strcmp(key, "HTTP_CONTENT_TYPE") 
-        || !strcmp(key, "HTTP_CONTENT_LENGTH")) {
-
+        || !strcmp(key, "HTTP_CONTENT_LENGTH"))
+    {
         key += 5; /* strlen("HTTP_") */
     }
 
@@ -137,8 +204,8 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
     return value;
 }
 
-APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, const char *name, 
-                                                char *value)
+static apr_status_t cgi_header_out(void *env, const char *name, 
+                                   char *value)
 {
     dP;
     apr_file_t *out;
@@ -150,7 +217,7 @@ APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, const char *name,
 }
 
 
-APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar)
+static apreq_jar_t *cgi_jar(void *env, apreq_jar_t *jar)
 {
 
     if (jar != NULL) {
@@ -162,8 +229,8 @@ APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar)
     return ctx.jar;
 }
 
-APREQ_DECLARE(apreq_request_t *)apreq_env_request(void *env,
-                                                  apreq_request_t *req)
+static apreq_request_t *cgi_request(void *env,
+                                    apreq_request_t *req)
 {
 
     if (req != NULL) {
@@ -174,21 +241,17 @@ APREQ_DECLARE(apreq_request_t *)apreq_env_request(void *env,
     return ctx.req;
 }
 
-
-APREQ_DECLARE_LOG(apreq_log)
+static void cgi_log(const char *file, int line, int level, 
+                    apr_status_t status, void *env, const char *fmt,
+                    va_list vp)
 {
     dP;
-    va_list vp;
-
-    va_start(vp, fmt);
-    fprintf(stderr, "[%s(%d)] %s\n", file, line, 
-            apr_pvsprintf(p,fmt,vp));
-    va_end(vp);
+    fprintf(stderr, "[%s(%d)] %s\n", file, line, apr_pvsprintf(p,fmt,vp));
 }
 
-APREQ_DECLARE(apr_status_t) apreq_env_read(void *env, 
-                                           apr_read_type_e block,
-                                           apr_off_t bytes)
+static apr_status_t cgi_read(void *env, 
+                             apr_read_type_e block,
+                             apr_off_t bytes)
 {
     dP;
     apreq_request_t *req = apreq_request(env, NULL);
@@ -206,5 +269,10 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
     }
     return ctx.status;
 }
+
+static APREQ_ENV_MODULE(cgi, APREQ_MODULE_NAME, 
+                        APREQ_MODULE_MAGIC_NUMBER);
+
+static const apreq_env_t *apreq_env = &cgi_module;
 
 /** @} */

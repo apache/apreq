@@ -112,33 +112,14 @@
  * @{
  */
 
-#ifndef WIN32
-extern const char apreq_env_name[];
-extern const unsigned int apreq_env_magic_number; /**<+ YYYYMMDD */
-#else
-#if defined(MOD_APREQ_EXPORTS) || defined(LIBAPREQ_CGI_EXPORTS)
-__declspec(dllexport) const char apreq_env_name[];
-__declspec(dllexport) const unsigned int apreq_env_magic_number;
-#else
-__declspec(dllimport) const char apreq_env_name[];
-__declspec(dllimport) const unsigned int apreq_env_magic_number;
-#endif
-#endif
+APREQ_DECLARE_NONSTD(void) apreq_log(const char *file, int line,
+                                     int level, apr_status_t status,
+                                     void *env, const char *fmt, ...);
 
-/** logger */
-#define APREQ_DECLARE_LOG(f) APREQ_DECLARE_NONSTD(void)(f)(const char *file, \
-                             int line,  int level, apr_status_t status, \
-                             void *env, const char *fmt, ...)
-
-
-APREQ_DECLARE_LOG(apreq_log);
 APREQ_DECLARE(apr_pool_t *) apreq_env_pool(void *env);
-
-
 APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar);
 APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
                                                    apreq_request_t *req);
-
 
 APREQ_DECLARE(const char *) apreq_env_query_string(void *env);
 APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name);
@@ -148,7 +129,6 @@ APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name);
 #define apreq_env_cookie(env) apreq_env_header_in(env, "Cookie")
 #define apreq_env_cookie2(env) apreq_env_header_in(env, "Cookie2")
 
-/** header out */
 APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, 
                                                 const char *name,
                                                 char *val);
@@ -159,6 +139,29 @@ APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env,
 APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
                                            apr_read_type_e block,
                                            apr_off_t bytes);
+
+typedef struct apreq_env_t {
+    const char *name;
+    apr_uint32_t magic_number;
+    void (*log)(const char *,int,int,apr_status_t,void *,const char *,va_list);
+    apr_pool_t *(*pool)(void *);
+    apreq_jar_t *(*jar)(void *,apreq_jar_t *);
+    apreq_request_t *(*request)(void *,apreq_request_t *);
+    const char *(*query_string)(void *);
+    const char *(*header_in)(void *,const char *);
+    apr_status_t (*header_out)(void *, const char *,char *);
+    apr_status_t (*read)(void *,apr_read_type_e,apr_off_t);
+} apreq_env_t;
+
+#define APREQ_ENV_MODULE(pre, name, mmn) const apreq_env_t pre##_module = { \
+  name, mmn, pre##_log, pre##_pool, pre##_jar, pre##_request,               \
+  pre##_query_string, pre##_header_in, pre##_header_out, pre##_read }
+
+
+APREQ_DECLARE(const apreq_env_t *) apreq_env_module(const apreq_env_t *mod);
+
+#define apreq_env_name (apreq_env_module(NULL)->name)
+#define apreq_env_magic_number (apreq_env_module(NULL)->magic_number)
 
 /** @} */
 #ifdef __cplusplus
