@@ -91,12 +91,14 @@ AC_DEFUN([AC_APREQ], [
         APU_INCLUDES=`$APU_CONFIG --includes`
         APR_LA=`$APR_CONFIG --link-libtool`
         APU_LA=`$APU_CONFIG --link-libtool`
-        APR_LTLIBS=`$APR_CONFIG --link-libtool --ldflags --libs`
-        APU_LTLIBS=`$APU_CONFIG --link-libtool --ldflags --libs`
+        APR_LTLIBS=`$APR_CONFIG --link-libtool --libs`
+        APU_LTLIBS=`$APU_CONFIG --link-libtool --libs`
         dnl perl glue/tests do not use libtool: need ld linker flags
         APR_LDLIBS=`$APR_CONFIG --link-ld --ldflags --libs`
         APU_LDLIBS=`$APU_CONFIG --link-ld --ldflags --libs`
 
+        CPPFLAGS="$CPPFLAGS `$APR_CONFIG --cppflags`"
+        
         dnl Absolute source/build directory
         abs_srcdir=`(cd $srcdir && pwd)`
         abs_builddir=`pwd`
