@@ -3,10 +3,10 @@ libapreq and related things on Win32 using VC++ 6. Run
    perl Configure.pl
 to generate the top-level Makefile. Available options are:
 
-  --with-apache=C:\Path\to\Apache2 : specify the top-level Apache2 directory
-  --debug                          : build a debug version
-  --without-perl                   : skip initialization of perl glue
-  --help                           : print a help message
+  --with-apache2=C:\Path\to\Apache2 : specify the top-level Apache2 directory
+  --debug                           : build a debug version
+  --without-perl                    : skip initialization of perl glue
+  --help                            : print a help message
 
 With no options specified, an attempt will be made to find a suitable 
 Apache2 directory, and if found, a non-debug version will be built.
@@ -22,3 +22,8 @@ be generated. This can be used as:
   nmake docs          - build documentation
 
 The 'docs' target is only available if a doxygen binary is detected.
+
+An experimental apxs tool for Win32 is included here, which will be
+needed to build the env/c-modules tests. To install it, run
+   perl apxs_win32_PL
+which will lead you through an installation dialogue.
