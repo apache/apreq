@@ -24,6 +24,9 @@ AC_DEFUN([AC_APREQ], [
         AC_ARG_WITH(apu-config,
                 AC_HELP_STRING([  --with-apu-config],[path to apu-*-config script]),
                 [APU_CONFIG=$withval],[APU_CONFIG=""])
+        AC_ARG_WITH(apache1-apxs,
+                AC_HELP_STRING([--with-apache1-apxs],[path to apxs]),
+                [APACHE1_APXS=$withval],[APACHE1_APXS=""])
 
         prereq_check="$PERL build/version_check.pl"
 
@@ -131,6 +134,7 @@ AC_DEFUN([AC_APREQ], [
         AM_CONDITIONAL(BUILD_HTTPD, test -n "$APACHE2_SRC")
         AM_CONDITIONAL(BUILD_APR, test "x$APR_CONFIG" = x`$APR_CONFIG --srcdir`/apr-config)
         AM_CONDITIONAL(BUILD_APU, test "x$APU_CONFIG" = x`$APU_CONFIG --srcdir`/apu-config)
+        AM_CONDITIONAL(HAVE_APACHE1, test -n "$APACHE1_APXS")
 
         dnl Reset the default installation prefix to be the same as apu's
         ac_default_prefix=`$APU_CONFIG --prefix`
@@ -157,32 +161,19 @@ AC_DEFUN([AC_APREQ], [
         fi
 
         if test "x$USE_MAINTAINER_MODE" != "xno"; then
-            CPPFLAGS="$CPPFLAGS -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -Werror"
-            if test "$GCC" = "yes"; then
-                CPPFLAGS="$CPPFLAGS -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-noreturn -Wmissing-format-attribute -Wpacked -Wredundant-decls -Wnested-externs -Wdisabled-optimization -Wno-long-long -Wendif-labels -Wcast-align -Wpacked"
+            APR_ADDTO([CFLAGS],[
+                      -Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
+                      -Wmissing-declarations -Wwrite-strings -Wcast-qual
+                      -Wfloat-equal -Wshadow -Wpointer-arith
+                      -Wbad-function-cast -Wsign-compare -Waggregate-return
+                      -Wmissing-noreturn -Wmissing-format-attribute -Wpacked
+                      -Wredundant-decls -Wnested-externs -Wdisabled-optimization
+                      -Wno-long-long -Wendif-labels -Wcast-align -Wpacked
+                      ])
                 # -Wdeclaration-after-statement is only supported on gcc 3.4+
-            fi
         fi
 
-        if test "x$CPPFLAGS" = "x"; then
-           echo "  setting CPPFLAGS to \"`$APR_CONFIG --cppflags`\""
-           CPPFLAGS="`$APR_CONFIG --cppflags`"
-        else
-           apr_addto_bugger="`$APR_CONFIG --cppflags`"
-           for i in $apr_addto_bugger; do
-             apr_addto_duplicate="0"
-             for j in $CPPFLAGS; do
-               if test "x$i" = "x$j"; then
-                 apr_addto_duplicate="1"
-                 break
-               fi
-             done
-             if test $apr_addto_duplicate = "0"; then
-               echo "  adding \"$i\" to CPPFLAGS"
-               CPPFLAGS="$CPPFLAGS $i"
-             fi
-           done
-        fi
+        APR_ADDTO([CPPFLAGS], "`$APR_CONFIG --cppflags`")
 
         get_version="$abs_srcdir/build/get-version.sh"
         version_hdr="$abs_srcdir/include/apreq_version.h"
@@ -220,6 +211,8 @@ AC_DEFUN([AC_APREQ], [
         AC_SUBST(APACHE2_SRC)
         AC_SUBST(APACHE2_INCLUDES)
         AC_SUBST(APACHE2_HTTPD)
+
+        AC_SUBST(APACHE1_APXS)
 
         AC_SUBST(APU_CONFIG)
         AC_SUBST(APR_CONFIG)
@@ -284,4 +277,31 @@ EOF
 
   echo [$]0 [$]ac_configure_args '"[$]@"' >> $1
   chmod +x $1
+])dnl
+
+dnl
+dnl APR_ADDTO(variable, value)
+dnl
+dnl  Add value to variable
+dnl
+AC_DEFUN([APR_ADDTO],[
+  if test "x$$1" = "x"; then
+    echo "  setting $1 to \"$2\""
+    $1="$2"
+  else
+    apr_addto_bugger="$2"
+    for i in $apr_addto_bugger; do
+      apr_addto_duplicate="0"
+      for j in $$1; do
+        if test "x$i" = "x$j"; then
+          apr_addto_duplicate="1"
+          break
+        fi
+      done
+      if test $apr_addto_duplicate = "0"; then
+        echo "  adding \"$i\" to $1"
+        $1="$$1 $i"
+      fi
+    done
+  fi
 ])dnl
