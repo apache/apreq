@@ -20,6 +20,11 @@ sub a_t_version {
     $Apache::Test::VERSION;
 }
 
+sub mm_version {
+    require ExtUtils::MakeMaker;
+    $ExtUtils::MakeMaker::VERSION;
+}
+
 sub mp2_version {
     eval {
         require Apache2;
@@ -53,6 +58,7 @@ my %perl_glue = (
                              comment => "Win32 requires version 1.06"    },
   "ExtUtils::XSBuilder" => { version => "0.23",    test => \&xsb_version },
               mod_perl  => { version => "1.99_15", test => \&mp2_version },
+  "ExtUtils::MakeMaker" => { version => "6.15",    test => \&mm_version  },
                 );
 
 sub print_prereqs ($$) {
