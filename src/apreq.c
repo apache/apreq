@@ -379,6 +379,7 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
         break;
     default:
         /* nothing special required, just here to keep noisy compilers happy */
+        break;
     }
 
     rv = apr_palloc(p, len + sizeof *rv);
