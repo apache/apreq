@@ -217,8 +217,12 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
 
 static void clear_hook(void *ptr) {
    Hook *hook = (Hook*) ptr;
-   hook->sub != Nullsv && sv_2mortal(hook->sub);
-   hook->data != Nullsv && sv_2mortal(hook->data);
+   if (hook->sub != Nullsv) {
+       (void)sv_2mortal(hook->sub);
+   }
+   if (hook->data != Nullsv) {
+       (void)sv_2mortal(hook->data);
+   }
 }
 
 

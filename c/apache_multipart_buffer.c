@@ -182,7 +182,6 @@ char* get_line(multipart_buffer *self)
 /* finds a boundary */
 int find_boundary(multipart_buffer *self, char *boundary)
 {
-    int len, bound_len = strlen(boundary);
     char *line;
     
     /* loop thru lines */
