@@ -61,6 +61,10 @@
 
 #endif
 
+#define APACHE_HTTPD_TEST_ACCESS_CHECKER apreq_access_checker
+#define APACHE_HTTPD_TEST_COMMANDS       access_cmds
+#define APACHE_HTTPD_TEST_PER_DIR_CREATE create_access_config 
+
 #include "apache_httpd_test.h"
 #include "apreq_params.h"
 #include "apreq_env.h"
@@ -68,9 +72,6 @@
 #include "apr_strings.h"
 
 module AP_MODULE_DECLARE_DATA apreq_access_test_module;
-#define APACHE_HTTPD_TEST_ACCESS_CHECKER apreq_access_checker
-#define APACHE_HTTPD_TEST_COMMANDS       access_cmds
-#define APACHE_HTTPD_TEST_PER_DIR_CREATE create_access_config 
 
 struct access_test_cfg {
     apr_pool_t *pool;
