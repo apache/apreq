@@ -59,28 +59,6 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
     return param;
 }
 
-static int elt_size(void *data, const char *key, const char *val)
-{
-    apr_size_t *s = data;
-    *s = strlen(key) + strlen(val);
-    return 1; /* keep searching */
-}
-
-APREQ_DECLARE(apr_size_t)apreq_param_size(const apreq_param_t *p)
-{
-    apr_size_t tlen = 0;
-    apr_off_t blen = 0;
-
-    if (p->info != NULL)
-        apr_table_do(elt_size, &tlen, p->info, NULL);
-    if (p->upload != NULL)
-        apr_brigade_length(p->upload, 0, &blen);
-
-    return (apr_size_t)blen + tlen + p->v.nlen + p->v.dlen;
-
-}
-
-
 APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
                                                apr_pool_t *pool,
                                                const char *word,

@@ -27,24 +27,6 @@
 
 #define ADD_COOKIE(j,c) apreq_value_table_add(&c->v, j)
 
-APREQ_DECLARE(apr_size_t)apreq_cookie_size(const apreq_cookie_t *c)
-{
-    apr_size_t alen = 0;
-
-    if (c->path != NULL)
-        alen += strlen(c->path);
-    if (c->domain != NULL)
-        alen += strlen(c->domain);
-    if (c->port != NULL)
-        alen += strlen(c->port);
-    if (c->comment != NULL)
-        alen += strlen(c->comment);
-    if (c->commentURL != NULL)
-        alen += strlen(c->commentURL);
-
-    return (apr_size_t)alen + c->v.nlen + c->v.dlen;
-}
- 
 APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
                                          const char *time_str)
 {

@@ -40,8 +40,6 @@ typedef struct apreq_param_t {
     const apreq_value_t  v;      /**< underlying name/value info */
 } apreq_param_t;
 
-APREQ_DECLARE(apr_size_t)apreq_param_size(const apreq_param_t *p);
-
 
 /** @return 1 if the taint flag is set, 0 otherwise. */
 static APR_INLINE

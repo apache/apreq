@@ -60,8 +60,6 @@ typedef struct apreq_cookie_t {
 
 } apreq_cookie_t;
 
-APREQ_DECLARE(apr_size_t)apreq_cookie_size(const apreq_cookie_t *c);
-
 
 /** Upgrades cookie jar table values to apreq_cookie_t structs. */
 static APR_INLINE
