@@ -50,7 +50,7 @@ print "\nskipping test setup...$@" if $@;
 
 # prerequisites
 my %require = (
-    "Apache::Test" => "1.0",
+    "Apache::Test" => "1.03",
 );
 
 my $myVERSION = MM->parse_version('Request/Request.pm');
