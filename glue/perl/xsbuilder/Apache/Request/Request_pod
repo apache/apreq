@@ -249,7 +249,9 @@ brigade's tempfile. Check your system's link(2) manpage for details.
 =head2 slurp
 
 Reads the full contents of a file upload into the scalar argument.
-The return value is the APR status code (0 on success, error otherwise).
+The return value is currently an APR status code (0 on success, error otherwise),
+but this may change in a future release (to bring this function
+in line with similar read-type functions in mp2).
 
   # print out the upload file
   my $contents;
