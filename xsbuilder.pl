@@ -120,6 +120,8 @@ sub preprocess
         ::c_macro("APREQ_DECLARE_PARSER", "apreq_parser.h")->();
         ::c_macro("APR_DECLARE")->();
         ::c_macro("XS")-> ();
+        s/APR_INLINE//g;
+        s/static//g;
     }
 }
 
