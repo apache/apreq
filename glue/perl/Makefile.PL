@@ -148,6 +148,8 @@ __PACKAGE__ -> run;
 
 my @scripts = ();
 
+use File::Spec::Functions qw(catfile);
+
 File::Find::finddepth(sub {
     return unless /(.*?\.pl)\.PL$/;
     push @scripts, "$File::Find::dir/$1";
@@ -194,9 +196,20 @@ EOT
 
 sub test_docs {
     my ($pods, $tests) = @_;
-return join "", map <<EOT, 0..$#$pods;
+
+    my $pod2test = Apache::TestConfig::which('pod2test');
+    unless ($pod2test) {
+        # try under the perl's bin
+        require Config;
+        my $bin = $Config::Config{bin};
+        $pod2test = catfile $bin, "pod2test";
+    }
+
+    return "" unless $pod2test and -e $pod2test;
+
+    return join "", map <<EOT, 0..$#$pods;
 $$tests[$_]: $$pods[$_]
-	pod2test $$pods[$_] $$tests[$_]
+	\$(FULLPERLRUN) $pod2test $$pods[$_] $$tests[$_]
 
 EOT
 }
