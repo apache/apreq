@@ -1,7 +1,5 @@
 o look for 'XXX' in the source, they mark some bits of code that need work
 
-o port to apache 2.0
-
 o multipart_buffer_headers punts on headers more than 5k (which could
   happen with a really long form input name, for example). better than
   the old behavior of locking up, but we could be clever and actually
@@ -12,12 +10,20 @@ o should probably handle Apache::Request->param http://blah.com/?foo
 
 o mmap upload files ?
 
-o improve/automate build process for c, dtcl (autoconf support?)
+o improve/automate build process for dtcl
 
-o Fix our Apache::Test-based test suite
+o Convert our test suite back to Apache::Test.
 
 o solve the memory leak for:
   my $r = shift;
   $r = Apache::Request->new($r);
   as discussed at:
   http://marc.theaimsgroup.com/?t=102615343600005&r=1&w=2
+
+o The behavior of our mfd parser is inconsistent wrt empty file uploads:
+  An active upload_hook isn't called with a 0-byte file upload.
+
+o Our Makefile.PL is lame.
+
+o Investigate sporadic segfaults related to new upload code in Request.xs
+  and older (pre-5.8.0) perls.
