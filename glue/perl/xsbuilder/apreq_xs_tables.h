@@ -18,7 +18,27 @@
 #define APREQ_XS_TABLES_H
 
 /* backward compatibility macros support */
+
 #include "ppport.h"
+
+#define APREQ_XS_TABLE_CAN_PREFETCH_VALUES  (PERL_VERSION >= 8)
+
+#if APREQ_XS_TABLE_CAN_PREFETCH_VALUES
+
+/* Requires perl 5.8 or better. 
+ * A custom MGVTBL with its "copy" slot filled allows
+ * us to FETCH a table entry immediately during iteration.
+ * For multivalued keys this is essential in order to get
+ * the value corresponding to the current key, otherwise
+ * values() will always report the first value repeatedly.
+ * With this MGVTBL the keys() list always matches up with
+ * the values() list, even in the multivalued case.
+ * We only prefetch the value during iteration, because the
+ * prefetch adds overhead to EXISTS and STORE operations.
+ * They are only "penalized" when the perl program is iterating
+ * via each(), which seems to be a reasonable tradeoff.
+ */
+
 
 static int apreq_xs_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv, 
                                   const char *name, int namelen)
@@ -34,6 +54,7 @@ static int apreq_xs_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv,
 static const MGVTBL apreq_xs_table_magic = {0, 0, 0, 0, 0, 
                                             apreq_xs_table_magic_copy};
 
+#endif
 
 /**
  * Converts a C object, with environment, to a TIEHASH object.
@@ -62,9 +83,15 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
         sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, Nullch, -1);
         SvMAGIC(SvRV(rv))->mg_ptr = env;
     }
+
+#if APREQ_XS_TABLE_CAN_PREFETCH_VALUES
+
     sv_magic(sv, NULL, PERL_MAGIC_ext, Nullch, -1);
     SvMAGIC(sv)->mg_virtual = (MGVTBL *)&apreq_xs_table_magic;
     SvMAGIC(sv)->mg_flags |= MGf_COPY;
+
+#endif
+
     sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
     SvREFCNT_dec(rv); /* corrects SvREFCNT_inc(rv) implicit in sv_magic */
 
@@ -151,11 +178,9 @@ struct apreq_xs_table_key_magic {
 ** if perl still chokes on key magic
 ** Need 5.8.1 or higher for PERL_MAGIC_vstring
 */
-#if 0 && PERL_REVISION == 5 && PERL_VERSION == 8 && PERL_SUBVERSION >= 1
-#define APREQ_XS_TABLE_USE_KEY_MAGIC
-#endif
+#define APREQ_XS_TABLE_USE_KEY_MAGIC 0
 
-#ifdef APREQ_XS_TABLE_USE_KEY_MAGIC
+#if APREQ_XS_TABLE_USE_KEY_MAGIC
 
 #define APREQ_XS_TABLE_ADD_KEY_MAGIC(p, sv, o, v) do {                  \
     struct apreq_xs_table_key_magic *info = apr_palloc(p,sizeof *info); \
