@@ -21,9 +21,8 @@
 
 #include "ppport.h"
 
-#define APREQ_XS_TABLE_CAN_PREFETCH_VALUES  (PERL_VERSION >= 8)
 
-#if APREQ_XS_TABLE_CAN_PREFETCH_VALUES
+#if (PERL_VERSION >= 8)
 
 /* Requires perl 5.8 or better. 
  * A custom MGVTBL with its "copy" slot filled allows
@@ -134,34 +133,34 @@ static XS(apreq_xs_table_##attr##_##method)                             \
     void *env;                                                          \
     apr_table_t *t;                                                     \
     const char *key, *val;                                              \
-    SV *sv;                                                             \
+    SV *sv, *obj;                                                       \
     STRLEN klen, vlen;                                                  \
-    apreq_##attr##_t *obj;                                              \
+    apreq_##attr##_t *RETVAL;                                           \
                                                                         \
     if (items != 3 || !SvROK(ST(0)) || !SvPOK(ST(1)))                   \
         Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val)");     \
                                                                         \
-    sv  = apreq_xs_find_obj(aTHX_ ST(0), #attr);                        \
-    if (sv == NULL)                                                     \
-         Perl_croak(aTHX_ "Cannot find object");                        \
-    env = apreq_xs_sv2env(sv);                                          \
-    t   = (apr_table_t *) SvIVX(sv);                                    \
+    sv  = ST(0);                                                        \
+    obj = apreq_xs_find_obj(aTHX_ sv, #attr);                           \
+    if (obj == NULL)                                                    \
+         Perl_croak(aTHX_ "$table->" #method ": cannot find object");   \
+    env = apreq_xs_sv2env(obj);                                         \
+    t   = apreq_xs_##attr##_sv2table(obj);                              \
     key = SvPV(ST(1), klen);                                            \
                                                                         \
     if (SvROK(ST(2))) {                                                 \
-        obj = (apreq_##attr##_t *) SvIVX(SvRV(ST(2)));                  \
+        RETVAL = (apreq_##attr##_t *) SvIVX(SvRV(ST(2)));               \
     }                                                                   \
     else if (SvPOK(ST(2))) {                                            \
         val = SvPV(ST(2), vlen);                                        \
-        obj = apreq_make_##attr(apreq_env_pool(env), key, klen,         \
+        RETVAL = apreq_make_##attr(apreq_env_pool(env), key, klen,      \
                                                      val, vlen);        \
     }                                                                   \
     else                                                                \
         Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val): "     \
                    "unrecognized SV type for $val");                    \
-    val = obj->v.data;                                                  \
                                                                         \
-    apr_table_##method##n(t, key, val);                                 \
+    apr_table_##method##n(t, RETVAL->v.name, RETVAL->v.data);           \
     XSRETURN_EMPTY;                                                     \
 }
 
@@ -378,13 +377,15 @@ static XS(apreq_xs_##attr##_NEXTKEY)                            \
     dXSARGS;                                                    \
     SV *sv, *obj;                                               \
     IV idx;                                                     \
+    apr_table_t *t;                                             \
     const apr_array_header_t *arr;                              \
     apr_table_entry_t *te;                                      \
                                                                 \
     if (!SvROK(ST(0)))                                          \
         Perl_croak(aTHX_ "Usage: $table->NEXTKEY($prev)");      \
     obj = apreq_xs_find_obj(aTHX_ ST(0), #attr);                \
-    arr = apr_table_elts(apreq_xs_##attr##_sv2table(obj));      \
+    t = apreq_xs_##attr##_sv2table(obj);                        \
+    arr = apr_table_elts(t);                                    \
     te  = (apr_table_entry_t *)arr->elts;                       \
                                                                 \
     if (items == 1)                                             \
