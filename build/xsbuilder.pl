@@ -8,9 +8,12 @@ use strict;
 use warnings FATAL => 'all';
 use Apache2;
 use Apache::Build;
+require Win32 if Apache::Build::WIN32;
 
 use Cwd;
-cwd =~ m{^(.+httpd-apreq-2)} or die "Can't find base cvs directory";
+my $cwd = Apache::Build::WIN32 ?
+    Win32::GetLongPathName(cwd) : cwd;
+$cwd =~ m{^(.+httpd-apreq-2)} or die "Can't find base cvs directory";
 my $base_dir = $1;
 my $src_dir = "$base_dir/src";
 my $xs_dir = "$base_dir/glue/perl/xsbuilder";
@@ -20,13 +23,27 @@ sub slurp($$)
     read $file, $_[0], -s $file;
 }
 
-slurp my $config => "$base_dir/config.status";
-$config =~ /^s,\@APACHE2_INCLUDES\@,([^,]+)/m && -d $1 or
-    die "Can't find apache include directory";
-my $apache_includes = $1;
-$config =~ m/^s,\@APACHE2_LIBS\@,([^,]+)/m && -d $1 or
-    die "Can't find apr lib directory";
-my $apr_libs = $1;
+my ($apache_includes, $apr_libs);
+if (Apache::Build::WIN32) {
+    my $apache_dir = Apache::Build->build_config()->dir;
+    ($apache_includes = $apache_dir . '/include') =~ s!\\!/!g;
+    ($apr_libs = $apache_dir . '/lib') =~ s!\\!/!g;
+}
+else {
+    slurp my $config => "$base_dir/config.status";
+    $config =~ /^s,\@APACHE2_INCLUDES\@,([^,]+)/m && -d $1 or
+        die "Can't find apache include directory";
+    $apache_includes = $1;
+    $config =~ m/^s,\@APACHE2_LIBS\@,([^,]+)/m && -d $1 or
+        die "Can't find apr lib directory";
+    $apr_libs = $1;
+}
+my $apr_lib_flags = Apache::Build::WIN32 ? 
+    qq{-L$apr_libs -llibapr -llibaprutil} : 
+    qq{-L$apr_libs -lapr-0 -laprutil-0};
+my $apreq_lib_flags = Apache::Build::WIN32 ?
+    qq{-L$base_dir/win32/libs -llibapreq -lmod_apreq} :
+    qq{-L$src_dir/.libs -lapreq};
 
 my $mp2_typemaps = Apache::Build->new->typemaps;
 read DATA, my $grammar, -s DATA;
@@ -178,7 +195,7 @@ ExtUtils::MakeMaker::WriteMakefile(
     'VERSION' => '0.01',
     'TYPEMAPS' => [qw(@$mp2_typemaps $typemap)],
     'INC'      => "-I.. -I../.. -I../../.. -I$src_dir -I$xs_dir -I$apache_includes",
-    'LIBS'     => "-L$src_dir/.libs -L$apr_libs -lapreq -lapr-0 -laprutil-0",
+    'LIBS'     => "$apreq_lib_flags $apr_lib_flags",
 } ;
 $txt .= "'depend'  => $deps,\n" if ($deps) ;
 $txt .= qq{    
