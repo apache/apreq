@@ -222,7 +222,7 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
     if (SvTRUE(ERRSV))
         return -1;
 
-    return PerlIO_write(PerlIO_importFILE(upload->fp,0), buf, len);
+    return fwrite(buf, 1, len, upload->fp);
 }
 
 static void upload_hook_cleanup(void *ptr)
