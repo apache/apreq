@@ -6,6 +6,9 @@
 
 
 - Perl API [joes]
+  Implement HOOK_DATA and UPLOAD_HOOK.
+
+- Perl API [joes]
   Add safe XS wrappers for $table->add, $table->set, $table->STORE,
   and $table_class->new.
 

@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/07 13:31:59 $]   -*-text-*-
+Last modified at [$Date: 2004/07/07 23:53:01 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -80,8 +80,6 @@ TODO:
 
     - Install the html dox during "make install".  Should we do this 
       for the doxy manpages also?
-
-    - Implement HOOK_DATA and UPLOAD_HOOK.
 
     - Rework glue/perl build system to use apreq2-config instead of
       relying on paths like "../../src".

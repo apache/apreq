@@ -13,6 +13,17 @@ use APR::PerlIO;
 use Apache::ServerUtil;
 use File::Spec;
 
+my $data;
+
+sub hook {
+    my ($upload, $buffer, $len, $hook_data) = @_;
+    warn "$upload saw EOS" and return unless defined $buffer;
+
+    die "BAD UPLOAD ARGS" unless length $buffer == $len;
+    warn "$upload saw $buffer";
+    $data .= $buffer;
+}
+
 sub handler {
     my $r = shift;
     my $temp_dir = $r->server->server_root_relative('logs');
@@ -110,6 +121,12 @@ sub handler {
             $req->upload("HTTPUPLOAD")->slurp(my $data);
             $req->print($data);
         }
+    }
+    elsif ($test eq 'hook') {
+        $data = "";
+        $req->config(UPLOAD_HOOK => \&hook);
+        $req->parse;
+        $r->print($data);
     }
     elsif ($test eq 'type') {
         my $upload = $req->upload("HTTPUPLOAD");

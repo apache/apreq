@@ -143,53 +143,225 @@ APREQ_XS_DEFINE_TABLE_MAKE(request);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,set);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,add);
 
+
+struct hook_ctx {
+    SV                  *hook_data;
+    SV                  *hook;
+    SV                  *bucket_data;
+    SV                  *parent;
+    PerlInterpreter     *perl;
+};
+
+
+#define DEREF(slot) if (ctx->slot) SvREFCNT_dec(ctx->slot)
+
+static apr_status_t upload_hook_cleanup(void *ctx_)
+{
+    struct hook_ctx *ctx = ctx_;
+
+#ifdef USE_ITHREADS
+    dTHXa(ctx->perl);
+#endif
+
+    DEREF(hook_data);
+    DEREF(hook);
+    DEREF(bucket_data);
+    DEREF(parent);
+    return APR_SUCCESS;
+}
+
+APR_INLINE
+static apr_status_t eval_upload_hook(pTHX_ apreq_param_t *upload, 
+                                     void *env, struct hook_ctx *ctx)
+{
+    dSP;
+    SV *sv = ctx->bucket_data;
+    STRLEN len = SvPOK(sv) ? SvCUR(sv) : 0;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 4);
+    ENTER;
+    SAVETMPS;
+
+    PUSHs(sv_2mortal(apreq_xs_2sv(upload, "Apache::Upload", ctx->parent)));
+    PUSHs(sv);
+    PUSHs(sv_2mortal(newSViv(len)));
+    if (ctx->hook_data)
+        PUSHs(ctx->hook_data);
+
+    PUTBACK;
+    perl_call_sv(ctx->hook, G_EVAL|G_DISCARD);
+    FREETMPS;
+    LEAVE;
+
+    if (SvTRUE(ERRSV)) {
+        Perl_warn(aTHX_ "Upload hook failed: %s", SvPV_nolen(ERRSV));
+        return APR_EGENERAL;
+    }
+    return APR_SUCCESS;
+}
+
+
+static apr_status_t apreq_xs_upload_hook(APREQ_HOOK_ARGS)
+{
+    struct hook_ctx *ctx = hook->ctx; /* ctx set during $req->config */
+    apr_bucket *e;
+    apr_status_t s = APR_SUCCESS;
+#ifdef USE_ITHREADS
+    dTHXa(ctx->perl);
+#endif
+
+    for (e = APR_BRIGADE_FIRST(bb); e!= APR_BRIGADE_SENTINEL(bb);
+         e = APR_BUCKET_NEXT(e))
+    {
+        apr_off_t len;
+        const char *data;
+        apreq_log(APREQ_DEBUG 0, env, "looping through buckets");
+
+        if (APR_BUCKET_IS_EOS(e)) {  /*last call on this upload */           
+            SV *sv = ctx->bucket_data;
+            ctx->bucket_data = &PL_sv_undef;
+            s = eval_upload_hook(aTHX_ param, env, ctx);
+            ctx->bucket_data = sv;
+            if (s != APR_SUCCESS)
+                return s;
+            apreq_log(APREQ_DEBUG 0, env, "upload hook saw eos bucket");
+
+            break;
+        }
+
+        s = apr_bucket_read(e, &data, &len, APR_BLOCK_READ);
+        if (s != APR_SUCCESS)
+            return s;
+
+        sv_setpvn(ctx->bucket_data, data, (STRLEN)len);
+
+        s = eval_upload_hook(aTHX_ param, env, ctx);
+
+        apreq_log(APREQ_DEBUG 0, env, "ran upload hook");
+
+        if (s != APR_SUCCESS)
+            return s;
+
+    }
+
+    if (hook->next)
+        s = APREQ_RUN_HOOK(hook->next, env, param, bb);
+
+    return s;
+}
+
+
+
 static XS(apreq_xs_request_config)
 {
     dXSARGS;
+    apr_pool_t *pool;
     apreq_request_t *req;
+    apreq_hook_t *upload_hook = NULL;
+    SV *sv;
+    SV *hook_data = NULL;
     int j;
+
     if (items % 2 != 1 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "usage: $req->config(%settings)");
 
-    req = apreq_xs_sv2(request,ST(0));
+    sv = apreq_xs_find_obj(aTHX_ ST(0), "request");
+    req = (apreq_request_t *)SvIVX(sv);
+    pool = apreq_env_pool(req->env);
 
     for (j = 1; j + 1 < items; j += 2) {
-        STRLEN alen, vlen;
-        const char *attr = SvPVbyte(ST(j),alen), 
-                    *val = SvPVbyte(ST(j+1),vlen);
+        STRLEN alen;
+        const char *attr = SvPVbyte(ST(j),alen);
 
         if (strcasecmp(attr,"POST_MAX")== 0
             || strcasecmp(attr, "MAX_BODY") == 0) 
         {
+            const char *val = SvPV_nolen(ST(j+1));
             apreq_env_max_body(req->env,
                                (apr_off_t)apreq_atoi64f(val));
         }
         else if (strcasecmp(attr, "TEMP_DIR") == 0) {
+            const char *val = SvPV_nolen(ST(j+1));
             apreq_env_temp_dir(req->env, val);
         }
         else if (strcasecmp(attr, "MAX_BRIGADE") == 0) {
+            const char *val = SvPV_nolen(ST(j+1));
             apreq_env_max_brigade(req->env, (apr_ssize_t)apreq_atoi64f(val));
         }
         else if (strcasecmp(attr, "DISABLE_UPLOADS") == 0) {
-            if (req->parser == NULL)
+            if (req->parser == NULL) {
                 req->parser = apreq_parser(req->env, NULL);
-            if (req->parser != NULL)
-                apreq_add_hook(req->parser,
-                               apreq_make_hook(apreq_env_pool(req->env), 
-                                               apreq_hook_disable_uploads,
-                                               NULL, NULL));
+                if (req->parser == NULL) {
+                    Perl_warn(aTHX_ "Apache::Request::config: "
+                              "cannot disable/enable uploads (parser not found)");
+                    continue;
+                }
+            }
+            if (SvTRUE(ST(j+1))) {
+                /* add disable_uploads hook */
+                if (req->parser == NULL)
+                    req->parser = apreq_parser(req->env, NULL);
+                if (req->parser != NULL)
+                    apreq_add_hook(req->parser,
+                                   apreq_make_hook(pool, 
+                                                   apreq_hook_disable_uploads,
+                                                   NULL, NULL));
+            }
+            else {
+                /* remove all disable_uploads hooks */
+                apreq_hook_t *first = req->parser->hook;
+
+                while (first != NULL && first->hook == apreq_hook_disable_uploads)
+                    first = first->next;
+
+                req->parser->hook = first;
+
+                if (first != NULL) {
+                    apreq_hook_t *cur;
+
+                    for (cur = first->next; cur != NULL; cur = cur->next) {
+                        if (cur->hook == apreq_hook_disable_uploads)
+                            first->next = cur->next;
+                        else
+                            first = cur;
+                    }
+                }
+            }
         }
         else if (strcasecmp(attr, "UPLOAD_HOOK") == 0) {
-            ;
+            struct hook_ctx *ctx = apr_palloc(apreq_env_pool(req->env), sizeof *ctx);
+            if (upload_hook)
+                Perl_croak(aTHX_ "Apache::Request::config: "
+                           "cannot set UPLOAD_HOOK more than once");
+
+            ctx->hook_data = NULL;
+            ctx->hook = newSVsv(ST(j+1));
+            ctx->bucket_data = newSV(8000);
+            ctx->parent = SvREFCNT_inc(sv);
+#ifdef USE_ITHREADS
+            ctx->perl = aTHX;
+#endif
+            upload_hook = apreq_make_hook(pool, apreq_xs_upload_hook, NULL, ctx);
+            apreq_add_hook(req->parser, upload_hook);
+            apr_pool_cleanup_register(pool, ctx, upload_hook_cleanup, NULL);
         }
+
         else if (strcasecmp(attr, "HOOK_DATA") == 0) {
-            ;
+            if (hook_data)
+                Perl_croak(aTHX_ "Apache::Request::config: "
+                           "cannot set HOOK_DATA more than once");
+            hook_data = ST(j+1);
         }
         else {
             Perl_warn(aTHX_ "Apache::Request::config: "
                       "Unrecognized attribute %s, skipped", attr);
         }
     }
+
+    if (upload_hook && hook_data)
+        ((struct hook_ctx *)upload_hook->ctx)->hook_data = newSVsv(hook_data);
+
     XSRETURN(0);
 }
 

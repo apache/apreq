@@ -16,8 +16,6 @@
 
 #include "apreq.h"
 #include "apreq_env.h"
-#include "apreq_params.h"
-#include "apreq_cookie.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_env.h"

@@ -44,7 +44,7 @@
 APREQ_DECLARE(apreq_parser_t *)
     apreq_make_parser(apr_pool_t *pool,
                       const char *enctype,
-                      apr_status_t (*parser) APREQ_PARSER_ARGS,
+                      apr_status_t (*parser) (APREQ_PARSER_ARGS),
                       apreq_hook_t *hook,
                       void *ctx)
 {
@@ -58,7 +58,7 @@ APREQ_DECLARE(apreq_parser_t *)
 
 APREQ_DECLARE(apreq_hook_t *)
     apreq_make_hook(apr_pool_t *pool,
-                    apr_status_t (*hook) APREQ_HOOK_ARGS,
+                    apr_status_t (*hook) (APREQ_HOOK_ARGS),
                     apreq_hook_t *next,
                     void *ctx)
 {
@@ -146,7 +146,7 @@ static apr_status_t split_urlword(apr_table_t *t,
         decoded_len = apreq_decode((char *)v->name + off, data, dlen);
 
         if (decoded_len < 0) {
-            return APR_BADARG;
+            return APR_EGENERAL;
         }
 
         off += decoded_len;
@@ -179,7 +179,7 @@ static apr_status_t split_urlword(apr_table_t *t,
         decoded_len = apreq_decode(v->data + off, data, dlen);
 
         if (decoded_len < 0) {
-            return APR_BADCH;
+            return APR_EGENERAL;
         }
 
         off += decoded_len;
@@ -611,7 +611,7 @@ static apr_status_t brigade_start_string(apr_bucket_brigade *bb,
         bytes_to_check = MIN(slen,blen);
 
         if (strncmp(buf,start_string,bytes_to_check) != 0)
-            return APR_BADCH;
+            return APR_EGENERAL;
 
         slen -= bytes_to_check;
         start_string += bytes_to_check;
@@ -961,14 +961,14 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             if (cd == NULL) {
                 ctx->status = MFD_ERROR;
-                return APR_BADARG;
+                return APR_EGENERAL;
             }
 
             s = apreq_header_attribute(cd, "name", 4, &name, &nlen);
 
             if (s != APR_SUCCESS) {
                 ctx->status = MFD_ERROR;
-                return APR_BADARG;
+                return APR_EGENERAL;
             }
 
             s = apreq_header_attribute(cd, "filename", 8, &filename, &flen);
