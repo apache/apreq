@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/16 17:12:36 $]   -*-text-*-
+Last modified at [$Date: 2004/07/17 01:09:39 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -68,7 +68,6 @@ TODO:
       -  apreq_quote()
       -  apreq_quote_once()
       -  apreq_escape()
-      -  apreq_ua_cookie_version()
       -  apreq_encode_param()
 
     - CuTest needs va_arg to print comments for a failed unit test.

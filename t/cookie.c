@@ -104,6 +104,16 @@ static void rfc_cookie(CuTest *tc)
 
 }
 
+static void ua_version(CuTest *tc)
+{
+    apreq_cookie_version_t v;
+
+    v = apreq_ua_cookie_version(NULL);
+    CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_NETSCAPE, v);
+    v = apreq_ua_cookie_version("$Version=\"1\"");
+    CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_RFC, v);
+
+}
 
 CuSuite *testcookie(void)
 {
@@ -113,6 +123,7 @@ CuSuite *testcookie(void)
     SUITE_ADD_TEST(suite, jar_table_get);
     SUITE_ADD_TEST(suite, netscape_cookie);
     SUITE_ADD_TEST(suite, rfc_cookie);
+    SUITE_ADD_TEST(suite, ua_version);
 
     return suite;
 }

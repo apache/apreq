@@ -80,6 +80,31 @@ static void string_decoding_in_place(CuTest *tc)
     
 }
 
+static void header_attributes(CuTest *tc)
+{
+    const char hdr[] = "text/plain; boundary=\"-foo-\", charset=ISO-8859-1";
+    const char *val;
+    apr_size_t vlen;
+    apr_status_t s;
+
+    s = apreq_header_attribute(hdr, "none", 4, &val, &vlen);
+    CuAssertIntEquals(tc, APR_NOTFOUND, s);
+
+    s = apreq_header_attribute(hdr, "set", 3, &val, &vlen);
+    CuAssertIntEquals(tc, APR_NOTFOUND, s);
+
+    s = apreq_header_attribute(hdr, "boundary", 8, &val, &vlen);
+    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    CuAssertIntEquals(tc, 5, vlen);
+    CuAssertStrNEquals(tc, "-foo-", val, 5);
+
+    s = apreq_header_attribute(hdr, "charset", 7, &val, &vlen);
+    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    CuAssertIntEquals(tc, 10, vlen);
+    CuAssertStrNEquals(tc, "ISO-8859-1", val, 10);
+
+}
+
 
 CuSuite *testparam(void)
 {
@@ -89,6 +114,8 @@ CuSuite *testparam(void)
     SUITE_ADD_TEST(suite, request_args_get);
     SUITE_ADD_TEST(suite, params_as);
     SUITE_ADD_TEST(suite, string_decoding_in_place);
+    SUITE_ADD_TEST(suite, header_attributes);
+
     return suite;
 }
 

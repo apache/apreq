@@ -778,61 +778,63 @@ APREQ_DECLARE(apr_status_t)
                            const char *name, const apr_size_t nlen,
                            const char **val, apr_size_t *vlen)
 {
-    const char *loc = strchr(hdr, '='), *v;
+    const char *key, *v;
 
-    if (loc == NULL)
-        return APR_NOTFOUND;
+    while ((key = strchr(hdr, '=')) != NULL) {
 
-    v = loc + 1;
-    --loc;
+        v = key + 1;
+        --key;
 
-    while (apr_isspace(*loc) && loc - hdr > nlen)
-        --loc;
+        while (apr_isspace(*key) && key > hdr + nlen)
+            --key;
 
-    loc -= nlen - 1;
+        key -= nlen - 1;
 
-    while (apr_isspace(*v))
+        while (apr_isspace(*v))
             ++v;
 
-    if (*v == '"') {
-        ++v;
-        /* value is inside quotes */
-        for (*val = v; *v; ++v) {
-            switch (*v) {
-            case '"':
-                goto finish;
-            case '\\':
-                if (v[1] != 0)
-                    ++v;
-            default:
-                break;
+        if (*v == '"') {
+            ++v;
+            /* value is inside quotes */
+            for (*val = v; *v; ++v) {
+                switch (*v) {
+                case '"':
+                    goto finish;
+                case '\\':
+                    if (v[1] != 0)
+                        ++v;
+                default:
+                    break;
+                }
             }
         }
-    }
-    else {
-        /* value is not wrapped in quotes */
-        for (*val = v; *v; ++v) {
-            switch (*v) {
-            case ' ':
-            case ';':
-            case ',':
-            case '\t':
-            case '\r':
-            case '\n':
-                goto finish;
-            default:
-                break;
+        else {
+            /* value is not wrapped in quotes */
+            for (*val = v; *v; ++v) {
+                switch (*v) {
+                case ' ':
+                case ';':
+                case ',':
+                case '\t':
+                case '\r':
+                case '\n':
+                    goto finish;
+                default:
+                    break;
+                }
             }
         }
-    }
 
  finish:
-    if (strncasecmp(loc,name,nlen) != 0
-        || (loc > hdr && apr_isalpha(loc[-1])))
-        return apreq_header_attribute(v, name, nlen, val, vlen);
+        if (strncasecmp(key, name, nlen) == 0 
+            && (key == hdr || !apr_isalpha(key[-1])))
+        {
+            *vlen = v - *val;
+            return APR_SUCCESS;
+        }
+        else
+            hdr = v + 1;
+    }
 
-    *vlen = v - *val;
-    return APR_SUCCESS;
-
-
+    return APR_NOTFOUND;
 }
