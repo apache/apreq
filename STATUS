@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/09/13 07:04:02 $]   -*-text-*-
+Last modified at [$Date$]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.05 in development.
@@ -30,13 +30,6 @@ CURRENT VOTES:
              0:
             -1:
 
-    - We are moving from cvs to subversion as soon as it is convenient.
-      Vote was taken in March 2004 (http://marc.theaimsgroup.com/?t=107919363000001&r=1&w=2)
-      and the results were as follows:
-
-            +1: joes, randyk, stas
-             0:
-            -1:
 
 TODO:
 
