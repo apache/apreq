@@ -535,9 +535,7 @@ Changes to the 1.X API:
 
 =item * C<Apache::Cookie::parse> is gone.
 
-=item * C<Apache::Cookie::new> no longer encodes the supplied cookie name, and it
-        now accepts an objects as cookie values, assuming the object has a valid
-        C<freeze> method.  
+=item * C<Apache::Cookie::new> no longer encodes the supplied cookie name.  
 
 =item * C<name()> and <value()> no longer accept a "set" argument. In other words,
         neither a cookie's name, nor its value, may be modified.  A new cookie
