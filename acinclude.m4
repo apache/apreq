@@ -97,8 +97,6 @@ AC_DEFUN([AC_APREQ], [
         APR_LDLIBS=`$APR_CONFIG --link-ld --ldflags --libs`
         APU_LDLIBS=`$APU_CONFIG --link-ld --ldflags --libs`
 
-        CPPFLAGS="$CPPFLAGS `$APR_CONFIG --cppflags`"
-        
         dnl Absolute source/build directory
         abs_srcdir=`(cd $srcdir && pwd)`
         abs_builddir=`pwd`
@@ -110,6 +108,26 @@ AC_DEFUN([AC_APREQ], [
 
         if test "x$USE_MAINTAINER_MODE" != "xno"; then
             CPPFLAGS="$CPPFLAGS -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -Werror"
+        fi
+
+        if test "x$CPPFLAGS" = "x"; then
+           echo "  setting CPPFLAGS to \"`$APR_CONFIG --cppflags`\""
+           CPPFLAGS="`$APR_CONFIG --cppflags`"
+        else
+           apr_addto_bugger="`$APR_CONFIG --cppflags`"
+           for i in $apr_addto_bugger; do
+             apr_addto_duplicate="0"
+             for j in $CPPFLAGS; do
+               if test "x$i" = "x$j"; then
+                 apr_addto_duplicate="1"
+                 break
+               fi
+             done
+             if test $apr_addto_duplicate = "0"; then
+               echo "  adding \"$i\" to CPPFLAGS"
+               CPPFLAGS="$CPPFLAGS $i"
+             fi
+           done
         fi
 
         get_version="$abs_srcdir/build/get-version.sh"
