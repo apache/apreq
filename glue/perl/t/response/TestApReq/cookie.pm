@@ -20,7 +20,7 @@ sub handler {
     my $test = $req->param('test');
     my $key  = $req->param('key');
 
-    if ($cookies{$key}) {
+    if ($key and $cookies{$key}) {
         if ($test eq "bake") {
             $cookies{$key}->bake;
         }
