@@ -12,6 +12,7 @@ use Archive::Tar;
 use File::Path;
 use LWP::Simple;
 my ($apache, $debug, $help, $no_perl, $perl);
+my $VERSION = '2.03-dev';
 my $result = GetOptions( 'with-apache2=s' => \$apache,
 			 'debug' => \$debug,
 			 'help' => \$help,
@@ -124,13 +125,14 @@ docs:   \$(DOXYGEN_CONF)
 END
 
     my $bin_abspath = Win32::GetShortPathName(dirname($doxysearch));
-    open(my $conf, "$apreq_home/build/doxygen.conf") 
-        or die "Cannot read $apreq_home/build/doxygen.conf: $!";
+    open(my $conf, "$apreq_home/build/doxygen.conf.in") 
+        or die "Cannot read $apreq_home/build/doxygen.conf.in: $!";
     open(my $win32_conf, ">$apreq_home/build/doxygen.conf.win32")
         or die "Cannot write to $apreq_home/build/doxygen.conf.win32: $!";
     while (<$conf>) {
-        s/^(PERL_PATH\s+=\s+).*/$1"$^X"/;
-        s/^(BIN_ABSPATH\s+=\s+).*/$1$bin_abspath/;
+        s/\@PERL\@/"$^X"/;
+        s/\@PACKAGE\@/libapreq2/;
+        s/\@VERSION\@/$VERSION/;
         print $win32_conf $_;
     }
     close $conf;
