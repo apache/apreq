@@ -445,7 +445,7 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
     /*  The format string must be large enough to accomodate all
      *  of the cookie attributes.  The current attributes sum to 
      *  ~90 characters (w/ 6-8 padding chars per attr), so anything 
-     *  over 100 number be fine.
+     *  over 100 should be fine.
      */
 
     char format[128] = "%s=%s";
@@ -531,150 +531,29 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
 APREQ_DECLARE(char*) apreq_cookie_as_string(const apreq_cookie_t *c,
                                             apr_pool_t *p)
 {
-    char s[APREQ_COOKIE_MAX_LENGTH];
-    int n = apreq_serialize_cookie(s, APREQ_COOKIE_MAX_LENGTH, c);
-
-    if (n < APREQ_COOKIE_MAX_LENGTH)
-        return apr_pstrmemdup(p, s, n);
-    else
-        return NULL;
+    int n = apreq_cookie_serialize(c, NULL, 0);
+    char *s = apr_palloc(p, n + 1);
+    apreq_cookie_serialize(c, s, n + 1);
+    return s;
 }
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
                                               void *env)
 {
     char *s = apreq_cookie_as_string(c,apreq_env_pool(env));
-
-    if (s == NULL) {
-        apreq_log(APREQ_ERROR APR_EGENERAL, env, 
-                  "Serialized cookie exceeds APREQ_COOKIE_MAX_LENGTH = %d", 
-                    APREQ_COOKIE_MAX_LENGTH);
-        return APR_EGENERAL;
-    }
-
     return apreq_env_set_cookie(env, s);
 }
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
                                                void *env)
 {
-    char *s = apreq_cookie_as_string(c,apreq_env_pool(env));
+    char *s;
+    s = apreq_cookie_as_string(c, apreq_env_pool(env));
 
-    if ( s == NULL ) {
-        apreq_log(APREQ_ERROR APR_EGENERAL, env,
-                  "Serialized cookie exceeds APREQ_COOKIE_MAX_LENGTH = %d", 
-                    APREQ_COOKIE_MAX_LENGTH);
-        return APR_EGENERAL;
-    }
-    else if ( c->version == NETSCAPE ) {
-        apreq_log(APREQ_ERROR APR_EGENERAL, env,
-                  "Cannot bake2 a Netscape cookie: %s", s);
-        return APR_EGENERAL;
-    }
+    if ( c->version != NETSCAPE )
+        return apreq_env_set_cookie2(env, s);
 
-    return apreq_env_set_cookie2(env, s);
+    apreq_log(APREQ_ERROR APR_EGENERAL, env,
+              "Cannot bake2 a Netscape cookie: %s", s);
+    return APR_EGENERAL;
 }
-
-
-
-
-/* XXX: The functions below belong somewhere else, since they
-   generally make use of "common conventions" for cookie values. 
-   (whereas the cookie specs regard values as opaque) */
-
-#ifdef NEEDS_A_NEW_HOME
-
-void (apreq_cookie_push)(apreq_cookie_t *c, apreq_value_t *v)
-{
-    apreq_cookie_push(c,v);
-}
-
-void apreq_cookie_addn(apreq_cookie_t *c, char *val, int len)
-{
-    apreq_value_t *v = (apreq_value_t *)apr_array_push(c->values.data);
-    v->data = val;
-    v->size = len;
-}
-
-void apreq_cookie_add(apreq_cookie_t *c, char *val, int len)
-{
-    apr_array_header_t *a = (apr_array_header_t *)c->values.data;
-    apreq_cookie_addn(c, apr_pstrndup(a->pool, val, len), len);
-}
-
-APREQ_dDECODE(apreq_cookie_decode)
-{
-    apr_array_header_t *a;
-    apreq_value_t *v;
-    apr_off_t len;
-    char *word;
-
-    word = apr_pstrdup(p,key);
-    len  = apreq_unescape(word);
-    if (len <= 0)       /* key size must be > 0 */
-        return NULL;
-
-    a = apr_array_make(p, APREQ_NELTS, sizeof(apreq_value_t));
-    v = (apreq_value_t *)apr_array_push(a);
-    v->data = word;
-    v->size = len;
-
-    while ( *val && (word = apr_getword(p, &val, '&')) ) {
-        len = apreq_unescape(word);
-        if (len < 0)
-            return NULL; /* bad escape data */
-        v = (apreq_value_t *)apr_array_push(a);
-        v->data = word;
-        v->size = len;
-    }
-
-    return a;
-}
-
-static const char c2x_table[] = "0123456789abcdef";
-APREQ_dENCODE(apreq_cookie_encode)
-{
-    apr_size_t len = 0;
-    char *res, *data;
-    int i;
-
-    if (s == 0)
-        return apr_pcalloc(p,1);
-
-    for (i = 0; i < s; ++i)
-        len += a[i].size;
-
-    res = data = apr_palloc(p, 3*len + a->nelts);
-
-    for (i = 0; i < s; ++i) {
-        apr_size_t n = a[i].size;
-        const unsigned char *s = (const unsigned char *)a[i].data;
-
-        while (n--) {
-            unsigned c = *s;
-            if (apr_isalnum(c))
-                *data++ = c;
-            else if (c == ' ') 
-                *data++ = '+';
-            else {
-#if APR_CHARSET_EBCDIC
-                c = apr_xlate_conv_byte(ap_hdrs_to_ascii, (unsigned char)c);
-#endif
-                *data++ = '%';
-                *data++ = c2x_table[c >> 4];
-                *data++ = c2x_table[c & 0xf];
-            }
-            ++s;
-        }
-        *data++ = (i == 0) ? '=' : '&';
-    }
-
-    if (s == 1)
-        data[0] = 0;    /* no value: name= */
-    else
-        data[-1] = 0;   /* replace final '&' with '\0' */
-
-    return res;
-}
-
-#endif /* NEEDS_A_NEW_HOME */
