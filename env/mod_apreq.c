@@ -59,6 +59,7 @@
 #include "apr_tables.h"
 #include "apr_buckets.h"
 #include "http_request.h"
+#include "apr_strings.h"
 
 #include "apreq.h"
 #include "apreq_env.h"
@@ -84,8 +85,8 @@ struct env_config {
 };
 
 struct filter_ctx {
-    apr_bucket_brigade *bb_in;
-    apr_bucket_brigade *bb_out;
+    apr_bucket_brigade *bb;
+    apr_off_t           bytes_seen;
     apr_status_t        status;
 };
 
@@ -105,7 +106,7 @@ APREQ_DECLARE_LOG(apreq_log)
 }
 
 
-APREQ_DECLARE(const char*)apreq_env_args(void *env)
+APREQ_DECLARE(const char*)apreq_env_query_string(void *env)
 {
     dR;
     return r->args;
@@ -159,16 +160,16 @@ APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar)
 static ap_filter_t *get_apreq_filter(request_rec *r)
 {
     struct env_config *cfg = get_cfg(r);
-
+    ap_filter_t *f;
     if (cfg->f != NULL)
         return cfg->f;
 
-    for (cfg->f  = r->input_filters; 
-         cfg->f != NULL && cfg->f->frec->ftype == AP_FTYPE_CONTENT_SET;  
-         cfg->f  = cfg->f->next)
+    for (f  = r->input_filters; 
+         f != NULL && f->frec->ftype == AP_FTYPE_CONTENT_SET;  
+         f  = f->next)
     {
-        if (strcmp(cfg->f->frec->name, filter_name) == 0)
-            return cfg->f;
+        if (strcmp(f->frec->name, filter_name) == 0)
+            return cfg->f = f;
     }
     return cfg->f = ap_add_input_filter(filter_name, NULL, r, r->connection);
 }
@@ -186,6 +187,9 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
         c->req = req;
         return old;
     }
+
+    apreq_log(APREQ_DEBUG 0, r, 
+              "apreq request is now initialized" );
     return c->req;
 }
 
@@ -201,32 +205,74 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
     return ap_get_brigade(f, NULL, AP_MODE_SPECULATIVE, block, bytes);
 }
 
-static int apreq_filter_init(ap_filter_t *f)
+
+static apr_status_t apreq_filter_init(ap_filter_t *f)
 {
     request_rec *r = f->r;
-    apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
-    struct env_config *cfg = get_cfg(r);
     struct filter_ctx *ctx;
 
+    /* Now we have to deal with the possibility that apreq may have
+     * prefetched data prior to apache running the ap_invoke_filter_init
+     * hook.
+     */
+
     if (f->ctx) {
-        apreq_log(APREQ_ERROR 500, r, "apreq filter is already initialized!");
-        return 500; /* filter already initialized */
+
+        /* must be inside config.c:ap_invoke_handler -> 
+         * ap_invoke_filter_init (r->input_filters)
+         */
+        ctx = f->ctx;
+
+        /*
+         * first we relocate the filter to the top of the chain.
+         */
+
+        if (f != r->input_filters) {
+            ap_filter_t *top = r->input_filters;
+            ap_remove_input_filter(f);
+            r->input_filters = f;
+            f->next = top;
+        }
+
+        /* We may have already prefetched some data, perhaps
+         * at the behest of an aaa handler, or during a speculative
+         * read (via apreq_env_read) prior to an internal redirect.
+         * We need to drop whatever data we may already have parsed.
+         */
+
+        if (ctx->bytes_seen) {
+            apreq_request_t *req = apreq_env_request(r, NULL);
+
+            /* must dump the current parser because 
+             * its existing state is now incorrect.
+             * NOTE:
+             *   req->parser != NULL && req->body != NULL, since 
+             *   apreq_parse_request was called at least once already.
+             */
+
+             req->parser = NULL;
+             apr_table_clear(req->body);
+
+             ctx->bytes_seen = 0;
+             apr_brigade_cleanup(ctx->bb);
+             ctx->status = APR_INCOMPLETE;
+        }
+    } 
+    else {
+        apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
+        ctx = apr_palloc(r->pool, sizeof *ctx);
+        f->ctx      = ctx;
+        ctx->bb     = apr_brigade_create(r->pool, alloc);
+        ctx->bytes_seen = 0;
+        ctx->status = APR_INCOMPLETE;
+
+        apreq_log(APREQ_DEBUG 0, r, 
+                  "apreq filter is initialized" );
     }
-    ctx = apr_palloc(r->pool, sizeof *ctx);
-    f->ctx      = ctx;
-    ctx->bb_in  = apr_brigade_create(r->pool, alloc);
-    ctx->bb_out = apr_brigade_create(r->pool, alloc);
-    ctx->status = APR_INCOMPLETE;
-
-    if (cfg->req == NULL)
-        cfg->req = apreq_request(r, r->args);
-
-    if (cfg->req->body == NULL)
-        cfg->req->body = apreq_table_make(r->pool, APREQ_NELTS);
-
-    apreq_log(APREQ_DEBUG 0, r, "filter initialized successfully");
-    return 0;
+    
+    return APR_SUCCESS;
 }
+
 
 static apr_status_t apreq_filter(ap_filter_t *f,
                                  apr_bucket_brigade *bb,
@@ -235,80 +281,145 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                                  apr_off_t readbytes)
 {
     request_rec *r = f->r;
-    struct apreq_request_t *req = apreq_request(r, NULL);
     struct filter_ctx *ctx;
-    apr_status_t rv;
     apr_bucket *e;
     int saw_eos = 0;
+    apr_status_t rv;
 
     if (f->ctx == NULL)
         apreq_filter_init(f);
 
     ctx = f->ctx;
 
+    switch (ctx->status) {
+    case APR_INCOMPLETE:
+        break;
+    case APR_EOF:
+        return APR_EOF;
+
+    case APR_SUCCESS:
+    default:
+        return ap_get_brigade(f->next, bb, mode, block, readbytes);
+    }
+
     switch (mode) {
 
     case AP_MODE_SPECULATIVE: 
-        if (bb != NULL) { /* not a prefetch read  */
-            if (APR_BRIGADE_EMPTY(ctx->bb_out))
-                return ap_get_brigade(f->next, bb, mode, block, readbytes);
+        if (bb == NULL) {
 
-            APR_BRIGADE_FOREACH(e,ctx->bb_out) {
-                apr_bucket *b;
-                apr_bucket_copy(e,&b);
-                APR_BRIGADE_INSERT_TAIL(bb,b);
+            /* prefetch read! */
+
+            apr_off_t skip_bytes = ctx->bytes_seen;
+
+            bb = ctx->bb;
+            e = APR_BRIGADE_LAST(bb);
+            rv = ap_get_brigade(f->next, bb, mode, block,
+                                readbytes + skip_bytes);
+            if (rv != APR_SUCCESS)
+                return rv;
+            e = APR_BUCKET_NEXT(e);
+
+            /* throw away buckets we've already seen */
+
+            while (skip_bytes > 0 && e != APR_BRIGADE_SENTINEL(bb)) {
+                apr_bucket *f = e;
+                apr_size_t len;
+                const char *dummy;
+
+                if (APR_BUCKET_IS_EOS(e)) {
+                    ctx->status = APR_EOF;
+                    break;
+                }
+                rv = apr_bucket_read(e, &dummy, &len, APR_BLOCK_READ);
+                if (rv != APR_SUCCESS)
+                    return rv;
+
+                if (skip_bytes < len) {
+                    apr_bucket_split(e, skip_bytes);
+                    len = skip_bytes;
+                }
+                e = APR_BUCKET_NEXT(e);
+                apr_bucket_delete(f);
+                skip_bytes -= len;
+            }
+
+            /* add the new buckets to the ctx->bytes_seen count */
+
+            while (e != APR_BRIGADE_SENTINEL(bb)) {
+                apr_bucket *f = e;
+                apr_size_t len;
+                const char *dummy;
+
+                if (APR_BUCKET_IS_EOS(e)) {
+                    ctx->status = APR_EOF;
+                    break;
+                }
+                rv = apr_bucket_read(e, &dummy, &len, APR_BLOCK_READ);
+                if (rv != APR_SUCCESS)
+                    return rv;
+
+                ctx->bytes_seen += len;
             }
         }
-        mode = AP_MODE_READBYTES;
-        bb = ctx->bb_out;
+        else {
+            /* not a prefetch read; can simply get out of the way */
+            return ap_get_brigade(f->next, bb, mode, block, readbytes);
+        }
         break;
 
     case AP_MODE_EXHAUSTIVE:
     case AP_MODE_READBYTES:
-        APR_BRIGADE_CONCAT(bb, ctx->bb_out);
+        e = APR_BRIGADE_LAST(bb);
+
+        rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
+            if (rv != APR_SUCCESS)
+                return rv;
+
+        for (e  = APR_BUCKET_NEXT(e);
+             e != APR_BRIGADE_SENTINEL(bb); 
+             e  = APR_BUCKET_NEXT(e)) 
+        {
+            apr_bucket *b;
+
+            if (ctx->bytes_seen) {
+                const char *dummy;
+                apr_size_t len;
+                rv = apr_bucket_read(e, &dummy, &len, APR_BLOCK_READ);
+                if (rv != APR_SUCCESS)
+                    return rv;
+                if (ctx->bytes_seen < len) {
+                    apr_bucket_split(e, ctx->bytes_seen);
+                    len = ctx->bytes_seen;
+                }
+                ctx->bytes_seen -= len;
+                continue;
+            }
+
+            apr_bucket_copy(e, &b);
+            apr_bucket_setaside(b, r->pool);
+            APR_BRIGADE_INSERT_TAIL(ctx->bb, b);
+
+            if (APR_BUCKET_IS_EOS(e)) {
+                ctx->status = APR_EOF;
+                break;
+            }
+        }
         break;
 
     case AP_MODE_EATCRLF:
     case AP_MODE_GETLINE:
-        if (!APR_BRIGADE_EMPTY(ctx->bb_out))
-            return APR_ENOTIMPL;
-
-    default: 
-        return ap_get_brigade(f->next, bb, mode, block, readbytes);
+    default:
+        return APR_ENOTIMPL;
     }
 
-    e = APR_BRIGADE_LAST(bb);
-    rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
-    if (rv != APR_SUCCESS || ctx->status != APR_INCOMPLETE)
-        return rv;
-
-    e = APR_BUCKET_NEXT(e);
-
-    for ( ;e != APR_BRIGADE_SENTINEL(bb); e = APR_BUCKET_NEXT(e)) {
-        apr_bucket *b;
-        apr_bucket_copy(e, &b);
-        apr_bucket_setaside(b, r->pool);
-        APR_BRIGADE_INSERT_TAIL(ctx->bb_in, b);
-
-        if (APR_BUCKET_IS_EOS(e)) {
-            saw_eos = 1;
-            break;
-        }
-    }
-
-    ctx->status = apreq_parse_request(req, ctx->bb_in);
-
-    if (ctx->status == APR_INCOMPLETE && saw_eos == 1)
-        ctx->status = APR_EOF; /* parser choked on EOS bucket */
-
-    apreq_log(APREQ_DEBUG rv, r, "filter parser returned(%d)", ctx->status);
-    return rv;
+    rv = apreq_parse_request(apreq_request(r, NULL), ctx->bb);
+    return rv == APR_INCOMPLETE ? APR_SUCCESS : rv;
 }
 
 
 static void register_hooks (apr_pool_t *p)
 {
-    ap_register_input_filter(filter_name, apreq_filter, apreq_filter_init, 
+    ap_register_input_filter(filter_name, apreq_filter, apreq_filter_init,
                              AP_FTYPE_CONTENT_SET);
 }
 
