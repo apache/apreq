@@ -4,6 +4,10 @@
 @section v2_03_dev Changes with libapreq2-2.03-dev
 
 
+- February 16, 2004 - Perl API [stas]
+
+Add a proper support for ithreads
+
 - December 31, 2003 - C API [Swen Schillig, joes]
 
 Fixed bug in calculation of Netscape cookie expiration dates.

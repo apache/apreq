@@ -74,7 +74,7 @@
  * @return    The object, if found;  otherwise NULL.
  */
 APR_INLINE
-static SV *apreq_xs_find_obj(SV *in, const char *key)
+static SV *apreq_xs_find_obj(pTHX_ SV *in, const char *key)
 {
     const char altkey[] = { '_', key[0] };
 
@@ -112,9 +112,9 @@ static SV *apreq_xs_find_obj(SV *in, const char *key)
  * and produces a pointer to the object's C analog.
  */
 APR_INLINE
-static void *apreq_xs_perl2c(SV* in, const char *name)
+static void *apreq_xs_perl2c(pTHX_ SV* in, const char *name)
 {
-    SV *sv = apreq_xs_find_obj(in, name);
+    SV *sv = apreq_xs_find_obj(aTHX_ in, name);
     if (sv == NULL)
         return NULL;
     else 
@@ -126,7 +126,7 @@ static void *apreq_xs_perl2c(SV* in, const char *name)
  * and produces a pointer to the underlying C environment.
  */ 
 APR_INLINE
-static void *apreq_xs_perl2env(SV *sv)
+static void *apreq_xs_perl2env(pTHX_ SV *sv)
 {
     MAGIC *mg;
     if (sv != NULL && (mg = mg_find(sv, PERL_MAGIC_ext)))
@@ -174,8 +174,9 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
 
 
 #define apreq_xs_2sv(t,class) apreq_xs_c2perl(aTHX_ t, env, class)
-#define apreq_xs_sv2(type,sv)((apreq_##type##_t *)apreq_xs_perl2c(sv, #type))
-#define apreq_xs_sv2env(sv) apreq_xs_perl2env(sv)
+#define apreq_xs_sv2(type,sv)((apreq_##type##_t *)apreq_xs_perl2c(aTHX_ sv, \
+                                                                  #type))
+#define apreq_xs_sv2env(sv) apreq_xs_perl2env(aTHX_ sv)
 
 /** Converts apreq_env to a Perl package, which forms the
  * base class for Apache::Request and Apache::Cookie::Jar objects.
@@ -199,7 +200,7 @@ static XS(apreq_xs_##type##_env)                        \
         XSRETURN(0);                                    \
                                                         \
     if (SvROK(ST(0))) {                                 \
-        SV *sv = apreq_xs_find_obj(ST(0), #type);       \
+        SV *sv = apreq_xs_find_obj(aTHX_ ST(0), #type); \
         void *env = apreq_xs_sv2env(sv);                \
                                                         \
         if (env)                                        \
