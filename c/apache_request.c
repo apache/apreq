@@ -470,8 +470,9 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 
             /* mozilla empty-file (missing CRLF) hack */
             fill_buffer(mbuff);
-            if(strEQ(mbuff->buf_begin, mbuff->boundary)) { 
-                r->remaining -= 2; 
+            if( strEQN(mbuff->buf_begin, mbuff->boundary, 
+                      strlen(mbuff->boundary)) ) {
+                r->remaining -= 2;
                 continue; 
             }
 
