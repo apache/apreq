@@ -132,6 +132,25 @@ Get or set the secure flag for the cookie:
 
 =back
 
+=head1 CAVEATS
+
+=over 4
+
+The underlying C code for the Apache::Cookie module
+presents some unexpected results for Perl programmers
+when dealing with null bytes ('\0's) inside cookies.
+Native C commonly uses "null-terminated strings" when
+storing scalar string values. This means that C uses
+a '\0' byte to mark the end of the string(EOS). What
+this means for Perl programmers is that if you wish to
+create a cookie with a '\0' byte, the underlying C library
+will simply truncate the value at the '\0' byte.  A cookie
+with the value '\0' will similarly simply be ignored, as
+the C library will not detect any content whatsoever.
+This problem is solved in the libapreq-2.0 library.
+
+=back
+
 =head1 BUGS
 
 =over 4
@@ -151,3 +170,4 @@ Apache(3), Apache::Request(3), CGI::Cookie(3)
 =head1 AUTHOR
 
 Doug MacEachern, updated for v1.0 by Joe Schaefer
+updated for v1.1 by Issac Goldstand
