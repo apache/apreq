@@ -58,11 +58,16 @@ Win32 build:
   C:\httpd-apreq-2> nmake perl_glue
   C:\httpd-apreq-2> nmake perl_test
 
-SVN ACCESS
+SVN (Subversion) ACCESS
 
 Development of httpd-apreq-2 can be followed through the svn repository:
 
-  $ svn checkout https://svn.apache.org/repos/asf/httpd/apreq/trunk/ httpd-apreq-2
+  $ svn checkout http://svn.apache.org/repos/asf/httpd/apreq/trunk/ httpd-apreq-2
+
+Developers with commit access must use the https protocol instead;
+note that, if you are compiling svn from sources, you must
+supply the configure script with the appropriate switch to
+enable ssl.
 
 Subversion sources, and binaries for some platforms, may be obtained
 through the home page:
@@ -78,9 +83,6 @@ In particular,
      http://svnbook.red-bean.com/en/1.0/apa.html
 
 contains a guide for users familiar with cvs.
-
-
-
 
 
 
