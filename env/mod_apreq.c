@@ -106,7 +106,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER 20040615
+#define APREQ_MODULE_MAGIC_NUMBER 20040620
 
 
 static void apache2_log(const char *file, int line, int level, 
@@ -347,6 +347,48 @@ static apr_ssize_t apache2_max_brigade(void *env, apr_ssize_t bytes)
     return c->max_brigade;
 }
 
+/* if we need to fiddle with the filter stack, now's the time :-) */
+static apr_status_t apreq_filter_init(ap_filter_t *f)
+{
+    request_rec *r = f->r;
+    struct env_config *cfg = get_cfg(r);
+    apreq_request_t *req = cfg->req;
+    ap_filter_t *in;
+
+    if (f == r->input_filters)
+        return APR_SUCCESS;
+
+    if (f != r->proto_input_filters) {
+        for (in = r->input_filters; in != r->proto_input_filters; 
+             in = in->next)
+        {
+            if (f == in) {
+                if (strcmp(r->input_filters->frec->name, filter_name) == 0) {
+                    /* this intermediate filter is superfluous- remove it */
+                    if (cfg->f == f)
+                        cfg->f = r->input_filters;
+                    ap_remove_input_filter(f);
+                }
+                else
+                    apreq_filter_relocate(f);
+
+                return APR_SUCCESS;
+            }
+        }
+    }
+
+    /* else this is a protocol filter which may still be active.
+     * if it is, we must reset it here.
+     */
+    if (cfg->f == f) {
+        cfg->f = NULL;
+        if (req) {
+            req->body = NULL;
+            req->parser = NULL;
+        }
+    }
+    return APR_SUCCESS;
+}
 
 static apr_status_t apreq_filter(ap_filter_t *f,
                                  apr_bucket_brigade *bb,
@@ -385,12 +427,11 @@ static apr_status_t apreq_filter(ap_filter_t *f,
              * append a new apreq filter to the top of the
              * chain and flush out the parser data
              */
-            get_apreq_filter(r);
+            cfg->f = NULL;
             if (req) {
                 req->parser = NULL;
                 req->body = NULL;
             }
-            /* assert(bb != NULL); this must never be a prefetch read */
         }
     }
 
@@ -519,7 +560,7 @@ static void register_hooks (apr_pool_t *p)
 {
     const apreq_env_t *old_env;
     old_env = apreq_env_module(&apache2_module);
-    ap_register_input_filter(filter_name, apreq_filter, NULL,
+    ap_register_input_filter(filter_name, apreq_filter, apreq_filter_init,
                              AP_FTYPE_CONTENT_SET);
 }
 
