@@ -13,76 +13,12 @@
 **  See the License for the specific language governing permissions and
 **  limitations under the License.
 */
-#include "apr_optional.h"
 
 /* avoid namespace collisions from perl's XSUB.h */
 #include "modperl_perl_unembed.h"
 
 /* XXX modperl_* dependency for T_HASHOBJ support */
 #include "modperl_common_util.h"
-
-
-/* Temporary work-around for missing apr_perlio.h file.
- * #include "apr_perlio.h" 
- */
-#ifndef APR_PERLIO_H
-
-#ifdef PERLIO_LAYERS
-#include "perliol.h"
-#else 
-#include "iperlsys.h"
-#endif
-
-#include "apr_portable.h"
-#include "apr_file_io.h"
-#include "apr_errno.h"
-
-#ifndef MP_SOURCE_SCAN
-#include "apr_optional.h"
-#endif
-
-/* 5.6.0 */
-#ifndef IoTYPE_RDONLY
-#define IoTYPE_RDONLY '<'
-#endif
-#ifndef IoTYPE_WRONLY
-#define IoTYPE_WRONLY '>'
-#endif
-
-typedef enum {
-    APR_PERLIO_HOOK_READ,
-    APR_PERLIO_HOOK_WRITE
-} apr_perlio_hook_e;
-
-void apr_perlio_init(pTHX);
-
-/* The following functions can be used from other .so libs, they just
- * need to load APR::PerlIO perl module first
- */
-#ifndef MP_SOURCE_SCAN
-
-#ifdef PERLIO_LAYERS
-PerlIO *apr_perlio_apr_file_to_PerlIO(pTHX_ apr_file_t *file, apr_pool_t *pool,
-                                      apr_perlio_hook_e type);
-APR_DECLARE_OPTIONAL_FN(PerlIO *,
-                        apr_perlio_apr_file_to_PerlIO,
-                        (pTHX_ apr_file_t *file, apr_pool_t *pool,
-                         apr_perlio_hook_e type));
-#endif /* PERLIO_LAYERS */
-
-
-SV *apr_perlio_apr_file_to_glob(pTHX_ apr_file_t *file, apr_pool_t *pool,
-                                apr_perlio_hook_e type);
-APR_DECLARE_OPTIONAL_FN(SV *,
-                        apr_perlio_apr_file_to_glob,
-                        (pTHX_ apr_file_t *file, apr_pool_t *pool,
-                         apr_perlio_hook_e type));
-#endif /* MP_SOURCE_SCAN */
-
-#endif /*APR_PERLIO_H*/
-
-
-
 
 #define apreq_xs_upload_error_check   do {                              \
     int n = PL_stack_sp - (PL_stack_base + ax - 1);                     \
@@ -291,6 +227,7 @@ static XS(apreq_xs_upload_size)
     }
     XSRETURN_IV((IV)len);
 }
+
 static XS(apreq_xs_upload_type)
 {
     dXSARGS;
@@ -315,60 +252,170 @@ static XS(apreq_xs_upload_type)
     XSRETURN(1);
 }
 
-static APR_OPTIONAL_FN_TYPE(apr_perlio_apr_file_to_glob) *f2g;
-
-static XS(apreq_xs_upload_fh)
+static XS(apreq_xs_upload_brigade_copy)
 {
     dXSARGS;
-    MAGIC *mg;
-    void *env;
-    apr_bucket_brigade *bb;
-    apr_status_t s;
-    apr_off_t len;
-    apr_file_t *file;
+    apr_bucket_brigade *bb, *bb_copy;
+    char *class;
 
-    if (items != 1 || !SvROK(ST(0)))
-        Perl_croak(aTHX_ "Usage: $upload->fh()");
+    if (items != 2 || !SvPOK(ST(0)) || !SvROK(ST(1)))
+        Perl_croak(aTHX_ "Usage: Apache::Upload::Brigade->new($bb)");
 
-    if (!(mg = mg_find(SvRV(ST(0)), PERL_MAGIC_ext)))
-        Perl_croak(aTHX_ "$upload->fh(): can't find env");
+    class = SvPV_nolen(ST(0));
+    bb = (apr_bucket_brigade *)SvIVX(SvRV(ST(1)));
+    bb_copy = apr_brigade_create(bb->p,bb->bucket_alloc);
+    APREQ_BRIGADE_COPY(bb_copy, bb);
 
-    env = mg->mg_ptr;
-    bb = apreq_xs_sv2param(ST(0))->bb;
-    file = apreq_brigade_spoolfile(bb);
-
-    if (file == NULL) {
-        apr_bucket *last;
-        const char *tmpdir = apreq_env_temp_dir(env, NULL);
-
-        s = apreq_file_mktemp(&file, apreq_env_pool(env), tmpdir);
-
-        if (s != APR_SUCCESS) {
-            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_fh:"
-                      "apreq_file_mktemp failed");
-            Perl_croak(aTHX_ "$upload->fh: can't make tempfile");
-        }
-
-        s = apreq_brigade_fwrite(file, &len, bb);
-
-        if (s != APR_SUCCESS) {
-            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_fh:"
-                      "apreq_brigade_fwrite failed");
-            Perl_croak(aTHX_ "$upload->fh: can't write brigade to tempfile");
-        }
-
-        last = apr_bucket_file_create(file, len, 0, bb->p, bb->bucket_alloc);
-        APR_BRIGADE_INSERT_TAIL(bb, last);
-    }
-
-    /* Reset seek pointer before passing apr_file_t to perl. */
-    len = 0;
-    apr_file_seek(file, 0, &len);
-
-    /* Should we pass a dup(2) of the file instead? */
-    ST(0) = f2g(aTHX_ file, bb->p, APR_PERLIO_HOOK_READ);
+    ST(0) = sv_2mortal(sv_setref_pv(newSV(0), class, bb_copy));
     XSRETURN(1);
 }
+
+static XS(apreq_xs_upload_brigade_read)
+{
+    dXSARGS;
+    apr_bucket_brigade *bb;
+    apr_bucket *e, *end;
+    IV want = -1, offset = 0;
+    SV *sv;
+    apr_status_t s;
+    char *buf;
+
+    switch (items) {
+    case 4:
+        offset = SvIV(ST(3));
+    case 3:
+        want = SvIV(ST(2));
+    case 2:
+        sv = ST(1);
+        bb = (apr_bucket_brigade *)SvIVX(SvRV(ST(0)));
+        break;
+    default:
+        Perl_croak(aTHX_ "Usage: $bb->READ($buf,$len,$off)");
+    }
+
+    if (want == 0)
+        XSRETURN_IV(0);
+
+    if (APR_BRIGADE_EMPTY(bb))
+        XSRETURN_UNDEF;
+
+
+    if (want == -1) {
+        const char *data;
+        apr_size_t dlen;
+        e = APR_BRIGADE_FIRST(bb);
+        s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
+        if (s != APR_SUCCESS)
+            apreq_xs_croak(aTHX_ newHV(), s, 
+                           "Apache::Request::Upload::Brigade::READ "
+                           "apr_bucket_read failed", "APR::Error");
+        want = dlen;
+        end = APR_BUCKET_NEXT(e);
+    }
+    else {
+        switch (s = apr_brigade_partition(bb, (apr_off_t)want, &end)) {
+            apr_off_t len;
+
+        case APR_INCOMPLETE:
+            s = apr_brigade_length(bb, 1, &len);
+            if (s != APR_SUCCESS)
+                apreq_xs_croak(aTHX_ newHV(), s, 
+                               "Apache::Request::Upload::Brigade::READ "
+                               "apr_brigade_length failed", "APR::Error");
+            want = len;
+
+        case APR_SUCCESS:
+            break;
+
+        default:
+            apreq_xs_croak(aTHX_ newHV(), s, 
+                           "Apache::Request::Upload::Brigade::READ "
+                           "apr_brigade_partition failed", "APR::Error");
+        }
+    }
+
+    SvUPGRADE(sv, SVt_PV);
+    SvGROW(sv, want + offset + 1);
+    buf = SvPVX(sv) + offset;
+    SvCUR_set(sv, want + offset);
+
+    while ((e = APR_BRIGADE_FIRST(bb)) != end) {
+        const char *data;
+        apr_size_t dlen;
+        s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
+        if (s != APR_SUCCESS)
+            apreq_xs_croak(aTHX_ newHV(), s, 
+                           "Apache::Request::Upload::Brigade::READ "
+                           "apr_bucket_read failed", "APR::Error");
+        memcpy(buf, data, dlen);
+        buf += dlen;
+        apr_bucket_delete(e);
+    }
+
+    *buf = 0;
+    SvPOK_only(sv);
+    XSRETURN_IV(want);
+}
+
+static XS(apreq_xs_upload_brigade_readline)
+{
+    dXSARGS;
+    apr_bucket_brigade *bb;
+    apr_bucket *e;
+    SV *sv;
+    apr_status_t s;
+
+    if (items != 1 || !SvROK(ST(0)))
+        Perl_croak(aTHX_ "Usage: $bb->READLINE");
+
+    bb = (apr_bucket_brigade *)SvIVX(SvRV(ST(0)));
+
+    if (APR_BRIGADE_EMPTY(bb))
+        XSRETURN(0);
+
+    XSprePUSH;
+
+    sv = sv_2mortal(newSVpvn("",0));
+    XPUSHs(sv);
+
+    while (!APR_BRIGADE_EMPTY(bb)) {
+        const char *data;
+        apr_size_t dlen;
+        const char *eol;
+
+        e = APR_BRIGADE_FIRST(bb);
+        s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
+        if (s != APR_SUCCESS)
+            apreq_xs_croak(aTHX_ newHV(), s, 
+                           "Apache::Request::Upload::Brigade::READLINE "
+                           "apr_bucket_read failed", "APR::Error");
+
+        eol = memchr(data, '\012', dlen); /* look for LF (linefeed) */
+
+        if (eol != NULL) {
+            if (eol < data + dlen - 1) {
+                dlen = eol - data + 1;
+                apr_bucket_split(e, dlen);
+            }
+
+            sv_catpvn(sv, data, dlen);
+            apr_bucket_delete(e);
+
+            if (GIMME_V != G_ARRAY || APR_BRIGADE_EMPTY(bb))
+                break;
+
+            sv = sv_2mortal(newSVpvn("",0));
+            XPUSHs(sv);
+        }
+        else {
+            sv_catpvn(sv, data, dlen);
+            apr_bucket_delete(e);
+        }
+    }
+
+    PUTBACK;
+}
+
 
 static XS(apreq_xs_upload_tempname)
 {

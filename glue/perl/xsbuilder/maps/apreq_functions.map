@@ -27,7 +27,6 @@ MODULE=Apache::Upload PACKAGE=Apache::Upload PREFIX=Apache__Upload_
  DEFINE_link                     | apreq_xs_upload_link |
  DEFINE_slurp                    | apreq_xs_upload_slurp |
  DEFINE_size                     | apreq_xs_upload_size |
- DEFINE_fh                       | apreq_xs_upload_fh |
  DEFINE_type                     | apreq_xs_upload_type |
  DEFINE_tempname                | apreq_xs_upload_tempname |
 
@@ -37,6 +36,12 @@ MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table
 
 MODULE=Apache::Upload PACKAGE=Apache::Request PREFIX=Apache__Request_
  DEFINE_upload  | apreq_xs_upload_get |
+
+MODULE=Apache::Upload PACKAGE=Apache::Upload::Brigade PREFIX=Apache__Upload__Brigade_
+ DEFINE_new | apreq_xs_upload_brigade_copy |
+ DEFINE_TIEHANDLE | apreq_xs_upload_brigade_copy |
+ DEFINE_READ | apreq_xs_upload_brigade_read |
+ DEFINE_READLINE | apreq_xs_upload_brigade_readline |
 
 ##########  Apache::Cookie:: Functions  ##########
 

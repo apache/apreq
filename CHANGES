@@ -4,6 +4,12 @@
 @section v2_04_dev Changes with libapreq2-2.04-dev
 
 - Perl API [joes]
+  Replaced APR::PerlIO implementation of $upload->fh with a TIEHANDLE
+  API layered over APR::Brigade.   Without this change, one filehandle's 
+  seek pointer could become stale after another handle (on the same upload)
+  is read from.
+
+- Perl API [joes]
   Added apreq_xs_croak for throwing APR::Error exceptions and included
   error-checking on $req->param, $req->args, $req->body, $req->upload, 
   and $jar->get.

@@ -22,7 +22,7 @@ my $location = "/TestApReq__request";
 
 for my $test (qw/slurp bb_read fh_read tempname bad;query=string%%/) {
     # upload a string as a file
-    my $value = 'DataUpload' x 100_000;
+    my $value = ('DataUpload' x 10 . "\r\n") x 100;
     my $result = UPLOAD_BODY("$location?test=$test", content => $value); 
     ok t_cmp($value, $result, "basic upload");
     my $i;

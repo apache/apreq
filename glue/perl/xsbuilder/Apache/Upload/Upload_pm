@@ -5,6 +5,14 @@ use APR::PerlIO;
 use APR::Error;
 use Apache::Request;
 
+package Apache::Upload;
+sub fh {
+    my $upload = shift;
+    my $fh = do {local *FH};
+    tie *$fh, "Apache::Upload::Brigade", $upload->bb;
+    return $fh;
+}
+
 package Apache::Upload::Error;
 push our(@ISA), "APR::Error";
 
@@ -18,3 +26,6 @@ BEGIN {
         *{$_} = sub {die __PACKAGE__ ."::",  "$_: unsafe operation"};
     }
 }
+
+package Apache::Upload::Brigade;
+push our(@ISA), "APR::Brigade";
