@@ -24,9 +24,6 @@ if BUILD_HTTPD
 
 all-local: @APACHE2_HTTPD@
 
-t/TEST : Makefile.am t/TEST.PL
-	@PERL@ -MApache::TestMM -e '$(TEST_CONFIG_SCRIPT)' -- -httpd @APACHE2_HTTPD@
-
 else
 
 noinst_LTLIBRARIES = mod_apreq2.la
@@ -34,8 +31,5 @@ mod_apreq2_la_SOURCES = apreq_private_apache2.h handle.c filter.c
 
 install-exec-local: mod_apreq.la
 	@APACHE2_APXS@ -i -a -n apreq2 mod_apreq2.la
-
-t/TEST : Makefile.am t/TEST.PL
-	@PERL@ -MApache::TestMM -e '$(TEST_CONFIG_SCRIPT)' -- -apxs @APACHE2_APXS@
 
 endif

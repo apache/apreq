@@ -48,7 +48,7 @@ use base 'Apache::TestConfig';
 
 sub cmodules_configure {
     my $self = shift;
-    my $dir = "$module_dir/apache2/t";
+    my $dir = "$module_dir/t/c-modules";
     $self->SUPER::cmodules_configure($dir);
 }
 sub cmodules_httpd_conf {
@@ -79,7 +79,7 @@ APXS=$self->{APXS}
 all: $lib
 
 $lib: $name.c
-        \$(APXS) -I../.. -I../../../../include $libs -llibhttpd $dversion -p -I$self->{cmodules_dir} -c $name.c
+        \$(APXS) -I../../../apache2 -I../../../include $libs -llibhttpd $dversion -p -I$self->{cmodules_dir} -c $name.c
 
 clean:
 	-erase @goners vc60.pdb 
@@ -91,7 +91,7 @@ APXS=$self->{APXS}
 all: $lib
 
 $lib: $name.c
-	\$(APXS) -L../../../../library -I../.. -I../../../../include -lapreq2 $dversion -I$self->{cmodules_dir} -c $name.c
+	\$(APXS) -L../../../../library -I../../../apache2 -I../../../../include -lapreq2 $dversion -I$self->{cmodules_dir} -c $name.c
 
 clean:
 	-rm -rf $name.o $name.lo $name.slo $name.la .libs
