@@ -2,6 +2,10 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.14 - April 30, 2003
+
+Add documentation for subclassing Apache::Request. [Steve Hay]
+
 =item 1.13 - April 18, 2003
 
 Sync test suite uris with latest Apache::Test [Stas]
