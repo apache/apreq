@@ -50,24 +50,15 @@ EOF
 $Apache::TestTrace::Level = 'debug';
 bless my $cfg = Apache::Test->config();
 
+unless (-d "t/conf") {
+    warn "Creating t/conf directory.";
+    mkdir "t/conf" or die "mkdir 't/conf' failed: $!";
+}
+
 $cfg->preamble(LoadModule => [apreq_module => "../.libs/mod_apreq.so"]);
 $cfg->cmodules_configure;
 $cfg->generate_httpd_conf;
 
-my @scripts = ();
-
-finddepth(sub {
-    return unless /(.*?\.pl)\.PL$/;
-    push @scripts, "$File::Find::dir/$1";
-}, '.');
-
 Apache::TestMM::filter_args();
+Apache::TestRun->generate_script;
 
-for my $script (@scripts) {
-    Apache::TestMM::generate_script($script);
-}
-
-for my $util (qw(Report Smoke Run)) {
-    my $class = "Apache::Test${util}";
-    $class->generate_script;
-}
