@@ -293,7 +293,6 @@ END
             or die "Cannot open win32/$file.def: $!";
         print $def $preamble;
         print $def $_, "\n" for (sort keys %fns);
-        print $def "apreq_env\n";
         close $def;
     }
     
