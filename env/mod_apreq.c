@@ -88,11 +88,6 @@ static const char filter_name[] = "APREQ";
 module AP_MODULE_DECLARE_DATA apreq_module;
 
 /**
- * @file mod_apreq.c
- * @brief Source code for Apache-2 filter module
- */
-
-/**
  * mod_apreq.c provides an input filter for using libapreq2
  * (and allow its parsed data structures to be shared) within
  * the Apache-2 webserver.  Using it, libapreq2 works properly

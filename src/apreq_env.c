@@ -64,12 +64,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-
-/**
- * @file apreq_env.c
- * @brief Implements logging and environment hooks, also the default CGI module.
- */
-
 static const apreq_env_t *apreq_env;
 
 APREQ_DECLARE(const apreq_env_t *) apreq_env_module(const apreq_env_t *mod)
