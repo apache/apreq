@@ -19,7 +19,7 @@
 #            checked-out version of the source code.
 
 perl="perl"
-libtool="libtoolize --automake --copy --force"
+libtool="libtool"
 
 while test $# -gt 0 
 do
@@ -33,11 +33,15 @@ do
   --with-perl=*)
   perl=$optarg
   ;;
+  --with-libtool=*)
+  libtool=$optarg
+  ;;
   esac
 
   shift
 done
 
+libtoolize="${libtool}ize --automake --copy --force"
 
 echo "removing stale config files"
 touch .deps
@@ -46,12 +50,12 @@ rm -f generated_lists
 rm -rf autom4te*.cache
 
 echo "checking buildconf prereqs";
-$perl build/version_check.pl libtool   || exit 1
+$perl build/version_check.pl libtool $libtool  || exit 1
 $perl build/version_check.pl autoconf  || exit 1
 $perl build/version_check.pl automake  || exit 1
 $perl build/version_check.pl ExtUtils::XSBuilder || exit 1
 
-echo "running $libtool" && $libtool && \
+echo "running $libtoolize" && $libtoolize && \
 echo "running aclocal"  && aclocal && \
 echo "running autoconf" && autoconf && \
 echo "running autoheader" && autoheader && \
