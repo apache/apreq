@@ -97,6 +97,7 @@ struct filter_ctx {
     apr_bucket_brigade *bb;
     apr_bucket_brigade *spool;
     apr_status_t        status;
+    unsigned            saw_eos;
 };
 
 static const char filter_name[] = "APREQ";
@@ -226,11 +227,11 @@ static void apreq_filter_make_context(ap_filter_t *f)
     request_rec *r = f->r;
     apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
     struct filter_ctx *ctx = apr_palloc(r->pool, sizeof *ctx);
-    f->ctx      = ctx;
-    ctx->bb     = apr_brigade_create(r->pool, alloc);
-    ctx->spool  = apr_brigade_create(r->pool, alloc);
-    ctx->status = APR_INCOMPLETE;
-
+    f->ctx       = ctx;
+    ctx->bb      = apr_brigade_create(r->pool, alloc);
+    ctx->spool   = apr_brigade_create(r->pool, alloc);
+    ctx->status  = APR_INCOMPLETE;
+    ctx->saw_eos = 0;
     apreq_log(APREQ_DEBUG 0, r, 
               "apreq filter context created." );    
 }
@@ -309,8 +310,10 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
              */
 
             apreq_log(APREQ_DEBUG 0, r, "dropping stale apreq filter (%d)", f);
-            req->parser = NULL;
-            req->body = NULL;
+            if (req) {
+                req->parser = NULL;
+                req->body = NULL;
+            }
             if (cfg->f == f) {
                 ctx->status = APR_SUCCESS;
                 cfg->f = NULL;
@@ -326,10 +329,11 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     else {
         apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
         ctx = apr_palloc(r->pool, sizeof *ctx);
-        f->ctx      = ctx;
-        ctx->bb     = apr_brigade_create(r->pool, alloc);
-        ctx->spool  = apr_brigade_create(r->pool, alloc);
-        ctx->status = APR_INCOMPLETE;
+        f->ctx       = ctx;
+        ctx->bb      = apr_brigade_create(r->pool, alloc);
+        ctx->spool   = apr_brigade_create(r->pool, alloc);
+        ctx->status  = APR_INCOMPLETE;
+        ctx->saw_eos = 0;
         apreq_log(APREQ_DEBUG 0, r, 
                   "apreq filter is initialized (%d)", f);
     }
@@ -362,19 +366,21 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     default:
         return APR_ENOTIMPL;
     }
-    apreq_log(APREQ_DEBUG ctx->status, r, "entering filter (%d)",
-              r->input_filters == f);
+
     req = apreq_request(r, NULL);
 
     if (bb != NULL) {
-        apr_bucket_brigade *tmp;
-        rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
-        if (rv != APR_SUCCESS) {
-            apreq_log(APREQ_ERROR rv, r, "get_brigade failed");
-            return rv;
+        if (!ctx->saw_eos) {
+            apr_bucket_brigade *tmp;
+            rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
+            
+            if (rv != APR_SUCCESS) {
+                apreq_log(APREQ_ERROR rv, r, "get_brigade failed");
+                return rv;
+            }
+            tmp = apreq_copy_brigade(bb);
+            APR_BRIGADE_CONCAT(ctx->bb, tmp);
         }
-        tmp = apreq_copy_brigade(bb);
-        APR_BRIGADE_CONCAT(ctx->bb, tmp);
 
         if (!APR_BRIGADE_EMPTY(ctx->spool)) {
             APR_BRIGADE_PREPEND(bb, ctx->spool);
@@ -388,21 +394,19 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                 if (APR_BUCKET_IS_EOS(e))
                     e = APR_BUCKET_NEXT(e);
                 ctx->spool = apr_brigade_split(bb, e);
-                apreq_log(APREQ_DEBUG rv,r, "returning %d bytes from spool", 
-                          readbytes);
             }
         }
 
         if (ctx->status != APR_INCOMPLETE) {
             if (APR_BRIGADE_EMPTY(ctx->spool)) {
-                ap_remove_input_filter(f);
                 apreq_log(APREQ_DEBUG ctx->status,r,"removing filter(%d)",
                           r->input_filters == f);
+                ap_remove_input_filter(f);
             }
             return ctx->status;
         }
     }
-    else {
+    else if (!ctx->saw_eos) {
         /* prefetch read! */
         apr_bucket_brigade *tmp = apr_brigade_create(r->pool, 
                                       apr_bucket_alloc_create(r->pool));
@@ -423,9 +427,12 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             last = APR_BRIGADE_LAST(ctx->spool);
         }
     }
+    else
+        return ctx->status;
+
+    if (APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(ctx->bb)))
+        ctx->saw_eos = 1;
     ctx->status = apreq_parse_request(req, ctx->bb);
-    apreq_log(APREQ_DEBUG ctx->status, r, "leaving filter (%d)",
-              r->input_filters == f);
     return (ctx->status == APR_INCOMPLETE) ? APR_SUCCESS : ctx->status;
 }
 
