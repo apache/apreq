@@ -1,4 +1,3 @@
-#include "apache_request.h"
 #include "apache_cookie.h"
 #undef __attribute__
 #include "mod_perl.h"
