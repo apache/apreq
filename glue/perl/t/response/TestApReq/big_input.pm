@@ -12,7 +12,8 @@ sub handler {
     my $len = 0;
 
     for ($req->param) {
-        $len += length($_) + length($req->param($_)) + 2; # +2 ('=' and '&')
+        my $val = $req->param($_) || '';
+        $len += length($_) + length($val) + 2; # +2 ('=' and '&')
     }
     $len--; # the stick with two ends one '&' char off
 
