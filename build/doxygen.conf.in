@@ -1,0 +1,75 @@
+PROJECT_NAME           = "@PACKAGE@-@VERSION@"
+PROJECT_NUMBER         = "Shared Library Version @APREQ_DOTTED_VERSION@"
+
+OUTPUT_DIRECTORY       = docs
+OUTPUT_LANGUAGE        = English
+
+BRIEF_MEMBER_DESC      = YES
+REPEAT_BRIEF           = YES
+
+TAB_SIZE               = 8
+ALIASES                = 
+OPTIMIZE_OUTPUT_FOR_C  = YES
+
+INTERNAL_DOCS          = NO
+
+GENERATE_TODOLIST      = YES
+GENERATE_TESTLIST      = YES
+GENERATE_BUGLIST       = YES
+GENERATE_DEPRECATEDLIST= YES
+
+MAX_INITIALIZER_LINES  = 30
+SHOW_USED_FILES        = YES
+
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_FORMAT            = "$file:$line: $text"
+
+INPUT                  = . src env
+FILE_PATTERNS          = *.c *.h CHANGES FAQ STATUS
+RECURSIVE              = NO
+EXCLUDE                = 
+EXCLUDE_SYMLINKS       = NO
+EXCLUDE_PATTERNS       = apreq_tables* \
+                         apreq_config*
+EXAMPLE_PATH           = ./
+EXAMPLE_PATTERNS       = 
+IMAGE_PATH             = ./build/feather.gif
+SOURCE_BROWSER         = NO
+
+ALPHABETICAL_INDEX     = NO
+COLS_IN_ALPHA_INDEX    = 5
+IGNORE_PREFIX          = 
+
+GENERATE_HTML          = YES
+HTML_HEADER            = build/dox.head
+HTML_FOOTER            = build/dox.foot
+HTML_STYLESHEET        = build/dox.css
+HTML_ALIGN_MEMBERS     = YES
+
+
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+GENERATE_AUTOGEN_DEF   = NO
+GENERATE_PERLMOD       = NO
+
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = APREQ_DECLARE(x)=x \
+                         APREQ_DECLARE_NONSTD(x)=x
+
+TAGFILES               = docs/apr.tag=http://apr.apache.org/docs/apr \
+                         docs/apu.tag=http://apr.apache.org/docs/apr-util
+GENERATE_TAGFILE       = docs/apreq2.tag
+ALLEXTERNALS           = NO
+EXTERNAL_GROUPS        = NO
+PERL_PATH              = @PERL@
+
+HIDE_UNDOC_RELATIONS   = YES
+
+SEARCHENGINE           = NO

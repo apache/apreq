@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.53)
-AC_INIT(Apache HTTP Request Library, 2.04-dev, apreq-dev@httpd.apache.org, libapreq2)
+AC_INIT(Apache HTTP Server Request Library, 2.04-dev, apreq-dev@httpd.apache.org, libapreq2)
 dnl Generate config.nice script- macro must be here at the top
 dnl to avoid corruption of $0 and $@.
 APR_CONFIG_NICE(config.nice)
@@ -32,6 +32,6 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 dnl Checks for library functions.
 
 AC_APREQ
-AC_CONFIG_FILES([Makefile src/Makefile env/Makefile glue/Makefile t/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile env/Makefile glue/Makefile t/Makefile build/doxygen.conf])
 AC_CONFIG_FILES([apreq2-config], [chmod +x apreq2-config])
 AC_OUTPUT
