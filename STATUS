@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/03/24 08:22:47 $]   -*-text-*-
+Last modified at [$Date: 2004/04/08 15:16:38 $]   -*-text-*-
 /** @page STATUS
 
      2.03-dev under development
@@ -64,9 +64,11 @@ OPEN ISSUES:
     - Should we bundle an apr-based "application/xml" parser?  
       If so, how should we parse the xml data into an apr_table?
 
-    - Clean up the CHANGES file format so it's more readable.
 
 BUGS:
+
+    - $req->upload() in list context fails to filter out non-uploads.
+      Also $req->upload("nonexistent-key-name") reportedly segfaults.
 
     - Strange bug when ssl is enabled & lots of fields are present: see
         http://marc.theaimsgroup.com/?t=107766265600001&r=1&w=2
