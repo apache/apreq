@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/07/17 02:59:33 $]   -*-text-*-
+Last modified at [$Date: 2003/07/17 21:59:30 $]   -*-text-*-
 /** @page STATUS
 
      2.0.0  in development
@@ -46,7 +46,6 @@ TODO:
       and Apache::Request don't need to be linked against mod_apreq
       to resolve missing apreq_env* symbols. 
 
-    - drop build/test_config.pl from the repository.
 
 OPEN ISSUES:
 
