@@ -256,10 +256,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
         case '=':
             if (nlen == 0) {
                 nlen = qs - start;
-                break;
             }
-            else
-                return APR_BADCH;
+            break;
 
         case '&':
         case ';': 
