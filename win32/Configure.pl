@@ -224,8 +224,8 @@ sub check {
     die qq{No httpd header found under $apache/include}
         unless -e qq{$apache/include/httpd.h};
     my $vers = qx{"$apache/bin/Apache.exe" -v};
-    die qq{"$apache" does not appear to be version 2.0}
-        unless $vers =~ m!Apache/2.0!;
+    die qq{"$apache" does not appear to be version 2.x}
+        unless $vers =~ m!Apache/2.\d!;
     return 1;
 }
 
