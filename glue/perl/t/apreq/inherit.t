@@ -9,7 +9,9 @@ use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 plan tests => 4;
 my $location = "/TestApReq__inherit";
 my @response = split/\r?\n/, GET_BODY($location, Cookie=>"apache=2");
-ok t_cmp("method => GET", $response[0], "inherit method");
-ok t_cmp("cookie => apache=2", $response[1], "inherit cookie");
-ok t_cmp("DESTROYING TestApReq::inherit object", $response[2], "first object cleanup");
-ok t_cmp("DESTROYING TestApReq::inherit object", $response[3], "second object cleanup");
+ok t_cmp($response[0], "method => GET", "inherit method");
+ok t_cmp($response[1], "cookie => apache=2", "inherit cookie");
+ok t_cmp($response[2], "DESTROYING TestApReq::inherit object",
+         "first object cleanup");
+ok t_cmp($response[3], "DESTROYING TestApReq::inherit object",
+         "second object cleanup");

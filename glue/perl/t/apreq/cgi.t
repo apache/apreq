@@ -48,8 +48,8 @@ for my $key_len (@key_len) {
 
         t_debug "# of keys : $key_num, key_len $key_len";
         my $body = GET_BODY "$script?$query";
-        ok t_cmp($len,
-                 $body,
+        ok t_cmp($body,
+                 $len,
                  "GET long query");
     }
 
@@ -70,32 +70,32 @@ for my $big_key_len (@big_key_len) {
 
         t_debug "# of keys : $big_key_num, big_key_len $big_key_len";
         my $body = POST_BODY($script, content => $query);
-        ok t_cmp($len,
-                 $body,
+        ok t_cmp($body,
+                 $len,
                  "POST big data");
     }
 
 }
 
-ok t_cmp("\tfoo => 1$line_end", 
-         POST_BODY("$script?foo=1", Content => $filler), "simple post");
+ok t_cmp(POST_BODY("$script?foo=1", Content => $filler),
+          "\tfoo => 1$line_end", "simple post");
 
-ok t_cmp("\tfoo => ?$line_end\tbar => hello world$line_end", 
-         GET_BODY("$script?foo=%3F&bar=hello+world"), "simple get");
+ok t_cmp(GET_BODY("$script?foo=%3F&bar=hello+world"),
+         "\tfoo => ?$line_end\tbar => hello world$line_end", "simple get");
 
 my $body = POST_BODY($script, content => 
                      "aaa=$filler;foo=1;bar=2;filler=$filler");
-ok t_cmp("\tfoo => 1$line_end\tbar => 2$line_end", 
-         $body, "simple post");
+ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end", 
+         "simple post");
 
 $body = POST_BODY("$script?foo=1", content => 
                   "intro=$filler&bar=2&conclusion=$filler");
-ok t_cmp("\tfoo => 1$line_end\tbar => 2$line_end", 
-         $body, "simple post");
+ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end", 
+         "simple post");
 
 $body = UPLOAD_BODY("$script?foo=1", content => $filler);
-ok t_cmp("\tfoo => 1$line_end", 
-         $body, "simple upload");
+ok t_cmp($body, "\tfoo => 1$line_end", 
+         "simple upload");
 
 
 {
@@ -103,8 +103,8 @@ ok t_cmp("\tfoo => 1$line_end",
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = qq{$key=$value};
-    ok t_cmp($value,
-             GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
+    ok t_cmp(GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
+             $value,
              $test);
 }
 {
@@ -112,8 +112,8 @@ ok t_cmp("\tfoo => 1$line_end",
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$location"};
-    ok t_cmp(qq{"$value"},
-             GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
+    ok t_cmp(GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
+             qq{"$value"},
              $test);
 }
 {
@@ -122,8 +122,8 @@ ok t_cmp("\tfoo => 1$line_end",
     my $value = 'okie dokie';
     my $cookie = "$key=" . join '',
         map {/ / ? '+' : sprintf '%%%.2X', ord} split //, $value;
-    ok t_cmp($value,
-             GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
+    ok t_cmp(GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
+             $value,
              $test);
 }
 {
@@ -133,7 +133,7 @@ ok t_cmp("\tfoo => 1$line_end",
     my $cookie = "$key=$value";
     my ($header) = GET_HEAD("$script?test=$test&key=$key", 
                             Cookie => $cookie) =~ /^#Set-Cookie:\s+(.+)/m;
-    ok t_cmp($cookie, $header, $test);
+    ok t_cmp($header, $cookie, $test);
 }
 {
     my $test  = 'bake2';
@@ -142,7 +142,7 @@ ok t_cmp("\tfoo => 1$line_end",
     my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$location"};
     my ($header) = GET_HEAD("$script?test=$test&key=$key", 
                             Cookie => $cookie) =~ /^#Set-Cookie2:\s+(.+)/m;
-    ok t_cmp(qq{$key="$value"; Version=1; path="$location"}, $header, $test);
+    ok t_cmp($header, qq{$key="$value"; Version=1; path="$location"}, $test);
 }
 
 __DATA__

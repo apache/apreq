@@ -37,8 +37,8 @@ for my $key_len (@key_len) {
 
         my $body = GET_BODY "$location?$query";
         t_debug "# of keys : $key_num, key_len $key_len";
-        ok t_cmp(( ($key_len + 3) * $key_num - 1),
-                 $body,
+        ok t_cmp($body,
+                 ( ($key_len + 3) * $key_num - 1),
                  "GET long query");
     }
 
@@ -60,8 +60,8 @@ for my $big_key_len (@big_key_len) {
 
         my $body = POST_BODY $location, content => $query;
         t_debug "# of keys : $big_key_num, key_len $big_key_len";
-        ok t_cmp(( ($big_key_len + 3) * $big_key_num - 1),
-                 $body,
+        ok t_cmp($body,
+                 ( ($big_key_len + 3) * $big_key_num - 1),
                  "POST big data");
     }
 
