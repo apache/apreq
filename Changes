@@ -2,8 +2,16 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.22 - July 5, 2003
+
+Open uploaded files with binary mode (relevant for Perl > 5.7),
+so as to be able to get the correct sizes on systems where such
+a mode makes a difference. Thanks to Steve Hay for first pointing
+out this problem. [randyk]
+
 =item 1.21 - June 25, 2003
-Fix memory access problem with TEMP_DIR- see 
+
+Fix memory access problem with TEMP_DIR - see
 http://marc.theaimsgroup.com/?l=apreq-dev&m=105647058517842&w=2
 Thanks to Jay Buffington for the spot.  [joes]
 
