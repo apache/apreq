@@ -465,12 +465,14 @@ ApacheRequest_upload(req, sv=Nullsv)
 
 	if (name) {
 	    uptr = ApacheUpload_find(req->upload, name);
-	    if (!uptr)
-		XSRETURN_UNDEF;
 	}
 	else {
 	    uptr = req->upload;
 	}
+
+	if (!uptr)
+            XSRETURN_UNDEF;
+
 	upload_push(uptr);
     }
     else {
@@ -497,13 +499,19 @@ ApacheUpload_fh(upload)
     CODE:
     fd = PerlLIO_dup(fileno(ApacheUpload_fh(upload)));
 
+    /* XXX: user should check errno on undef returns */
+
+    if (fd < 0) 
+        XSRETURN_UNDEF;
+
     if ( !(RETVAL = PerlIO_fdopen(fd, "r")) )
-	    XSRETURN_UNDEF;
+	XSRETURN_UNDEF;
 
     OUTPUT:
     RETVAL
 
     CLEANUP:
+    /* XXX: there may be a leak/segfault in here somewhere */
     if (ST(0) != &PL_sv_undef) {
 	IO *io = GvIOn((GV*)SvRV(ST(0)));
 	if (upload->req->parsed)
