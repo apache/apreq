@@ -3,31 +3,46 @@
 Apache::Upload - Methods for dealing with file uploads.
 
 =for testing
-ok 1;
-
-=for future testing
+    use POSIX;
     use Apache2;
     use APR::Pool;
     use Apache::Upload;
     $r = APR::Pool->new;
     $req = Apache::Request->new($r);
-    $upload = Apache::Upload->new($r, name => "foo", value => __FILE__);
-    $req->body->add($upload);
+    $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
+    eval { POSIX::close(0); $req->parse };
+    $req->body->add($u);
+    $data = do { local (@ARGV, $/) = __FILE__; <> };
 
 
 
 
 =head1 SYNOPSIS
 
+=for example begin
+
     use Apache::Upload;
 
-    my $req = Apache::Request->new($r);  # $r is an Apache::RequestRec
-    my $upload_table = $req->upload;
-    my $upload = $req->upload("file_field"); # same as $upload_table->{file_field}
-    my $size = $upload->size;
-    $upload->slurp(my $file_contents);
-    my $fh = $upload->fh;
-    print while <$fh>;
+    $req = Apache::Request->new($r);
+    $upload = $req->upload("foo");
+    $size = $upload->size;
+
+    # three methods to get at the upload's contents ... slurp, fh, io
+
+    $upload->slurp($slurp_data);
+
+    read $upload->fh, $fh_data, $size;
+
+    $io = $upload->io;
+    print while <$io>;
+
+=for example end
+
+=for example_testing
+    ok $upload->bb->length == $size;
+    is $_STDOUT_, $data;
+    is $fh_data, $data;
+    is $slurp_data, $data;
 
 
 
@@ -59,7 +74,8 @@ section below.
 
 The name of the HTML form element which generated the upload.
 
-    my $name = $upload->name;
+=for example_testing
+    is $upload->name, "foo";
 
 
 
@@ -68,9 +84,12 @@ The name of the HTML form element which generated the upload.
 
     $upload->filename()
 
-The filename of the uploaded file:
+The (client-side) filename as submitted in the HTML form.  Note: 
+some agents will submit the file's full pathname, while others 
+may submit just the basename.
 
-    my $filename = $upload->filename;
+=for example_testing
+    is $upload->filename, __FILE__;
 
 
 
@@ -100,9 +119,15 @@ C<readline> methods available.  However these methods are just
 syntactic sugar for the underlying C<READ> and C<READLINE> methods from 
 Apache::Upload::Brigade.  
 
+=for example begin
+
     $io = $upload->io;
     print while $io->read($_); # equivalent to: tied(*$io)->READ($_)
 
+=for example end
+
+=for example_testing
+    is $_STDOUT_, $data;
 
 See L<READ|read> and L<READLINE|readline> below for additional notes 
 on their usage.
@@ -114,10 +139,7 @@ on their usage.
     $upload->bb()
     $upload->bb($set)
 
-Returns an I<APR::Brigade> which represents the upload's contents.
-Passing an optional I<APR::Brigade> argument will reassign the 
-brigade, which effectively replaces the original contents of the 
-upload.
+Get/set the APR::Brigade which represents the upload's contents.
 
 
 
@@ -126,10 +148,10 @@ upload.
 
     $upload->size()
 
+Returns the size of the upload in bytes.
 
-The size of the upload in bytes:
-
-    my $size = $upload->size;
+=for example_testing
+    is $upload->size, -s __FILE__;
 
 
 
@@ -139,24 +161,27 @@ The size of the upload in bytes:
     $upload->info()
     $upload->info($set)
 
-The additional header information for the uploaded file.
+Get/set the additional header information table for the 
+uploaded file.
 Returns a hash reference tied to the I<APR::Table> class.
 An optional C<$table> argument can be passed to reassign
 the upload's internal (apr_table_t) info table to the one
 C<$table> represents.
 
-Examples:
+=for example begin
 
     my $info = $upload->info;
-    while (my($key, $val) = each %$info) {
-	...
+    while (my($hdr_name, $hdr_value) = each %$info) {
+	# ...
     }
 
     # fetch upload's Content-Type header
     my $type = $upload->info->{"Content-type"};
 
-    #reassign table
-    $upload->info($apr_table_object);
+=for example end
+
+=for example_testing
+    is $type, "application/octet-stream";
 
 
 
@@ -167,11 +192,18 @@ Examples:
 
 Returns the MIME type of the given I<Apache::Upload> object.
 
+=for example begin
+
     my $type = $upload->type;
 
     #same as
-    my $type = $upload->info->{"Content-Type"};
-    $type =~ s/;.*$//ms;
+    my $content_type = $upload->info->{"Content-Type"};
+    $content_type =~ s/;.*$//ms;
+
+=for example end
+
+=for example_testing
+    is $type, $content_type;
 
 
 
@@ -183,9 +215,13 @@ Returns the MIME type of the given I<Apache::Upload> object.
 To avoid recopying the upload's internal tempfile brigade on a 
 *nix-like system, I<link> will create a hard link to it:
 
-  my $upload = $req->upload('file');
+=for example begin
+
+  my $upload = $req->upload('foo');
   $upload->link("/path/to/newfile") or
       die sprintf "link from '%s' failed: $!", $upload->tempname;
+
+=for example end
 
 Typically the new name must lie on the same device and partition 
 as the brigade's tempfile.  If this or any other reason prevents
@@ -203,9 +239,9 @@ copy the temporary file to the specified location.
 Reads the full contents of a file upload into the scalar argument.
 The return value is the length of the file.
 
-  # print out the upload file
-  $upload->slurp(my $contents);
-  print $contents; 
+=for example_testing
+   is $upload->slurp($contents), -s __FILE__;
+   is $contents, $data;
 
 
 
@@ -215,6 +251,9 @@ The return value is the length of the file.
     $upload->tempname()
 
 Provides the name of the spool file.
+
+=for example_testing
+    like $upload->tempname, qr/apreq.{6}$/;
 
 
 
@@ -228,6 +267,7 @@ these methods delete buckets from the brigade as soon as their
 data is actually read, so you cannot C<seek> on handles tied to
 this class.  Such handles have semantics similar to that of a 
 read-only socket.
+
 
 
 
@@ -273,13 +313,11 @@ linefeeds (the '\012' character), but we may eventually use C<$/> instead.
 
 
 
-
-
 =head1 PORTING from 1.X
 
 =over 4
 
-=item * C<info($header)> is replaced by C<info($table)>.
+=item * C<info($header_name)> is replaced by C<info($set)>.
 
 =item * C<type()> returns only the MIME-type portion of the Content-Type header.
 

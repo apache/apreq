@@ -108,12 +108,77 @@ APREQ_XS_DEFINE_TABLE_FETCH(upload_table, param, UPLOAD_PKG);
 APREQ_XS_DEFINE_TABLE_DO(upload_table, param, UPLOAD_PKG);
 APREQ_XS_DEFINE_ENV(upload);
 
-APREQ_XS_DEFINE_POOL(upload_table);
-
 APREQ_XS_DEFINE_TABLE_MAKE(request, UPLOAD_PKG);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,add);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,set);
 APREQ_XS_DEFINE_TABLE_NEXTKEY(upload_table);
+
+
+
+static XS(apreq_xs_upload_make)
+{
+    dXSARGS;
+    void *env;
+    const char *class, *name, *value, *filename;
+    STRLEN nlen, vlen;
+    apreq_param_t *upload;
+    apr_bucket *b;
+    apr_status_t s;
+    apr_pool_t *p;
+    apr_file_t *f;
+    apr_finfo_t finfo;
+    SV *sv, *obj;
+
+
+    if (items != 5 || SvROK(ST(0)) || !SvROK(ST(1)))
+        Perl_croak(aTHX_ "Usage: Apache::Upload->"
+                   "make($env, $name, $value, $filename)");
+
+    class = SvPV_nolen(ST(0));
+    obj = SvRV(ST(1));
+    env = (void *)SvIVX(obj);
+    name = SvPV(ST(2), nlen);
+    value = SvPV(ST(3), vlen);
+    filename = SvPV_nolen(ST(4));
+
+    p = apreq_env_pool(env);
+
+    s = apr_file_open(&f, filename, APR_READ | APR_BINARY, APR_OS_DEFAULT, p);
+
+    if (s != APR_SUCCESS)
+        goto make_error;
+
+    s = apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
+
+    if (s != APR_SUCCESS)
+        goto make_error;
+
+    upload = apreq_make_param(p, name, nlen, value, vlen);
+
+    upload->bb = apr_brigade_create(p, apr_bucket_alloc_create(p));
+    b = apr_bucket_file_create(f, 0, finfo.size, p, upload->bb->bucket_alloc);
+    APR_BRIGADE_INSERT_TAIL(upload->bb, b);
+    b = apr_bucket_immortal_create("", 0, upload->bb->bucket_alloc);
+    APR_BRIGADE_INSERT_TAIL(upload->bb, b);
+
+    upload->info = apr_table_make(p, APREQ_NELTS);
+    apr_table_addn(upload->info, "Content-Disposition", 
+                  apr_psprintf(p, "form-data; name=\"%s\"; filename=\"%s\"",
+                               name, value));
+    apr_table_addn(upload->info, "Content-Type", "application/octet-stream");
+
+    sv = apreq_xs_2sv(upload, class, obj);
+    ST(0) = sv_2mortal(sv);
+    XSRETURN(1);
+
+ make_error:
+    apreq_xs_croak(aTHX_ newHV(), s, 
+                   "Apache::Upload::make", 
+                   "APR::Error");
+
+    XSRETURN_UNDEF;
+}
+
 
 
 static XS(apreq_xs_upload_link)

@@ -161,9 +161,6 @@ APREQ_XS_DEFINE_TABLE_FETCH(table, param, NULL);
 APREQ_XS_DEFINE_TABLE_DO(table, param, NULL);
 APREQ_XS_DEFINE_TABLE_NEXTKEY(table);
 
-APREQ_XS_DEFINE_POOL(request);
-APREQ_XS_DEFINE_POOL(table);
-
 APREQ_XS_DEFINE_TABLE_MAKE(request, NULL);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,set);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,add);
@@ -406,6 +403,9 @@ static XS(apreq_xs_request_parse)
 
     do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);
     while (s == APR_INCOMPLETE);
+
+    if (req->body == NULL)
+        req->body = apr_table_make(req->env, APREQ_NELTS);
 
     if (GIMME_V != G_VOID)
         XSRETURN_IV(s);

@@ -10,13 +10,12 @@ MODULE=Apache::Request PACKAGE=Apache::Request
  DEFINE_body    | apreq_xs_request_body_get |
  DEFINE_config  | apreq_xs_request_config |
  DEFINE_parse   | apreq_xs_request_parse |
- DEFINE_pool    | apreq_xs_request_pool |
+
 apr_status_t:DEFINE_body_status  | apreq_parse_request(apreq_xs_sv2(request,sv),NULL) | SV *:sv
 
 MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Table_
  DEFINE_get     | apreq_xs_table_get |
  DEFINE_FETCH   | apreq_xs_table_FETCH |
- DEFINE_pool    | apreq_xs_table_pool |
  DEFINE_set     | apreq_xs_table_param_set |
  DEFINE_STORE   | apreq_xs_table_param_set |
  DEFINE_add     | apreq_xs_table_param_add |
@@ -36,12 +35,11 @@ MODULE=Apache::Upload PACKAGE=Apache::Upload PREFIX=Apache__Upload_
  DEFINE_size                     | apreq_xs_upload_size |
  DEFINE_type                     | apreq_xs_upload_type |
  DEFINE_tempname                 | apreq_xs_upload_tempname |
- DEFINE_pool                     | apreq_xs_upload_table_pool |
+ DEFINE_make                     | apreq_xs_upload_make |
 
 MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table_
  DEFINE_get     | apreq_xs_upload_table_get |
  DEFINE_FETCH   | apreq_xs_upload_table_FETCH |
- DEFINE_pool    | apreq_xs_upload_table_pool |
  DEFINE_set     | apreq_xs_table_param_set |
  DEFINE_STORE   | apreq_xs_table_param_set |
  DEFINE_add     | apreq_xs_table_param_add |
@@ -73,7 +71,6 @@ MODULE=Apache::Cookie PACKAGE=Apache::Cookie
  DEFINE_env        | apreq_xs_cookie_env  |
  DEFINE_encode     | apreq_xs_encode |
  DEFINE_decode     | apreq_xs_decode |
- DEFINE_pool       | apreq_xs_table_pool |
  const char *:DEFINE_name | apreq_cookie_name(c)  | apreq_cookie_t *:c
  const char *:DEFINE_raw_value| apreq_cookie_value(c) | apreq_cookie_t *:c
  apr_status_t:DEFINE_bake | apreq_cookie_bake (apreq_xs_sv2cookie(c), apreq_xs_sv2env(SvRV(c))) | SV *:c
@@ -84,13 +81,11 @@ MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar PREFIX=Apache__Cookie__Jar_
  DEFINE_env        | apreq_xs_jar_env |
  DEFINE_cookies    | apreq_xs_jar_get |
  DEFINE_get        | apreq_xs_jar_get |
- DEFINE_pool       | apreq_xs_jar_pool |
  DEFINE_config     | apreq_xs_jar_config |
 
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table PREFIX=Apache__Cookie__Table_
  DEFINE_get        | apreq_xs_table_get |
  DEFINE_FETCH      | apreq_xs_table_FETCH |
- DEFINE_pool       | apreq_xs_table_pool |
  DEFINE_set     | apreq_xs_table_cookie_set |
  DEFINE_STORE   | apreq_xs_table_cookie_set |
  DEFINE_add     | apreq_xs_table_cookie_add |

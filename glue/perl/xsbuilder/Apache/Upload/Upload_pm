@@ -7,6 +7,26 @@ use Apache::Request;
 
 package Apache::Upload;
 
+# XXX argument wrapper for apreq_xs_upload_make
+sub new {
+    my ($class, $env, %attrs) = @_;
+    my $name  = delete $attrs{name};
+    my $value = delete $attrs{value};
+    my $file  = delete $attrs{file};
+
+    $name     = delete $attrs{-name}  unless defined $name;
+    $value    = delete $attrs{-value} unless defined $value;
+    $file     = delete $attrs{-file}  unless defined $name;
+
+    $value = $file unless defined $value;
+
+    die "Usage: Apache::Upload->new($env, name => $name, file=>$file)"
+        unless defined $name and defined $file;
+
+    return $class->make($env, $name, $value, $file);
+}
+
+
 sub io {
     tie local (*FH), "Apache::Upload::Brigade", shift->bb;
     return bless *FH{IO}, "Apache::Upload::IO";
