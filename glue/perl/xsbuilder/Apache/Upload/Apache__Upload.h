@@ -16,9 +16,6 @@
 
 #include "apreq_xs_tables.h"
 
-/* avoid namespace collisions from perl's XSUB.h */
-#include "modperl_perl_unembed.h"
-
 /* XXX modperl_* dependency for T_HASHOBJ support */
 #include "modperl_common_util.h"
 

@@ -17,6 +17,9 @@
 #ifndef APREQ_XS_POSTPERL_H
 #define APREQ_XS_POSTPERL_H
 
+/* avoid namespace collisions from perl's XSUB.h */
+#include "modperl_perl_unembed.h"
+
 /* backward compatibility macros support */
 #include "ppport.h"
 
