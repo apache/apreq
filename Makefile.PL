@@ -38,7 +38,7 @@ sub MY::postamble {
 
 cvs_tag :
 	cvs tag v$(VERSION_SYM) . 
-	@echo update Apache/Request.pm's VERSION now 
+	@echo update the VERSION in Apache/Request.pm now 
 
 EOF
 } 
