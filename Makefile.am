@@ -5,7 +5,7 @@ APU_SRCDIR=`@APU_CONFIG@ --srcdir`
 APR_SRCDIR=`@APR_CONFIG@ --srcdir`
 APU_DOX = (cd $(APU_SRCDIR); cat docs/doxygen.conf - | doxygen -)
 APR_DOX = (cd $(APR_SRCDIR); cat docs/doxygen.conf - | doxygen -)
-SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi
+SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi, s(href="/Apache.+/([^/]+).html")(href="group__apreq__xs__\L$$1.html")g
 EUM=ExtUtils::Manifest
 
 bin_SCRIPTS = apreq2-config

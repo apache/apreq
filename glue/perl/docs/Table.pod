@@ -56,7 +56,8 @@ Apache::*::Table - Table classes for Apache::Request, Apache::Upload, and Apache
 
 =head1 SEE ALSO
 
-APR::Table(3), Apache::Request(3), Apache::Upload(3), Apache::Cookie(3).
+L<Apache::Request>, L<Apache::Cookie>, L<Apache::Upload>
+APR::Table(3)
 
 
 

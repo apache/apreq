@@ -598,8 +598,9 @@ Changes to the 1.X API:
 
 =head1 SEE ALSO
 
-CGI::Cookie(3), Apache::Cookie::Error(3), Apache::Cookie::Jar::Error(3),
-Apache::Cookie::Table(3), Apache::Request(3), APR(3).
+L<Apache::Cookie::Table>, L<Apache::Cookie::Error>, 
+L<Apache::Cookie::Jar::Error>, L<Apache::Request>,
+CGI::Cookie(3)
 
 
 

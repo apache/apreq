@@ -131,7 +131,7 @@ file system as the final destination file:
 
 =for example end
 
-For more details on C<link>, see the L<Apache::Upload> manpage.
+For more details on C<link>, see L<Apache::Upload>.
 
 
 =item * C<HOOK_DATA>
@@ -423,7 +423,7 @@ addressed when porting 1.X apps to the new 2.X API.
 =head1 SEE ALSO
 
 L<Apache::Request::Table>, L<Apache::Request::Error>, L<Apache::Upload>,
-L<Apache::Cookie>, L<APR::Table>.
+L<Apache::Cookie>, APR::Table(3).
 
 
 

@@ -43,7 +43,9 @@ detects bad cookies (usually during bake or bake2).
 
 =head1 SEE ALSO
 
-APR::Error(3), Apache::Request(3), Apache::Upload(3), Apache::Cookie(3).
+L<Apache::Request>, L<Apache::Cookie>, L<Apache::Upload>
+APR::Error(3)
+
 
 
 

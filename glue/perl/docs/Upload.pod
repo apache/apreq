@@ -341,7 +341,8 @@ linefeeds (the '\012' character), but we may eventually use C<$/> instead.
 
 =head1 SEE ALSO
 
-L<Apache::Cookie>, L<Apache::Upload>, L<APR::Table>
+L<Apache::Upload::Table>, L<Apache::Upload::Error>, L<Apache::Request>,
+APR::Table(3)
 
 
 
