@@ -19,7 +19,7 @@ my $src_dir = "$base_dir/src";
 my $xs_dir = "$base_dir/glue/perl/xsbuilder";
 sub slurp($$)
 {
-    open my $file, $_[1] or die $!;
+    open my $file, $_[1] or die "Can't open $_[1]: $!";
     read $file, $_[0], -s $file;
 }
 
@@ -27,7 +27,10 @@ my ($apache_includes, $apr_libs, $apreq_libname);
 
 if (Apache::Build::WIN32) {
     # XXX May need fixing, Randy!
-    # XXX How do we set $version in the Win32 build?
+    slurp my $config => "$base_dir/configure.ac";
+    $config =~ /^AC_INIT[^,]+,\s*([^,\s]+)/m or 
+        die "Can't find version string";
+    $version = $1;
     my $apache_dir = Apache::Build->build_config()->dir;
     ($apache_includes = "-I$apache_dir" . '/include') =~ s!\\!/!g;
     ($apr_libs = $apache_dir . '/lib') =~ s!\\!/!g;
