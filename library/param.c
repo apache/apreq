@@ -150,7 +150,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
                 if (s != APR_SUCCESS)
                     return s;
 
-                APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
+                apreq_param_tainted_on(param);
                 apreq_value_table_add(&param->v, t);
             }
 

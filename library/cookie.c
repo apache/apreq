@@ -355,7 +355,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
                 return status;
 
             c = apreq_cookie_make(p, name, nlen, value, vlen);
-            APREQ_FLAGS_ON(c->flags, APREQ_TAINT);
+            apreq_cookie_tainted_on(c);
             if (version != NETSCAPE)
                 apreq_cookie_version_set(c, version);
         }

@@ -28,6 +28,14 @@
  extern "C" {
 #endif 
 
+/**
+ * @file apreq.h
+ * @brief Main header file...
+ * @ingroup libapreq2
+ *
+ * Define the generic APREQ_ macros and common data structures.
+ */
+
 #ifndef WIN32
 #define APREQ_DECLARE(d)                APR_DECLARE(d)
 #define APREQ_DECLARE_NONSTD(d)         APR_DECLARE_NONSTD(d)
@@ -37,8 +45,6 @@
 #define APREQ_DECLARE_NONSTD(type)      __declspec(dllexport) type
 #define APREQ_DECLARE_DATA              __declspec(dllexport)
 #endif
-
-
 
 #define APREQ_DEFAULT_READ_BLOCK_SIZE   (64  * 1024)
 #define APREQ_DEFAULT_READ_LIMIT        (64 * 1024 * 1024)
@@ -59,10 +65,11 @@
 #define APREQ_CHARSET_MASK        255
 
 #define APREQ_CHARSET_ASCII         0
+#define APREQ_CHARSET_ISO_8529_1    1
 #define APREQ_CHARSET_UTF8          8
 
-#define APREQ_TAINT_BIT             8
-#define APREQ_TAINT_MASK            1
+#define APREQ_TAINTED_BIT           8
+#define APREQ_TAINTED_MASK          1
 
 #define APREQ_COOKIE_VERSION_BIT   11
 #define APREQ_COOKIE_VERSION_MASK   3

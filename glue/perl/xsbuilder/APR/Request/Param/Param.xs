@@ -430,9 +430,9 @@ is_tainted(obj, val=NULL)
 
     if (items == 2) {
         if (SvTRUE(val))
-           apreq_param_taint_on(obj);
+           apreq_param_tainted_on(obj);
         else
-           apreq_param_taint_off(obj);
+           apreq_param_tainted_off(obj);
     }
 
   OUTPUT:
@@ -474,7 +474,7 @@ make(class, pool, name, val)
     v = SvPV(val, vlen);
     RETVAL = apreq_param_make(pool, n, nlen, v, vlen);
     if (SvTAINTED(name) || SvTAINTED(val))
-        apreq_param_taint_on(RETVAL);
+        apreq_param_tainted_on(RETVAL);
 
   OUTPUT:
     RETVAL

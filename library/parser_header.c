@@ -143,7 +143,7 @@ static apr_status_t split_header_line(apreq_param_t **p,
     while ((f = APR_BRIGADE_FIRST(bb)) != e)
         apr_bucket_delete(f);
 
-    APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
+    apreq_param_tainted_on(param);
     *p = param;
     return APR_SUCCESS;
 

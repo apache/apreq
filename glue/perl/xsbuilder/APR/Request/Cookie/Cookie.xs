@@ -296,9 +296,9 @@ is_tainted(obj, val=NULL)
 
     if (items == 2) {
         if (SvTRUE(val))
-           apreq_cookie_taint_on(obj);
+           apreq_cookie_tainted_on(obj);
         else
-           apreq_cookie_taint_off(obj);
+           apreq_cookie_tainted_off(obj);
     }
 
   OUTPUT:
@@ -338,7 +338,7 @@ make(class, pool, name, val)
     v = SvPV(val, vlen);
     RETVAL = apreq_cookie_make(pool, n, nlen, v, vlen);
     if (SvTAINTED(name) || SvTAINTED(val))
-        apreq_cookie_taint_on(RETVAL);
+        apreq_cookie_tainted_on(RETVAL);
 
   OUTPUT:
     RETVAL

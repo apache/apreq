@@ -40,8 +40,10 @@ extern "C" {
  *
  */
 
-/** XXX: move this to apreq_module_t ...
-    Maximum length of a single Set-Cookie(2) header */
+/** @todo convert this macro to an apreq_module_t method.
+ *
+ * Maximum length of a single Set-Cookie(2) header.
+ */
 #define APREQ_COOKIE_MAX_LENGTH            4096
 
 /** @brief Cookie type, supporting both Netscape and RFC cookie specifications.
@@ -61,7 +63,7 @@ typedef struct apreq_cookie_t {
 } apreq_cookie_t;
 
 
-/** Upgrades cookie jar table values to apreq_cookie_t structs. */
+/** Upgrades a jar's table values to apreq_cookie_t structs. */
 static APR_INLINE
 apreq_cookie_t *apreq_value_to_cookie(const char *val)
 {
@@ -108,19 +110,19 @@ void apreq_cookie_secure_off(apreq_cookie_t *c) {
 /** @return 1 if the taint flag is set, 0 otherwise. */
 static APR_INLINE
 unsigned apreq_cookie_is_tainted(const apreq_cookie_t *c) {
-    return APREQ_FLAGS_GET(c->flags, APREQ_TAINT);
+    return APREQ_FLAGS_GET(c->flags, APREQ_TAINTED);
 }
 
 /** Sets the cookie's tainted flag. */
 static APR_INLINE
-void apreq_cookie_taint_on(apreq_cookie_t *c) {
-    APREQ_FLAGS_ON(c->flags, APREQ_TAINT);
+void apreq_cookie_tainted_on(apreq_cookie_t *c) {
+    APREQ_FLAGS_ON(c->flags, APREQ_TAINTED);
 }
 
-/** Turns off the cookie's taint flag. */
+/** Turns off the cookie's tainted flag. */
 static APR_INLINE
-void apreq_cookie_taint_off(apreq_cookie_t *c) {
-    APREQ_FLAGS_OFF(c->flags, APREQ_TAINT);
+void apreq_cookie_tainted_off(apreq_cookie_t *c) {
+    APREQ_FLAGS_OFF(c->flags, APREQ_TAINTED);
 }
 
 /**
@@ -129,7 +131,14 @@ void apreq_cookie_taint_off(apreq_cookie_t *c) {
  * @param pool pool which allocates the cookies
  * @param jar table where parsed cookies are stored
  * @param header the header value
- * @return APR_SUCCESS or an error code
+ *
+ * @return APR_SUCCESS.
+ * @return ::APREQ_ERROR_BADSEQ if an unparseable character sequence appears.
+ * @return ::APREQ_ERROR_MISMATCH if an rfc-cookie attribute appears in a
+ *         netscape cookie header.
+ * @return ::APR_ENOTIMPL if an unrecognized rfc-cookie attribute appears.
+ * @return ::APREQ_ERROR_NOTOKEN if a required token was not present.
+ * @return ::APREQ_ERROR_BADCHAR if an unexpected token was present.
  */
 APREQ_DECLARE(apr_status_t) apreq_parse_cookie_header(apr_pool_t *pool,
                                                       apr_table_t *jar,
@@ -143,6 +152,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_cookie_header(apr_pool_t *pool,
  * @param nlen  Length of name.
  * @param value The cookie's value.
  * @param vlen  Length of value.
+ *
  * @return the new cookie
  */
 APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *pool, 
@@ -155,8 +165,10 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *pool,
  * Returns a string that represents the cookie as it would appear 
  * in a valid "Set-Cookie*" header.
  *
- * @param c The cookie.
- * @param p The pool.
+ * @param c cookie.
+ * @param p pool which allocates the returned string.
+ *
+ * @return header string.
  */
 APREQ_DECLARE(char*) apreq_cookie_as_string(const apreq_cookie_t *c,
                                             apr_pool_t *p);
@@ -168,11 +180,12 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(const apreq_cookie_t *c,
  * The return value has the same semantics as that of apr_snprintf,
  * including the special behavior for a "len = 0" argument.
  *
- * @param c The cookie.
- * @param buf Storage location for the result.
- * @param len Size of buf's storage area. 
+ * @param c   cookie.
+ * @param buf storage location for the result.
+ * @param len size of buf's storage area. 
+ *
+ * @return size of resulting header string.
  */
-
 APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
                                           char *buf, apr_size_t len);
 

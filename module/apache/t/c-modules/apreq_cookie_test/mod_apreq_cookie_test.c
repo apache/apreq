@@ -72,11 +72,11 @@ static int apreq_cookie_test_handler(request_rec *r)
     ap_set_content_type(r, "text/plain");
 
     if (strcmp(test, "bake") == 0) {
-        apreq_cookie_taint_off(cookie);
+        apreq_cookie_tainted_off(cookie);
         s = apreq_cookie_bake(cookie, req);
     }
     else if (strcmp(test, "bake2") == 0) {
-        apreq_cookie_taint_off(cookie);
+        apreq_cookie_tainted_off(cookie);
         s = apreq_cookie_bake2(cookie, req);
     }
     else {

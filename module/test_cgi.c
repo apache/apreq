@@ -95,11 +95,11 @@ int main(int argc, char const * const * argv)
         }
 
         if (strcmp(test->v.data, "bake") == 0) {
-            apreq_cookie_taint_off(cookie);
+            apreq_cookie_tainted_off(cookie);
             apreq_cookie_bake(cookie, req);
         }
         else if (strcmp(test->v.data, "bake2") == 0) {
-            apreq_cookie_taint_off(cookie);
+            apreq_cookie_tainted_off(cookie);
             apreq_cookie_bake2(cookie, req);
         }
 

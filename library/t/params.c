@@ -127,10 +127,10 @@ static void header_attributes(dAT)
     AT_mem_eq(val, "20", 2);
 
     s = apreq_header_attribute(hdr, "age", 3, &val, &vlen);
-    AT_int_eq(s, APREQ_ERROR_BADTOKEN);
+    AT_int_eq(s, APREQ_ERROR_BADSEQ);
 
     s = apreq_header_attribute(hdr, "no-quote", 8, &val, &vlen);
-    AT_int_eq(s, APREQ_ERROR_BADTOKEN);
+    AT_int_eq(s, APREQ_ERROR_BADSEQ);
 
 }
 

@@ -44,19 +44,19 @@ typedef struct apreq_param_t {
 /** @return 1 if the taint flag is set, 0 otherwise. */
 static APR_INLINE
 unsigned apreq_param_is_tainted(const apreq_param_t *p) {
-    return APREQ_FLAGS_GET(p->flags, APREQ_TAINT);
+    return APREQ_FLAGS_GET(p->flags, APREQ_TAINTED);
 }
 
 /** Sets the tainted flag. */
 static APR_INLINE
-void apreq_param_taint_on(apreq_param_t *p) {
-    APREQ_FLAGS_ON(p->flags, APREQ_TAINT);
+void apreq_param_tainted_on(apreq_param_t *p) {
+    APREQ_FLAGS_ON(p->flags, APREQ_TAINTED);
 }
 
 /** Turns off the taint flag. */
 static APR_INLINE
-void apreq_param_taint_off(apreq_param_t *p) {
-    APREQ_FLAGS_OFF(p->flags, APREQ_TAINT);
+void apreq_param_tainted_off(apreq_param_t *p) {
+    APREQ_FLAGS_OFF(p->flags, APREQ_TAINTED);
 }
 
 /** @return 1 if the UTF-8 flag is set, 0 otherwise. */

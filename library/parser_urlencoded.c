@@ -130,7 +130,7 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
     while ((f = APR_BRIGADE_FIRST(bb)) != e)
         apr_bucket_delete(f);
 
-    APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
+    apreq_param_tainted_on(param);
     *p = param;
     return APR_SUCCESS;
 }
