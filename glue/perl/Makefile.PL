@@ -11,6 +11,9 @@ use Apache::TestReport ();
 use Apache::TestSmoke ();
 use Apache::TestRun ();
 use Apache::TestConfigPerl ();
+use Apache::TestSmokePerl ();
+use Apache::TestReportPerl ();
+
 use File::Find qw(finddepth);
 use File::Basename;
 use Apache::Build;
@@ -157,6 +160,8 @@ File::Find::finddepth(sub {
 
 Apache::TestMM::filter_args();
 Apache::TestMM::generate_script("t/TEST");
+Apache::TestSmokePerl->generate_script;
+Apache::TestReportPerl->generate_script;
 
 ModPerl::MM::WriteMakefile(
     NAME => 'libapreq2',
