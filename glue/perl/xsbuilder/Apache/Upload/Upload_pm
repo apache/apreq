@@ -1,14 +1,24 @@
 use APR::Table;
 use APR::Bucket;
 use APR::Brigade;
+use APR::PerlIO;
 use APR::Error;
 use Apache::Request;
 
 package Apache::Upload;
-sub fh {
+
+sub io {
     tie local (*FH), "Apache::Upload::Brigade", shift->bb;
     return *FH{IO};
 }
+
+sub fh {
+    my $upload = shift;
+    open my $fh, "<:APR", $upload->tempname, $upload->pool or 
+        die "Can't open ", $upload->tempname, ": ", $!;
+    return $fh;
+}
+
 
 package Apache::Upload::Error;
 push our(@ISA), "APR::Error";

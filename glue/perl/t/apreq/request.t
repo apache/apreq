@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
-plan tests => 12, have_lwp;
+plan tests => 15, have_lwp;
 
 my $location = "/TestApReq__request";
 #print GET_BODY $location;
@@ -20,9 +20,9 @@ my $location = "/TestApReq__request";
              "basic param");
 }
 
-for my $test (qw/slurp bb_read fh_read tempname bad;query=string%%/) {
+for my $test (qw/slurp bb tempname fh io bad;query=string%%/) {
     # upload a string as a file
-    my $value = ('DataUpload' x 10 . "\r\n") x 100;
+    my $value = ('DataUpload' x 10 . "\r\n") x 1_000;
     my $result = UPLOAD_BODY("$location?test=$test", content => $value); 
     ok t_cmp($value, $result, "basic upload");
     my $i;
@@ -33,6 +33,11 @@ for my $test (qw/slurp bb_read fh_read tempname bad;query=string%%/) {
     ok t_cmp(length($value), $i, "basic upload length");    
 }
 
+{
+    my $value = 'DataUpload' x 100;
+    my $result = UPLOAD_BODY("$location?test=type", content => $value); 
+    ok t_cmp("text/plain", $result, "type");
+}
 {
     my $value = 'DataUpload' x 100;
     my $result = UPLOAD_BODY("$location?test=disable_uploads", content => $value); 

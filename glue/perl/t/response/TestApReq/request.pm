@@ -11,8 +11,6 @@ use Apache::Upload;
 use APR::Pool;
 use APR::PerlIO;
 
-my $p = APR::Pool->new();
-
 sub handler {
     my $r = shift;
     my $req = Apache::Request->new($r);
@@ -35,7 +33,7 @@ sub handler {
         }
         $req->print($data);
     }
-    elsif ($test eq 'bb_read') {
+    elsif ($test eq 'bb') {
         my ($upload) = $req->upload("HTTPUPLOAD");
         my $bb = $upload->bb;
         my $e = $bb->first;
@@ -45,29 +43,42 @@ sub handler {
             $e = $bb->next($e);
         }
     }
-    elsif ($test eq 'fh_read') {
-        my $upload = $req->upload(($req->upload)[0]);
-        my $fh = $upload->fh;
-        die "content-type mismatch" unless $upload->info->{"Content-Type"} eq $upload->type;
-        read $upload->fh, my $contents, $upload->size;
-        $upload->slurp(my $data);
-        die "fh contents != slurp data" unless $contents eq $data;
-        my $bb = $upload->bb;
-        my $e = $bb->first;
-        my $brigade_contents = "";
-        while ($e) {
-            $e->read(my $buf);
-            $brigade_contents .= $buf;
-            $e = $bb->next($e);
-        }
-        die "brigade contents != slurp data" unless $brigade_contents eq $data;
-        $r->print(<$fh>);
-
-    }
     elsif ($test eq 'tempname') {
         my $upload = $req->upload("HTTPUPLOAD");
-        open my $fh, "<:APR", $upload->tempname, $p or die $!;
+        my $name = $upload->tempname;
+        open my $fh, "<:APR", $name, $upload->pool or die "Can't open $name: $!";
         $r->print(<$fh>);
+    }
+    elsif ($test eq 'fh') {
+        my $upload = $req->upload(($req->upload)[0]);
+        my $fh = $upload->fh;
+        read $upload->fh, my $fh_contents, $upload->size;
+        $upload->slurp(my $slurp_data);
+        die 'fh contents != slurp data'
+            unless $fh_contents eq $slurp_data;
+        read $fh, $fh_contents, $upload->size;
+        die '$fh contents != slurp data'
+            unless $fh_contents eq $slurp_data;
+        seek $fh, 0, 0;
+        $r->print(<$fh>);
+    }
+    elsif ($test eq 'io') {
+        my $upload = $req->upload(($req->upload)[0]);
+        my $io = $upload->io;
+        read $upload->io, my $io_contents, $upload->size;
+        $upload->slurp(my $slurp_data);
+        die "io contents != slurp data" unless $io_contents eq $slurp_data;
+        my $bb = $upload->bb;
+        my $e = $bb->first;
+        my $bb_contents = "";
+        while ($e) {
+            $e->read(my $buf);
+            $bb_contents .= $buf;
+            $e = $bb->next($e);
+        }
+        die "io contents != brigade contents" 
+            unless $io_contents eq $bb_contents;
+        $r->print(<$io>);
     }
     elsif ($test eq 'bad') {
         eval {my $q = $req->args('query')};
@@ -75,6 +86,12 @@ sub handler {
             $req->upload("HTTPUPLOAD")->slurp(my $data);
             $req->print($data);
         }
+    }
+    elsif ($test eq 'type') {
+        my $upload = $req->upload("HTTPUPLOAD");
+        die "content-type mismatch" 
+            unless $upload->info->{"Content-Type"} eq $upload->type;
+        $r->print($upload->type);
     }
     elsif ($test eq 'disable_uploads') {
         $req->config(DISABLE_UPLOADS => 1);

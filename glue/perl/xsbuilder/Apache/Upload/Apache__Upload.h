@@ -109,6 +109,7 @@ APREQ_XS_DEFINE_GET(upload, UPLOAD_TABLE, param, UPLOAD_PKG, RETVAL->bb);
 APREQ_XS_DEFINE_GET(upload_table, UPLOAD_TABLE, param, UPLOAD_PKG, 1);
 APREQ_XS_DEFINE_ENV(upload);
 
+APREQ_XS_DEFINE_POOL(upload_table);
 
 APR_INLINE
 static XS(apreq_xs_upload_link)

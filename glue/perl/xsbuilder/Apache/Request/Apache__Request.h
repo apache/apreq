@@ -134,6 +134,9 @@ APREQ_XS_DEFINE_GET(args,    PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_GET(body,    PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_GET(table,   PARAM_TABLE, param, NULL, 1);
 
+APREQ_XS_DEFINE_POOL(request);
+APREQ_XS_DEFINE_POOL(table);
+
 static XS(apreq_xs_request_config)
 {
     dXSARGS;

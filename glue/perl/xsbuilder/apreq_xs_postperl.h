@@ -395,6 +395,20 @@ void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func,
     Perl_croak(aTHX_ Nullch);
 }
 
+#define APREQ_XS_DEFINE_POOL(attr)                              \
+static XS(apreq_xs_##attr##_pool)                               \
+{                                                               \
+    dXSARGS;                                                    \
+    void *env;                                                  \
+                                                                \
+    if (items != 1 || !SvROK(ST(0)))                            \
+        Perl_croak(aTHX_ "Usage: $obj->pool()");                \
+    env = apreq_xs_##attr##_sv2env(ST(0));                      \
+    ST(0) = sv_2mortal(sv_setref_pv(newSV(0), "APR::Pool",      \
+                                    apreq_env_pool(env)));      \
+    XSRETURN(1);                                                \
+}
+
 /** @} */
 
 #endif /* APREQ_XS_POSTPERL_H */

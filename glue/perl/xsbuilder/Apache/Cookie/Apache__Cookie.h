@@ -71,6 +71,8 @@ APREQ_XS_DEFINE_OBJECT(jar);
 
 APREQ_XS_DEFINE_GET(jar,   TABLE_PKG, cookie, COOKIE_PKG, 1);
 APREQ_XS_DEFINE_GET(table, TABLE_PKG, cookie, COOKIE_PKG, 1);
+APREQ_XS_DEFINE_POOL(jar);
+APREQ_XS_DEFINE_POOL(table);
 
 /**
  *Returns serialized version of cookie.
