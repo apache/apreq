@@ -8,6 +8,10 @@ use Apache::RequestIO;
 use Apache::Request ();
 use Apache::Connection;
 use Apache::Upload;
+use APR::Pool;
+use APR::PerlIO;
+
+my $p = APR::Pool->new();
 
 sub handler {
     my $r = shift;
@@ -62,7 +66,7 @@ sub handler {
     }
     elsif ($test eq 'tempname') {
         my $upload = $req->upload("HTTPUPLOAD");
-        open my $fh, "<", $upload->tempname or die $!;
+        open my $fh, "<:APR", $upload->tempname, $p or die $!;
         $r->print(<$fh>);
     }
     elsif ($test eq 'bad') {
