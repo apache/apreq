@@ -70,9 +70,7 @@ TEST: $(LIBAPREQ) $(MOD) $(CGI)
         cd $(LIBDIR) && $(TESTALL).exe -v
         cd $(APREQ_HOME)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
-        copy $(LIBDIR)\cgi_test.exe $(APREQ_CGI)\t\cgi-bin\cgi_test.exe
-        cd $(APREQ_CGI)
-        $(PERL) t\TEST.PL
+        copy $(LIBDIR)\test_cgi.exe $(APREQ_ENV)\t\cgi-bin\test_cgi.exe
         cd $(APREQ_HOME)
 END
 
@@ -80,7 +78,7 @@ my $clean = << 'END';
 CLEAN:
         cd $(LIBDIR)
         $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
-        cd $(APREQ_CGI)
+        cd $(APREQ_ENV)
         $(PERL) t\TEST.PL -clean
         cd $(APREQ_HOME)
 !IF EXIST("$(PERLGLUE)\Makefile")
@@ -349,7 +347,7 @@ __DATA__
 
 LIBAPREQ=libapreq
 TESTALL=testall
-CGITEST=cgi_test
+CGITEST=test_cgi
 MOD=mod_apreq
 CGI=libapreq_cgi
 
@@ -385,7 +383,6 @@ LIBDIR=$(CFG_HOME)\libs
 PERLGLUE=$(APREQ_HOME)\glue\perl
 APACHE_LIB=$(APACHE)\lib
 APREQ_ENV=$(APREQ_HOME)\env
-APREQ_CGI=$(APREQ_ENV)\cgi_test
 
 ALL : "$(LIBAPREQ)"
 
