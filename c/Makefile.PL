@@ -18,7 +18,7 @@ else {
     WriteMakefile(
        #grr, problems with things finding libapreq.so, sort out later.
        'LINKTYPE' => 'static',
-       'SKIP' => [qw(dynamic dynamic_lib dynamic_bs)],
+#       'SKIP' => [qw(dynamic_lib dynamic_bs)],
        'NAME'	 => 'libapreq',
        'INC' 	 => $src->inc,
        'TYPEMAPS'   => $src->typemaps,
@@ -31,14 +31,24 @@ my $pwd = fastcwd;
 $ENV{LD_RUN_PATH} = 
     "$ENV{LD_RUN_PATH}:$Config{installsitearch}/auto/libapr:$pwd";
 
+sub MY::dynamic {
+    my $self = shift;
+    my $string = $self->MM::dynamic;
+    $string =~ s/(Makefile\s+).*/$1/g;
+    $string;
+}
+
 sub MY::top_targets { 
     my $self = shift; 
     my $string = $self->MM::top_targets; 
     my $libapreq = <<"EOF";
 LD_RUN_PATH = $ENV{LD_RUN_PATH}
 EOF
+
+    my $so = "\n".'$(DLBASE).$(DLEXT): $(INST_DYNAMIC)'."\n";
+
     $string =~ s/(pure_all\s+::\s+)(.*)/$1 static $2/; 
-    return $libapreq . $string;
+    return $libapreq . $so . $string;
 }
 
 sub MY::post_initialize { 
@@ -47,7 +57,7 @@ sub MY::post_initialize {
     for (qw(apache_request apache_cookie multipart_buffer)) {
 	$self->{PM}->{"$_.h"} = "$to/$_.h";
     }
-    ''; 
+    '';
 } 
 
 sub win32_setup {
