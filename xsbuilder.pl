@@ -460,6 +460,50 @@ sub typemap_code
                             OUTPUT => '$arg = apreq_xs_2sv($var,\"${ntype}\");',
                             c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
                            },
+        T_HASHOBJ       => {
+                            INPUT => <<'EOT', # '$var = modperl_hash_tied_object(aTHX_ \"${ntype}\", $arg)'
+
+    if (sv_derived_from($arg, \"${ntype}\")) {
+        if (SVt_PVHV == SvTYPE(SvRV($arg))) {
+            SV *hv = SvRV($arg);
+            MAGIC *mg;
+            if (SvMAGICAL(hv)) {
+                if ((mg = mg_find(hv, PERL_MAGIC_tied))) {
+                    $var = (void *)MgObjIV(mg);
+                }
+                else {
+                    Perl_warn(aTHX_ \"Not a tied hash: (magic=%c)\", mg);
+                    $var = NULL;
+                }
+            }
+            else {
+                Perl_warn(aTHX_ \"SV is not tied\");
+                $var = NULL;
+            }
+        }
+        else {
+            $var = (void *)SvObjIV($arg);
+        }
+    }
+    else {
+        Perl_croak(aTHX_
+                   \"argument is not a blessed reference \"
+                   \"(expecting an %s derived object)\", "\${ntype}\");
+    }
+EOT
+
+                            OUTPUT => <<'EOT', # '$arg = modperl_hash_tie(aTHX_ \"${ntype}\", $arg, $var);'
+  {
+    SV *hv = (SV*)newHV();
+    SV *rsv = $arg;
+    sv_setref_pv(rsv, \"${ntype}\", $var);
+    sv_magic(hv, rsv, PERL_MAGIC_tied, Nullch, 0);
+    $arg = SvREFCNT_inc(sv_bless(sv_2mortal(newRV_noinc(hv)),
+                                 gv_stashpv(\"${ntype}\", TRUE)));
+  }
+EOT
+
+                           },
     }
 }
 
