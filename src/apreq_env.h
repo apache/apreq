@@ -55,14 +55,14 @@
  *
  */
 
-#ifdef WIN32
+#ifndef WIN32
+extern const char apreq_env[];
+#else
 #if defined(MOD_APREQ_EXPORTS) || defined(LIBAPREQ_CGI_EXPORTS)
 __declspec(dllexport) const char apreq_env[];
 #else
 __declspec(dllimport) const char apreq_env[];
 #endif
-#else
-extern const char apreq_env[];
 #endif
 
 #define APREQ_DECLARE_LOG(f) APREQ_DECLARE_NONSTD(void)(f)(const char *file, \
