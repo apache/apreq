@@ -1,14 +1,19 @@
 package TestApReq::inherit;
+use base 'Apache::Request';
 use strict;
-use Apache::Request;
-use Apache::Constants qw/OK/;
+use warnings FATAL => 'all';
+use APR;
+use Apache::RequestRec;
+use Apache::RequestIO;
+use Devel::Peek;
 sub handler {
-    my $r = Apache->request;
-    $r->send_http_header('text/plain');
-
-    my $apr = Apache::Request->new($r);
-    printf "method => %s\n", $apr->method;
-    return OK;
+    my $r = shift;
+    $r->content_type('text/plain');
+    $r = __PACKAGE__->new($r); # tickles refcnt bug in apreq-1
+    Dump($r);
+    die "Wrong package: ", ref $r unless $r->isa('TestApReq::inherit');
+    $r->print(sprintf "method => %s\n", $r->method);
+    return 0;
 }
 
 1;

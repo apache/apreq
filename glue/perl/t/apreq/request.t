@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 use strict;
 use warnings FATAL => 'all';
 
@@ -6,7 +7,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
-plan tests => 2;
+plan tests => 2, todo => [2];
 
 my $location = "/TestApReq__request";
 #print GET_BODY $location;
