@@ -3,6 +3,11 @@ AC_DEFUN(AC_APREQ, [
 		[  --with-apache2-apxs  path to apache2's apxs],
 		[APACHE2_APXS=$withval],
 		[APACHE2_APXS="/usr/local/apache2/bin/apxs"])
+	AC_ARG_WITH(perl,
+		[  --with-perl  path to perl executable],
+		[PERL=$withval],
+		[PERL="perl"])
+
 	APACHE2_INCLUDES=`$APACHE2_APXS -q INCLUDEDIR`
         APACHE2_MODULES=`$APACHE2_APXS -q LIBEXECDIR`
         APACHE2_LIBS=`$APACHE2_APXS -q LIBDIR`
@@ -10,6 +15,7 @@ AC_DEFUN(AC_APREQ, [
 	AC_SUBST(APACHE2_INCLUDES)
         AC_SUBST(APACHE2_MODULES)
         AC_SUBST(APACHE2_LIBS)
+        AC_SUBST(PERL)
 ])
 
 AC_DEFUN(APR_ADDTO,[
