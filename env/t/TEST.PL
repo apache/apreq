@@ -2,7 +2,6 @@ use strict;
 use warnings FATAL => 'all';
 
 use constant WIN32 => $^O eq 'MSWin32';
-require Win32 if WIN32;
 
 use Cwd;
 my $cwd = WIN32 ?
@@ -26,6 +25,10 @@ sub pre_configure {
 sub configure {
     my $self = shift;
     my $cfg = $self->{test_config};
+    # make sure Win32 uses the just-built libapreq2.dll
+    if (WIN32) {
+        $cfg->preamble(qq{LoadFile "$env_dir_libs/libapreq2.dll"\n});
+    }
     $cfg->preamble(IfModule => '!mod_apreq.c',
                qq(LoadModule apreq_module "$env_dir_libs/mod_apreq.so"\n));
     bless $cfg, "My::TestConfig";
