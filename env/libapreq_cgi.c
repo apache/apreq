@@ -59,6 +59,7 @@
 #include "apreq_cookie.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
+#include "apr_env.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -94,6 +95,12 @@ const unsigned int apreq_env_magic_number = 20031014;
 
 #define CRLF "\015\012"
 
+#define APREQ_ASSERT(rc_run) do { \
+         apr_status_t rc = rc_run; \
+         if (rc != APR_SUCCESS) { \
+             apreq_log(APREQ_DEBUG 0, ctx, "failed: %d", rc); \
+         } \
+     } while (0)
 
 APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
 {
@@ -103,14 +110,18 @@ APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
 
 APREQ_DECLARE(const char *)apreq_env_query_string(void *env)
 {
-    return getenv("QUERY_STRING");
+    dCTX;
+    char *value;
+    APREQ_ASSERT(apr_env_get(&value, "QUERY_STRING", ctx->pool));
+    return value;
 }
+
 APREQ_DECLARE(const char *)apreq_env_header_in(void *env, 
                                                const char *name)
 {
     dCTX;
     char *key = apr_pstrdup(ctx->pool, name);
-    char *k;
+    char *k, *value;
     for (k = key; *k; ++k) {
         if (*k == '-')
             *k = '_';
@@ -118,8 +129,8 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
             *k = apr_toupper(*k);
     }
 
-
-    return getenv(key);
+    APREQ_ASSERT(apr_env_get(&value, key, ctx->pool));
+    return value;
 }
 
 APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *ctx, const char *name, 
