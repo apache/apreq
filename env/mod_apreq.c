@@ -204,14 +204,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         if (ctx->bb_parse == NULL)
             ctx->bb_parse = apr_brigade_create(r->pool, f->c->bucket_alloc);
         if (ctx->req == NULL) {
-            apreq_parser_t *parser;
-            ctx->req = apreq_request(r, NULL);
-            parser = apreq_make_parser(r->pool, APREQ_URL_ENCTYPE,
-                                       apreq_parse_urlencoded, NULL, ctx->req);
-            apreq_register_parser(ctx->req, parser);
-            parser = apreq_make_parser(r->pool, APREQ_MFD_ENCTYPE,
-                                       apreq_parse_multipart, NULL, ctx->req);
-            apreq_register_parser(ctx->req, parser);
+            ctx->req = apreq_request(r, r->args);
         }
         apreq_log(APREQ_DEBUG 0, r, "filter initialized");
     }

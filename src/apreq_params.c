@@ -57,6 +57,7 @@
  */
 
 #include "apreq_params.h"
+#include "apreq_parsers.h"
 #include "apreq_env.h"
 #include "apr_strings.h"
 
@@ -106,6 +107,7 @@ static const char * enctype(apr_pool_t *p, const char *ct)
 APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx, const char *args)
 {
     apreq_request_t *req;
+    apreq_parser_t *parser;
     apr_status_t s;
 
     if (args == NULL) {
@@ -128,7 +130,12 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx, const char *args)
         req->body     = NULL;
         req->v.name = enctype(p, apreq_env_content_type(ctx));
         /* XXX need to install copy/merge callbacks for apreq_param_t */
-
+        parser = apreq_make_parser(p, APREQ_URL_ENCTYPE,
+                                   apreq_parse_urlencoded, NULL, req);
+        apreq_register_parser(req, parser);
+        parser = apreq_make_parser(p, APREQ_MFD_ENCTYPE,
+                                   apreq_parse_multipart, NULL, req);
+        apreq_register_parser(req, parser);
 
         /* XXX get/set race condition here wrt apreq_env_request? */
         old_req = apreq_env_request(ctx, req);
@@ -150,7 +157,13 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx, const char *args)
         req->args     = apreq_make_table(p, APREQ_NELTS);
         req->body     = NULL;
         req->v.name = enctype(p, apreq_env_content_type(ctx));
-        /* XXX need to install copy/merge callbacks for apreq_param_t */
+        /* XXX need to install copy/merge callbacks for apreq_param_t */ 
+        parser = apreq_make_parser(p, APREQ_URL_ENCTYPE,
+                                   apreq_parse_urlencoded, NULL, req);
+        apreq_register_parser(req, parser);
+        parser = apreq_make_parser(p, APREQ_MFD_ENCTYPE,
+                                   apreq_parse_multipart, NULL, req);
+        apreq_register_parser(req, parser);
     }
 
     s = (args == NULL) ? APR_SUCCESS : 
