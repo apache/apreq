@@ -366,6 +366,19 @@ sub write_typemap
 package My::TypeMap;
 use base 'ExtUtils::XSBuilder::TypeMap';
 
+sub null_type {
+    my($self, $type) = @_;
+    my $t = $self->get->{$type};
+    my $class = $t -> {class} ;
+
+    if ($class =~ /APREQ_COOKIE_VERSION/) {
+        return 'APREQ_COOKIE_VERSION_DEFAULT';
+    }
+    else {
+        return $self->SUPER::null_type($type);
+    }
+}
+
 # XXX this needs serious work
 sub typemap_code
 {
@@ -393,6 +406,10 @@ sub typemap_code
                             perl2c => 'apreq_xs_sv2(jar,sv)',
                             OUTPUT => '$arg = apreq_xs_2sv($var,\"${ntype}\");',
                             c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
+                           },
+ T_APREQ_COOKIE_VERSION => {
+                            INPUT  => '$var = ((apreq_cookie_version_t)SvTRUE($arg))',
+                            OUTPUT => '$arg = boolSV((bool)$var);',
                            },
         T_HASHOBJ       => {
                             INPUT => <<'EOT', # '$var = modperl_hash_tied_object(aTHX_ \"${ntype}\", $arg)'
