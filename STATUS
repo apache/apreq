@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/11/16 04:27:01 $]   -*-text-*-
+Last modified at [$Date: 2004/02/29 03:32:57 $]   -*-text-*-
 /** @page STATUS
 
      2.03-dev under development
@@ -24,9 +24,26 @@ CURRENT RELEASE NOTES:
 
 RELEASE SHOWSTOPPERS:
 
+    - License for Perl API (pod and pm files) needs updating to ASLv2. See
+      http://www.apache.org/dev/apply-license.html
+
+    - Include perl glue for CGI environment.
+
 
 CURRENT VOTES:
 
+    - Should we switch to EU::MM for determining the full path to perl?
+      The problem is that some folks move their perl binary post-installation,
+      but never adjust Config.pm.  EU::MM is smart, by accepting a 
+      full path in $^X or by searching the user's $PATH for $^X, before
+      resorting to Config.pm.  However, if we change apreq2, we should also
+      lobby test-dev to adopt the same solution for Apache::Test.  Otherwise
+      our test suite will likely fail, even though the rest of the perl build
+      system will presumably still work.
+
+            +1: joes
+             0:
+            -1:
 
 TODO:
 
@@ -41,21 +58,27 @@ TODO:
     - symbol exports files:
       -# aix needs .exp files
 
+    - Clean up apreq_config_t, breaking binary compatibility by removing
+      some useless fields in the struct.
+
+    - Fix test_cgi.c (probably a httpd.conf issue) so it passes the
+      Apache::Test tests on debian-amd64.
+
 
 OPEN ISSUES:
 
     - Should we bundle an apr-based "application/xml" parser?  
       If so, how should we parse the xml data into an apr_table?
 
-    - How should the Perl API work in a CGI context?
-      Will users need to preload an "CGI environment" module 
-      before loading Request.so or Cookie.so?
-
-    - Figure out how to bundle a CPAN release.
+    - Clean up the CHANGES file format so it's more readable.
 
 BUGS:
 
-  XXX
+    - Strange bug when ssl is enabled & lots of fields are present: see
+        http://marc.theaimsgroup.com/?t=107766265600001&r=1&w=2
+
+    - Fix build automake/libtool/autoconf build system so it works
+      properly on OSX & AIX.
 
 
 WISH LIST:
