@@ -21,4 +21,6 @@ the Apache::Upload API
 Andreas J. Koenig (andreas.koenig@anima.de) - various patches and
 suggestions
 
+Tom Vaughan (tvaughan@aventail.com) - autoconf support
+
 other contributors are listed in the Changes file

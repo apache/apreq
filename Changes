@@ -4,6 +4,9 @@ Revision history for Perl extension Apache::Request.
 
 =item 0.32 - August 16, 1999
 
+autoconf support
+[Tom Vaughan <tvaughan@aventail.com>]
+
 also parse r->args if content-type is multipart
 [Ville Skyttä <ville@office.popsystems.com>]
 

@@ -9,5 +9,5 @@ include and linker arguments.
 
 To build libapreq without the Makefile.PL, run:
 
- (cd c && make -f Makefile.noperl)
+ ./configure [--with-apache-includes=DIR] && make
 
