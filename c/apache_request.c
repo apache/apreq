@@ -218,36 +218,26 @@ static int urlword_dlm[] = {'&', ';', 0};
 
 static char *my_urlword(pool *p, const char **line)
 {
-    int i;
+    char *res = NULL;
+    const char *pos = *line;
+    char ch;
 
-    for (i = 0; urlword_dlm[i]; i++) {
-	int stop = urlword_dlm[i];
-	char *pos = strchr(*line, stop);
-	char *res;
-
-	if (!pos) {
-	    if (!urlword_dlm[i+1]) {
-		int len = strlen(*line);
-		res = ap_pstrndup(p, *line, len);
-		*line += len;
-		return res;
-	    }
-	    continue;
-	}
-
-	res = ap_pstrndup(p, *line, pos - *line);
-
-	while (*pos == stop) {
-	    ++pos;
-	}
-
-	*line = pos;
-
-	return res;
+    while ( (ch = *pos) != '\0' && ch != ';' && ch != '&') {
+	++pos;
     }
 
-    return NULL;
+    res = ap_pstrndup(p, *line, pos - *line);
+
+    while (ch == ';' || ch == '&') {
+	++pos;
+	ch = *pos;
+    }
+
+    *line = pos;
+
+    return res;
 }
+
 
 static void split_to_parms(ApacheRequest *req, const char *data)
 {
