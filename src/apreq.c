@@ -41,13 +41,14 @@ apreq_value_t *apreq_value_merge(apr_pool_t *p,
                                  const apr_array_header_t *arr)
 {
     apreq_value_t *a = *(apreq_value_t **)(arr->elts);
-    apreq_value_t *v = apreq_char_to_value( apreq_join(p, ", ", arr, 0) );
+    apreq_value_t *v = apreq_char_to_value( apreq_join(p, ", ", arr, AS_IS) );
     if (arr->nelts > 0)
         v->name = a->name;
     return v;
 }
 
-char *apreq_expires(apr_pool_t *p, const char *time_str, const int type)
+APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str, 
+                                    const apreq_expires_t type)
 {
     apr_time_t when;
     apr_time_exp_t tms;
@@ -74,7 +75,7 @@ char *apreq_expires(apr_pool_t *p, const char *time_str, const int type)
 
 /* used for specifying file & byte sizes */
 
-apr_int64_t apreq_atoi64(const char *s) {
+APREQ_DECLARE(apr_int64_t) apreq_atoi64(const char *s) {
     apr_int64_t n = 0;
     char *p;
     if (s == NULL)
@@ -99,7 +100,7 @@ apr_int64_t apreq_atoi64(const char *s) {
 
 /* converts date offsets (e.g. "+3M") to seconds */
 
-long apreq_atol(const char *s) 
+APREQ_DECLARE(long) apreq_atol(const char *s) 
 {
     apr_int64_t n = 0;
     char *p;
@@ -183,7 +184,7 @@ apr_off_t apreq_index(const char* hay, apr_off_t hlen,
 }
 
 static const char c2x_table[] = "0123456789abcdef";
-static char x2c(const char *what)
+static APR_INLINE char x2c(const char *what)
 {
     register char digit;
 
@@ -203,11 +204,12 @@ static char x2c(const char *what)
     return (digit);
 }
 
-apr_ssize_t apreq_unescape(char *d, const char *s, const apr_size_t slen)
+apr_ssize_t apreq_decode(char *d, const char *s, const apr_size_t slen)
 {
     register int badesc = 0;
     char *start = d;
     const char *end = s + slen;
+
     if (s == NULL || d == NULL)
         return -1;
 
@@ -268,7 +270,7 @@ apr_ssize_t apreq_unescape(char *d, const char *s, const apr_size_t slen)
 }
 
 
-apr_size_t apreq_escape(char *dest, const char *src, 
+apr_size_t apreq_encode(char *dest, const char *src, 
                         const apr_size_t slen) 
 {
     char *d = dest;
@@ -342,7 +344,7 @@ apr_size_t apreq_quote(char *dest, const char *src, const apr_size_t slen)
 APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 
                                        const char *sep, 
                                        const apr_array_header_t *arr,
-                                       int mode)
+                                       apreq_join_t mode)
 {
     apr_ssize_t len, slen;
     apreq_value_t *rv;
@@ -362,12 +364,14 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
     /* Allocated the required space */
 
     switch (mode) {
-    case APREQ_JOIN_ESCAPE:
+    case ENCODE:
         len += 2 * len;
         break;
-    case APREQ_JOIN_QUOTE:
+    case QUOTE:
         len = 2 * (len + n);
         break;
+    default:
+        /* nothing special required, just here to keep noisy compilers happy */
     }
 
     rv = apr_palloc(p, len + sizeof *rv);
@@ -385,18 +389,18 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
 
     switch (mode) {
 
-    case APREQ_JOIN_ESCAPE:
-        d += apreq_escape(d, a[0]->data, a[0]->size);
+    case ENCODE:
+        d += apreq_encode(d, a[0]->data, a[0]->size);
 
         for (j = 1; j < n; ++j) {
                 memcpy(d, sep, slen);
                 d += slen;
-                d += apreq_escape(d, a[j]->data, a[j]->size);
+                d += apreq_encode(d, a[j]->data, a[j]->size);
         }
         break;
 
-    case APREQ_JOIN_UNESCAPE:
-        len = apreq_unescape(d, a[0]->data, a[0]->size);
+    case DECODE:
+        len = apreq_decode(d, a[0]->data, a[0]->size);
 
         if (len < 0) {
             rv->status = APR_BADCH;
@@ -409,7 +413,7 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
             memcpy(d, sep, slen);
             d += slen;
 
-            len = apreq_unescape(d, a[j]->data, a[j]->size);
+            len = apreq_decode(d, a[j]->data, a[j]->size);
 
             if (len < 0) {
                 rv->status = APR_BADCH;
@@ -421,7 +425,7 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
         break;
 
 
-    case APREQ_JOIN_QUOTE:
+    case QUOTE:
         d += apreq_quote(d, a[0]->data, a[0]->size);
 
         for (j = 1; j < n; ++j) {
@@ -448,5 +452,19 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
 
     *d = 0;
     rv->size = d - rv->data;
+    return rv->data;
+}
+
+APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p, 
+                                   const char *src, const apr_size_t slen)
+{
+    apreq_value_t *rv;
+    if (src == NULL || slen == 0)
+        return NULL;
+
+    rv = apr_palloc(p, 3 * slen + sizeof *rv);
+    rv->name = NULL;
+    rv->status = APR_SUCCESS;
+    rv->size = apreq_encode(rv->data, src, slen);
     return rv->data;
 }

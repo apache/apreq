@@ -60,6 +60,8 @@
 #include "apreq_env.h"
 
 #define p2v(param) ( (param) ? &(param)->v : NULL )
+#define UPGRADE(s) apreq_value_to_param(apreq_char_to_value(s))
+
 
 APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 {
@@ -96,13 +98,13 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 
     query_string = apreq_env_args(ctx);
     req->status = (query_string == NULL) ? APR_SUCCESS :
-        apreq_param_split(req->args, p, query_string, strlen(query_string));
+        apreq_param_split(p, req->args, query_string, strlen(query_string));
  
     return req;
 }
 
 
-apr_status_t apreq_parse(apreq_request_t *req)
+APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req)
 {
     if (req->body == NULL)
         if (req->status == APR_SUCCESS)
@@ -117,23 +119,29 @@ apr_status_t apreq_parse(apreq_request_t *req)
         return req->status;
 }
 
-const char *apreq_param(apreq_request_t *req, const char *key)
+
+APREQ_DECLARE(const apreq_param_t *)apreq_param(const apreq_request_t *req, 
+                                                const char *name)
 {
-    const char *param = apreq_table_get(req->args, key);
-    return param ? param : apreq_table_get(req->body, key);
+    const apreq_param_t *param = UPGRADE(apreq_table_get(req->args, name));
+    return param ? param : UPGRADE(apreq_table_get(req->body, name));
 }
 
-apr_array_header_t *apreq_params(const apreq_request_t *req, 
-                                 apr_pool_t *pool,
-                                 const char *key)
+
+APREQ_DECLARE(apr_array_header_t *) apreq_params(apr_pool_t *pool,
+                                                 const apreq_request_t *req, 
+                                                 const char *name)
 {
-    apr_array_header_t *arr = apreq_table_values(req->args, pool, key);
-    apr_array_cat(arr, apreq_table_values(req->body, pool, key));
+    apr_array_header_t *arr = apreq_table_values(pool, req->args, name);
+    apr_array_cat(arr, apreq_table_values(pool, req->body, name));
     return arr;
 }
 
-apr_status_t apreq_param_split(apreq_table_t *t, apr_pool_t *pool,
-                               const char *data, apr_size_t dlen)
+
+APREQ_DECLARE(apr_status_t) apreq_param_split(apr_pool_t *pool,
+                                              apreq_table_t *t,
+                                              const char *data, 
+                                              apr_size_t dlen)
 {
     const char *start = data, *end = data + dlen;
     apr_size_t nlen = 0;
@@ -196,7 +204,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_decode(apr_pool_t *pool,
     param->v.status = APR_SUCCESS;
     param->v.name = NULL;
 
-    size = apreq_unescape(param->v.data, word + nlen + 1, vlen);
+    size = apreq_decode(param->v.data, word + nlen + 1, vlen);
 
     if (size < 0) {
         param->v.size = 0;
@@ -207,8 +215,30 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_decode(apr_pool_t *pool,
     param->v.size = size;
     param->v.name = param->v.data + size + 1;
 
-    if (apreq_unescape(param->v.data + size + 1, word, nlen) < 0)
+    if (apreq_decode(param->v.data + size + 1, word, nlen) < 0)
         param->v.status = APR_BADCH;
 
     return param;
+}
+
+
+APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool, 
+                                         const apreq_param_t *param)
+{
+    apreq_value_t *v;
+    apr_size_t nlen;
+
+    if (param->v.name == NULL || param->v.status != APR_SUCCESS)
+        return NULL;
+
+    nlen = strlen(param->v.name);
+
+    v = apr_palloc(pool, 3 * (nlen + param->v.size) + 2 + sizeof *v);
+    v->name = param->v.name;
+    v->status = APR_SUCCESS;
+    v->size = apreq_encode(v->data, param->v.name, nlen);
+    v->data[v->size++] = '=';
+    v->size += apreq_encode(v->data + v->size, param->v.data, param->v.size);
+
+    return v->data;
 }

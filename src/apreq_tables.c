@@ -550,7 +550,7 @@ APREQ_DECLARE(apreq_table_t *) apreq_table_make(apr_pool_t *p, int nelts)
 }
 
 APREQ_DECLARE(apreq_table_t *) apreq_table_copy(apr_pool_t *p, 
-                                              const apreq_table_t *t)
+                                                const apreq_table_t *t)
 {
     apreq_table_t *new = apr_palloc(p, sizeof *new);
 
@@ -575,8 +575,8 @@ APREQ_DECLARE(apreq_table_t *) apreq_table_copy(apr_pool_t *p,
     return new;
 }
 
-APREQ_DECLARE(apr_table_t *)apreq_table_export(const apreq_table_t *t, 
-                                               apr_pool_t *p)
+APREQ_DECLARE(apr_table_t *)apreq_table_export(apr_pool_t *p,
+                                               const apreq_table_t *t)
 {
     int idx;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
@@ -841,8 +841,8 @@ APREQ_DECLARE(const char *) apreq_table_get_cached(apreq_table_t *t,
 }
 
 
-APREQ_DECLARE(apr_array_header_t *) apreq_table_values(const apreq_table_t *t,
-                                                       apr_pool_t *p,
+APREQ_DECLARE(apr_array_header_t *) apreq_table_values(apr_pool_t *p,
+                                                       const apreq_table_t *t,
                                                        const char *key)
 {
     int idx;

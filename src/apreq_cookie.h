@@ -45,14 +45,6 @@ typedef struct apreq_cookie_t {
 
 
 /**
- * returns the current context jar.
- *
- *
- */
-APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx);
-#define apreq_jar(r) apreq_jar_parse(r,NULL)
-
-/**
  * Returns the number of cookies in the jar.
  *
  * @param jar The cookie jar.
@@ -70,8 +62,8 @@ int apreq_jar_items(apreq_jar_t *jar);
  * @param name  The name of the desired cookie.
  */
 
-apreq_cookie_t *apreq_jar_get(apreq_jar_t *jar, char *name);
-#define apreq_jar_get(j,k) apreq_value_to_cookie(apreq_char_to_value( \
+apreq_cookie_t *apreq_cookie(const apreq_jar_t *jar, const char *name);
+#define apreq_cookie(j,k) apreq_value_to_cookie(apreq_char_to_value( \
                               apreq_table_get(j,k)))
 
 /**
@@ -100,7 +92,7 @@ void apreq_jar_add(apreq_jar_t *jar, apreq_cookie_t *c);
  */
 
 
-apreq_jar_t *apreq_jar_parse(void *ctx, const char *data);
+APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx, const char *data);
 
 /**
  * Returns a new cookie, made from the argument list.
@@ -133,8 +125,8 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c,
  * @param c The cookie.
  * @param p The pool.
  */
-APREQ_DECLARE(const char*) apreq_cookie_as_string(const apreq_cookie_t *c,
-                                                  apr_pool_t *p);
+APREQ_DECLARE(const char*) apreq_cookie_as_string(apr_pool_t *p,
+                                                  const apreq_cookie_t *c);
 
 /**
  * Same functionality as apreq_cookie_as_string.  Stores the string
@@ -168,7 +160,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
  *
  * @param c The cookie.
  */
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake(apreq_cookie_t *c);
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c);
 
 /* XXX: how about baking whole cookie jars, too ??? */
 
@@ -177,7 +169,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(apreq_cookie_t *c);
  *
  * @param c The cookie.
  */
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(apreq_cookie_t *c);
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c);
 
 APREQ_DECLARE(apreq_cookie_version_t) apreq_cookie_ua_version(void *ctx);
 

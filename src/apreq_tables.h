@@ -116,8 +116,8 @@ APREQ_DECLARE(apreq_table_t *) apreq_table_copy(apr_pool_t *p,
  * @param p The pool to allocate the APR table from
  * @param t The APREQ table to copy
  */
-APREQ_DECLARE(apr_table_t *) apreq_table_export(const apreq_table_t *t, 
-                                                apr_pool_t *p);
+APREQ_DECLARE(apr_table_t *) apreq_table_export(apr_pool_t *p,
+                                                const apreq_table_t *t);
 
 /**
  * Create an APREQ Table from an APR Table.
@@ -243,8 +243,8 @@ APREQ_DECLARE(const char *) apreq_table_get_cached(apreq_table_t *t,
  * only the first value of a multivalued entry is used.
  */
 
-APREQ_DECLARE(apr_array_header_t *) apreq_table_values(const apreq_table_t *t,
-                                                       apr_pool_t *p,
+APREQ_DECLARE(apr_array_header_t *) apreq_table_values(apr_pool_t *p,
+                                                       const apreq_table_t *t,
                                                        const char *key);
 /**
  * Add an apreq_value_t to the table. If another value already exists

@@ -35,12 +35,6 @@
 #define APREQ_MATCH_FULL                0
 #define APREQ_MATCH_PART                1
 
-/* join modes */
-#define APREQ_JOIN_ESCAPE               1
-#define APREQ_JOIN_UNESCAPE             2
-#define APREQ_JOIN_URLENCODE            3
-#define APREQ_JOIN_QUOTE                4
-
 /* status codes */
 #define APREQ_OK                        0
 #define APREQ_CONTINUE                100
@@ -70,10 +64,11 @@ apreq_value_t *apreq_value_make(apr_pool_t *p, const char *name,
 apreq_value_t *apreq_value_copy(apr_pool_t *p, const apreq_value_t *val);
 apreq_value_t *apreq_value_merge(apr_pool_t *p, const apr_array_header_t *arr);
 
+typedef enum { AS_IS, ENCODE, DECODE, QUOTE } apreq_join_t;
 APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 
                                        const char *sep, 
                                        const apr_array_header_t *arr, 
-                                       int mode);
+                                       apreq_join_t mode);
 
 /* XXX: should we drop this and replace it with apreq_index ? */
 char *apreq_memmem(char* hay, apr_off_t haylen, 
@@ -84,8 +79,14 @@ apr_off_t apreq_index(const char* hay, apr_off_t haylen,
 
 /* url-escapes non-alphanumeric characters */
 apr_size_t apreq_quote(char *dest, const char *src, const apr_size_t slen);
-apr_size_t apreq_escape(char *dest, const char *src, const apr_size_t slen);
-apr_ssize_t apreq_unescape(char *dest, const char *src, apr_size_t slen);
+apr_size_t apreq_encode(char *dest, const char *src, const apr_size_t slen);
+apr_ssize_t apreq_decode(char *dest, const char *src, apr_size_t slen);
+
+APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p, 
+                                   const char *src, const apr_size_t slen);
+
+APREQ_DECLARE(apr_ssize_t) apreq_unescape(char *str);
+#define apreq_unescape(str) apreq_decode(str,str,strlen(str))
 
 /**
  * Returns an RFC-822 formatted time string. Similar to ap_gm_timestr_822.
@@ -96,9 +97,11 @@ apr_ssize_t apreq_unescape(char *dest, const char *src, apr_size_t slen);
  */
 
 /* returns date string, (time_str is offset from "now") formatted
- * either as an NSCOOKIE or HTTP date */
+ * either as an ::NSCOOKIE or ::HTTP date */
 
-char *apreq_expires(apr_pool_t *p, const char *time_str, const int type);
+typedef enum {HTTP, NSCOOKIE} apreq_expires_t;
+APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str, 
+                                    const apreq_expires_t type);
 
 /* file sizes (KMG) to bytes */
 apr_int64_t apreq_atoi64(const char *s);

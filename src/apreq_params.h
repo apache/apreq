@@ -81,6 +81,12 @@ typedef struct apreq_param_t {
     apreq_value_t        v;
 } apreq_param_t;
 
+#define apreq_value_to_param(ptr) apreq_attr_to_type(apreq_param_t, \
+                                                      v, ptr)
+#define apreq_param_name(p)  ((p)->v.name)
+#define apreq_param_value(p) ((p)->v.data)
+
+
 
 /* XXX this might be better as an ADT */
 typedef struct apreq_request_t {
@@ -109,11 +115,11 @@ APREQ_DECLARE(apr_status_t)apreq_parse(apreq_request_t *req);
  * @remark Also parses the request as necessary.
  */
 
-APREQ_DECLARE(const char *) apreq_param(apreq_request_t *req, 
-                                        const char *key); 
+APREQ_DECLARE(const apreq_param_t *) apreq_param(const apreq_request_t *req, 
+                                        const char *name); 
 
 APREQ_DECLARE(const char *) apreq_arg(const apreq_request_t *req, 
-                                      const char *key);
+                                      const char *name);
 #define apreq_arg(r,k) apreq_table_get((req)->arg, k)
 
 
@@ -135,9 +141,9 @@ APREQ_DECLARE(const apreq_table_t *) apreq_body(const apreq_request_t *req);
  */
 
 APREQ_DECLARE(apr_array_header_t *) apreq_params(
-                                            const apreq_request_t *req,
                                             apr_pool_t *p,
-                                            const char *key);
+                                            const apreq_request_t *req,
+                                            const char *name);
 
 /**
  * Returns a ", " -separated string containing all parameters 
@@ -157,15 +163,17 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params(
  */
 APREQ_DECLARE(apr_array_header_t *) apreq_keys(apreq_request_t *req);
 
-APREQ_DECLARE(apr_status_t)  apreq_param_split(apreq_table_t *t, 
-                                               apr_pool_t *pool,
+APREQ_DECLARE(apr_status_t)  apreq_param_split(apr_pool_t *pool,
+                                               apreq_table_t *t, 
                                                const char *data, 
-                                               apr_size_t dlen);
+                                               const apr_size_t dlen);
 
 APREQ_DECLARE(apreq_param_t *) apreq_param_decode(apr_pool_t *pool, 
                                                   const char *word,
                                                   const apr_size_t nlen, 
                                                   const apr_size_t vlen);
+APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool, 
+                                         const apreq_param_t *param);
 
 
 #ifdef __cplusplus
