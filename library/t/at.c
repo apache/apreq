@@ -56,19 +56,22 @@ apr_status_t at_comment(at_t *t, const char *fmt, va_list vp)
     if (rv <= 0)
         return APR_EINVAL;
 
+
     end = b + rv;
 
     buf[0] = '#';
     buf[1] = ' ';
 
     if (rv == 250) {
+        end[-1] = '.';
         *end++ = '.';
         *end++ = '.';
-        *end++ = '.';
-        *end = '\n';
+        *end++ = '\n';
+        *end = 0;
     }
     else if (end[-1] != '\n') {
-        *end = '\n';
+        *end++ = '\n';
+        *end = 0;
     }
 
     b = buf;
@@ -76,10 +79,9 @@ apr_status_t at_comment(at_t *t, const char *fmt, va_list vp)
         char *eol;
 
         eol = strchr(b + 2, '\n');
-        assert(eol != NULL);
         *eol = 0;
         s = at_report(t, b);
-        if (s != APR_SUCCESS || eol == end)
+        if (s != APR_SUCCESS || eol == end - 1)
             break;
 
         b    = eol - 1;
@@ -234,8 +236,10 @@ static apr_status_t at_report_local_write(at_report_t *ctx, const char *msg)
         }
         longjmp(*AT->abort, 0);
     }
-    AT->current--;
-    q->passed++;
+    else if (strncmp(msg, "ok", 2) == 0) {
+        AT->current--;
+        q->passed++;
+    }
     return APR_SUCCESS;
 }
 

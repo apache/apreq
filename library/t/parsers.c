@@ -110,17 +110,19 @@ static void locate_default_parsers(dAT)
 {
     apreq_parser_function_t f;
 
-    /* initialize default-parser hash */
-    apreq_register_parser(NULL, NULL);
-    
+    AT_trace_on();
+
     f = apreq_parser(URL_ENCTYPE);
-    AT_EQ(f, apreq_parse_urlencoded, "%pp");
+    AT_EQ(f, (apreq_parser_function_t)apreq_parse_urlencoded, "%pp");
 
     f = apreq_parser(MFD_ENCTYPE);
-    AT_EQ(f, apreq_parse_multipart, "%pp");
+    AT_EQ(f, (apreq_parser_function_t)apreq_parse_multipart, "%pp");
 
     f = apreq_parser(MR_ENCTYPE);
-    AT_EQ(f, apreq_parse_multipart, "%pp");
+    AT_EQ(f, (apreq_parser_function_t)apreq_parse_multipart, "%pp");
+
+    AT_trace_off();
+
 }
 
 static void parse_urlencoded(dAT)
@@ -512,7 +514,7 @@ int main(int argc, char *argv[])
 
 
     AT = at_create(test_pool, 0, at_report_stdout_make(test_pool)); 
-//    AT_trace_on();
+
     for (i = 0; i < sizeof(test_list) / sizeof(at_test_t);  ++i)
         plan += test_list[i].plan;
 

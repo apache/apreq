@@ -148,18 +148,15 @@ void at_check(at_t *t, int is_ok, const char *label, const char *file,
 
     va_start(vp, fmt);
     if (AT_FLAG_TRACE(t->flags)) {
-        char format[64] = "testing: %s (%s:%d)";
-            at_trace(t, format, label, file, line);
+        char format[32] = "testing: %s (%s:%d)";
+        at_trace(t, format, label, file, line);
 
         if (fmt != NULL) {
-            char *f;
-            at_trace(t, " format: %s", fmt);
-            strcpy(format, "   left: ");
-            strcpy(format + sizeof("   left: ") -1, fmt);
-            f = format + strlen(format);
-            strcpy(f+1, format);
-            *f = '\n';
-            memcpy(f+1, "  right: ", sizeof("  right: ") -1);
+            apr_snprintf(format, sizeof format, " format: %s", fmt);
+            at_trace(t, "%s", format);
+            memcpy(format, "   left:", 8);
+            at_comment(t, format, vp);
+            memcpy(format, "  right:", 8);
             at_comment(t, format, vp);
         }
     }
