@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/10/18 21:03:06 $]   -*-text-*-
+Last modified at [$Date: 2003/10/25 04:13:14 $]   -*-text-*-
 /** @page STATUS
 
      2.0.0  in development
@@ -38,8 +38,6 @@ TODO:
 
     - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
 
-    - Add an apreq2-config script similar to ap[ru]-config.
-
     - Bring Perl documentation up to speed.
 
     - Write parser/hook API documentation.
@@ -55,9 +53,6 @@ TODO:
       and Apache::Request don't need to be linked against mod_apreq
       to resolve missing apreq_env* symbols. 
 
-    - continue working on the top-level Makefile.PL to completely
-      abstract all the targets so one needs to do only:
-      perl Makefile.PL && make && make test && make install
 
 OPEN ISSUES:
 
@@ -88,9 +83,5 @@ WISH LIST:
       - tomcat,
       - mod_ruby,
       - mod_parrot.
-
-    - Someone should also adopt env/libapreq_cgi.c and ensure it
-      doesn't fall into disrepair by adding some tests to env/t.
-
 
 */

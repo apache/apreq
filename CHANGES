@@ -2,13 +2,19 @@
 
 @section 2.0.0-dev Changes with libapreq2-2.0.0-dev
 
+- October 24, 2003 - C API: libapreq_cgi.c [randyk, joes]
+
+CGI environment defined by env/libapreq_cgi.c is functional
+(with tests added to env/t).  This library may soon be incorporated
+directly into libapreq2 as a default enviroment.
+
 - October 23, 2003 - C API: mod_apreq.c [joes]
 
 Added ctx->saw_eos to ensure we don't read from upstream filters
 after receiving an eos bucket.  Otherwise it was possible for
 two eos buckets to appear when a prefetch read is involved, which
 breaks other modules like mod_proxy.  This bug was uncovered by
-Phillipe Chiasson.  mod_apreq's apreq_env_majic_number bumped to
+Philippe Chiasson.  mod_apreq's apreq_env_majic_number bumped to
 reflect the added fixes.
 
 - October 17, 2003 - configure: --enable-perl-glue [joes]
