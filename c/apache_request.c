@@ -302,6 +302,10 @@ static int ap_unescape_url_u(char *url)
 		if(c < 0x80){
 		    url[x] = c;
 		}
+                else if(c < 0x800) {
+                    url[x] = 0xc0 | (c >> 6);
+                    url[++x] = 0x80 | (c & 0x3f);
+                }
 		else if(c < 0x10000){
 		    url[x] = (0xe0 | (c >> 12));
 		    url[++x] = (0x80 | ((c >> 6) & 0x3f));
