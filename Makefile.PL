@@ -24,4 +24,4 @@ qx{./configure $opts};
 push @ARGV, ('-apxs', $opts{"with-apache2-apxs"}) 
     if exists $opts{"with-apache2-apxs"};
 
-qx{cd "glue/perl" && $perl Makefile.PL @ARGV};
+qx{cd "glue/perl" && $opts{"with-perl"} Makefile.PL @ARGV};
