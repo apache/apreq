@@ -57,6 +57,7 @@
 #include "apreq_params.h"
 #include "apreq_parsers.h"
 #include "apreq_cookie.h"
+#include "apr_strings.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -69,7 +70,8 @@ struct env_ctx {
     apreq_request_t    *req;
     apreq_jar_t        *jar;
     apr_bucket_brigade *bb;
-    int                loglevel;
+    int                 loglevel;
+    apr_status_t        status;
 };
 
 const char apreq_env[] = "CGI";
@@ -83,7 +85,7 @@ APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
     return ctx->pool;
 }
 
-APREQ_DECLARE(const char *)apreq_env_args(void *env)
+APREQ_DECLARE(const char *)apreq_env_query_string(void *env)
 {
     return getenv("QUERY_STRING");
 }
@@ -150,8 +152,21 @@ APREQ_DECLARE_LOG(env_log)
     va_end(vp);
 }
 
-APREQ_DECLARE(apr_status_t) apreq_env_read(void *env, apr_read_type_e block,
+APREQ_DECLARE(apr_status_t) apreq_env_read(void *env, 
+                                           apr_read_type_e block,
                                            apr_off_t bytes)
 {
-    return APR_ENOTIMPL;
+    dCTX;
+    if (ctx->bb == NULL) {
+        apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(ctx->pool);
+        apr_file_t *in;
+        apr_bucket *stdin_pipe;
+
+        ctx->bb = apr_brigade_create(ctx->pool, alloc);
+        apr_file_open_stdin(&in, ctx->pool);
+        stdin_pipe = apr_bucket_pipe_create(in,alloc);
+        APR_BRIGADE_INSERT_HEAD(ctx->bb, stdin_pipe);
+    }
+
+    return apreq_request_parse(apreq_request(env,NULL), ctx->bb);
 }
