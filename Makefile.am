@@ -12,7 +12,7 @@ UPLOAD_POD=$(POD_PREFIX)/Upload/Upload_pod
 SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi
 EUM=ExtUtils::Manifest
 
-bin_SCRIPTS = apreq2_config
+bin_SCRIPTS = apreq2-config
 
 if BUILD_PERL_GLUE
 PERL_TEST = perl_test
@@ -36,9 +36,6 @@ release_test:
 	@cd $(distdir); @PERL@ Makefile.PL -apxs @APACHE2_APXS@ && $(MAKE) test
 	rm -rf $(distdir)
 	@echo "$(distdir).tar.gz is kosher."
-
-
-apreq2_config:
 
 reconfig:
 	./buildconf
