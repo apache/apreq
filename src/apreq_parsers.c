@@ -698,11 +698,9 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(void *env,
 {
     apr_bucket *last = APR_BRIGADE_LAST(out);
     apr_status_t s;
-    struct iovec v[APREQ_NELTS];
     apr_bucket_file *f;
     apr_bucket *e;
     apr_off_t wlen;
-    int n = 0;
 
     if (APR_BUCKET_IS_EOS(last))
         return APR_EOF;
@@ -764,9 +762,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 {
     apr_pool_t *pool = apreq_env_pool(env);
     struct mfd_ctx *ctx = parser->ctx;
-    apr_off_t off;
     apr_status_t s;
-
 
     if (parser->ctx == NULL) {
         char *ct;
@@ -814,7 +810,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
     case MFD_INIT:
         {
-            apr_bucket *e = APR_BRIGADE_LAST(ctx->bb);
             s = split_on_bdry(ctx->bb, bb, NULL, ctx->bdry + 2);
             if (s != APR_SUCCESS) {
                 APREQ_BRIGADE_SETASIDE(bb, pool);

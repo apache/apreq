@@ -689,11 +689,11 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
             return rc;
     }
     else {
-        char *tn = tempnam(NULL, "apreq");
-        if (tn == NULL)
-            return APR_EGENERAL;
-        tmpl = apr_pstrcat(pool, tn, "XXXXXX", NULL);
-        free(tn);
+        const char *tdir;
+        rc = apr_temp_dir_get(&tdir, pool);
+        if (rc != APR_SUCCESS)
+            return rc;
+        tmpl = apr_pstrcat(pool, tdir, "XXXXXX", NULL);
     }
     
     return apr_file_mktemp(fp, tmpl,

@@ -1,6 +1,13 @@
 /** @page CHANGES
 
+
 @section v2_04_dev Changes with libapreq2-2.04-dev
+
+
+- C API [joes]
+  Replace free/tempnam dependency in apreq_file_mktemp() with
+  apr_temp_dir_get().  Add additional gcc warning flags when
+  --enable-maintainer-mode is set.
 
 - C API [joes, Scott Hutton]
   Replace apreq_brigade_copy with more effective APREQ_BRIGADE_COPY
@@ -14,6 +21,7 @@
 
 
 @section v2_03_dev Changes with libapreq2-2.03-dev (released June 12, 2004)
+
 
 - C API [joes]
   "Objectify" cookie/jar API: s/apreq_(make|serialize)_cookie/apreq_cookie_$1/

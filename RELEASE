@@ -91,10 +91,11 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
 9. Wait ~12-24 hours for the ASF mirrors to pick up the new package, then
    update the apreq homepage to list the new release in the News section
    Be sure to update the libapreq2 documentation. For instructions on updating 
-   the httpd website, see build/WEBSITE.
+   the httpd website, see build/WEBSITE.  IMPORTANT: YOU MUST UPDATE
+   download.html TO POINT AT THE NEW RELEASE PACKAGE!
 
 10. Mail the announcement from your cvs.apache.org account by piping the 
     "CPAN Upload" email acknowledgement (from PAUSE) through build/announcement.pl:
 
-        % build/announcement.pl < CPAN_ack | ssh user@cvs.apache.org "sendmail -oi -t -odq"
+    % build/announcement.pl < CPAN_ack | ssh user@cvs.apache.org "sendmail -oi -t -odq"
 

@@ -10,6 +10,7 @@ libapreq2_la_LDFLAGS = -version-info @APREQ_LIBTOOL_VERSION@
 
 pkgincludedir = $(includedir)/@APREQ_LIBNAME@
 
+
 if BUILD_APR
 
 @APR_LA@:

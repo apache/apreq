@@ -103,9 +103,9 @@ AC_DEFUN([AC_APREQ], [
           USE_VPATH=1
         fi
 
-        dnl AC_SUBST(top_builddir)
-        dnl AC_SUBST(abs_srcdir)
-        dnl AC_SUBST(abs_builddir)
+        if test -n "$USE_MAINTAINER_MODE"; then
+            CPPFLAGS="$CPPFLAGS -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -Werror"
+        fi
 
         get_version="$abs_srcdir/build/get-version.sh"
         version_hdr="$abs_srcdir/src/apreq_version.h"
@@ -145,28 +145,6 @@ AC_DEFUN([AC_APREQ], [
         AC_SUBST(APR_LA)
         AC_SUBST(APU_LA)
         AC_SUBST(PERL)
-])
-
-AC_DEFUN([APR_ADDTO],[
-  if test "x$$1" = "x"; then
-    echo "  setting $1 to \"$2\""
-    $1="$2"
-  else
-    apr_addto_bugger="$2"
-    for i in $apr_addto_bugger; do
-      apr_addto_duplicate="0"
-      for j in $$1; do
-        if test "x$i" = "x$j"; then
-          apr_addto_duplicate="1"
-          break
-        fi
-      done
-      if test $apr_addto_duplicate = "0"; then
-        echo "  adding \"$i\" to $1"
-        $1="$$1 $i"
-      fi
-    done
-  fi
 ])
 
 dnl Iteratively interpolate the contents of the second argument

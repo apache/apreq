@@ -1,6 +1,7 @@
 #! /usr/bin/perl
 use warnings;
 use strict;
+
 our($PACKAGE_NAME, $PACKAGE_TITLE, $PACKAGE_VERSION, $LIBRARY_VERSION);
 foreach (qw/PACKAGE_TITLE PACKAGE_NAME PACKAGE_VERSION LIBRARY_VERSION/) {
     no strict 'refs';
@@ -18,10 +19,10 @@ sub slurp {
 my $MAIL_FROM = '<' . (split /[:@]/, slurp "CVS/Root")[2] . '@apache.org>';
 my $RCPT_TO = join ",\n      ", map "<$_>" ,
     qw(
-        announce@httpd.apache.org
+         announce@httpd.apache.org
         apreq-dev@httpd.apache.org
-        announce@perl.apache.org
-        modperl@perl.apache.org
+         announce@perl.apache.org
+          modperl@perl.apache.org
       );
 
 my ($LICENSE_VERSION) = grep s/^\s+Version (\d\.\d),.*$/$1/, slurp "LICENSE";
@@ -57,6 +58,7 @@ EOT
 
 
 my $changes = (split /\s+[@]section\s+v\S+\s+/, slurp "CHANGES")[1];
+
 print <<EOM;
 $mail_header
 
