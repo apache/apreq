@@ -92,14 +92,13 @@
  * @{
  */
 
-/* XXX temporary workaround for Win32 */
-#ifndef WIN32
-
+#ifdef WIN32
+#define APREQ_DECLARE(type)             __declspec(dllexport) type __stdcall
+#define APREQ_DECLARE_NONSTD(type)      __declspec(dllexport) type
+#define APREQ_DECLARE_DATA              __declspec(dllexport)
+#else
 #define APREQ_DECLARE(d)                APR_DECLARE(d)
 #define APREQ_DECLARE_NONSTD(d)         APR_DECLARE_NONSTD(d)
-#else
-#define APREQ_DECLARE(d)                d
-#define APREQ_DECLARE_NONSTD(d)         d
 #endif
 
 #define APREQ_URL_ENCTYPE               "application/x-www-form-urlencoded"
