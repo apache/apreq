@@ -57,7 +57,7 @@ static void *apreq_merge_dir_config(apr_pool_t *p, void *a_, void *b_)
 }
 
 
-/** The warehouse. */
+/* The warehouse. */
 struct env_config {
     apreq_jar_t        *jar;
     apreq_request_t    *req;
@@ -67,7 +67,7 @@ struct env_config {
     apr_ssize_t         max_brigade;
 };
 
-/** Tracks the filter state */
+/* Tracks the filter state */
 struct filter_ctx {
     apr_bucket_brigade *bb;
     apr_bucket_brigade *spool;
@@ -106,7 +106,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER 20040620
+#define APREQ_MODULE_MAGIC_NUMBER 20040621
 
 
 static void apache2_log(const char *file, int line, int level, 
@@ -514,9 +514,9 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         }
     }
     else if (!ctx->saw_eos) {
-        ap_filter_t *in;
         /* bb == NULL, so this is a prefetch read! */
         apr_off_t total_read = 0;
+
         bb = apr_brigade_create(ctx->bb->p, ctx->bb->bucket_alloc);
 
         while (total_read < readbytes) {
@@ -553,15 +553,17 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         /* Adding "f" to the protocol filter chain ensures the 
          * spooled data is preserved across internal redirects.
          */
-        for (in = r->input_filters; in != r->proto_input_filters; 
-             in = in->next)
-        {
-            if (f == in) {
-                r->proto_input_filters = f;
-                break;
+        if (f != r->proto_input_filters) {
+            ap_filter_t *in;
+            for (in = r->input_filters; in != r->proto_input_filters; 
+                 in = in->next)
+            {
+                if (f == in) {
+                    r->proto_input_filters = f;
+                    break;
+                }
             }
         }
-
     }
     else
         return APR_SUCCESS;
