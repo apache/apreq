@@ -59,7 +59,7 @@ if (WIN32) {
         die "Cannot find aprutil lib";
     $apr_libs .= ' -l' . basename($1, '.lib');
     $apreq_libname = 'apreq2';
-    $perl_lib = $Config{installsitelib} . '\Apache2\auto\libaprext';
+    $perl_lib = $Config{installsitelib} . '\auto\libaprext';
     $perl_lib =~ s{\\}{\\\\}g;
 }
 else {
@@ -166,15 +166,6 @@ my %opts = (
     clean => { FILES => "xs t/logs t/TEST @scripts" },
     realclean => { FILES => "xsbuilder/tables" },
 );
-
-if (WIN32) {
-    my $PM = {
-        'lib/Apache/Request.pm' => '$(INST_LIB)/Apache/Request.pm',
-        'lib/Apache/Upload.pm' => '$(INST_LIB)/Apache/Upload.pm',
-        'lib/Apache/Cookie.pm' => '$(INST_LIB)/Apache/Cookie.pm',
-    };
-    $opts{PM} = $PM;
-}
 
 ModPerl::MM::WriteMakefile(%opts);
 
