@@ -1,5 +1,4 @@
 use strict;
-use Apache2;
 use ModPerl::MM;
 
 use 5.005;
