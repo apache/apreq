@@ -153,7 +153,7 @@ static XS(apreq_xs_cookie_set_attr)
     if (items == 0)
         XSRETURN_UNDEF;
 
-    c = apreq_value_to_cookie(apreq_xs_sv2(cookie,ST(0)));
+    c = apreq_xs_sv2(cookie,ST(0));
     p = apreq_env_pool(apreq_xs_sv2env(SvRV(ST(0))));
 
     for (j = 1; j + 1 < items; j += 2) {
