@@ -80,6 +80,7 @@ static const struct testlist {
 } tests[] = {
     {"tables", testtable},
     {"cookies", testcookie},
+    {"params", testparam},
     {"LastTest", NULL}
 };
 

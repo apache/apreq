@@ -110,7 +110,7 @@ typedef struct apreq_request_t {
  * @param ctx The current request context.
  */
 
-APREQ_DECLARE(apreq_request_t *)apreq_request(void *ctx);
+APREQ_DECLARE(apreq_request_t *)apreq_request(void *ctx, const char *args);
 
 
 /**
@@ -151,12 +151,6 @@ APREQ_DECLARE(apreq_table_t *) apreq_params(apr_pool_t *p,
 #define apreq_params_as_string(req,key,pool, mode) \
  apreq_join(pool, ", ", apreq_params(req,pool,key), mode)
 
-/**
- * Returns an array of param keys; the array elements are unique.
- * @param req The current apreq_request_t object.
- * @remark Also parses the request as necessary.
- */
-APREQ_DECLARE(apr_array_header_t *) apreq_keys(apreq_request_t *req);
 
 APREQ_DECLARE(apr_status_t)  apreq_split_params(apr_pool_t *pool,
                                                 apreq_table_t *t, 

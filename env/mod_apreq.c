@@ -195,7 +195,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             ctx->bb_parse = apr_brigade_create(r->pool, f->c->bucket_alloc);
         if (ctx->req == NULL) {
             apreq_parser_t *parser;
-            ctx->req = apreq_request(r);
+            ctx->req = apreq_request(r,r->args);
             parser = apreq_make_parser(r->pool, APREQ_URL_ENCTYPE,
                                        apreq_parse_urlencoded, NULL, ctx->req);
             apreq_register_parser(ctx->req, parser);

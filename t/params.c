@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2002-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,90 +52,44 @@
  * <http://www.apache.org/>.
  */
 
-#include "apreq.h"
 #include "apreq_env.h"
-#include "apreq_params.h"
-#include "apreq_parsers.h"
-#include "apreq_cookie.h"
-
-#include "apr_lib.h"
-#include "apr_strings.h"
-#include <stdlib.h>
 #include "test_apreq.h"
+#include "apreq.h"
+#include "apreq_params.h"
+#include "apr_strings.h"
 
-/* rigged environent for unit tests */
+static apreq_request_t *r = NULL;
 
-static const char env_name[] = "CGI";
-#define CRLF "\015\012"
-
-static apr_pool_t *env_pool(void *ctx)
+static void request_make(CuTest *tc)
 {
-    return p;
+    r = apreq_request(NULL,"a=1;quux=foo+bar&plus=%2B;okie=dokie");
+
+    CuAssertPtrNotNull(tc, r);
 }
 
-static const char *env_in(void *ctx, const char *name)
+static void request_args_get(CuTest *tc)
 {
-    return NULL;
-}
+    const char *val;
 
-static apr_status_t env_out(void *ctx, const char *name, char *value)
-{    
-    return printf("%s: %s" CRLF, name, value) > 0 ? APR_SUCCESS : APR_EGENERAL;
-}
+    val = apreq_table_get(r->args,"a");
+    CuAssertStrEquals(tc,"1",val);
+    val = apreq_table_get(r->args,"quux");
+    CuAssertStrEquals(tc,"foo bar",val);
 
-static const char *env_args(void *ctx)
-{
-    return NULL;
-}
+    val = apreq_table_get(r->args,"plus");
+    CuAssertStrEquals(tc,"+",val);
+    val = apreq_table_get(r->args,"okie");
+    CuAssertStrEquals(tc,"dokie",val);
 
-static void *env_jar(void *ctx, void *jar)
-{
-    return NULL;
-}
-
-static void *env_request(void *ctx, void *req)
-{
-    return NULL;
-}
-
-static apreq_cfg_t *env_cfg(void *ctx)
-{
-    return NULL;
-}
-
-static int loglevel = 10;
-APREQ_LOG(env_log)
-{
-    va_list vp;
-
-    if (level < loglevel)
-        return;
-
-    va_start(vp, fmt);
-    fprintf(stderr, "[%s(%d)] %s\n", file, line, apr_pvsprintf(p,fmt,vp));
-    va_end(vp);
-    
 }
 
 
-static int dump_table(void *ctx, const char *key, const char *value)
+CuSuite *testparam(void)
 {
-    dAPREQ_LOG;
-    apreq_log(APREQ_DEBUG 0, ctx, "%s => %s", key, value);
-    return 1;
+    CuSuite *suite = CuSuiteNew("Param");
+
+    SUITE_ADD_TEST(suite, request_make);
+    SUITE_ADD_TEST(suite, request_args_get);
+    return suite;
 }
-
-
-const struct apreq_env APREQ_ENV =
-{
-    env_name,
-    env_pool,
-    env_in,
-    env_out,
-    env_args,
-    env_jar,
-    env_request,
-    env_cfg,
-    env_log
- };
 

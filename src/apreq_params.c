@@ -89,16 +89,16 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
 }
 
 
-APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
+APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx, const char *args)
 {
 
     apreq_request_t *req, *old_req = apreq_env_request(ctx, NULL);
-    const char *query_string, *ct;
+    const char *ct;
     apr_pool_t *p;
     apr_status_t s;
     dAPREQ_LOG;
 
-    if (old_req != NULL)
+    if (args == NULL && old_req != NULL)
         return old_req;
 
     p = apreq_env_pool(ctx);
@@ -137,10 +137,12 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 
     /* XXX need to install copy/merge callbacks for apreq_param_t */
     req->pool = p;
-    query_string = apreq_env_args(ctx);
 
-    s = (query_string == NULL) ? APR_SUCCESS : 
-        apreq_split_params(p, req->args, query_string);
+    if (args == NULL)
+        args = apreq_env_args(ctx);
+
+    s = (args == NULL) ? APR_SUCCESS : 
+        apreq_split_params(p, req->args, args);
 
     if (s == APR_SUCCESS)
         req->v.status = ct ? APR_INCOMPLETE : APR_SUCCESS;
