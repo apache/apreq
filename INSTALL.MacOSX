@@ -25,8 +25,11 @@ and then "sudo make install" to install the C library.
 
 Next, the normal Perl build of libapreq should work. Note that you'll need
 Apache::TestMM, libwwwperl, and URI installed in order to run "make test".
+It's also a good idea to use the "-apxs" argument to Makefile.PL so that
+"make test" knows where to find and start your Apache server. This is
+especially true if you've compiled and isntalled your own Apache.
 
-% perl Makefile.PL
+% perl Makefile.PL -apxs /usr/sbin/apxs
 % make
 % make test
 % sudo make install
