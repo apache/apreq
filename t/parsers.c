@@ -115,7 +115,7 @@ static void parse_multipart(CuTest *tc)
     apr_table_t *t;
     apr_status_t rv;
     apreq_request_t *req = apreq_request(APREQ_MFD_ENCTYPE
-                         "; boundary=\"AaB03x\"" ,"");
+                         "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"" ,"");
     apr_bucket_brigade *bb = apr_brigade_create(p, 
                                    apr_bucket_alloc_create(p));
 

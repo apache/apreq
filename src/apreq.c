@@ -751,3 +751,67 @@ APREQ_DECLARE(apr_bucket_brigade *)
     }
     return copy;
 }
+
+APREQ_DECLARE(apr_status_t)
+    apreq_header_attribute(const char *const hdr,
+                           const char *name, const apr_size_t nlen,
+                           const char **val, apr_size_t *vlen)
+{
+    const char *loc = strchr(hdr, '='), *v;
+
+    if (loc == NULL)
+        return APR_NOTFOUND;
+
+    v = loc + 1;
+    --loc;
+
+    while (apr_isspace(*loc) && loc - hdr > nlen)
+        --loc;
+
+    loc -= nlen - 1;
+
+    while (apr_isspace(*v))
+            ++v;
+
+    if (*v == '"') {
+        ++v;
+        /* value is inside quotes */
+        for (*val = v; *v; ++v) {
+            switch (*v) {
+            case '"':
+                goto finish;
+            case '\\':
+                if (v[1] != 0)
+                    ++v;
+            default:
+                break;
+            }
+        }
+    }
+    else {
+        /* value is not wrapped in quotes */
+        for (*val = v; *v; ++v) {
+            switch (*v) {
+            case ' ':
+            case ';':
+            case ',':
+            case '\t':
+            case '\r':
+            case '\n':
+                goto finish;
+            default:
+                break;
+            }
+        }
+    }
+
+ finish:
+    if (strncasecmp(loc,name,nlen) != 0
+        || (loc > hdr && apr_isalpha(loc[-1])))
+        return apreq_header_attribute(v, name, nlen, val, vlen);
+
+    *vlen = v - *val;
+    return APR_SUCCESS;
+
+
+}

@@ -778,82 +778,6 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
 }
 
 
-static apr_status_t nextval(const char **line, const char *name,
-                            const char **val, apr_size_t *vlen)
-{
-    const char *loc = strchr(*line, '=');
-    const apr_size_t nlen = strlen(name);
-    int in_quotes = 0;
-
-    if (loc == NULL) {
-        loc = strchr(*line, ';');
-
-        if (loc == NULL || loc - *line < nlen)
-            return APR_NOTFOUND;
-
-        vlen = 0;
-        *val = loc + 1;
-        --loc;
-
-        while (apr_isspace(*loc) && loc - *line > nlen)
-            --loc;
-
-        loc -= nlen - 1;
-
-        if (strncasecmp(loc, name, nlen) != 0)
-            return APR_NOTFOUND;
-
-        while (apr_isspace(**val))
-            ++*val;
-
-        *line = *val;
-        return APR_SUCCESS;
-    }
-
-
-    *val = loc + 1;
-    --loc;
-
-    while (apr_isspace(*loc) && loc - *line > nlen)
-        --loc;
-
-    loc -= nlen - 1;
-
-    if (strncasecmp(loc, name, nlen) != 0)
-        return APR_NOTFOUND;
-
-    while (apr_isspace(**val))
-            ++*val;
-
-    if (**val == '"') {
-        ++*val;
-        in_quotes = 1;
-    }
-    for (loc = *val; *loc; ++loc) {
-        switch (*loc) {
-        case ' ':
-        case '\t':
-        case ';':
-            if (in_quotes)
-                continue;
-            /* else fall through */
-        case '"':
-            goto finish;
-        case '\\':
-            if (in_quotes && loc[1] != 0)
-                ++loc;
-        default:
-            break;
-        }
-    }
-
- finish:
-    *vlen = loc - *val;
-    *line = (*loc == 0) ? loc : loc + 1;
-    return APR_SUCCESS;
-}
-
-
 APREQ_DECLARE_PARSER(apreq_parse_multipart)
 {
     apr_pool_t *pool = apr_table_pool(t);
@@ -880,19 +804,20 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         }
         *ct++ = 0;
 
-        s = nextval((const char **)&ct, "boundary", 
-                    (const char **)&ctx->bdry, &blen);
-        if (s != APR_SUCCESS) {
+        s = apreq_header_attribute(ct, "boundary", 8,
+                                   (const char **)&ctx->bdry, &blen);
+        if (s != APR_SUCCESS)
             return s;
-        }
+        
+        ctx->bdry[blen] = 0;
+
         *--ctx->bdry = '-';
         *--ctx->bdry = '-';
         *--ctx->bdry = '\n';
         *--ctx->bdry = '\r';
 
-        ctx->bdry[4 + blen] = 0;
         ctx->pattern = apr_strmatch_precompile(pool,ctx->bdry,1);
-        ctx->hdr_parser = apreq_make_parser(pool,"",apreq_parse_headers,
+        ctx->hdr_parser = apreq_make_parser(pool, "", apreq_parse_headers,
                                             NULL,NULL);
         ctx->info = NULL;
 
@@ -953,13 +878,14 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 return APR_BADARG;
             }
 
-            s = nextval(&cd, "name", &name, &nlen);
+            s = apreq_header_attribute(cd, "name", 4, &name, &nlen);
+
             if (s != APR_SUCCESS) {
                 ctx->status = MFD_ERROR;
                 return APR_BADARG;
             }
 
-            s = nextval(&cd, "filename", &filename, &flen);
+            s = apreq_header_attribute(cd, "filename", 8, &filename, &flen);
 
             if (s != APR_SUCCESS) {
                 apr_bucket *e;
