@@ -4,6 +4,9 @@ Revision history for libapreq-1
 
 =item 1.33
 
+fix Makefile.PL to properly skip the test suite if A-T requirements
+weren't satisfied [Stas]
+
 require Apache::Test 1.13 to run perl tests (need() was added at that
 version) [Stas]
 

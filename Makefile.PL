@@ -6,8 +6,11 @@ use 5.005;
 use File::Path qw(mkpath);
 use lib qw(Apache-Test/lib);
 
+use constant MIN_A_T_VERSION => 2.13;
+
 use constant HAS_APACHE_TEST => eval {
-    require Apache::Test && $Apache::Test::VERSION >= 1.13;
+    require Apache::Test &&
+        $Apache::Test::VERSION >= MIN_A_T_VERSION;
 };
 
 use constant WIN32 => ($^O eq "MSWin32") || $ENV{WIN32_TEST};
@@ -35,24 +38,26 @@ BEGIN {
 my $conf_data = join '', <DATA>;
 $conf_data =~ s|(blib/arch)|$FindBin::Bin/$1|;
 
-eval {
-  require Apache::Test;
-  # accept the configs from command line
-  Apache::TestMM::filter_args();
-  Apache::TestMM::generate_script('t/TEST');
-#    local $SIG{ALRM} = sub { die "alarm\n" };
-#    alarm 60;
-#    my %params = Apache::test->get_test_params();
-#    alarm 0;
-
-#    Apache::test->write_httpd_conf(%params, include => $conf_data);
-#    *MY::test = sub {Apache::test->MM_test(%params)};
-};
-print "\nskipping test setup...$@" if $@;
+if (HAS_APACHE_TEST) {
+    # accept the configs from command line
+    Apache::TestMM::filter_args();
+    Apache::TestMM::generate_script('t/TEST');
+}
+else {
+    print "\nskipping test setup... which requires Apache::Test " .
+    MIN_A_T_VERSION . " or higher\n";
+    *MY::test = sub {
+        return <<'EOF';
+test : pure_all
+	@echo \*** This test suite requires Apache::Test available
+	@echo \*** available from CPAN
+EOF
+    };
+}
 
 # prerequisites
 my %require = (
-    "Apache::Test" => "1.03",
+    "Apache::Test" => MIN_A_T_VERSION,
 );
 
 my $myVERSION = MM->parse_version('Request/Request.pm');
