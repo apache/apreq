@@ -948,7 +948,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             case APR_SUCCESS:
                 /* part has no body- return CRLF to front */
-                e = apr_bucket_transient_create(CRLF, 2,
+                e = apr_bucket_immortal_create(CRLF, 2,
                                                 ctx->bb->bucket_alloc);
                 APR_BRIGADE_INSERT_HEAD(ctx->in,e);
                 break;
@@ -975,7 +975,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             if (s != APR_SUCCESS) {
                 name = apr_pstrmemdup(pool, name, nlen);
-                e = apr_bucket_transient_create(name, nlen,
+                e = apr_bucket_immortal_create(name, nlen,
                                                 ctx->bb->bucket_alloc);
                 APR_BRIGADE_INSERT_HEAD(ctx->bb,e);
                 ctx->status = MFD_PARAM;
