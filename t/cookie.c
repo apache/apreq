@@ -117,12 +117,13 @@ static void netscape_cookie(CuTest *tc)
 
 static void rfc_cookie(CuTest *tc)
 {
-    apreq_cookie_t *c = apreq_make_cookie(p,RFC,"rfc",3,"out",3);
+    apreq_cookie_t *c = apreq_make_cookie(p,"rfc",3,"out",3);
     apreq_cookie_version_t version = RFC;
     long expires = apreq_atoi64t("+3m");
 
     CuAssertStrEquals(tc,"out",apreq_cookie_value(c));
-    CuAssertIntEquals(tc, version,c->version);
+    c->version = version;
+    c->time.max_age = -1;
 
     CuAssertStrEquals(tc,"rfc=out; Version=1", apreq_cookie_as_string(p,c));
     c->domain = apr_pstrdup(p, "example.com");

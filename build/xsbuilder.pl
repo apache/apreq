@@ -189,6 +189,46 @@ $txt .= qq{
 
 }
 
+# another bug in WrapXS.pm - 
+# must insert a space before typemap definition
+
+sub write_typemap
+{
+    my $self = shift;
+    my $typemap = $self->typemap;
+    my $map = $typemap->get;
+    my %seen;
+
+    my $fh = $self->open_class_file('', 'typemap');
+    print $fh "$self->{noedit_warning_hash}\n";
+
+    while (my($type, $t) = each %$map) {
+        my $class = $t -> {class} ;
+        $class ||= $type;
+        next if $seen{$type}++ || $typemap->special($class);
+
+        my $typemap = $t -> {typemapid} ;
+        if ($class =~ /::/) {
+            next if $seen{$class}++ ;
+            $class =~ s/::$// ;
+            print $fh "$class\t$typemap\n";
+        }
+        else {
+            print $fh "$type\t$typemap\n";
+        }
+    }
+
+    my $typemap_code = $typemap -> typemap_code ;
+
+    foreach my $dir ('INPUT', 'OUTPUT') {
+        print $fh "\n$dir\n" ;
+        while (my($type, $code) = each %{$typemap_code}) {
+            print $fh "$type\n\t$code->{$dir}\n\n" if ($code->{$dir}) ;
+        }
+    }
+
+    close $fh;
+}
 
 package My::TypeMap;
 use base 'ExtUtils::XSBuilder::TypeMap';
@@ -198,20 +238,28 @@ sub typemap_code
 {
     {
         T_APREQ_COOKIE  => {
-                            OUTPUT => '$arg = apreq_xs_cookie2sv($var)',
                             INPUT  => '$var = apreq_xs_sv2cookie($arg)',
+                            perl2c => 'apreq_xs_sv2cookie(sv)',
+                            OUTPUT => '$arg = apreq_xs_cookie2sv($var,apreq_xs_class);',
+                            c2perl => 'apreq_xs_cookie2sv(ptr,apreq_xs_class);',
                            },
         T_APREQ_PARAM   => {
-                            OUTPUT => '$arg = apreq_xs_param2sv($var)',
                             INPUT  => '$var = apreq_xs_sv2param($arg)',
+                            perl2c => 'apreq_xs_sv2param(sv)',
+                            OUTPUT => '$arg = apreq_xs_param2sv($var,apreq_xs_class);',
+                            c2perl => 'apreq_xs_param2sv(ptr,apreq_xs_class)',
                            },
         T_APREQ_REQUEST => {
-                            OUTPUT => '$arg = apreq_xs_request2sv($var)',
                             INPUT  => '$var = apreq_xs_sv2request($arg)',
+                            perl2c => 'apreq_xs_sv2request(sv)',
+                            OUTPUT => '$arg = apreq_xs_request2sv($var,apreq_xs_class);',
+                            c2perl => 'apreq_xs_request2sv(ptr,apreq_xs_class)',
                            },
         T_APREQ_JAR     => {
-                            OUTPUT => '$arg = apreq_xs_jar2sv($var)',
                             INPUT  => '$var = apreq_xs_sv2jar($arg)',
+                            perl2c => 'apreq_xs_sv2jar(sv)',
+                            OUTPUT => '$arg = apreq_xs_jar2sv($var,apreq_xs_class);',
+                            c2perl => 'apreq_xs_jar2sv(ptr,apreq_xs_class)',
                            },
     }
 }
