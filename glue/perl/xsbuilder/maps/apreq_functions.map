@@ -29,6 +29,7 @@ MODULE=Apache::Upload PACKAGE=Apache::Upload PREFIX=Apache__Upload_
  DEFINE_size                     | apreq_xs_upload_size |
  DEFINE_fh                       | apreq_xs_upload_fh |
  DEFINE_type                     | apreq_xs_upload_type |
+ DEFINE_tempfile                | apreq_xs_upload_tempfile |
 
 MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table_
  DEFINE_get     | apreq_xs_upload_table_get |

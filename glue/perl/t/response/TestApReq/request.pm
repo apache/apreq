@@ -47,6 +47,11 @@ sub handler {
         return unless $upload->info->{"Content-Type"} eq $upload->type;
         $r->print(<$fh>);
     }
+    elsif ($test eq 'tempfile') {
+        my $upload = $req->upload("HTTPUPLOAD");
+        open my $fh, "<", $upload->tempfile or die $!;
+        $r->print(<$fh>);
+    }
 
     return 0;
 }

@@ -105,10 +105,12 @@ this function in line with similar read-type functions in mp2).
   my $contents;
   print $contents if $upload->slurp($contents) == 0;
 
+=head2 C<tempname()>
+
+Provides the name of the spool file.
 
 =head1 API CHANGES from v1.X to v2.X
 
-C<tempname> has been removed from the API.
 C<info($header)> is replaced by C<info($table)>.
 C<type()> returns only the MIME-type portion of the Content-Type header.
 

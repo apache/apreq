@@ -5,7 +5,7 @@
 
 - Perl API [joes]
   Added $jar->status, $req->args_status and $req->body_status to report
-  parsing errors.
+  parsing errors. Also add $upload->tempname per user request.
 
 - C API [joes]
   Dropped status attribute of apreq_value_t.  Added status field to

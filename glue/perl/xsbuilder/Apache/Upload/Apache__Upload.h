@@ -342,6 +342,62 @@ static XS(apreq_xs_upload_fh)
     XSRETURN(1);
 }
 
+static XS(apreq_xs_upload_tempfile)
+{
+    dXSARGS;
+    MAGIC *mg;
+    void *env;
+    apr_bucket_brigade *bb;
+    apr_status_t s;
+    apr_file_t *file;
+    const char *path;
+
+    if (items != 1 || !SvROK(ST(0)))
+        Perl_croak(aTHX_ "Usage: $upload->temp_file()");
+
+    if (!(mg = mg_find(SvRV(ST(0)), PERL_MAGIC_ext)))
+        Perl_croak(aTHX_ "$upload->temp_file(): can't find env");
+
+    env = mg->mg_ptr;
+    bb = apreq_xs_sv2param(ST(0))->bb;
+    file = apreq_brigade_spoolfile(bb);
+
+    if (file == NULL) {
+        apr_bucket *last;
+        apr_off_t len;
+        const char *tmpdir = apreq_env_temp_dir(env, NULL);
+
+        s = apreq_file_mktemp(&file, apreq_env_pool(env), tmpdir);
+
+        if (s != APR_SUCCESS) {
+            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_temp_file:"
+                      "apreq_file_mktemp failed");
+            Perl_croak(aTHX_ "$upload->temp_file: can't make tempfile");
+        }
+
+        s = apreq_brigade_fwrite(file, &len, bb);
+
+        if (s != APR_SUCCESS) {
+            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_fh:"
+                      "apreq_brigade_fwrite failed");
+            Perl_croak(aTHX_ "$upload->temp_file: can't write brigade to tempfile");
+        }
+
+        last = apr_bucket_file_create(file, len, 0, bb->p, bb->bucket_alloc);
+        APR_BRIGADE_INSERT_TAIL(bb, last);
+    }
+
+    s = apr_file_name_get(&path, file);
+    if (s != APR_SUCCESS)
+        XSRETURN_UNDEF;
+
+    ST(0) = sv_2mortal(newSVpvn(path, strlen(path)));
+    XSRETURN(1);
+}
+
+
+#ifdef IMPLEMENT_UPLOAD_HOOKS
+
 struct hook_ctx {
     SV                  *hook_data;
     SV                  *hook;
@@ -350,7 +406,6 @@ struct hook_ctx {
     PerlInterpreter     *perl;
 };
 
-#ifdef IMPLEMENT_UPLOAD_HOOKS
 
 #define DEREF(slot) if (ctx->slot) SvREFCNT_dec(ctx->slot)
 
