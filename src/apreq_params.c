@@ -219,15 +219,23 @@ APREQ_DECLARE(apr_status_t) apreq_split_params(apr_pool_t *pool,
         case '&':
         case ';': 
         case 0:
-            if (nlen > 0) {
-                const apr_size_t vlen = data - start - nlen - 1;
+            if (data > start) {
+                apr_size_t vlen = 0;
+                if (nlen == 0)
+                    nlen = data - start;
+                else
+                    vlen = data - start - nlen - 1;
+
                 status = apreq_table_add(t, p2v(
                                 apreq_decode_param( pool, start,
                                                     nlen, vlen )));
 
-                if (*data == 0 || status != APR_SUCCESS)
+                if (status != APR_SUCCESS)
                     return status;
             }
+
+            if (*data == 0)
+                return status;
 
             nlen = 0;
             start = data + 1;
@@ -246,7 +254,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool,
     apreq_param_t *param;
     apr_ssize_t size;
 
-    if (nlen == 0 || word[nlen] != '=')
+    if (nlen == 0)
         return NULL;
 
     param = apr_palloc(pool, nlen + vlen + 1 + sizeof *param);
