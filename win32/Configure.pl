@@ -154,6 +154,10 @@ print << 'END';
 END
 }
 
+my @args = ($^X, "$apreq_home/win32/apreq2_win32.pl", 
+            "--with-apache2=$apache");
+system(@args) == 0 or warn "system @args failed: $?";
+
 sub usage {
     print <<'END';
 
