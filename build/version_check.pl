@@ -32,27 +32,27 @@ sub mp2_version {
 }
 
 my %cvs = (
-                libtool => { test => \&gnu_version, version => "1.4.2" },
-               autoconf => { test => \&gnu_version, version => "2.53"  },
-               automake => { test => \&gnu_version, version => "1.6.3" },
-                doxygen => { test => \&gnu_version, version => "1.3"   },
+                libtool => { version => "1.4.2",   test => \&gnu_version },
+               autoconf => { version => "2.53",    test => \&gnu_version },
+               automake => { version => "1.6.3",   test => \&gnu_version },
+                doxygen => { version => "1.3",     test => \&gnu_version },
           );
 
 my %build = (
-                apache2 => { test => \&exe_version, version => "2.0.46"},
-                    apr => { test => \&gnu_version, version => "0.9.4",
-                             comment => "bundled with apache2 2.0.46"},
-                    apu => { test => \&gnu_version, version => "0.9.4",
-                             comment => "bundled with apache2 2.0.46"},
-                   perl => { test => \&gnu_version, version => "5.6.1" },
+                apache2 => { version => "2.0.46",  test => \&exe_version },
+                    apr => { version => "0.9.4",   test => \&gnu_version,
+                             comment => "bundled with apache2 2.0.46"    },
+                    apu => { version => "0.9.4",   test => \&gnu_version,
+                             comment => "bundled with apache2 2.0.46"    },
+                   perl => { version => "5.6.1",   test => \&gnu_version },
             );
 
 my %perl_glue = (
                   perl  => $build{perl},
-         "Apache::Test" => { test => \&a_t_version, version => "1.04",
-                             comment => "bundled with mod_perl 1.99_09"},
-  "ExtUtils::XSBuilder" => { test => \&xsb_version, version => "0.23"  },
-              mod_perl  => { test => \&mp2_version, version => "1.99_09"},
+         "Apache::Test" => { version => "1.04",    test => \&a_t_version,
+                             comment => "bundled with mod_perl 1.99_09"  },
+  "ExtUtils::XSBuilder" => { version => "0.23",    test => \&xsb_version },
+              mod_perl  => { version => "1.99_09", test => \&mp2_version },
                 );
 
 sub print_prereqs ($$) {
@@ -65,13 +65,14 @@ sub print_prereqs ($$) {
         }
         else {
             $comment = defined $comment ? "  ($comment)" : "";
-            printf "%30s:  %s$comment\n", $_, $version;
+            printf "%30s:  %s%s\n", $_, $version, $comment;
         }
     }
 }
 
 if (@ARGV == 0) {
-    if ($opts{version}) {
+
+    if ($opts{version}) {      # generate META.yml file content
         print <<EOT;
 --- #YAML:1.0 (see http://module-build.sourceforge.net/META-spec.html)
 name: libapreq2
@@ -87,25 +88,31 @@ provides:
     version: $opts{version}
 generated_by: $0
 EOT
-        my %build_prereqs = %perl_glue;
         my %runtime_prereqs =  (
                                 mod_perl => $perl_glue{mod_perl},
-                                perl => $perl_glue{perl},
+                                    perl => $perl_glue{perl},
                                );
         print_prereqs "requires:", \%runtime_prereqs;
-        print_prereqs "build_requires:", \%build_prereqs;
+        print_prereqs "build_requires:", \%perl_glue;
     }
-    else {
+
+    else {                     # generate PREREQUISITES file content
         print "=" x 50, "\n";
-        print_prereqs "Build system (core C API) prerequisites\n", \%build;
+        print_prereqs
+            "Build system (core C API) prerequisites\n", \%build;
         print "\n", "=" x 50, "\n";
-        print_prereqs "Perl glue (Apache::Request) prerequisites\n", \%perl_glue;
+        print_prereqs
+            "Perl glue (Apache::Request) prerequisites\n", \%perl_glue;
         print "\n", "=" x 50, "\n";
-        print_prereqs "Additional prerequisites for httpd-apreq-2 cvs builds\n",\%cvs;
+        print_prereqs
+            "Additional prerequisites for httpd-apreq-2 cvs builds\n", \%cvs;
     }
 
     exit 0;
 }
+
+
+# test prerequisites from the command-line arguments
 
 my %prereq = (%cvs, %build, %perl_glue);
 die "$0 failed: unknown tool '$tool'.\n" unless $prereq{$tool};
