@@ -21,7 +21,7 @@ require HTTP::Cookies;
 
 my $location = '/cgi-bin';
 my $script = $location . (WIN32 ? '/test_cgi.exe' : '/test_cgi');
-my $line_end = WIN32 ? "\r\n" : "\n";
+my $line_end = "\n";
 my $filler = "0123456789" x 20; # < 64K
 
 # GET
