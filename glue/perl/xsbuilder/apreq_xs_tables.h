@@ -174,8 +174,8 @@ struct apreq_xs_do_arg {
     void            *env;
     const char      *pkg;
     SV              *parent, *sub;
-    PerlInterpreter *perl;
     unsigned         tainted;
+    PerlInterpreter *perl;
 };
 
 static int apreq_xs_table_keys(void *data, const char *key,
@@ -259,7 +259,7 @@ static XS(apreq_xs_##attr##_get)                                        \
 {                                                                       \
     dXSARGS;                                                            \
     const char *key = NULL;                                             \
-    struct apreq_xs_do_arg d = { NULL, NULL, NULL, NULL, aTHX, 0 };     \
+    struct apreq_xs_do_arg d = { NULL, NULL, NULL, NULL, 0, aTHX };     \
     void *env;                                                          \
     SV *sv, *obj;                                                       \
     MAGIC *mg;                                                          \
@@ -441,7 +441,7 @@ static int apreq_xs_##attr##_do_sub(void *data, const char *key,        \
 static XS(apreq_xs_##attr##_do)                                         \
 {                                                                       \
     dXSARGS;                                                            \
-    struct apreq_xs_do_arg d = { NULL, NULL, NULL, NULL, aTHX, 0 };     \
+    struct apreq_xs_do_arg d = { NULL, NULL, NULL, NULL, 0, aTHX };     \
     apr_table_t *t;                                                     \
     void *env;                                                          \
     int i, rv;                                                          \
