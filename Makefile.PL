@@ -8,7 +8,7 @@ $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
 check_compat();
 
 WriteMakefile(
-	      'NAME'	 => 'libapreq',
+	      'NAME'	 => 'Apache::Request',
 	      'VERSION' => $myVERSION,
 	      'DIR' => [qw(c Request Cookie)], 
 	      'macro' => {

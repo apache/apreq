@@ -12,7 +12,7 @@ else {
 
     use Cwd;
     my $pwd = fastcwd;
-    my @objs = qw(apache_request.o apache_cookie.o multipart_buffer.o);
+    my @objs = qw(apache_request.o apache_cookie.o apache_multipart_buffer.o);
     $MY_LD_RUN_PATH = "$Config{installsitearch}/auto/libapreq:$pwd"; 
 
     WriteMakefile(
@@ -54,7 +54,7 @@ EOF
 sub MY::post_initialize { 
     my $self = shift; 
     my $to   = '$(INST_ARCHLIB)/' . "auto/libapreq/include"; 
-    for (qw(apache_request apache_cookie multipart_buffer)) {
+    for (qw(apache_request apache_cookie apache_multipart_buffer)) {
 	$self->{PM}->{"$_.h"} = "$to/$_.h";
     }
     '';

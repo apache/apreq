@@ -4,6 +4,8 @@ Revision history for Perl extension Apache::Request.
 
 =item 0.32 - August 16, 1999
 
+distribution package name renamed from libapreq to Apache-Request
+
 multipart_buffer.[ch] renamed to apache_multipart_buffer.[ch]
 
 autoconf support
