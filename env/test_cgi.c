@@ -79,6 +79,7 @@ int main(int argc, char const * const * argv)
     else if (test && key) {
         const apreq_jar_t *jar = apreq_jar(pool, NULL);
         apreq_cookie_t *cookie;
+        char *dest;
 
         apreq_log(APREQ_DEBUG 0, pool, "Fetching Cookie %s", key->v.data);
         cookie = apreq_cookie(jar, key->v.data);
@@ -91,23 +92,20 @@ int main(int argc, char const * const * argv)
 
         if (strcmp(test->v.data, "bake") == 0) {
             apreq_cookie_bake(cookie, pool);
-            apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
         }
         else if (strcmp(test->v.data, "bake2") == 0) {
             apreq_cookie_bake2(cookie, pool);
-            apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
         }
+
+        apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
+        dest = apr_pcalloc(pool, cookie->v.size + 1);
+        if (apreq_decode(dest, cookie->v.data, cookie->v.size) >= 0)
+            apr_file_printf(out, "%s", dest);
         else {
-            char *dest = apr_pcalloc(pool, cookie->v.size + 1);
-            apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
-            if (apreq_decode(dest, cookie->v.data, cookie->v.size) >= 0)
-                apr_file_printf(out, "%s", dest);
-            else {
-                apreq_log(APREQ_ERROR APR_EGENERAL, pool, 
-                          "Bad cookie encoding: %s", 
-                          cookie->v.data);
-                exit(-1);
-            }
+            apreq_log(APREQ_ERROR APR_EGENERAL, pool, 
+                      "Bad cookie encoding: %s", 
+                      cookie->v.data);
+            exit(-1);
         }
     }
 

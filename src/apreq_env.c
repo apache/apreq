@@ -190,6 +190,7 @@ static apr_status_t cgi_header_out(void *env, const char *name,
     apr_status_t s = apr_file_open_stdout(&out, p);
     apreq_log(APREQ_DEBUG s, p, "Setting header: %s => %s", name, value);
     bytes = apr_file_printf(out, "%s: %s" CRLF, name, value);
+    apr_file_flush(out);
     return bytes > 0 ? APR_SUCCESS : APR_EGENERAL;
 }
 

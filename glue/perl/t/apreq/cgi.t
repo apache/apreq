@@ -158,7 +158,6 @@ use Apache::Request;
 use Apache::Cookie;
 
 my $p = APR::Pool->new();
-print "Content-Type: text/plain\n\n";
 
 apreq_log("Creating Apache::Request object");
 my $req = Apache::Request->new($p);
@@ -170,6 +169,7 @@ my $test = $req->param("test");
 my $key  = $req->param("key");
 
 if ($foo || $bar) {
+    print "Content-Type: text/plain\n\n";
     if ($foo) {
         apreq_log("foo => $foo");
         print "\tfoo => $foo\n";
@@ -190,12 +190,14 @@ elsif ($test && $key) {
         elsif ($test eq "bake2") {
             $cookies{$key}->bake2;
         }
+        print "Content-Type: text/plain\n\n";
         print $cookies{$key}->value;
     }
 }
 
 else {
     my $len = 0;
+    print "Content-Type: text/plain\n\n";
     apreq_log("Fetching all parameters");
     for ($req->param) {
         my $param = $req->param($_);
