@@ -343,12 +343,6 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *d, apr_size_t *dlen,
         slen -= len;
     }
 
-    /*XXX fooo
-    memcpy(d,s,slen);
-    d[slen] = 0;
-    *dlen = slen;
-    return APR_SUCCESS;
-    */
     rv = url_decode(d, dlen, s, &slen);
     *dlen += len;
     return rv;
@@ -841,16 +835,9 @@ APREQ_DECLARE(apr_status_t)
     return APR_NOTFOUND;
 }
 
-/* XXX: find a way to remove these spool_bucket_* functions.
- * The only reason joes uses them here, is because this assignment
- *
- *     static const apr_bucket_type_t spool_bucket = apr_bucket_type_file;
- *   
- * is (I think) illegal in C89, even though the RHS is declared constant.
- * Not sure its ok in C99 either.
- */
 
-#define BUCKET_IS_SPOOL(e) ((e)->type == &spool_bucket)
+
+#define BUCKET_IS_SPOOL(e) ((e)->type == &spool_bucket_type)
 #define FILE_BUCKET_LIMIT      ((apr_size_t)-1 - 1)
 
 static
@@ -872,19 +859,23 @@ apr_status_t spool_bucket_setaside(apr_bucket *data, apr_pool_t *reqpool)
     return apr_bucket_type_file.setaside(data, reqpool);
 }
 
-/* XXX: all we really need to do here is make a local copy of
- * apr_bucket_type_file; i.e.
- *
- *    static const apr_bucket_type_t spool_bucket = apr_bucket_type_file;
- */
-static const apr_bucket_type_t spool_bucket = {
-    "APREQ_SPOOL_BUCKET", 5, APR_BUCKET_DATA,
+static
+apr_status_t spool_bucket_split(apr_bucket *a, apr_size_t point)
+{
+    apr_status_t rv = apr_bucket_shared_split(a, point);
+    a->type = &apr_bucket_type_file;
+    return rv;
+}
+
+static const apr_bucket_type_t spool_bucket_type = {
+    "APREQ_SPOOL", 5, APR_BUCKET_DATA,
     spool_bucket_destroy,
     spool_bucket_read,
     spool_bucket_setaside,
-    apr_bucket_shared_split,
-    apr_bucket_shared_copy
+    spool_bucket_split,
+    apr_bucket_copy_notimpl,
 };
+
 
 APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
                                                  const char *temp_dir,
@@ -937,7 +928,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
 
         last_out = apr_bucket_file_create(file, wlen, 0, 
                                           out->p, out->bucket_alloc);
-        last_out->type = &spool_bucket;
+        last_out->type = &spool_bucket_type;
         APR_BRIGADE_INSERT_TAIL(out, last_out);
         f = last_out->data;
     }
