@@ -1,6 +1,4 @@
 Makefile.in
-libtool
-acconfig.h
 acinclude.m4
 aclocal.m4
 config.guess
@@ -8,7 +6,6 @@ config.sub
 configure
 configure.in
 install-sh
-ltconfig
 ltmain.sh
 mkinstalldirs
 Makefile.am
@@ -39,8 +36,6 @@ c/apache_multipart_buffer.h
 c/apache_multipart_buffer.c
 c/Makefile.am
 c/Makefile.in
-c/libapreq_config.h.in
-c/stamp-h.in
 eg/c/testapreq/mod_testapreq.c
 eg/c/testapreq/mod_testapreq.module
 eg/c/testapreq/Makefile.tmpl
