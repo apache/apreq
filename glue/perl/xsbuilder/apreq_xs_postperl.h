@@ -68,7 +68,8 @@ SV *apreq_xs_##type##2sv(apreq_##type##_t *t)                            \
     SvIVX(sv) = (IV)t;                                                   \
     SvIOK_on(sv);                                                        \
     SvPOK_on(sv);                                                        \
-    return sv;                                                           \
+    sv_magic(sv, Nullsv, PERL_MAGIC_ext, (char *)t->env, 0);             \
+    return newRV_noinc(sv);                                              \
 }
 
 
@@ -95,13 +96,8 @@ static SV *apreq_xs_##type##2sv(apreq_##type##_t *t)                     \
     SvPVX(sv) = t->v.data;                                               \
     SvCUR_set(sv, t->v.size);                                            \
                                                                          \
-    sv_magicext(sv, NULL, PERL_MAGIC_tiedscalar,                         \
+    sv_magicext(sv, Nullsv, PERL_MAGIC_tiedscalar,                       \
                 (MGVTBL *)&apreq_xs_##type##_magic, (char *)t, 0);       \
-                                                                         \
-    /* disable get/set magic (only use "free" magic) */                  \
-    SvSMAGICAL_off(sv);                                                  \
-    SvGMAGICAL_off(sv);                                                  \
-    SvRMAGICAL_on(sv);                                                   \
                                                                          \
     /* initialize sv as an object, so "tied" will return object ref */   \
     SvSTASH(sv) = gv_stashpv(class, TRUE);                               \
