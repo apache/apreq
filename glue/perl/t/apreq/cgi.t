@@ -152,8 +152,8 @@ use warnings FATAL => 'all';
 use Apache2;
 use APR;
 use APR::Pool;
-use lib qw(../../blib/lib/Apache2
-           ../../blib/arch/Apache2);
+use blib;
+use Apache2;
 use Apache::Request;
 use Apache::Cookie;
 
