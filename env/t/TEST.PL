@@ -1,9 +1,7 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Apache2;
-use Apache::Build;
-use constant WIN32 => Apache::Build::WIN32;
+use constant WIN32 => $^O eq 'MSWin32';
 require Win32 if WIN32;
 
 use Cwd;
@@ -40,8 +38,7 @@ package My::TestConfig;
 use Apache::TestTrace;
 use Apache::TestConfigC;
 use Config;
-use Apache::Build;
-use constant WIN32 => Apache::Build::WIN32;
+use constant WIN32 => $^O eq 'MSWin32';
 
 use base 'Apache::TestConfig';
 
