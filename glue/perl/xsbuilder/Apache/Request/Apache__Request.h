@@ -76,9 +76,9 @@ APREQ_XS_DEFINE_MAKE(param);
 #define S2P(s) (s ? apreq_value_to_param(apreq_strtoval(s)) : NULL)
 #define apreq_xs_request_push(sv,d,key) do {                            \
     apreq_request_t *req = apreq_xs_sv2(request,sv);                    \
-    apr_table_do(apreq_xs_do(request), &d, req->args, key, NULL);       \
+    apr_table_do(apreq_xs_do(request), d, req->args, key, NULL);        \
     if (req->body)                                                      \
-        apr_table_do(apreq_xs_do(request), &d, req->body, key, NULL);   \
+        apr_table_do(apreq_xs_do(request), d, req->body, key, NULL);    \
 } while (0)
 #define apreq_xs_args_push(sv,d,k) apreq_xs_push(args,sv,d,k)
 #define apreq_xs_body_push(sv,d,k) apreq_xs_push(body,sv,d,k)
@@ -86,7 +86,7 @@ APREQ_XS_DEFINE_MAKE(param);
 #define apreq_xs_upload_push(sv,d,key) do {                             \
     apr_table_t *t = apreq_xs_body_sv2table(sv);                        \
     if (t)                                                              \
-        apr_table_do(apreq_xs_do(upload), &d, t, key, NULL);            \
+        apr_table_do(apreq_xs_do(upload), d, t, key, NULL);             \
 } while (0)
 
 #define apreq_xs_upload_table_push(sv,d,k) apreq_xs_push(upload_table,sv,d,k)

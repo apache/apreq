@@ -296,7 +296,7 @@ static int apreq_xs_table_keys(void *data, const char *key,
 #define apreq_xs_push(attr,sv,d,key) do {                               \
      apr_table_t *t = apreq_xs_##attr##_sv2table(sv);                   \
      if (t)                                                             \
-         apr_table_do(apreq_xs_do(attr), &d, t, key, NULL);             \
+         apr_table_do(apreq_xs_do(attr), d, t, key, NULL);              \
 } while (0)
 
 /** 
@@ -340,45 +340,46 @@ static XS(apreq_xs_##attr##_get)                                        \
 {                                                                       \
     dXSARGS;                                                            \
     const char *key = NULL;                                             \
+    struct apreq_xs_do_arg d = { NULL, aTHX };                          \
+    void *env;                                                          \
                                                                         \
-    if (items == 1 || items == 2 && SvROK(ST(0))) {                     \
-        void *env = apreq_xs_##attr##_sv2env(ST(0));                    \
-        struct apreq_xs_do_arg d = { env, aTHX };                       \
+    if (items == 0 || items > 2 || !SvROK(ST(0)))                       \
+        Perl_croak(aTHX_ "Usage: $table->get($key)");                   \
+                                                                        \
+    env = apreq_xs_##attr##_sv2env(ST(0));                              \
+    d.env = env;                                                        \
+    if (items == 2)                                                     \
+        key = SvPV_nolen(ST(1));                                        \
+                                                                        \
+    switch (GIMME_V) {                                                  \
         apreq_##type##_t *RETVAL;                                       \
-        if (items == 2)                                                 \
-            key = SvPV_nolen(ST(1));                                    \
                                                                         \
-        switch (GIMME_V) {                                              \
-            apreq_##type##_t *RETVAL;                                   \
+    case G_ARRAY:                                                       \
+        XSprePUSH;                                                      \
+        PUTBACK;                                                        \
+        apreq_xs_##attr##_push(ST(0), &d, key);                         \
+        break;                                                          \
                                                                         \
-        case G_ARRAY:                                                   \
-            XSprePUSH;                                                  \
-            PUTBACK;                                                    \
-            apreq_xs_##attr##_push(ST(0), d, key);                      \
-            break;                                                      \
-                                                                        \
-        case G_SCALAR:                                                  \
-            if (items == 1) {                                           \
-                apr_table_t *t = apreq_xs_##attr##_sv2table(ST(0));     \
-                if (t == NULL)                                          \
-                    XSRETURN_UNDEF;                                     \
-                ST(0) = sv_2mortal(apreq_xs_table2sv(t,class));         \
-                XSRETURN(1);                                            \
-            }                                                           \
-                                                                        \
-            RETVAL = apreq_xs_##attr##_##type(ST(0), key);              \
-            if (!RETVAL  || !(COND))                                    \
+    case G_SCALAR:                                                      \
+        if (items == 1) {                                               \
+            apr_table_t *t = apreq_xs_##attr##_sv2table(ST(0));         \
+            if (t == NULL)                                              \
                 XSRETURN_UNDEF;                                         \
-            ST(0) = sv_2mortal(apreq_xs_##type##2sv(RETVAL,subclass));  \
+            ST(0) = sv_2mortal(apreq_xs_table2sv(t,class));             \
             XSRETURN(1);                                                \
-                                                                        \
-        default:                                                        \
-            XSRETURN(0);                                                \
         }                                                               \
+                                                                        \
+        RETVAL = apreq_xs_##attr##_##type(ST(0), key);                  \
+        if (!(COND) || !RETVAL)                                         \
+            XSRETURN_UNDEF;                                             \
+        ST(0) = sv_2mortal(apreq_xs_##type##2sv(RETVAL,subclass));      \
+        XSRETURN(1);                                                    \
+                                                                        \
+    default:                                                            \
+        XSRETURN(0);                                                    \
     }                                                                   \
-    else                                                                \
-	Perl_croak(aTHX_ "Usage: $table->get($key)");                   \
 }
+
 
 /** @} */
 
