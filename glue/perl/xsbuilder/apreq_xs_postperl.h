@@ -34,6 +34,10 @@ typedef apr_table_t    apreq_xs_cookie_table_t;
 typedef HV             apreq_xs_error_t;
 typedef char*          apreq_xs_subclass_t;
 
+#define HANDLE_CLASS "APR::Request"
+#define COOKIE_CLASS "APR::Request::Cookie"
+#define PARAM_CLASS  "APR::Request::Param"
+#define ERROR_CLASS  "APR::Request::Error"
 
 /**
  * @file apreq_xs_postperl.h
@@ -54,9 +58,9 @@ typedef char*          apreq_xs_subclass_t;
  * @return    Reference to the object.
  */
 APR_INLINE
-static SV *apreq_xs_find_obj(pTHX_ SV *in, const char *key)
+static SV *apreq_xs_find_obj(pTHX_ SV *in, const char key)
 {
-    const char altkey[] = { '_', key[0] };
+    const char altkey[] = { '_', key };
 
     while (in && SvROK(in)) {
         SV *sv = SvRV(in);
@@ -68,7 +72,7 @@ static SV *apreq_xs_find_obj(pTHX_ SV *in, const char *key)
                in = mg->mg_obj;
                break;
             }
-            else if ((svp = hv_fetch((HV *)sv, key, 1, FALSE)) ||
+            else if ((svp = hv_fetch((HV *)sv, altkey+1, 1, FALSE)) ||
                      (svp = hv_fetch((HV *)sv, altkey, 2, FALSE)))
             {
                 in = *svp;
@@ -83,7 +87,7 @@ static SV *apreq_xs_find_obj(pTHX_ SV *in, const char *key)
        }
     }
 
-    Perl_croak(aTHX_ "apreq_xs_find_obj: object `%s' not found", key);
+    Perl_croak(aTHX_ "apreq_xs_find_obj: object attr `%c' not found", key);
     return NULL;
 }
 
@@ -94,7 +98,7 @@ static SV *apreq_xs_find_obj(pTHX_ SV *in, const char *key)
  * and produces a pointer to the object's C analog.
  */
 APR_INLINE
-static void *apreq_xs_perl2c(pTHX_ SV* in, const char *name)
+static void *apreq_xs_perl2c(pTHX_ SV* in, const char name)
 {
     SV *sv = apreq_xs_find_obj(aTHX_ in, name);
     IV iv = SvIVX(SvRV(sv));
@@ -112,22 +116,92 @@ static SV *apreq_xs_perl_sv2env(pTHX_ SV *sv)
     return NULL; /* not reached */
 }
 
-APR_INLINE
-static apreq_handle_t *apreq_xs_get_handle(pTHX_ SV *sv)
+
+
+static APR_INLINE
+SV *apreq_xs_object2sv(pTHX_ void *ptr, const char *class, SV *parent, const char *base)
 {
-    MAGIC *mg = mg_find(SvRV(sv), PERL_MAGIC_ext);
-    SV *obj = apreq_xs_find_obj(aTHX_ mg->mg_obj, "r");
-    IV iv = SvIVX(SvRV(obj));
-    return INT2PTR(apreq_handle_t *,iv);
+    SV *rv = sv_setref_pv(newSV(0), class, (void *)ptr);
+    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, Nullch, 0);
+    if (!sv_derived_from(rv, base))
+        croak("apreq_xs_object2sv failed: target class %s isn't derived from %s",
+              class, base);
+    return rv;
+}
+
+
+APR_INLINE
+static SV *apreq_xs_handle2sv(pTHX_ apreq_handle_t *req, 
+                              const char *class, SV *parent)
+{
+    return apreq_xs_object2sv(aTHX_ req, class, parent, HANDLE_CLASS);
 }
 
 APR_INLINE
-static const apr_table_t *apreq_xs_get_table(pTHX_ SV *sv, const char *name)
+static SV *apreq_xs_param2sv(pTHX_ apreq_param_t *p, 
+                              const char *class, SV *parent)
 {
-    SV *obj = apreq_xs_find_obj(aTHX_ sv, name);
-    IV iv = SvIVX(SvRV(obj));
-    return INT2PTR(apr_table_t *,iv);
+    return apreq_xs_object2sv(aTHX_ p, class, parent, PARAM_CLASS);
 }
+
+APR_INLINE
+static SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c, 
+                              const char *class, SV *parent)
+{
+    return apreq_xs_object2sv(aTHX_ c, class, parent, COOKIE_CLASS);
+}
+
+
+APR_INLINE
+static SV *apreq_xs_sv2object(pTHX_ SV *sv, const char *class, const char attr)
+{
+    SV *obj;
+    MAGIC *mg;
+    sv = apreq_xs_find_obj(aTHX_ sv, attr);
+    if (sv_derived_from(sv, class)) {
+        return SvRV(sv);
+    }
+
+    /* check if parent (mg->mg_obj) is a handle */
+    if ((mg = mg_find(SvRV(sv), PERL_MAGIC_ext)) != NULL
+        && (obj = mg->mg_obj) != NULL
+        && SvOBJECT(obj))
+    {
+        sv = sv_2mortal(newRV_noinc(obj));
+        if (sv_derived_from(sv, class))
+            return obj;
+    }
+
+    Perl_croak(aTHX_ "apreq_xs_sv2object: %s object not found", class);
+    return NULL;
+}
+
+APR_INLINE
+static apreq_handle_t *apreq_xs_sv2handle(pTHX_ SV *sv)
+{
+    SV *obj = apreq_xs_sv2object(aTHX_ sv, HANDLE_CLASS, 'r');
+    IV iv = SvIVX(obj);
+    return INT2PTR(apreq_handle_t *, iv);
+}
+
+
+static APR_INLINE
+apreq_param_t *apreq_xs_sv2param(pTHX_ SV *sv)
+{
+    SV *obj = apreq_xs_sv2object(aTHX_ sv, PARAM_CLASS, 'p');
+    IV iv = SvIVX(obj);
+    return INT2PTR(apreq_param_t *, iv);
+}
+
+static APR_INLINE
+apreq_cookie_t *apreq_xs_sv2cookie(pTHX_ SV *sv)
+{
+    SV *obj = apreq_xs_sv2object(aTHX_ sv, COOKIE_CLASS, 'c');
+    IV iv = SvIVX(obj);
+    return INT2PTR(apreq_cookie_t *, iv);
+}
+
+
 
 /** 
  * Searches a perl object ref with apreq_xs_find_obj

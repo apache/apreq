@@ -1,44 +1,6 @@
 #include "apreq_xs_tables.h"
 #define TABLE_CLASS "APR::Request::Param::Table"
-#define PARAM_CLASS "APR::Request::Param"
-#define ERROR_CLASS "APR::Request::Error"
 
-static APR_INLINE
-SV *apreq_xs_param2sv(pTHX_ apreq_param_t *p, const char *class, SV *parent)
-{
-    SV *rv = sv_setref_pv(newSV(0), class, (void *)p);
-    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, Nullch, 0);
-    return rv;
-}
-
-static APR_INLINE
-apreq_param_t *apreq_xs_sv2param(pTHX_ SV *sv)
-{
-    IV iv = SvIVX(SvRV(sv));
-    return INT2PTR(apreq_param_t *, iv);
-}
-
-static APR_INLINE
-SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *parent,
-                      const char *param_class, I32 plen)
-{
-    SV *sv = (SV *)newHV();
-    SV *rv = sv_setref_pv(newSV(0), class, (void *)t);
-    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, param_class, plen);
-
-#if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
-
-    sv_magic(sv, NULL, PERL_MAGIC_ext, Nullch, -1);
-    SvMAGIC(sv)->mg_virtual = (MGVTBL *)&apreq_xs_table_magic;
-    SvMAGIC(sv)->mg_flags |= MGf_COPY;
-
-#endif
-
-    sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
-    SvREFCNT_dec(rv); /* corrects SvREFCNT_inc(rv) implicit in sv_magic */
-
-    return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
-}
 
 static int apreq_xs_table_keys(void *data, const char *key, const char *val)
 {
@@ -80,8 +42,8 @@ static XS(apreq_xs_args)
         Perl_croak(aTHX_ "Usage: APR::Request::args($req [,$name])");
 
     sv = ST(0);
-    obj = apreq_xs_find_obj(aTHX_ sv, "r");
-    iv = SvIVX(SvRV(obj));
+    obj = apreq_xs_sv2object(aTHX_ sv, HANDLE_CLASS, 'r');
+    iv = SvIVX(obj);
     req = INT2PTR(apreq_handle_t *, iv);
 
 
@@ -156,7 +118,7 @@ static XS(apreq_xs_body)
         Perl_croak(aTHX_ "Usage: APR::Request::body($req [,$name])");
 
     sv = ST(0);
-    obj = apreq_xs_find_obj(aTHX_ sv, "r");
+    obj = apreq_xs_sv2object(aTHX_ sv, HANDLE_CLASS, 'r');
     iv = SvIVX(SvRV(obj));
     req = INT2PTR(apreq_handle_t *, iv);
 
@@ -236,11 +198,11 @@ static XS(apreq_xs_table_FETCH)
 
     sv = ST(0);
 
-    t_obj = apreq_xs_find_obj(aTHX_ sv, "param");
-    iv = SvIVX(SvRV(t_obj));
+    t_obj = apreq_xs_sv2object(aTHX_ sv, TABLE_CLASS, 't');
+    iv = SvIVX(t_obj);
     t = INT2PTR(const apr_table_t *, iv);
 
-    mg = mg_find(SvRV(t_obj), PERL_MAGIC_ext);
+    mg = mg_find(t_obj, PERL_MAGIC_ext);
     param_class = mg->mg_ptr;
     parent = mg->mg_obj;
 
@@ -252,7 +214,7 @@ static XS(apreq_xs_table_FETCH)
         apr_table_entry_t *te;
         key = SvPV_nolen(ST(1));
 
-        idx = SvCUR(SvRV(t_obj));
+        idx = SvCUR(t_obj);
         arr = apr_table_elts(t);
         te  = (apr_table_entry_t *)arr->elts;
 
@@ -298,8 +260,7 @@ static XS(apreq_xs_table_NEXTKEY)
         Perl_croak(aTHX_ "Usage: " TABLE_CLASS "::NEXTKEY($table, $key)");
 
     sv  = ST(0);
-    obj = apreq_xs_find_obj(aTHX_ sv, "param");
-    obj = SvRV(obj);
+    obj = apreq_xs_sv2object(aTHX_ sv, TABLE_CLASS,'t');
 
     iv = SvIVX(obj);
     t = INT2PTR(const apr_table_t *, iv);
@@ -426,8 +387,8 @@ param_class(t, newclass=NULL)
     APR::Request::Param::Table t
     char *newclass
   PREINIT:
-    SV *obj = apreq_xs_find_obj(aTHX_ ST(0), "table");
-    MAGIC *mg = mg_find(SvRV(obj), PERL_MAGIC_ext);
+    SV *obj = apreq_xs_sv2object(aTHX_ ST(0), TABLE_CLASS, 't');
+    MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
     char *curclass = mg->mg_ptr;
 
   CODE:

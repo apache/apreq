@@ -13,9 +13,8 @@ sub handler {
     die "Wrong package: ", ref $r unless $r->isa('TestApReq::inherit');
     $r->content_type('text/plain');
     # look for segfault when $r->isa("Apache::Request")
-    my $j = Apache::Cookie::Jar->new($r);
 
-    my $req = bless { r => $r, j => $j };
+    my $req = bless { r => $r };
     $req->printf("method => %s\n", $req->method);
     $req->printf("cookie => %s\n", $req->cookies("apache")->as_string);
     return 0;

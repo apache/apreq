@@ -1,45 +1,5 @@
 #include "apreq_xs_tables.h"
 #define TABLE_CLASS "APR::Request::Cookie::Table"
-#define COOKIE_CLASS "APR::Request::Cookie"
-#define ERROR_CLASS "APR::Request::Error"
-
-static APR_INLINE
-SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c, const char *class, SV *parent)
-{
- 
-    SV *rv = sv_setref_pv(newSV(0), class, (void *)c);
-    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, Nullch, 0);
-    return rv;
-}
-
-static APR_INLINE
-apreq_cookie_t *apreq_xs_sv2cookie(pTHX_ SV *sv)
-{
-    IV iv = SvIVX(SvRV(sv));
-    return INT2PTR(apreq_cookie_t *, iv);
-}
-
-static APR_INLINE
-SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *parent,
-                      const char *cookie_class, I32 clen)
-{
-    SV *sv = (SV *)newHV();
-    SV *rv = sv_setref_pv(newSV(0), class, (void *)t);
-    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, cookie_class, clen);
-
-#if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
-
-    sv_magic(sv, NULL, PERL_MAGIC_ext, Nullch, -1);
-    SvMAGIC(sv)->mg_virtual = (MGVTBL *)&apreq_xs_table_magic;
-    SvMAGIC(sv)->mg_flags |= MGf_COPY;
-
-#endif
-
-    sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
-    SvREFCNT_dec(rv); /* corrects SvREFCNT_inc(rv) implicit in sv_magic */
-
-    return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
-}
 
 static int apreq_xs_table_keys(void *data, const char *key, const char *val)
 {
@@ -81,8 +41,8 @@ static XS(apreq_xs_jar)
         Perl_croak(aTHX_ "Usage: APR::Request::jar($req [,$name])");
 
     sv = ST(0);
-    obj = apreq_xs_find_obj(aTHX_ sv, "r");
-    iv = SvIVX(SvRV(obj));
+    obj = apreq_xs_sv2object(aTHX_ sv, HANDLE_CLASS, 'r');
+    iv = SvIVX(obj);
     req = INT2PTR(apreq_handle_t *, iv);
 
     if (items == 2 && GIMME_V == G_SCALAR) {
@@ -117,7 +77,7 @@ static XS(apreq_xs_jar)
             XSRETURN_EMPTY;
 
         d.pkg = COOKIE_CLASS;
-        d.parent = SvRV(obj);
+        d.parent = obj;
 
         switch (GIMME_V) {
 
@@ -143,13 +103,12 @@ static XS(apreq_xs_jar)
     }
 }
 
-
 static XS(apreq_xs_table_FETCH)
 {
     dXSARGS;
     const apr_table_t *t;
     const char *cookie_class;
-    SV *sv, *t_obj, *parent;
+    SV *sv, *obj, *parent;
     IV iv;
     MAGIC *mg;
 
@@ -159,14 +118,13 @@ static XS(apreq_xs_table_FETCH)
 
     sv = ST(0);
 
-    t_obj = apreq_xs_find_obj(aTHX_ sv, "param");
-    iv = SvIVX(SvRV(t_obj));
+    obj = apreq_xs_sv2object(aTHX_ sv, TABLE_CLASS, 't');
+    iv = SvIVX(obj);
     t = INT2PTR(const apr_table_t *, iv);
 
-    mg = mg_find(SvRV(t_obj), PERL_MAGIC_ext);
+    mg = mg_find(obj, PERL_MAGIC_ext);
     cookie_class = mg->mg_ptr;
     parent = mg->mg_obj;
-
 
     if (GIMME_V == G_SCALAR) {
         IV idx;
@@ -175,7 +133,7 @@ static XS(apreq_xs_table_FETCH)
         apr_table_entry_t *te;
         key = SvPV_nolen(ST(1));
 
-        idx = SvCUR(SvRV(t_obj));
+        idx = SvCUR(obj);
         arr = apr_table_elts(t);
         te  = (apr_table_entry_t *)arr->elts;
 
@@ -221,8 +179,7 @@ static XS(apreq_xs_table_NEXTKEY)
         Perl_croak(aTHX_ "Usage: $table->NEXTKEY($prev)");
 
     sv  = ST(0);
-    obj = apreq_xs_find_obj(aTHX_ sv, "param");
-    obj = SvRV(obj);
+    obj = apreq_xs_sv2object(aTHX_ sv, TABLE_CLASS, 't');
 
     iv = SvIVX(obj);
     t = INT2PTR(const apr_table_t *, iv);
@@ -349,6 +306,23 @@ tainted(obj, val=NULL)
   OUTPUT:
     RETVAL
 
+SV*
+bind_handle(cookie, req)
+    SV *cookie
+    SV *req
+  PREINIT:
+    MAGIC *mg;
+    SV *obj;
+  CODE:
+    obj = apreq_xs_sv2object(aTHX_ cookie, COOKIE_CLASS, 'c');
+    mg = mg_find(obj, PERL_MAGIC_ext);
+    req = apreq_xs_sv2object(aTHX_ req, HANDLE_CLASS, 'r');
+    RETVAL = newRV_noinc(mg->mg_obj);
+    SvREFCNT_inc(req);
+    mg->mg_obj = req;
+
+  OUTPUT:
+    RETVAL
 
 APR::Request::Cookie
 make(class, pool, name, val)
@@ -394,8 +368,8 @@ cookie_class(t, newclass=NULL)
     APR::Request::Cookie::Table t
     char *newclass
   PREINIT:
-    SV *obj = apreq_xs_find_obj(aTHX_ ST(0), "table");
-    MAGIC *mg = mg_find(SvRV(obj), PERL_MAGIC_ext);
+    SV *obj = apreq_xs_sv2object(aTHX_ ST(0), TABLE_CLASS, 't');
+    MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
     char *curclass = mg->mg_ptr;
 
   CODE:

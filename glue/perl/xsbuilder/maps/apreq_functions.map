@@ -126,10 +126,10 @@ apreq_xs_handle_cgi_t *:DEFINE_new | apreq_handle_cgi (p) | const char *:class, 
 
 
 #################### APR::Request::Cookie stuff ####################
-# | apreq_cookie_bake(c, req) | apreq_cookie_t *:c, apreq_handle_t *:req=apreq_xs_get_handle(aTHX_ ST(0))
 MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie PREFIX=apreq_cookie_
-apreq_cookie_bake
-apreq_cookie_bake2
+apreq_cookie_bake | (c, req) | apreq_cookie_t *:c, req=apreq_xs_sv2handle(aTHX_ ST(0))
+apreq_cookie_bake2| (c, req) | apreq_cookie_t *:c, req=apreq_xs_sv2handle(aTHX_ ST(0))
+apreq_cookie_expires
 
 MODULE=APR::Request::Cookie PACKAGE=APR::Request PREFIX=APR__Request_
 DEFINE_jar | apreq_xs_jar |

@@ -52,7 +52,7 @@ APREQ_DECLARE(unsigned)
 
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
-                                              apreq_handle_t *env)
+                                              apreq_handle_t *req)
 {
     char s[APREQ_COOKIE_MAX_LENGTH];
     int len;
@@ -64,11 +64,11 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
     if (len >= APREQ_COOKIE_MAX_LENGTH)
         return APREQ_ERROR_OVERLIMIT;
 
-    return apreq_header_out(env, "Set-Cookie", s);
+    return apreq_header_out(req, "Set-Cookie", s);
 }
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
-                                               apreq_handle_t *env)
+                                               apreq_handle_t *req)
 {
     char s[APREQ_COOKIE_MAX_LENGTH];
     int len;
@@ -84,7 +84,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
     if (len >= APREQ_COOKIE_MAX_LENGTH)
         return APREQ_ERROR_OVERLIMIT;
 
-    return apreq_header_out(env, "Set-Cookie2", s);
+    return apreq_header_out(req, "Set-Cookie2", s);
 }
 
 

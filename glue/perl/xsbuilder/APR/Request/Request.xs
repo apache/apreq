@@ -11,16 +11,11 @@ static XS(apreq_xs_parse)
     apreq_handle_t *req;
     apr_status_t s;
     const apr_table_t *t;
-    SV *sv, *obj;
-    IV iv;
 
-    if (items != 1 || !SvROK(ST(0)) || !sv_derived_from(ST(0), "APR::Request"))
+    if (items != 1 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: APR::Request::parse($req)");
 
-    sv = ST(0);
-    obj = apreq_xs_find_obj(aTHX_ sv, "r");
-    iv = SvIVX(SvRV(obj));
-    req = INT2PTR(apreq_handle_t *, iv);
+    req = apreq_xs_sv2handle(aTHX_ ST(0));
 
     XSprePUSH;
     EXTEND(SP, 3);
@@ -30,11 +25,41 @@ static XS(apreq_xs_parse)
     PUSHs(sv_2mortal(newSViv(s)));
     s = apreq_body(req, &t);
     PUSHs(sv_2mortal(newSViv(s)));
-
     PUTBACK;
 }
 
 MODULE = APR::Request     PACKAGE = APR::Request
+
+SV*
+encode(in)
+    SV *in
+  PREINIT:
+    STRLEN len;
+    char *src;
+  CODE:
+    src = SvPV(in, len);
+    RETVAL = newSV(3 * len);
+    SvCUR_set(RETVAL, apreq_encode(SvPVX(RETVAL), src, len));
+    SvPOK_on(RETVAL);
+
+  OUTPUT:
+    RETVAL
+
+SV*
+decode(in)
+    SV *in
+  PREINIT:
+    STRLEN len;
+    apr_size_t dlen;
+    char *src;
+  CODE:
+    src = SvPV(in, len);
+    RETVAL = newSV(len);
+    apreq_decode(SvPVX(RETVAL), &dlen, src, len); /*XXX needs error-handling */
+    SvCUR_set(RETVAL, dlen);
+    SvPOK_on(RETVAL);
+  OUTPUT:
+    RETVAL
 
 SV*
 read_limit(req, val=NULL)

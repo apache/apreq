@@ -514,13 +514,13 @@ sub null_type {
 sub typemap_code
 {
     {
-        T_SUBCLASS => {
+           T_SUBCLASS  => {
                           INPUT => <<'EOT',
     if (SvROK($arg) || !sv_derived_from($arg, \"$Package\"))
         Perl_croak(aTHX_ \"Usage: argument is not a subclass of $Package\");
     $var = SvPV_nolen($arg)
 EOT
-                          },
+                           },
 
         T_APREQ_COOKIE  => {
                             INPUT  => '$var = apreq_xs_sv2cookie(aTHX_ $arg)',
@@ -528,51 +528,40 @@ EOT
                             OUTPUT => '$arg = apreq_xs_cookie2sv(aTHX_ $var, class, parent);',
                             c2perl => 'apreq_xs_cookie2sv(aTHX_ ptr, class, parent)',
                            },
+
         T_APREQ_PARAM   => {
                             INPUT  => '$var = apreq_xs_sv2param(aTHX_ $arg)',
                             perl2c => 'apreq_xs_sv2param(aTHX_ sv)',
                             OUTPUT => '$arg = apreq_xs_param2sv(aTHX_ $var, class, parent);',
                             c2perl => 'apreq_xs_param2sv(aTHX_ ptr, class, parent)',
                            },
-        T_APREQ_HANDLE => {
-                            INPUT  => '$var = apreq_xs_perl2c(aTHX_ $arg, \"r\")',
-                            perl2c => 'apreq_xs_perl2c(aTHX_ sv, \"r\")',
-                            c2perl => 'sv_setref_pv(newSV(0), class, ptr)',
-                            OUTPUT => <<'EOT',
-    $arg = sv_setref_pv(newSV(0), class, $var);
-    if (sv_derived_from($arg, \"${ntype}\")) {
-        SV *parent = ST(1);
-        SV *rv = SvRV($arg);
-        sv_magic(rv, parent, PERL_MAGIC_ext, Nullch, 0);
-    }
-    else
-        Perl_croak(aTHX_ \"Usage: target class %s isn't derived from ${ntype}\", class);
-EOT
-                           },
-        T_APREQ_HANDLE_APACHE2 => {
-                            INPUT  => '$var = apreq_xs_perl2c(aTHX_ $arg, \"r\")',
-                            OUTPUT => <<'EOT',
-    $arg = sv_setref_pv(newSV(0), class, $var);
-    if (sv_derived_from($arg, \"${ntype}\")) {
-        SV *parent = SvRV(ST(1)); /* r's SV */
-        SV *rv = SvRV($arg);
-        sv_magic(rv, parent, PERL_MAGIC_ext, Nullch, -1);
-        SvMAGIC(rv)->mg_ptr = (void *)r;
-    }
-    else
-        Perl_croak(aTHX_ \"Usage: target class %s isn't derived from ${ntype}\", class);
-EOT
-                           },
- T_APREQ_COOKIE_VERSION => {
-                            INPUT  => '$var = ((apreq_cookie_version_t)SvTRUE($arg))',
-                            OUTPUT => '$arg = boolSV((bool)$var);',
-                           },
-    T_APREQ_ERROR => {
-                          INPUT => '$var = (HV *)SvRV($arg)',
-                          OUTPUT => '$arg = sv_bless(newRV_noinc((SV*)$var), gv_stashpvn(\"${ntype}\", sizeof(\"${ntype}\") - 1, FALSE);'
-                     },
 
-        T_HASHOBJ       => {
+         T_APREQ_HANDLE => {
+                            INPUT  => '$var = apreq_xs_sv2handle(aTHX_ $arg)',
+                            perl2c => 'apreq_xs_sv2handle(aTHX_ sv)',
+                            c2perl => 'apreq_xs_handle2sv(aTHX_ ptr, class, parent)',
+                            OUTPUT => '$arg = apreq_xs_handle2sv(aTHX_ $var, class, parent);',
+                           },
+
+     T_APREQ_HANDLE_CGI => {
+                            INPUT  => '$var = apreq_xs_sv2handle(aTHX_ $arg)',
+                            OUTPUT => '$arg = apreq_xs_handle2sv(aTHX_ $var, class, SvRV(ST(1)));'
+                           },
+
+ T_APREQ_HANDLE_APACHE2 => {
+                            INPUT  => '$var = apreq_xs_sv2handle(aTHX_ $arg)',
+                            OUTPUT => <<'EOT',
+    $arg = apreq_xs_handle2sv(aTHX_ $var, class, SvRV(ST(1)));
+    SvMAGIC(SvRV($arg))->mg_ptr = (void *)r;
+EOT
+                           },
+
+          T_APREQ_ERROR => {
+                             INPUT => '$var = (HV *)SvRV($arg)',
+                            OUTPUT => '$arg = sv_bless(newRV_noinc((SV*)$var), gv_stashpvn(\"${ntype}\", sizeof(\"${ntype}\") - 1, FALSE);'
+                           },
+
+              T_HASHOBJ => {
                             INPUT => <<'EOT', # '$var = modperl_hash_tied_object(aTHX_ \"${ntype}\", $arg)'
     if (sv_derived_from($arg, \"${ntype}\")) {
         if (SVt_PVHV == SvTYPE(SvRV($arg))) {
@@ -603,7 +592,7 @@ EOT
     }
 EOT
 
-                            OUTPUT => <<'EOT', # '$arg = modperl_hash_tie(aTHX_ \"${ntype}\", $arg, $var);'
+                 OUTPUT => <<'EOT', # '$arg = modperl_hash_tie(aTHX_ \"${ntype}\", $arg, $var);'
   {
     SV *hv = (SV*)newHV();
     SV *rsv = $arg;

@@ -17,25 +17,27 @@ sub handler {
     my %cookies = Apache::Cookie->fetch($r);
 
     $r->content_type('text/plain');
-    my $test = $req->param('test');
-    my $key  = $req->param('key');
+    my $test = $req->APR::Request::args('test');
+    my $key  = $req->APR::Request::args('key');
 
     if ($key and $cookies{$key}) {
         if ($test eq "bake") {
+            $cookies{$key}->tainted(0);
             $cookies{$key}->bake;
         }
         elsif ($test eq "bake2") {
+            $cookies{$key}->tainted(0);
             $cookies{$key}->bake2;
         }
         $r->print($cookies{$key}->value);
     }
     else {
         my @expires;
-        @expires = ("expires", $req->param('expires')) if $req->param('expires');
+        @expires = ("expires", $req->APR::Request::args('expires')) if $req->APR::Request::args('expires');
         my $cookie = Apache::Cookie->new($r, name => "foo",
                                             value => "bar", @expires);
         if ($test eq "bake") {
-            $cookie->bake;
+            $cookie->bake($req);
         }
         elsif ($test eq "bake2") {
             $cookie->set_attr(version => 1);

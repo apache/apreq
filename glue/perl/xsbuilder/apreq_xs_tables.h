@@ -62,17 +62,14 @@ static const MGVTBL apreq_xs_table_magic = {0, 0, 0, 0, 0,
  * @param class Class perl object will be blessed and tied to.
  * @return Reference to a new TIEHASH object in class.
  */
-APR_INLINE
-static SV *apreq_xs_table_c2perl(pTHX_ void *obj, const char *name, I32 nlen,
-                                 const char *class, SV *parent, unsigned tainted)
+
+static APR_INLINE
+SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *parent,
+                      const char *value_class, I32 vclen)
 {
     SV *sv = (SV *)newHV();
-    /*upgrade ensures CUR and LEN are both 0 */
-    SV *rv = sv_setref_pv(newSV(0), class, obj);
-
-    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, name, nlen);
-    if (tainted)
-        SvTAINTED_on(SvRV(rv));
+    SV *rv = sv_setref_pv(newSV(0), class, (void *)t);
+    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, value_class, vclen);
 
 #if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
 
