@@ -27,7 +27,7 @@ else {
 	  @mm_args,
 	  'INC'	=> "-I../c ". $src->inc,
 	  'TYPEMAPS'  => $src->typemaps,
-          'LIBS' => "-L$root -lapreq",
+          'OBJECT' => "Request.o $root/libapreq.a",
 	  'dynamic_lib' => {
 	  	'OTHERLDFLAGS' => $src->otherldflags,
 	  },

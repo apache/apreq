@@ -1,33 +1,12 @@
-Mac OS X 10.2
-=============
+Mac OS X 10.2 and Later
+=======================
 
-On Mac OS X 10.2.x Jaguar, the C and Perl libraries must be installed
-separately. Here's how to do it.
-
-% cd libapreq-1.x
-% sh BUILD.sh
-
-Unpack the libapreq tarball, change into the source code directory, and then
-run the BUILD.sh script. This prepares the libapreq sources to build the C
-library. Note that running BUILD.sh is actually optional if the libapreq
-sources are freshly unpacked.
-
-% ./configure --with-apache-includes=/usr/include/httpd
-% make
-% sudo make install
-
-We need to tell configure where to find the apache includes directory. The
-default Apple install of Apache puts these files in /usr/include/httpd. If
-you've compiled and installed your own Apache, you'll need to point to the
-directory into which you have installed the include files, such as
-/usr/local/apache/include. Once configure is done doing its thing, run "make"
-and then "sudo make install" to install the C library.
-
-Next, the normal Perl build of libapreq should work. Note that you'll need
-Apache::TestMM, libwwwperl, and URI installed in order to run "make test".
-It's also a good idea to use the "-apxs" argument to Makefile.PL so that
-"make test" knows where to find and start your Apache server. This is
-especially true if you've compiled and isntalled your own Apache.
+On Mac OS X 10.2.x Jaguar and laterthe normal Perl build of libapreq should
+work. Note that you'll need Apache::TestMM, libwwwperl, and URI installed in
+order to run "make test". It's also a good idea to use the "-apxs" argument to
+Makefile.PL so that "make test" knows where to find and start your Apache
+server. This is especially true if you've compiled and isntalled your own
+Apache.
 
 % perl Makefile.PL -apxs /usr/sbin/apxs
 % make
@@ -70,7 +49,7 @@ mod_perl's Makefile build Apache, configure it like this:
 Be sure to pass the "--without-execstrip" argument to to the
 APACI_ARGS; this seems to be required to compile Apache with mod_perl
 on Mac OS X. If you compile Apache by hand, you'll need to pass the
---without-execstrip option to its ./configure script.
+"--without-execstrip" option to its ./configure script.
 
 If you want to use Apache::Request and Apache::Cookie, you'll also need to
 remove the -lapreq linking flags within Request/Makefile.PL and
