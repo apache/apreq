@@ -201,7 +201,7 @@ int ApacheRequest___parse(ApacheRequest *req)
 
     if (r->method_number == M_POST) { 
 	const char *ct = ap_table_get(r->headers_in, "Content-type"); 
-	if (ct && *ct == 'a' && strEQ(ct, DEFAULT_ENCTYPE)) {
+	if (ct && *ct == 'a' && strstr(ct, DEFAULT_ENCTYPE)) {
 	    return ApacheRequest_parse_urlencoded(req); 
 	}
 	else if (ct && *ct == 'm' && strstr(ct, "multipart/form-data")) {

@@ -129,13 +129,13 @@ void multipart_buffer_fill(multipart_buffer *self, long bytes)
 					sizeof(char) * bytes_to_read + 1);
 	len_read = ap_get_client_block(self->r, buff, bytes_to_read);
 
-	if (len_read < 0) {
+	if (len_read <= 0) {
 	    ap_log_rerror(MPB_ERROR,
 			  "[libapreq] client dropped connection during read");
 	    self->length = 0;
 	    self->buffer = NULL;
 	    self->buffer_len = 0;
-	    return;
+	    break;
 	}
 
 	self->buffer = self->buffer ? 

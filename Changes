@@ -2,6 +2,15 @@ Revision history for Perl extension Apache::Request.
 
 =over 4
 
+=item 0.32 - August 16, 1999
+
+fix problem with mozilla:
+[libapreq] unknown content-type: `application/x-www-form-urlencoded; charset=ISO-8859-1'
+thanks to Chris Adams and Jeff Baker for spotting
+
+fix nasty bug when connection is broken during file upload
+thanks to Jeff Baker for the spot
+
 =item 0.31 - July 2, 1999
 
 CGI.pm 2.53's path/domain defaults will be used with -DDEFINE=CGI_253
