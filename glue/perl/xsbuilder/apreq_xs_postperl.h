@@ -110,8 +110,19 @@ APR_INLINE
 static SV *apreq_xs_c2perl(pTHX_ void *obj, void *env, const char *class)
 {
     SV *rv = sv_setref_pv(newSV(0), class, obj);
-    if (env)
-        sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, env, 0);
+    if (env) {
+        /* We use the old idiom for sv_magic() below,
+         * because perl 5.6 mangles the env pointer on
+         * the recommended 5.8.x invocation
+         *
+         *   sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, env, 0);
+         *
+         * 5.8.x is OK with the old way as well, but in the future
+         * we may have to use "#if PERL_VERSION < 8" ...
+         */
+        sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, Nullch, -1);
+        SvMAGIC(SvRV(rv))->mg_ptr = env;
+    }
     return rv;
 }
 
@@ -128,8 +139,20 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
 {
     SV *sv = (SV *)newHV();
     SV *rv = sv_setref_pv(newSV(0), class, obj);
-    if (env)
-        sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, env, 0);
+    if (env) {
+        /* We use the old idiom for sv_magic() below,
+         * because perl 5.6 mangles the env pointer on
+         * the recommended 5.8.x invocation
+         *
+         *   sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, env, 0);
+         *
+         * 5.8.x is OK with the old way as well, but in the future
+         * we may have to use "#if PERL_VERSION < 8" ...
+         */
+        sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, Nullch, -1);
+        SvMAGIC(SvRV(rv))->mg_ptr = env;
+#endif
+    }
 
     sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
     SvREFCNT_dec(rv); /* corrects SvREFCNT_inc(rv) implicit in sv_magic */
