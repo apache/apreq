@@ -70,10 +70,10 @@ APREQ_DECLARE(apreq_cookie_t *) (apreq_cookie)(const apreq_jar_t *jar,
     return apreq_cookie(jar,name);
 }
 
-APREQ_DECLARE(void) (apreq_jar_add)(apreq_jar_t *jar, 
-                                    apreq_cookie_t *c)
+APREQ_DECLARE(apr_status_t) (apreq_add_cookie)(apreq_jar_t *jar, 
+                                       const apreq_cookie_t *c)
 {
-    apreq_jar_add(jar,c);
+    return apreq_add_cookie(jar,c);
 }
 
 APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
@@ -96,7 +96,7 @@ static int has_rfc_cookie(void *ctx, const char *key, const char *val)
                                       1 -> not found, keep going. */
 }
 
-APREQ_DECLARE(apreq_cookie_version_t) apreq_cookie_ua_version(void *ctx)
+APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *ctx)
 {
     if (apreq_env_cookie2(ctx) == NULL) {
         apreq_jar_t *j = apreq_jar(ctx, NULL);
@@ -115,7 +115,8 @@ APREQ_DECLARE(apreq_cookie_version_t) apreq_cookie_ua_version(void *ctx)
 }
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c, 
-                                              char *attr, char *val)
+                                              char *attr,
+                                              char *val)
 {
     if ( attr[0] ==  '-' || attr[0] == '$' )
         ++attr;
@@ -182,7 +183,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c,
     return APR_ENOTIMPL;
 }
 
-APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(void *ctx, 
+APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(void *ctx, 
                                   const apreq_cookie_version_t version,
                                   const char *name, const apr_size_t nlen,
                                   const char *value, const apr_size_t vlen)
@@ -350,11 +351,9 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
             /* this is the normal exit point for apreq_jar */
             return j;
 
-
         case ',':
             ++data;
             goto parse_cookie_header;
-
 
         case '$':
             if (c == NULL) {
@@ -381,14 +380,13 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
             }
             break;
 
-
         default:
             status = get_pair(&data, &name, &nlen, &value, &vlen);
 
             if (status == APR_SUCCESS) {
-                c = apreq_cookie_make(ctx, version, name, nlen, 
+                c = apreq_make_cookie(ctx, version, name, nlen, 
                                       value, vlen);
-                apreq_jar_add(j, c);
+                apreq_add_cookie(j, c);
             }
             else {
                 apreq_warn(ctx, status, "Skipping bad NAME=VALUE pair: %s",
@@ -401,8 +399,8 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
     return j;
 }
 
-APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c, 
-                                          char *buf, apr_size_t len)
+APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
+                                          const apreq_cookie_t *c)
 {
     /*  The format string must be large enough to accomodate all
      *  of the cookie attributes.  The current attributes sum to 
@@ -471,7 +469,7 @@ APREQ_DECLARE(const char*) apreq_cookie_as_string(apr_pool_t *p,
 
 {
     char s[APREQ_COOKIE_LENGTH];
-    int n = apreq_cookie_serialize(c, s, APREQ_COOKIE_LENGTH);
+    int n = apreq_serialize_cookie(s, APREQ_COOKIE_LENGTH,c);
 
     if ( n < APREQ_COOKIE_LENGTH )
         return apr_pstrmemdup(p, s, n);
@@ -479,7 +477,7 @@ APREQ_DECLARE(const char*) apreq_cookie_as_string(apr_pool_t *p,
         return NULL;
 }
 
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c)
+APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c)
 {
     const char *s = apreq_cookie_as_string(apreq_env_pool(c->ctx),c);
 
@@ -493,7 +491,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c)
     return apreq_env_set_cookie(c->ctx, s);
 }
 
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c)
+APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c)
 {
     const char *s = apreq_cookie_as_string(apreq_env_pool(c->ctx),c);
 

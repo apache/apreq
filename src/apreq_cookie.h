@@ -73,8 +73,8 @@ apreq_cookie_t *apreq_cookie(const apreq_jar_t *jar, const char *name);
  * @param c The cookie to add.
  */
 
-void apreq_jar_add(apreq_jar_t *jar, apreq_cookie_t *c);
-#define apreq_jar_add(jar,c)  apreq_table_add(jar, &(c)->v)
+apr_status_t apreq_add_cookie(apreq_jar_t *jar, const apreq_cookie_t *c);
+#define apreq_add_cookie(jar,c)  apreq_table_add(jar, &(c)->v)
 
 /**
  * Parse the incoming "Cookie:" headers into a cookie jar.
@@ -109,7 +109,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx, const char *data);
  * @param value The cookie's value.
  * @param vlen  Length of value.
  */
-APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(void *ctx, 
+APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(void *ctx, 
                                   const apreq_cookie_version_t version,
                                   const char *name, const apr_size_t nlen, 
                                   const char *value, const apr_size_t vlen);
@@ -139,8 +139,8 @@ APREQ_DECLARE(const char*) apreq_cookie_as_string(apr_pool_t *p,
  * @param len Size of buf's storage area. 
  */
 
-APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c, 
-                                          char *buf, apr_size_t len);
+APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
+                                          const apreq_cookie_t *c);
 
 /**
  * Get/set the "expires" string.  For NETSCAPE cookies, this returns 
@@ -160,7 +160,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
  *
  * @param c The cookie.
  */
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c);
+APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c);
 
 /* XXX: how about baking whole cookie jars, too ??? */
 
@@ -169,9 +169,9 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c);
  *
  * @param c The cookie.
  */
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c);
+APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c);
 
-APREQ_DECLARE(apreq_cookie_version_t) apreq_cookie_ua_version(void *ctx);
+APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *ctx);
 
 
 #ifdef __cplusplus

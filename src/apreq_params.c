@@ -98,7 +98,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 
     query_string = apreq_env_args(ctx);
     req->status = (query_string == NULL) ? APR_SUCCESS :
-        apreq_param_split(p, req->args, query_string, strlen(query_string));
+        apreq_split_params(p, req->args, query_string, strlen(query_string));
  
     return req;
 }
@@ -138,10 +138,10 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params(apr_pool_t *pool,
 }
 
 
-APREQ_DECLARE(apr_status_t) apreq_param_split(apr_pool_t *pool,
-                                              apreq_table_t *t,
-                                              const char *data, 
-                                              apr_size_t dlen)
+APREQ_DECLARE(apr_status_t) apreq_split_params(apr_pool_t *pool,
+                                               apreq_table_t *t,
+                                               const char *data, 
+                                               apr_size_t dlen)
 {
     const char *start = data, *end = data + dlen;
     apr_size_t nlen = 0;
@@ -167,7 +167,7 @@ APREQ_DECLARE(apr_status_t) apreq_param_split(apr_pool_t *pool,
             else {
                 const apr_size_t vlen = data - start - nlen - 1;
                 status = apreq_table_add(t, p2v(
-                                apreq_param_decode( pool, start,
+                                apreq_decode_param( pool, start,
                                                     nlen, vlen )));
 
                 if (status != APR_SUCCESS)
@@ -184,7 +184,7 @@ APREQ_DECLARE(apr_status_t) apreq_param_split(apr_pool_t *pool,
 }
 
 
-APREQ_DECLARE(apreq_param_t *) apreq_param_decode(apr_pool_t *pool, 
+APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool, 
                                                   const char *word,
                                                   const apr_size_t nlen, 
                                                   const apr_size_t vlen)
@@ -222,7 +222,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_decode(apr_pool_t *pool,
 }
 
 
-APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool, 
+APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool, 
                                          const apreq_param_t *param)
 {
     apreq_value_t *v;
@@ -242,3 +242,4 @@ APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool,
 
     return v->data;
 }
+

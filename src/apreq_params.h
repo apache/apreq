@@ -163,16 +163,16 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params(
  */
 APREQ_DECLARE(apr_array_header_t *) apreq_keys(apreq_request_t *req);
 
-APREQ_DECLARE(apr_status_t)  apreq_param_split(apr_pool_t *pool,
-                                               apreq_table_t *t, 
-                                               const char *data, 
-                                               const apr_size_t dlen);
+APREQ_DECLARE(apr_status_t)  apreq_split_params(apr_pool_t *pool,
+                                                apreq_table_t *t, 
+                                                const char *data, 
+                                                const apr_size_t dlen);
 
-APREQ_DECLARE(apreq_param_t *) apreq_param_decode(apr_pool_t *pool, 
+APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool, 
                                                   const char *word,
                                                   const apr_size_t nlen, 
                                                   const apr_size_t vlen);
-APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool, 
+APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool, 
                                          const apreq_param_t *param);
 
 
