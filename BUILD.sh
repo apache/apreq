@@ -1,5 +1,5 @@
 #!/bin/sh
-# BUILD.sh - preconfigure libapreq
+# BUILD.sh - preconfigure libapreq (for distribution)
 
 libtoolize --automake -c -f
 aclocal
