@@ -52,6 +52,9 @@ CURRENT VOTES:
 
 TODO:
 
+    - Fix the broken make dependencies, especially in the module 
+      and glue subdirs.  The libtool workaround (for OSX IIRC) 
+      that copies module/.libs to module/t is especially bogus.
 
     - Consider dropping ExtUtils::XSBuilder as the C API is fairly
       stable now.  The header parsing + xs generation stuff may be too 
