@@ -9,7 +9,7 @@ use HTTP::Cookies;
 
 plan tests => 1;
 
-my $location = "/TestApReq::cookie";
+my $location = "/TestApReq__cookie";
 
 {
     # basic param() test

@@ -8,7 +8,7 @@ use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
 plan tests => 2;
 
-my $location = "/TestApReq::request";
+my $location = "/TestApReq__request";
 #print GET_BODY $location;
 
 {

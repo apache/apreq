@@ -8,7 +8,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY POST_BODY);
 
-my $location = "/TestApReq::big_input";
+my $location = "/TestApReq__big_input";
 
 my @key_len = (5, 100, 305);
 my @key_num = (5, 15, 26);
