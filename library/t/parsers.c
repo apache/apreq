@@ -108,6 +108,8 @@ static char mix_data[] =
 
 static void locate_default_parsers(dAT)
 {
+
+#ifndef WIN32
     apreq_parser_function_t f;
 
     AT_trace_on();
@@ -122,6 +124,9 @@ static void locate_default_parsers(dAT)
     AT_EQ(f, (apreq_parser_function_t)apreq_parse_multipart, "%pp");
 
     AT_trace_off();
+#else
+    AT_skip(3, "skipping ELF-dependent tests");
+#endif
 
 }
 
