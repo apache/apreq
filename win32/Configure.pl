@@ -64,11 +64,13 @@ unless ($apxs) {
 }
 
 my $test = << 'END';
-TEST: $(LIBAPREQ) $(MOD)
+TEST: $(LIBAPREQ) $(MOD) $(CGI)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
         set PATH=%PATH%;$(APACHE)\bin
         cd $(LIBDIR) && $(TESTALL).exe -v
         cd $(APREQ_HOME)
+	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTCGI).mak CFG="$(TESTCGI) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
+        copy $(LIBDIR)\test_cgi.exe $(APREQ_HOME)\env\t\cgi-bin\test_cgi.exe
 END
 
 my $clean = << 'END';
@@ -343,6 +345,7 @@ __DATA__
 
 LIBAPREQ=libapreq
 TESTALL=testall
+TESTCGI=test_cgi
 MOD=mod_apreq
 CGI=libapreq_cgi
 
