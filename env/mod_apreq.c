@@ -13,7 +13,7 @@
 **  See the License for the specific language governing permissions and
 **  limitations under the License.
 */
-#include "assert.h"
+
 #include "httpd.h"
 #include "http_config.h"
 #include "http_log.h"
@@ -375,10 +375,10 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     struct env_config *cfg = get_cfg(r);
     ap_filter_t *in;
 
-    if (f == r->input_filters)
-        return APR_SUCCESS;
-
     if (f != r->proto_input_filters) {
+        if (f == r->input_filters)
+            return APR_SUCCESS;
+
         for (in = r->input_filters; in != r->proto_input_filters; 
              in = in->next)
         {
@@ -453,7 +453,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
     ctx = f->ctx;
 
-    if (f != r->input_filters)
+    if (cfg->f != f)
         ctx->status = APR_SUCCESS;
 
     if (bb != NULL) {
