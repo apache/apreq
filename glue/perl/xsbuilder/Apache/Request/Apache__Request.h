@@ -176,7 +176,7 @@ static XS(apreq_xs_request_config)
     dXSARGS;
     apreq_request_t *req;
     apr_status_t status = APR_SUCCESS;
-    /* int j = 1; */
+    int j;
     if (items == 0)
         XSRETURN_UNDEF;
     if (!SvROK(ST(0)))
@@ -184,17 +184,30 @@ static XS(apreq_xs_request_config)
 
     req = apreq_xs_sv2(request,ST(0));
 
-    XSRETURN_UNDEF; /* XXX fixme (apreq_request_config is now gone)
-
     for (j = 1; j + 1 < items; j += 2) {
         STRLEN alen, vlen;
         const char *attr = SvPVbyte(ST(j),alen), 
                     *val = SvPVbyte(ST(j+1),vlen);
-        status = apreq_request_config(req, attr, alen, val, vlen); 
+
+        if (strcasecmp(attr,"POST_MAX")== 0
+            || strcasecmp(attr, "MAX_BODY") == 0) 
+        {
+            status = apreq_env_max_body(req->env,(apr_off_t)apreq_atoi64f(val));
+        }
+        else if (strcasecmp(attr, "TEMP_DIR") == 0) {
+            apreq_env_temp_dir(req->env, val);
+        }
+        else if (strcasecmp(attr, "MAX_BRIGADE") == 0) {
+            apreq_env_max_brigade(req->env, (apr_ssize_t)apreq_atoi64f(val));
+        }
+        else {
+            Perl_warn(aTHX_ "Apache::Request::config: "
+                      "Unrecognized attribute %s", attr);
+        }
+
         if (status != APR_SUCCESS)
             break;
     }
-*/
     XSRETURN_IV(status);
 }
 

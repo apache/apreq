@@ -43,11 +43,11 @@ The following attributes are optional:
 
 =over 4
 
-=item POST_MAX
+=item POST_MAX, MAX_BODY
 
 Limit the size of POST data (in bytes).
 
-=item DISABLE_UPLOADS
+=item DISABLE_UPLOADS [TODO]
 
 Disable file uploads.
 

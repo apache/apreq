@@ -91,6 +91,10 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
 
 APREQ_DECLARE(const char *) apreq_env_temp_dir(void *env, const char *path)
 {
+    if (path != NULL)
+        /* ensure path is a valid pointer during the entire request */
+        path = apr_pstrdup(apreq_env_pool(env),path);
+
     return apreq_env->temp_dir(env,path);
 }
 
