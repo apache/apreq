@@ -62,8 +62,7 @@ sub handler {
         my $link_file = File::Spec->catfile("$temp_dir", "linktest");
         unlink $link_file if -f $link_file;
         $upload->link($link_file) or die "Can't link to $link_file: $!";
-        open my $fh, "<:APR", $link_file, $upload->pool
-            or die "Can't open $link_file: $!";
+        open my $fh, "<", $link_file or die "Can't open $link_file: $!";
         $r->print(<$fh>);
     }
     elsif ($test eq 'fh') {
