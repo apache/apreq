@@ -145,7 +145,7 @@ static XS(apreq_xs_table_##attr##_##method)                             \
     if (obj == NULL)                                                    \
          Perl_croak(aTHX_ "$table->" #method ": cannot find object");   \
     env = apreq_xs_sv2env(obj);                                         \
-    t   = apreq_xs_##attr##_sv2table(obj);                              \
+    t   = (apr_table_t *)SvIVX(obj);                                    \
     key = SvPV(ST(1), klen);                                            \
                                                                         \
     if (SvROK(ST(2))) {                                                 \
