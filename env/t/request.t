@@ -5,7 +5,13 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC);
 
-plan tests => 14, have_lwp;
+my $num_tests = 14;
+$num_tests *= 2 if Apache::Test::have_ssl();
+plan tests => $num_tests, have_lwp;
+my $scheme = "http";
+
+START_TESTS:
+Apache::TestRequest::scheme($scheme);
 
 foreach my $location ('/apreq_request_test', '/apreq_access_test') {
 
@@ -75,3 +81,8 @@ EOT
      filter_content POST_BODY("/index.html?test=14", content => 
      "post+data=foo;more=$filler;test=output+filter+POST"), 
      "output filter POST");
+
+if (Apache::Test::have_ssl() and $scheme ne 'https') {    
+    $scheme = 'https';
+    goto START_TESTS;
+}
