@@ -34,7 +34,7 @@ Alternately, here's a recipe to install mod_apreq.c as a static apache module:
 
   % cd /path/to/httpd-2.0
   % CPPFLAGS=-I/path/to/httpd-apreq-2/src \
-    HTTPD_LDFLAGS=/path/to/httpd-apreq-2/src/libapreq.la \
+    HTTPD_LDFLAGS=/path/to/httpd-apreq-2/src/libapreq2.la \
     ./configure --with-module=filters:/path/to/httpd-apreq-2/env/mod_apreq.c \
     ...(add usual httpd+apr options here)...
 
