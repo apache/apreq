@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/09/10 23:54:08 $]   -*-text-*-
+Last modified at [$Date: 2004/09/12 03:04:12 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.05 in development.
@@ -55,6 +55,8 @@ TODO:
     - CuTest needs va_arg to print comments for a failed unit test.
 
     - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
+      Also add a test to configure that prevents simultaneous use of
+      --with-apache2-src and --with-apache2-apxs.
 
     - Bring Perl documentation up to speed: Table.pod, and Error.pod.
       These docs either need to be written, or they require Test::Inline 
