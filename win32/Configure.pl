@@ -1,6 +1,7 @@
 #!C:/Perl/bin/perl
 use strict;
 use warnings;
+use FindBin;
 use Getopt::Long;
 require File::Spec;
 require Win32;
@@ -17,6 +18,8 @@ usage() if $help;
 my @path_ext;
 path_ext();
 $apache ||= search();
+my $cfg_home = Win32::GetShortPathName($FindBin::Bin);
+$cfg_home =~ s!/!\\!g;
 
 my $doxygen = which('doxygen');
 my $cfg = $debug ? 'Debug' : 'Release';
@@ -38,6 +41,7 @@ open(my $make, '>Makefile') or die qq{Cannot open Makefile: $!};
 print $make <<"END";
 # Microsoft Developer Studio Generated NMAKE File.
 
+CFG_HOME=$cfg_home
 CFG=$cfg
 APACHE=$apache
 PERL=$^X
@@ -51,9 +55,9 @@ if ($doxygen) {
     print $make <<"END";
 
 docs: 
-	cd ..
+	cd \$(CFG_HOME)\\..
 	"$doxygen" build\\doxygen.conf.win32
-	cd win32
+	cd \$(CFG_HOME)
 
 END
 
@@ -242,7 +246,6 @@ END
 
 __DATA__
 
-
 LIBAPREQ=libapreq
 TESTALL=testall
 MOD=mod_apreq
@@ -275,41 +278,41 @@ NULL=
 NULL=nul
 !ENDIF 
 
-LIBDIR=.\libs
-PERLGLUE=..\glue\perl
+LIBDIR=$(CFG_HOME)\libs
+PERLGLUE=$(CFG_HOME)\..\glue\perl
 
 ALL : "$(LIBAPREQ)"
 
 $(LIBAPREQ):
-	$(MAKE) /nologo /f $(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)"
 
 CLEAN:
         cd $(LIBDIR)
         $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
-        cd ..
+        cd $(CFG_HOME)
 !IF EXIST("$(PERLGLUE)\Makefile")
         cd $(PERLGLUE)
         $(MAKE) /nologo clean
-        cd ..\..\win32
+        cd $(CFG_HOME)
 !ENDIF
 
 TEST: $(LIBAPREQ)
-	$(MAKE) /nologo /f $(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)"
         set PATH=%PATH%;$(APACHE)\bin
         cd $(LIBDIR) && $(TESTALL).exe -v
-        cd ..
+        cd $(CFG_HOME)
 
 $(MOD): $(LIBAPREQ)
-	$(MAKE) /nologo /f $(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)"
 
 $(CGI): $(LIBAPREQ)
-	$(MAKE) /nologo /f $(CGI).mak CFG="$(CGI) - Win32 $(CFG)" APACHE="$(APACHE)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(CGI).mak CFG="$(CGI) - Win32 $(CFG)" APACHE="$(APACHE)"
 
 PERL_GLUE: $(MOD)
         cd $(PERLGLUE)
 	$(PERL) Makefile.PL
         $(MAKE) /nologo
-        cd ..\..\win32
+        cd $(CFG_HOME)
 
 PERL_TEST: $(MOD)
         cd $(PERLGLUE)
@@ -317,4 +320,4 @@ PERL_TEST: $(MOD)
 	$(PERL) Makefile.PL
 !ENDIF
         $(MAKE) /nologo test
-        cd ..\..\win32
+        cd $(CFG_HOME)
