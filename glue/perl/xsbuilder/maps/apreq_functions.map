@@ -125,6 +125,14 @@ apreq_cookie_bake2 | apreq_cookie_bake2(c, req) | apreq_cookie_t *:c, apreq_hand
 MODULE=APR::Request::Cookie PACKAGE=APR::Request PREFIX=APR__Request_
 DEFINE_jar | apreq_xs_jar |
 
+MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie::Table PREFIX=APR__Request__Cookie__Table_
+DEFINE_get      | apreq_xs_table_get |
+DEFINE_FETCH    | apreq_xs_table_FETCH |
+#DEFINE_new      | apreq_xs_table_make |
+DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
+DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
+#DEFINE_do       | apreq_xs_table_do |
+
 
 #################### APR::Request::Param stuff ####################
 
@@ -134,3 +142,11 @@ apreq_param_name
 MODULE=APR::Request::Param PACKAGE=APR::Request PREFIX=APR__Request_
 DEFINE_args   | apreq_xs_args |
 DEFINE_body   | apreq_xs_body |
+
+MODULE=APR::Request::Param PACKAGE=APR::Request::Param::Table PREFIX=APR__Request__Param__Table_
+DEFINE_get      | apreq_xs_table_get |
+DEFINE_FETCH    | apreq_xs_table_FETCH |
+#DEFINE_new      | apreq_xs_table_make |
+DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
+DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
+#DEFINE_do       | apreq_xs_table_do |

@@ -118,6 +118,14 @@ static apreq_handle_t *apreq_xs_get_handle(pTHX_ SV *sv)
     return INT2PTR(apreq_handle_t *,iv);
 }
 
+APR_INLINE
+static const apr_table_t *apreq_xs_get_table(pTHX_ SV *sv, const char *name)
+{
+    SV *obj = apreq_xs_find_obj(aTHX_ sv, name);
+    IV iv = SvIVX(SvRV(obj));
+    return INT2PTR(apr_table_t *,iv);
+}
+
 /** 
  * Searches a perl object ref with apreq_xs_find_obj
  * and produces a pointer to the underlying C environment.
