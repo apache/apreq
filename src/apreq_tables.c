@@ -120,7 +120,7 @@ struct apreq_table_t {
     apr_array_header_t   a;
     int                  ghosts;
 
-    apreq_value_copy_t  *copy;
+    apreq_value_copy_t  *copy;  /* XXX: this may go away soon */
     apreq_value_merge_t *merge;
 
     int                  root[TABLE_HASH_SIZE];
@@ -139,7 +139,7 @@ struct apreq_table_t {
                               (t)->ghosts--; } while (0)
 
 /* NEVER KILL AN ENTRY THAT'S STILL WITHIN THE FOREST */
-#define IN_FOREST(t,idx) ( (idx)[o].tree[PARENT] >= 0 || ( !DEAD(idx) && \
+#define IN_FOREST(t,idx) ( !DEAD(idx) && ( (idx)[o].tree[PARENT] >= 0 || \
                            (idx) == t->root[TABLE_HASH((idx)[o].key)] ) )
 
 /********************* (internal) tree operations ********************/
@@ -289,12 +289,12 @@ static int insert(apreq_table_entry_t *o, int *root, int x,
 static void delete(apreq_table_entry_t *o, 
                    int *root,  const int idx, unsigned flags)
 {
-    int x,y;
+    int x;
 
     if (idx[o].tree[LEFT] < 0 || idx[o].tree[RIGHT] < 0) {
-        x = y = 1 + idx[o].tree[RIGHT] + idx[o].tree[LEFT];
+        x = 1 + idx[o].tree[RIGHT] + idx[o].tree[LEFT];
 
-
+        /* replace idx with x */
         if (idx[o].tree[PARENT] >= 0)
             idx[o].tree[PARENT][o].tree[LR(idx)] = x;
         else
@@ -302,11 +302,13 @@ static void delete(apreq_table_entry_t *o,
 
         if (x >= 0)
             x[o].tree[PARENT] = idx[o].tree[PARENT];
-        else
+
+        if (idx[o].color == RED)
             return;
     }
     else {
-        y = idx[o].tree[RIGHT];
+        /* find idx's in-order successor & remove that instead */
+        int y = idx[o].tree[RIGHT];
         while (y[o].tree[LEFT] >= 0)
             y = y[o].tree[LEFT];
 
@@ -316,33 +318,35 @@ static void delete(apreq_table_entry_t *o,
             y[o].tree[RIGHT] = idx[o].tree[RIGHT];
 
             if (x >= 0) {
+                /* replace y with x */
                 x[o].tree[PARENT] = y[o].tree[PARENT];
                 y[o].tree[PARENT][o].tree[LR(y)] = x;
             }
         }
 
+        /* copy idx's tree data into y ("RIGHT" is already done). */
         y[o].tree[LEFT] = idx[o].tree[LEFT];
         y[o].tree[PARENT] = idx[o].tree[PARENT];
-        
+
+        /* replace idx with y */
         if (idx[o].tree[PARENT] >= 0)
             idx[o].tree[PARENT][o].tree[LR(idx)] = y;
         else
             *root = y;
-    }
 
-    if (y[o].color == RED) {
-        y[o].color = idx[o].color;
-        return;
-    }
+        if (y[o].color == RED) {
+            y[o].color = idx[o].color;
+            return;
+        }
+        else
+            y[o].color = idx[o].color;
 
+    }
 
     /* rebalance tree (standard double-black promotion) */
 
-    x[o].color = idx[o].color;
-
     if (flags & TF_BALANCE) {
-        while (x != *root && x[o].color == BLACK) 
-        {
+        while (x != *root && x[o].color == BLACK) {
             /* x has a grandparent, parent & sibling */
             int parent = x[o].tree[PARENT];
             int grandparent = parent[o].tree[PARENT];
@@ -376,10 +380,9 @@ static void delete(apreq_table_entry_t *o,
                 rotate(o, root, parent, direction); /* promote x */
                 *root = x;
             }
-
         }
+        x[o].color = BLACK;
     }
-    x[o].color = BLACK;
 }
 
 static int combine(apreq_table_entry_t *o, int a, 

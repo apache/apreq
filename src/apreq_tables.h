@@ -242,7 +242,7 @@ APREQ_DECLARE(const char *) apreq_table_cache(apreq_table_t *t,
  * Return the keys (i.e. value names) in an (char *) array,
  * preserving their original order.
  * @param t Table.
- * @param p Pool used to allocate the resulting array struct.
+ * @param keys array used to store the result.
  */
 
 APREQ_DECLARE(apr_status_t) apreq_table_keys(const apreq_table_t *t,
@@ -252,8 +252,8 @@ APREQ_DECLARE(apr_status_t) apreq_table_keys(const apreq_table_t *t,
  * Return the (unique) values in an (apreq_value_t *) array,
  * preserving their original order.
  * @param t Table.
- * @param p Pool used to allocate the resulting array struct.
- * @remark With key == NULL, all values are returned.  However,
+ * @param values array used to sore the result..
+ * @remark With key == NULL, all table values are added.  However,
  * only the first value of a multivalued entry is used.
  */
 
