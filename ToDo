@@ -10,14 +10,12 @@ o multipart_buffer_headers punts on headers more than 5k (which could
 o should probably handle Apache::Request->param http://blah.com/?foo
   like CGI.pm does (turn it into a param named "keywords")
 
-o libapreq.so ?
-
 o mmap upload files ?
-
-o port to Mac OS/X
 
 o improve/automate build process for c, dtcl (autoconf support?)
 
 o Fix our Apache::Test-based test suite
+
+o Document build/install process for OS X.
 
 o optional build/link of libapreq.a directly into httpd?

@@ -83,8 +83,8 @@ sub MY::pasthru {
      my $self = shift;
     chomp(my $str = $self->MM::pasthru);
     join $/, "$str\\", 
-     "\t".'DEFINE="$(DEFINE)"', 
-    "";   
+     "\t".'DEFINE="$(DEFINE)"',
+    "";
 }
 sub MY::postamble { 
     return <<'EOF'; 
@@ -97,7 +97,7 @@ EOF
 }
 __DATA__
 <Perl>
-    push @INC, "blib/arch";
+   unshift @INC, "blib/arch";
 </Perl>
 PerlModule Apache::PerlRun
 PerlModule Apache::Request
