@@ -106,8 +106,10 @@ static XS(apreq_xs_upload_link)
     f = apreq_brigade_spoolfile(bb);
     if (f == NULL) {
         apr_off_t len;
-        s = apr_file_open(&f, name, APR_CREATE | APR_EXCL | APR_WRITE | APR_READ
-                          | APR_BINARY, APR_OS_DEFAULT, apreq_env_pool(env));
+        s = apr_file_open(&f, name, APR_CREATE | APR_EXCL | APR_WRITE |
+                          APR_READ | APR_BINARY | APR_BUFFERED, 
+                          APR_OS_DEFAULT,
+                          apreq_env_pool(env));
         if (s != APR_SUCCESS)
             XSRETURN_IV(s);
         s = apreq_brigade_fwrite(f, &len, bb);
