@@ -680,10 +680,11 @@ static apr_status_t nextval(const char **line, const char *name,
         if (loc == NULL || loc - *line < nlen)
             return APR_NOTFOUND;
 
-        *val = loc + 1;
         vlen = 0;
+        *val = loc + 1;
+        --loc;
 
-        while ( apr_isspace(*loc) && loc - *line > nlen )
+        while (apr_isspace(*loc) && loc - *line > nlen)
             --loc;
 
         loc -= nlen;
@@ -691,12 +692,16 @@ static apr_status_t nextval(const char **line, const char *name,
         if (strncasecmp(loc, name, nlen) != 0)
             return APR_NOTFOUND;
 
+        while (apr_isspace(**val))
+            ++*val;
+
         *line = *val;
         return APR_SUCCESS;
     }
 
 
     *val = loc + 1;
+    --loc;
 
     while (apr_isspace(*loc) && loc - *line > nlen)
         --loc;
@@ -716,21 +721,23 @@ static apr_status_t nextval(const char **line, const char *name,
     
     for(loc = *val; *loc; ++loc) {
         switch (*loc) {
+        case ' ':
+        case '\t':
         case ';':
             if (in_quotes)
                 continue;
             /* else fall through */
         case '"':
-            break;
+            goto finish;
         case '\\':
             if (in_quotes && loc[1] != 0)
                 ++loc;
-            break;
         default:
             break;
         }
     }
 
+ finish:
     *vlen = loc - *val;
     *line = (*loc == 0) ? loc : loc + 1;
     return APR_SUCCESS;
