@@ -48,6 +48,7 @@ my %build = (
             );
 
 my %perl_glue = (
+                  perl  => $build{perl},
          "Apache::Test" => { test => \&a_t_version, version => "1.04",
                              comment => "bundled with mod_perl 1.99_09"},
   "ExtUtils::XSBuilder" => { test => \&xsb_version, version => "0.23"  },
@@ -59,37 +60,50 @@ sub print_prereqs ($$) {
     print $preamble, "\n";
     for (sort keys %$prereq) {
         my ($version, $comment) = @{$prereq->{$_}}{qw/version comment/};
-        if ($opts{version} or not defined $comment) {
-            $comment = "";
+        if ($opts{version}) {
+            print "  $_: $version\n";
         }
         else {
-            $comment = "   ($comment)";
+            $comment = defined $comment ? "  ($comment)" : "";
+            printf "%30s:  %s$comment\n", $_, $version;
         }
-
-        printf "%30s:  %s$comment\n", $_, $version;
     }
-    print "\n";
 }
 
 if (@ARGV == 0) {
     if ($opts{version}) {
         print <<EOT;
+--- #YAML:1.0 (see http://module-build.sourceforge.net/META-spec.html)
 name: libapreq2
 version: $opts{version}
+license: open_source
 installdirs: site
 distribution_type: module
+dynamic_config: 1
+provides:
+  Apache::Request:
+    version: $opts{version}
+  Apache::Cookie:
+    version: $opts{version}
 generated_by: $0
 EOT
-        print_prereqs "requires:", \%perl_glue;
+        my %build_prereqs = %perl_glue;
+        my %runtime_prereqs =  (
+                                mod_perl => $perl_glue{mod_perl},
+                                perl => $perl_glue{perl},
+                               );
+        print_prereqs "requires:", \%runtime_prereqs;
+        print_prereqs "build_requires:", \%build_prereqs;
     }
     else {
         print "=" x 50, "\n";
         print_prereqs "Build system (core C API) prerequisites\n", \%build;
-        print "=" x 50, "\n";
+        print "\n", "=" x 50, "\n";
         print_prereqs "Perl glue (Apache::Request) prerequisites\n", \%perl_glue;
-        print "=" x 50, "\n";
+        print "\n", "=" x 50, "\n";
         print_prereqs "Additional prerequisites for httpd-apreq-2 cvs builds\n",\%cvs;
     }
+
     exit 0;
 }
 
