@@ -378,8 +378,6 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     if (f != r->proto_input_filters) {
         if (f == r->input_filters) {
             cfg->f = f;
-            if (cfg->req == NULL)
-                apreq_request(r ,NULL);
             return APR_SUCCESS;
         }
         for (in = r->input_filters; in != r->proto_input_filters; 
@@ -396,8 +394,6 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
                     /* move to top and register it */
                     apreq_filter_relocate(f);
                     cfg->f = f;
-                    if (cfg->req == NULL)
-                        apreq_request(r ,NULL);
                 }
                 return APR_SUCCESS;
             }
