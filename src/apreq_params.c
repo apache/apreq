@@ -64,6 +64,13 @@
 #define p2v(param) ( (param) ? &(param)->v : NULL )
 #define UPGRADE(s) apreq_value_to_param(apreq_char_to_value(s))
 
+static const apreq_cfg_t default_cfg = {
+    1024 * 1024, 
+    8192 * 2, 
+    200, 
+    8192 * 8
+};
+    
 
 APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
                                                 const char *name, 
@@ -124,11 +131,12 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req = apr_palloc(p, sizeof *req);
         req->env      = env;
         req->args     = apr_table_make(p, APREQ_NELTS);
-        req->cfg      = NULL;
+        req->cfg      = apr_palloc(p, sizeof(apreq_cfg_t));
         req->body     = NULL;
         req->parser   = apreq_parser(env, NULL);
         req->pool     = p;
 
+        *req->cfg = default_cfg;
         /* XXX need to install copy/merge callbacks for apreq_param_t */
 
         /* XXX get/set race condition here wrt apreq_env_request? */
@@ -146,10 +154,12 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req = apr_palloc(p, sizeof *req);
         req->env      = env;
         req->args     = apr_table_make(p, APREQ_NELTS);
-        req->cfg      = NULL;
+        req->cfg      = apr_palloc(p, sizeof(apreq_cfg_t));
         req->body     = NULL;
         req->parser   = apreq_parser(env, NULL);
         req->pool     = p;
+
+        *req->cfg = default_cfg;
         /* XXX need to install copy/merge callbacks for apreq_param_t */ 
     }
 

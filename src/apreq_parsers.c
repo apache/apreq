@@ -78,6 +78,28 @@
 #define apr_table_pool(t) ((apr_array_header_t *)(t))->pool
 #endif
 
+#define SANITY_CHECK do {                                               \
+    apr_off_t off;                                                      \
+    apr_status_t s = apr_brigade_length(bb, 0, &off);                   \
+    if (s != APR_SUCCESS)                                               \
+        return s;                                                       \
+    ctx->bytes_seen += off;                                             \
+    if (ck_sanity(cfg, ctx->bytes_seen, apr_table_elts(t)->nelts))      \
+        return APR_EGENERAL;                                            \
+} while (0)
+
+APR_INLINE
+static apr_status_t ck_sanity(const apreq_cfg_t *cfg, 
+                              const apr_off_t bytes_seen, 
+                              const int fields)
+{
+    if (cfg->max_len < bytes_seen || cfg->max_fields < fields)
+        return APR_EGENERAL;
+    else
+        return APR_SUCCESS;
+}
+
+
 APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
                                                   const char *type,
                                                   APREQ_DECLARE_PARSER(*parser),
@@ -232,6 +254,7 @@ static apr_status_t split_urlword(apr_table_t *t,
 }
 
 struct url_ctx {
+    apr_off_t bytes_seen;
     apr_status_t status;
 };
 
@@ -251,6 +274,8 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
     }
     ctx = parser->ctx;
 
+    SANITY_CHECK;
+
  parse_url_brigade:
 
     ctx->status = URL_NAME;
@@ -269,7 +294,6 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
         }
         if ( s != APR_SUCCESS )
             return s;
-
 
     parse_url_bucket:
 
@@ -403,6 +427,7 @@ static apr_status_t split_header(apr_pool_t *pool, apr_table_t *t,
 }
 
 struct hdr_ctx {
+    apr_off_t bytes_seen;
     apr_status_t status;
 };
 
@@ -424,6 +449,9 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
         parser->ctx = apr_pcalloc(pool, sizeof *ctx);
 
     ctx = parser->ctx;
+
+    if (ck_sanity(cfg, cfg->max_len, apr_table_elts(t)->nelts))
+        return APR_EGENERAL;
 
  parse_hdr_brigade:
 
@@ -594,6 +622,7 @@ struct mfd_ctx {
     apreq_parser_t              *hdr_parser;
     const apr_strmatch_pattern  *pattern;
     char                        *bdry;
+    apr_off_t                    bytes_seen;
     apr_status_t                 status;
 };
 
@@ -685,10 +714,10 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
 
 #define MAX_FILE_BUCKET_LENGTH ( 1 << ( 6 * sizeof(apr_size_t) ) )
 
-static apr_status_t apreq_bb_concat(apr_pool_t *pool, 
-                                    const apreq_cfg_t *cfg,
-                                    apr_bucket_brigade *out, 
-                                    apr_bucket_brigade *in)
+static apr_status_t bb_concat(apr_pool_t *pool, 
+                              const apreq_cfg_t *cfg,
+                              apr_bucket_brigade *out, 
+                              apr_bucket_brigade *in)
 {
     apr_bucket *last = APR_BRIGADE_LAST(out);
     apr_status_t s;
@@ -823,6 +852,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 {
     apr_pool_t *pool = apr_table_pool(t);
     struct mfd_ctx *ctx = parser->ctx;
+    apr_off_t off;
+    apr_status_t s;
 
 #define MFD_INIT     0
 #define MFD_NEXTLINE 1
@@ -834,7 +865,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
     if (parser->ctx == NULL) {
         char *ct;
         apr_size_t blen;
-        apr_status_t s;
 
         ctx = apr_pcalloc(pool, sizeof *ctx);
 
@@ -867,6 +897,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         parser->ctx = ctx;
     }
 
+    SANITY_CHECK;
 
  mfd_parse_brigade:
 
@@ -874,7 +905,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
     case MFD_INIT:
         {
-            apr_status_t s;
             s = split_on_bdry(pool, ctx->bb, bb, NULL, ctx->bdry + 2);
             if (s != APR_SUCCESS) {
                 return s;
@@ -1020,7 +1050,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     if (s != APR_INCOMPLETE && s != APR_SUCCESS)
                         return s;
                 }
-                return apreq_bb_concat(pool, cfg, param->bb, ctx->bb);
+                return bb_concat(pool, cfg, param->bb, ctx->bb);
 
             case APR_SUCCESS:
                 if (parser->hook) {
@@ -1033,8 +1063,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                         return s;
                 }
 
-                param->v.status = apreq_bb_concat(pool, cfg,
-                                                  param->bb, ctx->bb);
+                param->v.status = bb_concat(pool, cfg,
+                                            param->bb, ctx->bb);
 
                 if (param->v.status != APR_SUCCESS)
                     return s;
