@@ -54,6 +54,8 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
         c->max_age = apr_date_parse_rfc(time_str);
         if (c->max_age == APR_DATE_BAD)
             c->max_age = apr_time_from_sec(apreq_atoi64t(time_str));
+        else
+            c->max_age -= apr_time_now();
     }
 }
 
