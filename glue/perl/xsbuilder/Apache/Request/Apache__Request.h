@@ -179,7 +179,6 @@ static XS(apreq_xs_upload_slurp)
     char *data;
     apr_off_t len;
     apr_bucket_brigade *bb;
-    apr_bucket *e;
     apr_status_t s;
 
     if (items != 2 || !SvROK(ST(0)))
