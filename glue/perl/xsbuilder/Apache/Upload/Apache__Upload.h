@@ -115,7 +115,7 @@ APREQ_XS_DEFINE_TABLE_METHOD_N(param,add);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,set);
 APREQ_XS_DEFINE_TABLE_NEXTKEY(upload_table);
 
-APR_INLINE
+
 static XS(apreq_xs_upload_link)
 {
     dXSARGS;

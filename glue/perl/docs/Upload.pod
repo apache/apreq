@@ -2,6 +2,15 @@
 
 Apache::Upload - Methods for dealing with file uploads.
 
+=for future testing
+    use Apache2;
+    use APR::Pool;
+    use Apache::Upload;
+    $r = APR::Pool->new;
+    $req = Apache::Request->new($r);
+    $upload = Apache::Upload->new($r, name => "foo", value => __FILE__);
+    $req->body->add($upload);
+
 =head1 SYNOPSIS
 
     use Apache::Upload;

@@ -73,26 +73,25 @@ EOD
 
 sub freeze {
     my ($class, $value) = @_;
-    return encode($value) if not ref $value;
-    if (my $freeze = UNIVERSAL::can($value, "freeze")) {
-        my $val = $freeze->($value);
-        return $val if $val =~ /^".+"$/ or $val !~ tr/\r\n\t ;,//;
-        die "Unsafe encoding of cookie value $value: $val";
+    die "Usage: Apache::Cookie->freeze($value)" unless @_ == 2;
+
+    if (not ref $value) {
+        return encode($value);
     }
-    if (UNIVERSAL::isa($value, "ARRAY")) {
+    elsif (UNIVERSAL::isa($value, "ARRAY")) {
         return join '&', map encode($_), @$value;
     }
     elsif (UNIVERSAL::isa($value, "HASH")) {
         return join '&', map encode($_), %$value;
     }
-    else {
-        die "Can't freeze '$value'";
-    }
+
+    die "Can't freeze reference: $value";
 }
 
 sub thaw {
-    my @rv = map decode($_), split /&/, shift->raw_value;
-    return wantarray ? @rv : $rv[0];
+    my $self = shift;
+    my @rv = split /&/, @_ ? shift : $self->raw_value;
+    return wantarray ? map decode($_), @rv : decode($rv[0]);
 }
 
 sub value { shift->thaw }
