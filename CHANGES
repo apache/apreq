@@ -5,7 +5,7 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
-- C API [Max Kellemann]
+- C API [Max Kellermann]
   Rename apreq_env_t to apreq_env_module_t, to prepare for
   a new thread-safe apreq_env API.
 
