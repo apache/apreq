@@ -52,6 +52,11 @@ CURRENT VOTES:
 
 TODO:
 
+    - Move module/t to module/apache2/t.
+
+    - Figure out how and where the apreq_xs_ headers, and typemap file,
+      should be installed.
+
     - Write tests for the apache 1.3.x module.
 
     - Fix the broken make dependencies, especially in the module 
