@@ -55,7 +55,7 @@ Instructions for the httpd-apreq Release Manager (RM)
    for distribution:
 
     % scp libapreq-1.X.tar.gz* \
-      <username>@www.apache.org:/www/httpd.apache.org/dist/httpd/libapreq/
+      <username>@www.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
    Ask another developer to confirm the uploaded signature is ok.
 
@@ -63,7 +63,7 @@ Instructions for the httpd-apreq Release Manager (RM)
     % pgp libapreq-1.X.tar.gz.asc
 
    Check that your public key is among those listed in the
-   /www/httpd.apache.org/dist/httpd/KEYS file.
+   /www/www.apache.org/dist/httpd/KEYS file.
 
 9. Upload the package to CPAN. Doublecheck that the md5 checksum
    received from PAUSE is correct.
