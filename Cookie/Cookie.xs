@@ -1,6 +1,72 @@
 #include "apache_cookie.h"
+
+#ifdef WIN32
+
+#ifdef uid_t
+#define apache_uid_t uid_t
+#undef uid_t
+#endif
+#define uid_t apache_uid_t
+
+#ifdef gid_t
+#define apache_gid_t gid_t
+#undef gid_t
+#endif
+#define gid_t apache_gid_t
+
+#ifdef stat
+#define apache_stat stat
+#undef stat
+#endif
+
+#ifdef lstat
+#define apache_lstat lstat
+#undef lstat
+#endif
+
+#ifdef sleep
+#define apache_sleep sleep
+#undef sleep
+#endif
+
+#endif /* WIN32 */
+
 #undef __attribute__
 #include "mod_perl.h"
+
+#ifdef WIN32
+
+#undef uid_t
+#ifdef apache_uid_t
+#define uid_t apache_uid_t
+#undef apache_uid_t
+#endif
+
+#undef gid_t
+#ifdef apache_gid_t
+#define gid_t apache_gid_t
+#undef apache_gid_t
+#endif
+
+#ifdef apache_lstat
+#undef lstat
+#define lstat apache_lstat
+#undef apache_lstat
+#endif
+
+#ifdef apache_stat
+#undef stat
+#define stat apache_stat
+#undef apache_stat
+#endif
+
+#ifdef apache_sleep
+#undef sleep
+#define sleep apache_sleep
+#undef apache_sleep
+#endif
+
+#endif /* WIN32 */
 
 typedef ApacheCookie * Apache__Cookie;
 
