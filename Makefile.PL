@@ -4,7 +4,14 @@ use FindBin;
 use 5.005;
 
 use File::Path qw(mkpath);
+use lib qw(Apache-Test/lib);
 
+use constant HAS_APACHE_TEST => eval {require Apache::Test};
+# enable 'make test|clean'
+if (HAS_APACHE_TEST) {
+    require Apache::TestMM;
+    Apache::TestMM->import(qw(test clean));
+}
 BEGIN {
     unless (eval {require mod_perl}) {
         die "Please install mod_perl: 1.25 < version < 1.99\n($@)";
@@ -24,16 +31,19 @@ $conf_data =~ s|(blib/arch)|$FindBin::Bin/$1|;
 
 if (not $Is_Win32) {
   eval {
-    require Apache::test;
-    local $SIG{ALRM} = sub { die "alarm\n" };
-    alarm 60;
-    my %params = Apache::test->get_test_params();
-    alarm 0;
-    
-    Apache::test->write_httpd_conf(%params, include => $conf_data);
-    *MY::test = sub {Apache::test->MM_test(%params)};
+    require Apache::Test;
+    # accept the configs from command line
+    Apache::TestMM::filter_args();
+    Apache::TestMM::generate_script('t/TEST');
+#    local $SIG{ALRM} = sub { die "alarm\n" };
+#    alarm 60;
+#    my %params = Apache::test->get_test_params();
+#    alarm 0;
+
+#    Apache::test->write_httpd_conf(%params, include => $conf_data);
+#    *MY::test = sub {Apache::test->MM_test(%params)};
   };
-  print "\n[timeout] skipping test setup...\n" if $@ eq "alarm\n";
+  print "\nskipping test setup...$@" if $@;
 }
 else {
   write_win32_conf();
@@ -41,7 +51,7 @@ else {
 
 # prerequisites
 my %require = (
-    "Apache::test" => "", # any version will do
+    "Apache::Test" => "", # any version will do
 );
 
 my $myVERSION = MM->parse_version('Request/Request.pm');
@@ -87,7 +97,7 @@ WriteMakefile(
 	      );
 
 sub clean_files {
-    return [qw( t/httpd.conf t/httpd.loc t/error_log t/httpd )];
+    return [qw( t/TEST t/httpd.conf t/httpd.loc t/error_log t/httpd )];
 }
 
 if ($Is_Win32 and -e $lib) {
