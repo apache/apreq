@@ -159,8 +159,6 @@ This problem is solved in the libapreq-2.0 library.
 
 =item C<value> should also accept a hash ref as argument.
 
-=item Reportedly does not run (linking problem?) on Apple's OSX
-
 =back
 
 =head1 SEE ALSO
