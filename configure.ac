@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.13)
-AC_INIT(libapreq - Apache Request Library, 2.0-dev, apreq-dev@httpd.apache.org, libapreq2)
+AC_PREREQ(2.53)
+AC_INIT(libapreq - Apache Request Library, 2.0.1-dev, apreq-dev@httpd.apache.org, libapreq2)
 
 dnl this:
 dnl AC_CONFIG_AUX_DIR(build)
@@ -24,7 +24,6 @@ AM_MAINTAINER_MODE
 dnl Checks for header files.
 AM_CONFIG_HEADER(src/apreq_config.h)
 dnl Checks for typedefs, structures, and compiler characteristics.
-
 dnl Checks for library functions.
 
 AC_APREQ
