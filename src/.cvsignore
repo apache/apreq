@@ -6,4 +6,4 @@ Makefile.in
 *.la
 apreq_config.h
 apreq_config.h.in
-stamp-h1
+stamp-h*

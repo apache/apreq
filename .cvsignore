@@ -5,10 +5,7 @@ Makefile.in
 aclocal.m4
 autom4te*.cache
 depcomp
-config.guess
-config.log
-config.status
-config.sub
+config.*
 configure
 install-sh
 libtool
@@ -16,4 +13,4 @@ ltmain.sh
 missing
 mkinstalldirs
 apreq2-config
-*.tar.gz
+*.tar.gz*
