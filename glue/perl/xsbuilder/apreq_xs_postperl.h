@@ -185,8 +185,7 @@ APR_INLINE                                              \
 static XS(apreq_xs_##type##_env)                        \
 {                                                       \
     char *class = NULL;                                 \
-    dXSARGS;                                            \
-    items = items;  /* -Werror */                       \
+    dMARK; dAX;                                         \
                                                         \
     /* map environment to package */                    \
                                                         \
