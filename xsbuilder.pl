@@ -59,7 +59,7 @@ my $apr_lib_flags = Apache::Build::WIN32 ?
     qq{-L$apr_libs -llibapr -llibaprutil} : 
     qq{$apr_libs};
 my $apreq_lib_flags = Apache::Build::WIN32 ?
-    qq{-L$base_dir/win32/libs -llib$apreq_libname -lmod_apreq} :
+    qq{-L$base_dir/win32/libs -llib$apreq_libname } :
     qq{-L$src_dir/.libs -l$apreq_libname};
 
 my $mp2_typemaps = Apache::Build->new->typemaps;
