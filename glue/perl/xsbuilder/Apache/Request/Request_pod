@@ -48,7 +48,7 @@ The following attributes are optional:
 
 Limit the size of POST data (in bytes).
 
-=item C<DISABLE_UPLOADS> [TODO]
+=item C<DISABLE_UPLOADS>
 
 Disable file uploads.
 
@@ -65,27 +65,27 @@ file system as the final destination file:
 
 For more details on C<link>, see the L<Apache:Upload> manpage.
 
-=item C<HOOK_DATA> (requires C<Apache::Upload>)
+=item C<HOOK_DATA>
 
 Extra configuration info passed to an upload hook.
 See the description for the next item, C<UPLOAD_HOOK>.
 
-=item C<UPLOAD_HOOK> (requires C<Apache::Upload>)
+=item C<UPLOAD_HOOK>
 
 Sets up a callback to run whenever file upload data is read. This
 can be used to provide an upload progress meter during file uploads.
 Apache will automatically continue writing the original data to
 $upload->fh after the hook exits.
 
- my $transparent_hook = sub {
-   my ($upload, $data, $hook_data) = @_;
-   warn "$hook_data: got $len bytes for " . $upload->name;
- };
+  my $transparent_hook = sub {
+    my ($upload, $data, $data_len, $hook_data) = @_;
+    warn "$hook_data: got $data_len bytes for " . $upload->name;
+  };
 
- my $apr = Apache::Request->new($r, 
-                                HOOK_DATA => "Note",
-                                UPLOAD_HOOK => $transparent_hook,
-                               );
+  my $req = Apache::Request->new($r, 
+                                 HOOK_DATA => "Note",
+                                 UPLOAD_HOOK => $transparent_hook,
+                                );
 
 =back
 
@@ -220,8 +220,6 @@ Apache::Request object to delegate to.)  For example:
 =item C<instance> is now identical to C<new>.
 
 =item C<param> includes the functionality of C<parms> and C<params>.
-
-=item The argument list for the upload hook has changed
 
 =back
 
