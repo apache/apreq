@@ -2,7 +2,12 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.13)
 AC_INIT(libapreq - Apache Request Library, 2.0, apreq-dev@httpd.apache.org, libapreq)
-AC_CONFIG_AUX_DIR(build)
+
+dnl this:
+dnl AC_CONFIG_AUX_DIR(build)
+dnl causes problems on certain platforms
+dnl aclocal.m4:817: required file `build/ltmain.sh' not found
+
 AM_INIT_AUTOMAKE
 
 AC_PROG_MAKE_SET
