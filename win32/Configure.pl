@@ -110,7 +110,7 @@ if ($apxs) {
 END
     $clean .= << 'END';
         cd $(APREQ_ENV)
-        $(PERL) t\TEST.PL -clean
+        $(PERL) module\t\TEST.PL -clean
         cd $(APREQ_HOME)
 END
 }
