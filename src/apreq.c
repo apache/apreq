@@ -682,19 +682,17 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
 {
     apr_status_t rc = APR_SUCCESS;
     char *tmpl;
-    if (path) {
-        rc = apr_filepath_merge(&tmpl, path, "apreqXXXXXX",
-                                APR_FILEPATH_NOTRELATIVE, pool);
+
+    if (path == NULL) {
+        rc = apr_temp_dir_get(&path, pool);
         if (rc != APR_SUCCESS)
             return rc;
     }
-    else {
-        const char *tdir;
-        rc = apr_temp_dir_get(&tdir, pool);
-        if (rc != APR_SUCCESS)
-            return rc;
-        tmpl = apr_pstrcat(pool, tdir, "XXXXXX", NULL);
-    }
+    rc = apr_filepath_merge(&tmpl, path, "apreqXXXXXX",
+                            APR_FILEPATH_NOTRELATIVE, pool);
+
+    if (rc != APR_SUCCESS)
+        return rc;
     
     return apr_file_mktemp(fp, tmpl,
                            APR_CREATE | APR_READ | APR_WRITE
