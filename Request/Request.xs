@@ -335,16 +335,23 @@ ApacheRequest_param(req, key=NULL, sv=Nullsv)
     }
 
 void
-ApacheRequest_upload(req, name=NULL)
+ApacheRequest_upload(req, sv=Nullsv)
     Apache::Request req
-    char *name
+    SV *sv
 
     PREINIT:
     ApacheUpload *uptr;
 
     PPCODE:
+    if (sv && SvOBJECT(sv) && sv_isa(sv, "Apache::Upload")) {
+        req->upload = (ApacheUpload *)SvIV((SV*)SvRV(sv));
+        XSRETURN_EMPTY;
+    }
     ApacheRequest_parse(req);
     if (GIMME == G_SCALAR) {
+        STRLEN n_a;
+        char *name = sv ? SvPV(sv, n_a) : NULL;
+
 	if (name) {
 	    uptr = ApacheUpload_find(req->upload, name);
 	    if (!uptr) {
