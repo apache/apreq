@@ -36,8 +36,15 @@ AC_DEFUN([AC_APREQ], [
         else
                 APACHE2_INCLUDES=-I`$APACHE2_APXS -q INCLUDEDIR`
                 APACHE2_HTTPD=`$APACHE2_APXS -q SBINDIR`/httpd
-                APR_CONFIG=`$APACHE2_APXS -q APR_BINDIR`/apr-config
-                APU_CONFIG=`$APACHE2_APXS -q APU_BINDIR`/apu-config
+                if test -z "`$APACHE2_APXS -q APR_VERSION`"; then
+                    APR_CONFIG=apr-config
+                    APU_CONFIG=apu-config 
+                else
+                    APR_CONFIG=apr-1-config
+                    APU_CONFIG=apu-1-config
+                fi
+                APR_CONFIG=`$APACHE2_APXS -q APR_BINDIR`/$APR_CONFIG
+                APU_CONFIG=`$APACHE2_APXS -q APU_BINDIR`/$APU_CONFIG
 
                 if test -z "`$prereq_check apache2 $APACHE2_HTTPD`"; then
                     AC_MSG_ERROR([Bad apache2 version])
