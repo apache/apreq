@@ -87,19 +87,20 @@ static int apreq_xs_request_upload_table_keys(void *data, const char *key,
 #endif
 
     dSP;
+    SV *sv;
 
-    if (key) {
-        if (val && apreq_value_to_param(apreq_strtoval(val))->bb)
-            XPUSHs(sv_2mortal(newSVpv(key,0)));
-        else    /* not an upload, so skip it */
-            return 1;
-    }
-    else
-        XPUSHs(&PL_sv_undef);
+    if (apreq_value_to_param(apreq_strtoval(val))->bb = NULL)
+        return 1;
 
+    sv = newSVpv(key,0);
+
+    sv_magic(sv, Nullsv, PERL_MAGIC_vstring, Nullch, -1);
+    SvMAGIC(sv)->mg_ptr = (char *)val;
+    SvRMAGICAL_on(sv);
+
+    XPUSHs(sv_2mortal(sv));
     PUTBACK;
     return 1;
-
 }
 
 

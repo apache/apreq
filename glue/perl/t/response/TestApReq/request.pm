@@ -140,11 +140,35 @@ sub handler {
         if (ref $@ eq "Apache::Request::Error") {
             my $args = $@->{_r}->args('test'); # checks _r is an object ref
             my $upload = $@->upload('HTTPUPLOAD'); # no exception this time!
-            $@->print("ok") if $args eq $test;
+            die "args test failed" unless $args eq $test;
             $args = $@->args;
             $args->add("foo" => "bar1");
             $args->add("foo" => "bar2");
-            warn "$a => $b" while ($a, $b) = each %$args;
+            my $test_string = "";
+
+            $test_string .= "$a=$b;" while ($a, $b) = each %$args;
+            die "each test failed: '$test_string'" unless
+                $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
+
+            $test_string = join ":", values %$args;
+            die "values test failed: $test_string" unless
+                $test_string eq "disable_uploads:bar1:bar2";
+
+            $test_string = "";
+            $test_string .= "$_=" . $args->get($_) . ";" for $args->get;
+            die "get test failed: '$test_string'" unless
+                $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
+
+            $test_string = "";
+            $test_string .= "$_=" . $args->get($_) . ";" for @_ = $args->get;
+            die "get test2 failed: '$test_string'" unless
+                $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
+
+            $test_string = join ":", %$args;
+            die "list deref test failed: '$test_string'" unless
+                $test_string eq "test:disable_uploads:foo:bar1:foo:bar2";
+
+            $@->print("ok");
         }
     }
 
