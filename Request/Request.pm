@@ -6,7 +6,7 @@ use Apache::Table ();
 
 {
     no strict;
-    $VERSION = '0.3102';
+    $VERSION = '0.3103';
     @ISA = qw(Apache);
     __PACKAGE__->mod_perl::boot($VERSION);
 }
@@ -24,6 +24,17 @@ sub param {
 	$tab->set($name, $value);
     }
     return wantarray ? ($tab->get($name)) : scalar $tab->get($name);
+}
+
+sub instance {
+    my $class = shift;
+    my $r = shift;
+    if (my $apreq = $r->pnotes('apreq')) {
+        return $apreq;
+    }
+    my $new_req = $class->new($r, @_);
+    $r->pnotes('apreq', $new_req);
+    return $new_req;
 }
 
 1;
@@ -90,6 +101,32 @@ error code if a file upload is attempted:
  }
 
 =back
+
+=item instance
+
+The instance() class method allows Apache::Request to be a singleton.
+This means that whenever you call Apache::Request->instance() within a
+single request you always get the same Apache::Request object back.
+This solves the problem with creating the Apache::Request object twice
+within the same request - the symptoms being that the second
+Apache::Request object will not contain the form parameters because
+they have already been read and parsed.
+
+  my $apr = Apache::Request->instance($r, DISABLE_UPLOADS => 1);
+
+Note that C<instance()> call will take the same parameters as the above
+call to C<new()>, however the parameters will only have an effect the
+first time C<instance()> is called within a single request. Extra
+parameters will be ignored on subsequent calls to C<instance()> within
+the same request.
+
+Subrequests receive a new Apache::Request object when they call
+instance() - the parent request's Apache::Request object is not copied
+into the subrequest.
+
+Also note that it is unwise to use the C<parse()> method when using
+C<instance()> because you may end up trying to call it twice, and
+detecting errors where there are none.
 
 =item parse
 
