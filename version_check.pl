@@ -4,12 +4,11 @@ use warnings 'FATAL';
 
 
 my $usage = "Usage: version_check.pl tool version_string [path/to/tool]";
-die "$usage: arguments needed." unless @ARGV;
 my ($tool, $path) = @ARGV;
 $path = $tool unless defined $path;
 
 sub exe_version { scalar qx/$path -v/ }
-sub gnu_version { scalar qx/$path --version / }
+sub gnu_version { scalar qx/$path --version/ }
 
 sub xsb_version { 
     package ExtUtils::XSBuilder;
@@ -36,9 +35,14 @@ my %prereq = (
                     apu => { test => \&gnu_version, version => "0.9.4" },
                    perl => { test => \&gnu_version, version => "5.6.1" },
               xsbuilder => { test => \&xsb_version, version => "0.23"  },
-                   mp2  => { test => \&mp2_version, version => "1.9909"},
+                   mp2  => { test => \&mp2_version, version => "1.99_09"},
                 doxygen => { test => \&gnu_version, version => "1.3"   },
              );
+
+if (@ARGV == 0) {
+    printf "%10s: %s\n", $_, $prereq{$_}->{version} for sort keys %prereq;
+    exit 0;
+}
 
 die "$0 failed: unknown tool '$tool'." unless $prereq{$tool};
 my $version = $prereq{$tool}->{version};
