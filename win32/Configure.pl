@@ -266,10 +266,11 @@ sub which {
     return unless $program;
     my @extras = ();
     my @drives = drives();
+    (my $program_files = $ENV{ProgramFiles}) =~ s!^\w+:\\!!;
     if (@drives > 0) {
         for my $drive (@drives) {
-            for ('Apache2', 'Program Files/Apache2',
-                 'Program Files/Apache Group/Apache2') {
+            for ('Apache2', "$program_files/Apache2",
+                 "$program_files/Apache Group/Apache2") {
                 my $bin = catdir $drive, $_, 'bin';
                 push @extras, $bin if (-d $bin);
             }
