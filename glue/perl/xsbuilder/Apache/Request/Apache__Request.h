@@ -177,7 +177,8 @@ static XS(apreq_xs_upload_slurp)
     MAGIC *mg;
     void *env;
     char *data;
-    apr_off_t len;
+    apr_off_t len_off;
+    apr_size_t len_size;
     apr_bucket_brigade *bb;
     apr_status_t s;
 
@@ -190,17 +191,21 @@ static XS(apreq_xs_upload_slurp)
     env = mg->mg_ptr;
     bb = apreq_xs_rv2param(ST(0))->bb;
 
-    s = apr_brigade_length(bb, 0, &len);
+    s = apr_brigade_length(bb, 0, &len_off);
     if (s != APR_SUCCESS)
         XSRETURN_IV(s);
 
+    len_size = len_off; /* max_body setting will be low enough to prevent
+                         * overflow, but even if it wasn't the code below will
+                         * at worst truncate the slurp data (not segfault).
+                         */
+                         
     SvUPGRADE(ST(1), SVt_PV);
-    data = SvGROW(ST(1), len + 1);
-    data[len] = 0;
-    SvCUR_set(ST(1), len);
+    data = SvGROW(ST(1), len_size + 1);
+    data[len_size] = 0;
+    SvCUR_set(ST(1), len_size);
     SvPOK_only(ST(1));
-
-    s = apr_brigade_flatten(bb, data, &len);
+    s = apr_brigade_flatten(bb, data, &len_size);
     XSRETURN_IV(s);
 }
 
