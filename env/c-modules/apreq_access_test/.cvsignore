@@ -1,4 +1,5 @@
 .libs
 Makefile
-mod_apreq_request_test.la
-mod_apreq_request_test.slo
+*.la
+*.lo
+*.slo
