@@ -23,14 +23,14 @@ sub handler {
     }
     elsif ($test eq 'upload') {
         my ($upload) = values %{$req->upload};
-#        unlink("/tmp/foo");
+#        unlink("/home/joe/tmp/foo");
         my $bb = $upload->bb;
         while (my $b = $bb->first) {
             $b->read(my $buffer);
             $r->print($buffer);
             $b->remove;
         }
-#        $upload->link("/tmp/foo");
+#        $upload->link("/home/joe/tmp/foo");
     }
 
     return 0;

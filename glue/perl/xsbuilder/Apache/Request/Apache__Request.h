@@ -158,8 +158,9 @@ static XS(apreq_xs_upload_link)
     if (f == NULL) {
         apr_off_t len;
         apr_status_t s;
+
         s = apr_file_open(&f, name, APR_CREATE | APR_EXCL | APR_WRITE |
-                          APR_READ | APR_BINARY | APR_BUFFERED, 
+                          APR_READ | APR_BINARY | APR_BUFFERED,
                           APR_OS_DEFAULT,
                           apreq_env_pool(env));
         if (s != APR_SUCCESS || 
@@ -173,6 +174,13 @@ static XS(apreq_xs_upload_link)
 
     if (PerlLIO_link(fname, name) >= 0)
         XSRETURN_YES;
+    else {
+        apr_status_t s = apr_file_copy(fname, name,
+                                       APR_OS_DEFAULT, 
+                                       apreq_env_pool(env));
+        if (s == APR_SUCCESS)
+            XSRETURN_YES;
+    }
 
     XSRETURN_UNDEF;
 }
