@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/04/15 23:12:32 $]   -*-text-*-
+Last modified at [$Date: 2004/05/22 13:58:21 $]   -*-text-*-
 /** @page STATUS
 
      2.03-dev under development
@@ -68,6 +68,8 @@ TODO:
 
     - symbol exports files:
       -# aix needs .exp files
+
+    - Add $upload->slurp to perl API.
 
 
 OPEN ISSUES:
