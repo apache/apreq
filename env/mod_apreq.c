@@ -114,7 +114,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER 20031025
+#define APREQ_MODULE_MAGIC_NUMBER 20031031
 
 
 static void apache2_log(const char *file, int line, int level, 
@@ -404,7 +404,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             return ctx->status;
         }
 
-        /* assert(req); */
+        if (req == NULL)
+            req = apreq_request(r, NULL);
 
     }
     else if (!ctx->saw_eos) {
@@ -416,7 +417,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         apr_bucket *last = APR_BRIGADE_LAST(ctx->spool);
         apr_size_t total_read = 0;
 
-        /* assert(req); */
+        if (req == NULL)
+            req = apreq_request(r, NULL);
 
         while (total_read < readbytes) {
             apr_off_t len;
