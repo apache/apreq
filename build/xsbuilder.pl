@@ -237,8 +237,20 @@ bootstrap $module \$VERSION ;
 # The modperl package isn't necessarily loaded, but Apache2
 # is.  Perhaps Apache2 should always include a VERSION?
 
-die __PACKAGE__ . ": httpd must load mod_apreq.so first"
-           if __PACKAGE__->env ne "Apache::RequestRec";
+if (\$ENV{MOD_PERL}) {
+    require mod_perl;
+    if (\$mod_perl::VERSION > 1.99) {
+        die __PACKAGE__ . ": httpd must load mod_apreq.so first"
+               if __PACKAGE__->env ne "Apache::RequestRec";
+    }
+    elsif (\$mod_perl::VERSION > 1.24) {
+        die __PACKAGE__ . ": httpd must load mod_apreq1.so first"
+              if __PACKAGE__->env ne "Apache";
+    }
+    else {
+       die "Unrecognized mod_perl version number: \$modperl::VERSION";
+    }
+}
 
 $code
 
