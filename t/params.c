@@ -95,8 +95,8 @@ static void request_args_get(CuTest *tc)
 static void string_decoding_in_place(CuTest *tc)
 {
     apreq_value_t *v;
-    char *s1 = malloc(4096);
-    char *s2 = malloc(4096);
+    char *s1 = apr_palloc(p,4096);
+    char *s2 = apr_palloc(p,4096);
 
     strcpy(s1, "bend it like beckham");
     strcpy(s2, "dandy %3Edons");
