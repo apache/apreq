@@ -1,0 +1,21 @@
+Experimental Patches:
+
+apache-1.3+apreq-1.1.patch  
+
+    patches apache-1.3 source to build libapreq directly into httpd.
+    To apply:
+
+        % cd ../../apache-1.3/
+        % patch -p0 < ../httpd-apreq/patches/apache-1.3+apreq-1.1.patch
+
+    Then build and install apache (+modperl) as normal.  If you want to
+    use Apache::Request and Apache::Cookie, you'll also need to remove
+    the -lapreq linking flags within Request/Makefile.PL and
+    Cookie/Makefile.PL, before doing the perl build of libapreq.
+    The following commands should do the trick:
+
+        % cd ..
+        % perl -pi.bak -e 's/-lapreq//' Request/Makefile.PL Cookie/Makefile.PL
+        % perl Makefile.PL
+        ...
+        % make && make test && make install
