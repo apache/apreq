@@ -5,6 +5,13 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- Perl API [joes]
+  Allow ctors for Apache::Cookie, Apache::Cookie::Jar
+  and Apache:::Request to accept Apache::Request objects
+  (instead of requiring an Apache::RequestRec object).
+  This thread details the bug
+        http://thread.gmane.org/gmane.comp.apache.mod-perl/15727
+
 - C API [Bojan Smojver]
   Bake cookies with err_headers_out so they are
   sent on non-2xx server responses (ie. a 304 redirect).

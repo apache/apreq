@@ -12,7 +12,9 @@ sub handler {
     $r = __PACKAGE__->new($r); # tickles refcnt bug in apreq-1
     die "Wrong package: ", ref $r unless $r->isa('TestApReq::inherit');
     $r->content_type('text/plain');
-    my $j = Apache::Cookie->jar($r->env);
+    # look for segfault when $r->isa("Apache::Request")
+    my $j = Apache::Cookie::Jar->new($r);
+
     my $req = bless { r => $r, j => $j };
     $req->printf("method => %s\n", $req->method);
     $req->printf("cookie => %s\n", $req->cookies("apache")->as_string);

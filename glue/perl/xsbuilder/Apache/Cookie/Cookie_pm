@@ -23,6 +23,7 @@ package Apache::Cookie::Jar;
 sub new {
     my $class = shift;
     my $env = shift;
+    $env = $env->env if $env->isa("Apache::Request");
     my $jar = $class->jar($env);
     $jar->config(@_) if @_;
     return $jar;
@@ -40,6 +41,7 @@ sub jar {
 
 sub new {
     my ($class, $env, %attrs) = @_;
+    $env = $env->env if $env->isa("Apache::Request");
     my $name  = delete $attrs{name};
     my $value = delete $attrs{value};
     $name     = delete $attrs{-name}  unless defined $name;
@@ -67,6 +69,7 @@ EOD
             die $usage;
         }
     }
+    $env = $env->env if $env->isa("Apache::Request");
     my $jar = $class->jar($env, @_);
     return wantarray ? %{(scalar $jar->cookies) || {}} : $jar->cookies;
 }

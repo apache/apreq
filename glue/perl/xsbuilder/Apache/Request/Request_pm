@@ -22,6 +22,7 @@ push our(@ISA), "Apache::RequestRec" if  __PACKAGE__ -> env eq "Apache::RequestR
 sub new {
     my $class = shift;
     my $env = shift;
+    $env = $env->env if $env->isa("Apache::Request");
     my $req = $class->request($env);
     $req->config(@_);
     return $req;
