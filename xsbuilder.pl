@@ -48,7 +48,10 @@ my $apreq_lib_flags = Apache::Build::WIN32 ?
 my $mp2_typemaps = Apache::Build->new->typemaps;
 read DATA, my $grammar, -s DATA;
 
-my %c_macro_cache;
+my %c_macro_cache = (
+                     XS => sub {s/XS\s*\(([^)]+)\)/void $1()/g},
+
+);
 sub c_macro
 {
     return $c_macro_cache{"@_"} if exists $c_macro_cache{"@_"};
@@ -77,11 +80,12 @@ sub c_macro
 
 
 package My::ParseSource;
+my @dirs = ("$base_dir/src", "$base_dir/glue/perl/xsbuilder");
 use base qw/ExtUtils::XSBuilder::ParseSource/;
 __PACKAGE__->$_ for shift || ();
 
-sub package {'Apache::Request'}
-
+sub package {'Apache::libapreq'}
+sub unwanted_includes {["apreq_tables.h"]}
 # ParseSource.pm v 0.23 bug: line 214 should read
 # my @dirs = @{$self->include_dirs};
 # for now, we override it here just to work around the bug
@@ -112,8 +116,7 @@ sub find_includes {
     return $self->{includes} = $self -> sort_includes (\@includes) ;
 }
 
-
-sub include_dirs {["$base_dir/src",]}# "$base_dir/glue/perl/xsinclude"]}
+sub include_dirs {\@dirs}
 
 sub preprocess
 {
@@ -126,6 +129,7 @@ sub preprocess
         ::c_macro("APREQ_DECLARE_PARSER", "apreq_parsers.h")->();
         ::c_macro("APREQ_DECLARE_LOG", "apreq_env.h")->();
         ::c_macro("APR_DECLARE")->();
+        ::c_macro("XS")-> ();
     }
 }
 
@@ -155,7 +159,7 @@ sub parse {
 
 
 package My::WrapXS;
-
+pop @dirs; # drop mod_h directories- WrapXS takes care of those
 use base qw/ExtUtils::XSBuilder::WrapXS/;
 our $VERSION = '0.1';
 __PACKAGE__ -> $_ for @ARGV;
