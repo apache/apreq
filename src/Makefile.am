@@ -19,7 +19,12 @@ AM_CFLAGS= -pg -fprofile-arcs -ftest-coverage
 clean-local:
 	-rm *.bb *.bbg *.da *.gcov
 
+else
+
+clean-local:
+
 endif
+
 
 
 if BUILD_APR
