@@ -151,7 +151,7 @@ sub handler {
                 $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
 
             $test_string = join ":", values %$args;
-            die "values test failed: $test_string" unless
+            die "values test failed: '$test_string'" unless
                 $test_string eq "disable_uploads:bar1:bar2";
 
             $test_string = "";

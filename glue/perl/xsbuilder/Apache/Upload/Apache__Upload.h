@@ -89,12 +89,12 @@ static int apreq_xs_request_upload_table_keys(void *data, const char *key,
     dSP;
     SV *sv;
 
-    if (apreq_value_to_param(apreq_strtoval(val))->bb = NULL)
+    if (apreq_value_to_param(apreq_strtoval(val))->bb == NULL)
         return 1;
 
     sv = newSVpv(key,0);
 
-    sv_magic(sv, Nullsv, PERL_MAGIC_vstring, Nullch, -1);
+    sv_magic(sv, d->parent, PERL_MAGIC_vstring, Nullch, -1);
     SvMAGIC(sv)->mg_ptr = (char *)val;
     SvRMAGICAL_on(sv);
 
