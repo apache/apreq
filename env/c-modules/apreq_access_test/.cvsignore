@@ -1,6 +1,0 @@
-.libs
-Makefile
-*.la
-*.lo
-*.slo
-mod_apreq_access_test.lo
