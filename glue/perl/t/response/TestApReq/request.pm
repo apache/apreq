@@ -12,6 +12,7 @@ use APR::Pool;
 use APR::PerlIO;
 use Apache::ServerUtil;
 use File::Spec;
+use constant WIN32 => $^O eq 'MSWin32';
 
 my $data;
 
@@ -73,7 +74,15 @@ sub handler {
         die "Tempfile in wrong temp_dir (expected $temp_dir, saw $dir)" unless
             $dir eq $temp_dir;
 
-        open my $fh, "<:APR", $name, $upload->pool or die "Can't open $name: $!";
+        my $fh;
+        if (WIN32) {
+            open $fh, "<:APR", $name, $upload->pool
+                or die "Can't open $name: $!";
+        }
+        else {
+            open $fh, "<", $name
+                or die "Can't open $name: $!";
+        }
         $r->print(<$fh>);
     }
     elsif ($test eq 'link') {
@@ -81,7 +90,15 @@ sub handler {
         my $link_file = File::Spec->catfile("$temp_dir", "linktest");
         unlink $link_file if -f $link_file;
         $upload->link($link_file) or die "Can't link to $link_file: $!";
-        open my $fh, "<", $link_file or die "Can't open $link_file: $!";
+        my $fh;
+        if (WIN32) {
+            open $fh, "<:APR", $link_file, $upload->pool
+                or die "Can't open $link_file: $!";
+        }
+        else {
+            open $fh, "<", $link_file
+                or die "Can't open $link_file: $!";
+        }
         $r->print(<$fh>);
     }
     elsif ($test eq 'fh') {
