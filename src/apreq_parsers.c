@@ -20,6 +20,9 @@
 #include "apr_strings.h"
 #include "apr_strmatch.h"
 #include "apr_xml.h"
+#include "apr_hash.h"
+
+void apreq_parser_initialize(void);
 
 #ifndef MAX
 #define MAX(A,B)  ( (A) > (B) ? (A) : (B) )
@@ -83,27 +86,60 @@ APREQ_DECLARE(void) apreq_add_hook(apreq_parser_t *p,
     p->hook = h;
 }
 
+static apr_hash_t *default_parsers;
+static apr_pool_t *default_parser_pool;
+
+void apreq_parser_initialize(void)
+{
+    if (default_parsers != NULL)
+        return;
+    apr_pool_create(&default_parser_pool, NULL);
+    default_parsers = apr_hash_make(default_parser_pool);
+
+    apreq_register_parser("application/x-www-form-urlencoded",
+                          apreq_parse_urlencoded);
+    apreq_register_parser("multipart/form-data", apreq_parse_multipart);
+    apreq_register_parser("multipart/related", apreq_parse_multipart);
+}
+
+struct apreq_parser_fcn {
+    apr_status_t (*parser) (APREQ_PARSER_ARGS);
+};
+
+APREQ_DECLARE(void) apreq_register_parser(const char *enctype, 
+                                    apr_status_t (*parser) (APREQ_PARSER_ARGS))
+{
+    struct apreq_parser_fcn *f = NULL;
+    apreq_parser_initialize();
+    if (parser != NULL) {
+        f = apr_palloc(default_parser_pool, sizeof *f);
+        f->parser = parser;
+    }
+    apr_hash_set(default_parsers, apr_pstrdup(default_parser_pool, enctype),
+                 APR_HASH_KEY_STRING, f);
+
+}
+
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
 {
     apr_pool_t *pool = apreq_env_pool(env);
     const char *type = apreq_env_content_type(env);
+    apr_ssize_t tlen;
+    struct apreq_parser_fcn *f;
 
-    if (type == NULL)
+    if (type == NULL || default_parsers == NULL)
         return NULL;
 
-    if (!strncasecmp(type, APREQ_URL_ENCTYPE,strlen(APREQ_URL_ENCTYPE)))
-        return apreq_make_parser(pool, type, 
-                                 apreq_parse_urlencoded, hook, NULL);
+    tlen = 0;
+    while(type[tlen] && type[tlen] != ';')
+        ++tlen;
 
-    else if (!strncasecmp(type,APREQ_MFD_ENCTYPE,strlen(APREQ_MFD_ENCTYPE))
-             || strncasecmp(type,  "multipart/related", 
-                            strlen("multipart/related")))
-        return apreq_make_parser(pool, type, 
-                                 apreq_parse_multipart, hook, NULL);
+    f = apr_hash_get(default_parsers, type, tlen);
 
+    if (f != NULL)
+        return apreq_make_parser(pool, type, f->parser, hook, NULL);
     else
         return NULL;
-
 }
 
 

@@ -23,9 +23,12 @@
 
 
 static const apreq_env_t *apreq_env;
+extern void apreq_parser_initialize(void);
+
 
 APREQ_DECLARE(const apreq_env_t *) apreq_env_module(const apreq_env_t *mod)
 {
+    apreq_parser_initialize();
     if (mod != NULL) {
         const apreq_env_t *old_mod = apreq_env;
         apreq_env = mod;
@@ -142,7 +145,7 @@ static struct {
 
 
 #define APREQ_MODULE_NAME         "CGI"
-#define APREQ_MODULE_MAGIC_NUMBER 20040731
+#define APREQ_MODULE_MAGIC_NUMBER 20040913
 
 static apr_pool_t *cgi_pool(void *env)
 {
@@ -210,7 +213,7 @@ static apreq_jar_t *cgi_jar(void *env, apreq_jar_t *jar)
 static apreq_request_t *cgi_request(void *env,
                                     apreq_request_t *req)
 {
-
+    apreq_parser_initialize();
     if (req != NULL) {
         apreq_request_t *old_req = ctx.req;
         ctx.req = req;

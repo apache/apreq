@@ -102,6 +102,36 @@ static char mix_data[] =
 extern apr_bucket_brigade *bb;
 extern apr_table_t *table;
 
+static void locate_default_parsers(CuTest *tc)
+{
+    apreq_request_t *req;
+    apreq_parser_t *parser;
+
+    req = apreq_request("application/x-www-form-urlencoded", "");
+    CuAssertPtrNotNull(tc, req);
+    CuAssertStrEquals(tc, APREQ_URL_ENCTYPE, apreq_enctype(req->env));
+    parser = apreq_parser(req->env, NULL);
+    CuAssertPtrNotNull(tc, parser);
+    CuAssertStrEquals(tc, APREQ_URL_ENCTYPE, parser->enctype);
+
+    req = apreq_request(APREQ_MFD_ENCTYPE
+                        "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"" ,"");
+    CuAssertPtrNotNull(tc, req);
+    parser = apreq_parser(req->env, NULL);
+    CuAssertPtrNotNull(tc, parser);
+    CuAssertStrNEquals(tc, APREQ_MFD_ENCTYPE, parser->enctype, 
+                       strlen(APREQ_MFD_ENCTYPE));
+
+    req = apreq_request("multipart/related; boundary=f93dcbA3; "
+        "type=application/xml; start=\"<980119.X53GGT@example.com>\"","");
+    CuAssertPtrNotNull(tc, req);
+    parser = apreq_parser(req->env, NULL);
+    CuAssertPtrNotNull(tc, parser);
+    CuAssertStrNEquals(tc, "multipart/related", parser->enctype, 
+                       strlen("multipart/related"));
+}
+
+
 static void parse_urlencoded(CuTest *tc)
 {
     const char *val;
@@ -440,6 +470,7 @@ static void parse_mixed(CuTest *tc)
 CuSuite *testparser(void)
 {
     CuSuite *suite = CuSuiteNew("Parsers");
+    SUITE_ADD_TEST(suite, locate_default_parsers);
     SUITE_ADD_TEST(suite, parse_urlencoded);
     SUITE_ADD_TEST(suite, parse_multipart);
     SUITE_ADD_TEST(suite, parse_disable_uploads);

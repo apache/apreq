@@ -273,6 +273,8 @@ struct apreq_parser_t {
 };
 
 
+
+
 /**
  * Parse the incoming brigade into a table.  Parsers normally
  * consume all the buckets of the brigade during parsing. However
@@ -389,22 +391,40 @@ APREQ_DECLARE(apreq_hook_t *)
 APREQ_DECLARE(void) apreq_add_hook(apreq_parser_t *p, 
                                    apreq_hook_t *h);
 
+
 /**
  * Create the default parser associated with the
  * current request's Content-Type (if possible).
  * @param env The current environment.
  * @param hook Hook(s) to add to the parser.
  * @return New parser, NULL if the Content-Type is
- * unrecognized.  apreq_parser() currently recognizes
- * APREQ_URL_ENCTYPE and APREQ_MFD_ENCTYPE.
+ * unrecognized.
  *
  * @param env The current environment.
  * @param hook Additional hooks to supply the parser with.
- * @return The built-in parser; NULL if the environment's
+ * @return The parser; NULL if the environment's
  * Content-Type is unrecognized.
  */
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env,
                                             apreq_hook_t *hook);
+
+
+/**
+ * Register a new parsing function with a MIME enctype.
+ * Registered parsers are added to apreq_parser()'s
+ * internal lookup table.
+ *
+ * @param enctype The MIME type.
+ * @param parser  The function to use during parsing. Setting
+ *                parser == NULL will remove an existing parser.
+ * @remark This is not a thread-safe operation, so applications 
+ * should only call this during process startup,
+ * or within a request-thread mutex.
+ */
+
+APREQ_DECLARE(void) apreq_register_parser(const char *enctype, 
+                            apr_status_t (*parser) (APREQ_PARSER_ARGS));
+
 
 /**
  * Returns APR_EGENERAL.  Effectively disables mfd parser

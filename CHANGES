@@ -6,6 +6,10 @@
 
 
 - C API [joes]
+  Add apreq_register_parser(), which allows users to add
+  their own parsers to apreq_parser()'s recognized MIME types.
+
+- C API [joes]
   Support "multipart/mixed" file uploads.
   Support XForms' "multipart/related" enctype.
 

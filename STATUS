@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/09/12 03:04:12 $]   -*-text-*-
+Last modified at [$Date: 2004/09/13 07:04:02 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.05 in development.
@@ -39,6 +39,17 @@ CURRENT VOTES:
             -1:
 
 TODO:
+
+    - Move the xs generation code into buildconf (instead of configure),
+      and fix glue/perl/Makefile.PL to clean the ./xs dir instead of 
+      removing it entirely.  % make release will also need fixing
+      to pick up the xs directory.
+
+    - There are too many calls to apreq_env_pool()- lots of these
+      can be eliminated by caching the pool in the parser's context.
+
+    - Add apreq_env_bucket_alloc(env) function to get a per-request 
+      bucket allocator, which will help the parsers to conserve memory.
 
     - in glue/perl/t/apreq/cgi.t on Win32, printing to the error log
       hangs if the strings involved are about 10000 in size.
