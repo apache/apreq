@@ -3,6 +3,7 @@ use Apache::Request ();
 
 my $r = shift;
 my $apr = Apache::Request->new($r);
+$apr->no_cache(1);
 $apr->send_http_header('text/html');
 
 my $title = "File Upload Example";
@@ -67,3 +68,4 @@ EOF
 	print "No statistics selected.\n";
     }
 }
+print "</BODY></HTML>";
