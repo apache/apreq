@@ -120,9 +120,8 @@ module AP_MODULE_DECLARE_DATA apreq_module;
  * an apreq_request_t using apreq_request() <em>before the content handler
  * ultimately reads from the input filter chain</em>.  It is important to
  * recognize that no matter how the input filters are initially arranged,
- * the APREQ filter will always reposition itself to be the last input filter
- * to read the data.  In other words, <code>r->input_filters</code> will
- * always point to the active APREQ filter for the request.
+ * the APREQ filter will attempt to reposition itself to be the last input filter
+ * to read the data.
  *
  * If you want to use other input filters to transform the incoming HTTP
  * request data, is important to register those filters with Apache
@@ -266,7 +265,7 @@ static ap_filter_t *get_apreq_filter(request_rec *r)
 {
     struct env_config *cfg = get_cfg(r);
 
-    if (cfg->f == r->input_filters)
+    if (cfg->f != NULL)
        return cfg->f;
 
     cfg->f = ap_add_input_filter(filter_name, NULL, r, r->connection);
@@ -319,8 +318,8 @@ static void apreq_filter_make_context(ap_filter_t *f)
         case APR_INCOMPLETE:
             break;
         default:
-            /* bad filter state, don't steal anything */
-            apreq_log(APREQ_DEBUG ctx->status, r, "cannot steal context: bad filter status");
+            apreq_log(APREQ_DEBUG ctx->status, r, 
+                      "cannot steal context: bad filter status");
             goto make_new_context;
         }
 
@@ -330,8 +329,8 @@ static void apreq_filter_make_context(ap_filter_t *f)
 
             if (req != NULL) {
                 if (req->parser != NULL) {
-                    /* new parser on this request: cannot steal context */
-                    apreq_log(APREQ_DEBUG ctx->status, r, "cannot steal context: new parser detected");
+                    apreq_log(APREQ_DEBUG ctx->status, r, 
+                              "cannot steal context: new parser detected");
                     goto make_new_context;
                 }
             }
