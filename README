@@ -27,7 +27,10 @@ Portions of the C code are based on examples from:
      ISBN 1-56592-567-X. 
      http://www.modperl.com/
 
-The development of this package is sponsored by:
+Development of this package, versions 0.32-current is sponsored by:
+Covalent Technologies Inc. http://www.covalent.net/
+
+Development of this package, versions 0.01-0.31 was sponsored by:
 Critical Path Inc. http://www.cp.net/ 
 
 Support for the Perl interface is available from:
@@ -37,4 +40,4 @@ Support for the C interface is available from:
 apache-modules@covalent.net
 
 Enjoy,
-Doug MacEachern (dougm@cp.net)
+Doug MacEachern (dougm@covalent.net)
