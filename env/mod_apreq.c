@@ -560,6 +560,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     case AP_MODE_EXHAUSTIVE:
         /* only the modes above are supported */
         break;
+    case AP_MODE_GETLINE: /* punt- chunks are b0rked in ap_http_filter */
+        return ap_get_brigade(f->next, bb, mode, block, readbytes);
     default:
         return APR_ENOTIMPL;
     }
