@@ -1,9 +1,31 @@
-NOTES on xsbuilder/
+To parse the libapreq headers into xsbuilder/tables:
 
-                   maps/ - stores
+        % perl ../../build/xsbuilder.pl run
+
+To build the xs/ directory and configure the tests:
+
+        % perl Makefile.PL -apxs /path/to/apache2/bin/apxs        
+
+To run the test suite:
+
+        % make test
 
 
 
+
+DEVELOPER NOTES
+
+xsbuilder/  (analogous to modperl-2.0/xs directory)
+
+          apreq_xs_postperl.h - helper functions & macros for XS
+          maps/ - files used to generate xs/ bindings
+          Apache/
+                 Request/
+                         Apache__Request.h - custom XS code for Request.xs
+                         Request_pm - perl code included in Request.pm
+                 Cookie/
+                         Apache__Cookie.h - custom XS for Cookie.xs
+                         Cookie_pm - perl code included in Cookie.pm
 
 current class diagram:
 
@@ -11,25 +33,24 @@ current class diagram:
 
                        //          \\
                                      
-               fetch //              \\ new
+Apache::Cookie->fetch//              \\Apache::Request->new
                                               
                    //                  \\
 
-           Apache::Cookie::Jar       Apache::Request
+           Apache::Cookie::Jar         Apache::Request
 
-       cookies  /       \                    \  args, body, params
+        cookies /                      / upload     \  args, body, params
 
-   Apache::Cookie::Table  \ get         Apache::Request::Table
+   Apache::Cookie::Table   Apache::Upload::Table    Apache::Request::Table
                            
-            get  \          \
+            / get                  / get
  
-                  Apache::Cookie
+     Apache::Cookie        Apache::Upload
 
 
 legend: double lines ("//" or "\\") represent an inheritance relationship.
         single lines ("/"  or  "\") represent method calls.
 
 
-missing components:  Apache::Request::Upload
-                     Apache::Request::Parser
-                     Apache::Request::Util
+missing components: Apache::Request::Parser
+

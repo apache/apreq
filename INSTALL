@@ -1,0 +1,12 @@
+Unix build, where libtool/automake/autoconf works:
+
+  (optional)% ./buildconf
+            % ./configure --with-apache2-apxs=/path/to/apache2/bin/apxs
+            % make && make test
+  (optional)% make perl_glue
+  (optional)% make perl_test
+            % make install
+  (optional)% make perl_install
+
+
+Win32 build:
