@@ -1,8 +1,6 @@
-.cvsignore
 BUILD.sh
 CREDITS
 Changes
-Cookie/.cvsignore
 Cookie/Cookie.pm
 Cookie/Cookie.xs
 Cookie/Makefile.PL
@@ -14,7 +12,6 @@ Makefile.PL
 Makefile.am
 Makefile.in
 README
-Request/.cvsignore
 Request/Makefile.PL
 Request/Request.pm
 Request/Request.xs
