@@ -1,6 +1,6 @@
 To install the Perl and C libraries, simply run:
 
- perl Makefile.PL && make install
+ perl Makefile.PL && make && make test && make install
 
 The libapreq.a and header files will be installed in the Perl
 architecture dependent library.  See the Apache::libapreq module for
