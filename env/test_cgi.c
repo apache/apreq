@@ -61,14 +61,14 @@
 #include "apr_lib.h"
 #include "apr_tables.h"
 
-typedef struct {
+struct env_ctx {
     apr_pool_t         *pool;
     apreq_request_t    *req;
     apreq_jar_t        *jar;
     apr_bucket_brigade *bb;
     int                 loglevel;
     apr_status_t        status;
-} env_ctx;
+};
 
 static int dump_table(void *count, const char *key, const char *value)
 {
@@ -80,7 +80,7 @@ static int dump_table(void *count, const char *key, const char *value)
 
 int main(int argc, char const * const * argv)
 {
-    env_ctx *ctx;
+    struct env_ctx *ctx;
     apr_pool_t *pool;
     const apreq_param_t *foo, *bar, *test, *key;
     apr_table_t *params;
@@ -103,7 +103,7 @@ int main(int argc, char const * const * argv)
         exit(-1);
     }
 
-    ctx = (env_ctx *) apr_palloc(pool, sizeof(*ctx));
+    ctx = (struct env_ctx *) apr_pcalloc(pool, sizeof *ctx);
     ctx->loglevel = 0;
     ctx->pool = pool;
     apreq_log(APREQ_DEBUG 0, ctx, "%s", "Creating apreq_request");

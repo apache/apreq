@@ -122,7 +122,7 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
 {
     dCTX;
     char *key = apr_pstrdup(ctx->pool, name);
-    char *k, *value, *http_key, http[] = "HTTP_";
+    char *k, *value=NULL, *http_key, http[] = "HTTP_";
     for (k = key; *k; ++k) {
         if (*k == '-')
             *k = '_';

@@ -68,7 +68,7 @@ for my $big_key_len (@big_key_len) {
 }
 
 ok t_cmp("\tfoo => 1$line_end", 
-         GET_BODY("$script?foo=1", Content => $filler));
+         POST_BODY("$script?foo=1", Content => $filler), "simple post");
 
 ok t_cmp("\tfoo => ?$line_end\tbar => hello world$line_end", 
          GET_BODY("$script?foo=%3F&bar=hello+world"), "simple get");
