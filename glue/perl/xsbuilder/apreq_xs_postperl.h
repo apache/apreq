@@ -379,10 +379,6 @@ void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func,
 {
     HV *stash = gv_stashpvn(class, strlen(class), FALSE);
 
-    if (SvTRUE(ERRSV)) {
-        Perl_croak(aTHX_ "%s", SvPV_nolen(ERRSV));   
-    }
-
     sv_setsv(ERRSV, sv_2mortal(sv_bless(newRV_noinc((SV*)data), stash)));
     sv_setiv(*hv_fetch(data, "rc",   2, 1), rc);
     sv_setpv(*hv_fetch(data, "file", 4, 1), CopFILE(PL_curcop));
