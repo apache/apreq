@@ -347,6 +347,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
                                                  apr_bucket_brigade *out, 
                                                  apr_bucket_brigade *in);
 
+APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 
 #ifdef __cplusplus
  }

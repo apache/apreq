@@ -769,6 +769,16 @@ static const apr_bucket_type_t spool_bucket_type = {
     apr_bucket_copy_notimpl,
 };
 
+APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb)
+{
+    apr_bucket *last;
+
+    last = APR_BRIGADE_LAST(bb);
+    if (BUCKET_IS_SPOOL(last))
+        return ((apr_bucket_file *)last->data)->fd;
+
+    return NULL;
+}
 
 APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
                                                  const char *temp_dir,
@@ -812,9 +822,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
         if (s != APR_SUCCESS)
             return s;
 
-        /* This cast, when out_len = -1, is intentional */
-        if ((apr_uint64_t)out_len < heap_limit)
-            s = apreq_brigade_fwrite(file, &wlen, out);
+        s = apreq_brigade_fwrite(file, &wlen, out);
 
         if (s != APR_SUCCESS)
             return s;
@@ -835,6 +843,9 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
         if (s != APR_SUCCESS)
             return s;
     }
+
+    if (in == out)
+        return APR_SUCCESS;
 
     last_in = APR_BRIGADE_LAST(in);
 

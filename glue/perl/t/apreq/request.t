@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
-plan tests => 18, under_construction;#have_lwp
+plan tests => 18, have_lwp;
 
 my $location = "/TestApReq__request";
 #print GET_BODY $location;
@@ -19,6 +19,7 @@ my $location = "/TestApReq__request";
              $value,
              "basic param");
 }
+
 
 for my $test (qw/slurp bb tempname link fh io bad;query=string%%/) {
     # upload a string as a file
@@ -33,11 +34,13 @@ for my $test (qw/slurp bb tempname link fh io bad;query=string%%/) {
     ok t_cmp($i, length($value), "basic upload length");    
 }
 
+
 {
     my $value = 'DataUpload' x 100;
     my $result = UPLOAD_BODY("$location?test=type", content => $value); 
     ok t_cmp($result, "text/plain", "type");
 }
+
 {
     my $value = 'DataUpload' x 100;
     my $result = UPLOAD_BODY("$location?test=hook", content => $value); 

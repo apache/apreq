@@ -470,3 +470,161 @@ params(handle, pool)
   OUTPUT:
     RETVAL
    
+
+
+MODULE = APR::Request::Param PACKAGE = APR::Request::Param
+
+SV *
+upload_link(param, path)
+    APR::Request::Param param
+    const char *path
+  PREINIT:
+    apr_file_t *f;
+    const char *fname;
+    apr_status_t s;
+
+  CODE:
+    if (param->upload == NULL)
+        Perl_croak(aTHX_ "$param->upload_link($file): param has no upload brigade");
+    f = apreq_brigade_spoolfile(param->upload);
+    if (f == NULL) {
+        apr_off_t len;
+        s = apr_file_open(&f, path, APR_CREATE | APR_EXCL | APR_WRITE |
+                          APR_READ | APR_BINARY,
+                          APR_OS_DEFAULT,
+                          param->upload->p);
+        if (s == APR_SUCCESS) {
+            s = apreq_brigade_fwrite(f, &len, param->upload);
+            if (s == APR_SUCCESS)
+                XSRETURN_YES;
+        }
+    }
+    else {
+        s = apr_file_name_get(&fname, f);
+        if (s != APR_SUCCESS)
+            Perl_croak(aTHX_ "$param->upload_link($file): can't get spoolfile name");
+        if (PerlLIO_link(fname, path) >= 0)
+            XSRETURN_YES;
+        else {
+            s = apr_file_copy(fname, path, APR_OS_DEFAULT, param->upload->p);
+            if (s == APR_SUCCESS)
+                XSRETURN_YES;
+        }
+    }
+    RETVAL = &PL_sv_undef;
+
+  OUTPUT:
+    RETVAL
+
+apr_size_t
+upload_slurp(param, buffer)
+    APR::Request::Param param
+    SV *buffer
+  PREINIT:
+    apr_off_t len;
+    apr_status_t s;
+    char *data;
+
+  CODE:
+    if (param->upload == NULL)
+        Perl_croak(aTHX_ "$param->upload_slurp($data): param has no upload brigade");
+
+    s = apr_brigade_length(param->upload, 0, &len);
+    if (s != APR_SUCCESS)
+        Perl_croak(aTHX_ "$param->upload_slurp($data): can't get upload length");
+
+    RETVAL = len;
+    SvUPGRADE(buffer, SVt_PV);
+    data = SvGROW(buffer, RETVAL + 1);
+    data[RETVAL] = 0;
+    SvCUR_set(buffer, RETVAL);
+    SvPOK_only(buffer);
+    s = apr_brigade_flatten(param->upload, data, &RETVAL);
+    if (s != APR_SUCCESS)
+        Perl_croak(aTHX_ "$param->upload_slurp($data): can't flatten upload");
+
+    if (apreq_param_is_tainted(param))
+        SvTAINTED_on(buffer);
+
+    SvSETMAGIC(buffer);
+
+  OUTPUT:
+    RETVAL
+
+UV
+upload_size(param)
+    APR::Request::Param param
+  PREINIT:
+    apr_off_t len;
+    apr_status_t s;
+
+  CODE:
+    if (param->upload == NULL)
+        Perl_croak(aTHX_ "$param->upload_size(): param has no upload brigade");
+
+    s = apr_brigade_length(param->upload, 0, &len);
+    if (s != APR_SUCCESS)
+        Perl_croak(aTHX_ "$param->upload_size(): can't get upload length");
+
+    RETVAL = len;    
+
+  OUTPUT:
+    RETVAL
+
+SV *
+upload_type(param)
+    APR::Request::Param param
+  PREINIT:
+    const char *ct, *sc;
+    STRLEN len;
+  CODE:
+    if (param->info == NULL)
+        Perl_croak(aTHX_ "$param->upload_type(): param has no info table");
+
+    ct = apr_table_get(param->info, "Content-Type");
+    if (ct == NULL)
+        Perl_croak(aTHX_ "$param->upload_type: can't find Content-Type header");
+    
+    if ((sc = index(ct, ';')))
+        len = sc - ct;
+    else
+        len = strlen(ct);
+
+    RETVAL = newSVpvn(ct, len);    
+    if (apreq_param_is_tainted(param))
+        SvTAINTED_on(RETVAL);
+
+  OUTPUT:
+    RETVAL
+
+
+const char *
+upload_tempname(param, req=apreq_xs_sv2handle(aTHX_ ST(0)))
+    APR::Request::Param param
+    APR::Request req
+
+  PREINIT:
+    apr_file_t *f;
+    apr_status_t s;
+
+  CODE:
+    if (param->upload == NULL)
+        Perl_croak(aTHX_ "$param->upload_tempname($req): param has no upload brigade");
+    f = apreq_brigade_spoolfile(param->upload);
+    if (f == NULL) {
+        const char *path;
+        s = apreq_temp_dir_get(req, &path);
+        if (s != APR_SUCCESS)
+            Perl_croak(aTHX_ "$param->upload_tempname($req): can't get temp_dir");
+        s = apreq_brigade_concat(param->upload->p, path, 0, 
+                                 param->upload, param->upload);
+        if (s != APR_SUCCESS)
+            Perl_croak(aTHX_ "$param->upload_tempname($req): can't make spool bucket");
+        f = apreq_brigade_spoolfile(param->upload);
+    }
+    s = apr_file_name_get(&RETVAL, f);
+    if (s != APR_SUCCESS)
+        Perl_croak(aTHX_ "$param->upload_link($file): can't get spool file name");
+
+  OUTPUT:
+    RETVAL

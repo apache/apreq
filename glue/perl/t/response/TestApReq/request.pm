@@ -28,9 +28,10 @@ sub handler {
     my $r = shift;
     my $temp_dir =
         File::Spec->catfile(Apache::ServerUtil::server_root, 'logs'); 
-    my $req = Apache::Request->new($r, POST_MAX => 1_000_000,
-                                       TEMP_DIR => $temp_dir);
-
+    my $req = Apache::Request->new($r);#, POST_MAX => 1_000_000,
+                                       #TEMP_DIR => $temp_dir);
+    $req->temp_dir($temp_dir);
+    $req->read_limit(1_000_000);
     $req->content_type('text/plain');
 
     my $test  = $req->args('test');
@@ -38,17 +39,11 @@ sub handler {
 
     if ($test eq 'param') {
         my $table = $req->args();
-        $table->add("new_arg" => "new");
-        die "Can't find new_arg" unless $table->{new_arg} eq "new";
-        $table->{new_arg} = 1;
-        die "Can't find newer arg" unless $table->get("new_arg") == 1;
-        delete $table->{new_arg};
-        die "New arg still exists after deletion" if exists $table->{new_arg};
         my $value = $req->param('value');
         $req->print($value);
     }
     elsif ($test eq 'slurp') {
-        my ($upload) = values %{$req->upload};
+        my ($upload) = $req->upload;#values %{$req->upload};
         $upload->slurp(my $data);
         if ($upload->size != length $data) {
             $req->print("Size mismatch: size() reports ", $upload->size,
@@ -146,8 +141,8 @@ sub handler {
             my $upload = $@->upload('HTTPUPLOAD'); # no exception this time!
             die "args test failed" unless $args eq $test;
             $args = $@->args;
-            $args->add("foo" => "bar1");
-            $args->add("foo" => "bar2");
+#            $args->add("foo" => "bar1");
+#            $args->add("foo" => "bar2");
             my $test_string = "";
 
             # MAGIC ITERATOR TESTS
