@@ -1,0 +1,7 @@
+ScriptAlias /cgi-bin/ "@ServerRoot@/cgi-bin/"
+
+<Directory "@ServerRoot@/cgi-bin">
+   AllowOverride None
+   Options None
+</Directory>
+
