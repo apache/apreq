@@ -89,6 +89,8 @@ typedef struct apreq_param_t {
 #define apreq_value_to_param(ptr) apreq_attr_to_type(apreq_param_t, v, ptr)
 #define apreq_param_name(p)  ((p)->v.name)
 #define apreq_param_value(p) ((p)->v.data)
+#define apreq_param_brigade(p)((p)->bb)
+#define apreq_param_info(p) ((p)->info)
 
 APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
                                                 const char *name, 
@@ -102,6 +104,7 @@ typedef struct apreq_request_t {
     apr_table_t        *body;         /* post data */
     apreq_parser_t     *parser;
     apreq_cfg_t        *cfg;
+    apr_pool_t         *pool;
     void               *env;
 } apreq_request_t;
 
@@ -181,8 +184,8 @@ APREQ_DECLARE(apr_status_t)apreq_parse_request(apreq_request_t *req,
 APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
                                            const apreq_request_t *req);
 
-APREQ_DECLARE(const apreq_param_t *) apreq_upload(const apreq_request_t *req,
-                                                  const char *key);
+APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
+                                            const char *key);
 
 
 

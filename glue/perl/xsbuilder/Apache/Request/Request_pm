@@ -4,6 +4,9 @@ use Apache2;
 use APR;
 use APR::Table;
 
+package Apache::Upload::Table;
+use base 'APR::Table';
+
 package Apache::Request::Table;
 use base 'APR::Table';
 

@@ -14,13 +14,12 @@
 #   data[1]
 #</apreq_value_t>
 
-<apreq_param_t MODULE=Apache::Request>
+!<apreq_param_t MODULE=Apache::Request>
 !  charset
-!  language
-   info
-   bb
+!   info
+!   bb
 !   v
-</apreq_param_t>
+!</apreq_param_t>
 
 <apreq_request_t MODULE=Apache::Request>
 !   args

@@ -4,6 +4,7 @@
 #include "apreq.h"
 #include "apr_tables.h"
 #include "apr_buckets.h"
+#include "apr_file_io.h"
 
 #ifdef  __cplusplus
 extern "C" {

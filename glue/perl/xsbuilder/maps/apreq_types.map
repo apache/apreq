@@ -12,7 +12,7 @@ struct apr_bucket_brigade   | APR::Brigade
 #struct apr_hash_t           | APR::Hash
 #apr_hash_index_t            | APR::HashIndex
 
-struct apreq_param_t        | Apache::Request::Param    | T_APREQ_PARAM
+struct apreq_param_t        | Apache::Upload
 struct apreq_request_t      | Apache::Request           | T_APREQ_REQUEST
 struct apreq_jar_t          | Apache::Cookie::Jar       | T_APREQ_JAR
-struct apreq_cookie_t       | Apache::Cookie            | T_APREQ_COOKIE
+struct apreq_cookie_t       | Apache::Cookie

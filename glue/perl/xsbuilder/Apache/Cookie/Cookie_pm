@@ -34,9 +34,9 @@ sub new {
 sub fetch {
     my $self = shift;
     my $jar = $self->jar(@_);
-    Dump($jar->cookies);
+    Dump(scalar $jar->cookie);
     Dump($jar->get("apache"));
-    return wantarray ? %{$jar->cookies} : $jar->cookies;
+    return wantarray ? %{scalar $jar->cookie} : $jar->cookie;
 }
 
 sub freeze {

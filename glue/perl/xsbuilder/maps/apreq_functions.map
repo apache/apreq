@@ -4,14 +4,25 @@ MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
  apreq_request | apreq_xs_request | const char *:class, void *:env, const char *:qs=NULL
  apreq_parse_request
  apreq_params
- apreq_param | apreq_xs_param |
+ apreq_param | apreq_xs_request_get |
 
 MODULE=Apache::Request PACKAGE=Apache::Request
  DEFINE_env     | apreq_xs_request_env |
+ DEFINE_args    | apreq_xs_args_get |
+ DEFINE_body    | apreq_xs_body_get |
+ DEFINE_upload  | apreq_xs_upload_get |
 
 MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Table_
- DEFINE_get     | apreq_xs_table_table_get |
- DEFINE_FETCH   | apreq_xs_table_table_get |
+ DEFINE_get     | apreq_xs_table_get |
+ DEFINE_FETCH   | apreq_xs_table_get |
+
+MODULE=Apache::Request PACKAGE=Apache::Upload PREFIX=Apache__Upload_
+apr_bucket_brigade *:DEFINE_bb  | apreq_param_brigade(apreq_xs_sv2(param,sv))  | SV *:sv
+apr_table_t *:DEFINE_info | apreq_param_info(apreq_xs_sv2(param,sv)) | SV *:sv
+
+MODULE=Apache::Request PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table_
+ DEFINE_get     | apreq_xs_upload_table_get |
+ DEFINE_FETCH   | apreq_xs_upload_table_get |
 
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie
 # DEFINE_jar        | apreq_xs_jar | 
@@ -28,13 +39,12 @@ MODULE=Apache::Cookie PACKAGE=Apache::Cookie
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar PREFIX=Apache__Cookie__Jar_
  DEFINE_new        | apreq_xs_jar           |
  DEFINE_env        | apreq_xs_jar_env       |
- DEFINE_cookie     | apreq_xs_jar_table_get |
- DEFINE_get        | apreq_xs_jar_table_get |
- DEFINE_cookies    | apreq_xs_jar_cookies   |
+ DEFINE_cookie     | apreq_xs_jar_get |
+ DEFINE_get        | apreq_xs_jar_get |
 
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table PREFIX=Apache__Cookie__Table_
- DEFINE_get        | apreq_xs_table_table_get |
- DEFINE_FETCH      | apreq_xs_table_table_get |
+ DEFINE_get        | apreq_xs_table_get |
+ DEFINE_FETCH      | apreq_xs_table_get |
 
 
 MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_

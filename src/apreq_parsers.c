@@ -739,21 +739,11 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
             return rc;
     }
     else {
-        int tries = 100;
-        char *tmp;
-           
-        /* XXX: this should hopefully be replace with currently
-         * non-existing apr_tmp_dir_get() */
-        while (--tries > 0) {
-            if ( (tmp = tempnam(NULL, "apreq")) == NULL ) {
-                continue;
-            }
-            path = apr_pstrcat(pool, tmp, "XXXXXX", NULL);
-            free(tmp);
-            break;               
-        }
-        if (path == NULL)
+        char *tmp = tempnam(NULL, "apreq");
+        if (tmp == NULL)
             return APR_EGENERAL;
+        path = apr_pstrcat(pool, tmp, "XXXXXX", NULL);
+        free(tmp);
     }
     
     return apr_file_mktemp(fp, path, 

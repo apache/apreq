@@ -1,24 +1,30 @@
-#define apreq_xs_jar_sv2table(sv) (apreq_xs_sv2(jar, sv)->cookies)
-#define apreq_xs_jar2cookies(j) j->cookies
+#define apreq_xs_jar2cookie(j) j->cookies
 #define apreq_xs_jar2env(j) j->env
 
-#define apreq_xs_table2sv(t) apreq_xs_table_c2perl(aTHX_ t, env, \
-                                                   "Apache::Cookie::Table")
 #define apreq_xs_cookie2sv(c,class) apreq_xs_2sv(c,class)
+//#define apreq_xs_jar2sv(j,class) apreq_xs_
 
 APREQ_XS_DEFINE_ENV(cookie);
 APREQ_XS_DEFINE_ENV(jar);
-
-/* jar */
-
-APREQ_XS_DEFINE_OBJECT(jar);
-APREQ_XS_DEFINE_TABLE(jar, cookies);
-APREQ_XS_DEFINE_GET(jar, cookie, "Apache::Cookie");
-
-/* cookie */
-
 APREQ_XS_DEFINE_MAKE(cookie);
-APREQ_XS_DEFINE_GET(table, cookie, "Apache::Cookie");
+APREQ_XS_DEFINE_OBJECT(jar);
+
+/* GET macros */
+#define S2C(s)  apreq_value_to_cookie(apreq_strtoval(s))
+#define apreq_xs_jar_push(sv,d,key)   apreq_xs_push(jar,sv,d,key)
+#define apreq_xs_table_push(sv,d,key) apreq_xs_push(table,sv,d,key)
+#define apreq_xs_jar_sv2table(sv) (apreq_xs_sv2(jar, sv)->cookies)
+#define apreq_xs_table_sv2table(sv) apreq_xs_sv2table(sv)
+#define apreq_xs_jar_cookie(sv,k) \
+                S2C(apr_table_get(apreq_xs_jar_sv2table(sv),k))
+#define apreq_xs_table_cookie(sv,k) \
+                S2C(apr_table_get(apreq_xs_table_sv2table(sv),k))
+
+#define TABLE_PKG   "Apache::Cookie::Table"
+#define COOKIE_PKG  "Apache::Cookie"
+
+APREQ_XS_DEFINE_GET(jar,   TABLE_PKG, cookie, COOKIE_PKG, 1);
+APREQ_XS_DEFINE_GET(table, TABLE_PKG, cookie, COOKIE_PKG, 1);
 
 
 static XS(apreq_xs_cookie_as_string)

@@ -108,6 +108,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req->cfg      = NULL;
         req->body     = NULL;
         req->parser   = apreq_parser(env, NULL);
+        req->pool     = p;
 
         /* XXX need to install copy/merge callbacks for apreq_param_t */
 
@@ -129,6 +130,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req->cfg      = NULL;
         req->body     = NULL;
         req->parser   = apreq_parser(env, NULL);
+        req->pool     = p;
         /* XXX need to install copy/merge callbacks for apreq_param_t */ 
     }
 
@@ -319,7 +321,7 @@ APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
 static int upload_get(void *data, const char *key, const char *val)
 {
     const apreq_param_t *p = apreq_value_to_param(apreq_strtoval(val));
-    const apreq_param_t **q = data;
+    apreq_param_t **q = data;
     if (p->bb) {
         *q = p;
         return 1; /* upload found, stop */
@@ -328,10 +330,10 @@ static int upload_get(void *data, const char *key, const char *val)
         return 0; /* keep searching */
 }
 
-APREQ_DECLARE(const apreq_param_t *) apreq_upload(const apreq_request_t *req,
-                                                  const char *key)
+APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
+                                            const char *key)
 {
-    const apreq_param_t *param = NULL;
+    apreq_param_t *param = NULL;
     if (req->body == NULL)
         return NULL;
     apr_table_do(upload_get, &param, req->body, key, NULL);
