@@ -131,16 +131,6 @@ typedef FILE * ApreqInputStream;
 
 #endif /*PerlIO*/
 
-/* PerlLIO stuff that does not belong, but might be needed anyway
- *
- *#define PerlLIO_dup(f)   		dup((f)) 
- *#define PerlLIO_close(f) 		close((f)) 
- *#define PerlLIO_fileno(f) 		fileno((f)) 
- *#define PerlLIO_fdopen(f) 		fdopen((f)) 
- *#define PerlLIO_seek(f) 		seek((f)) 
- *
- */
-
 static char *r_keys[] = { "_r", "r", NULL };
 
 static SV *r_key_sv(SV *in)
@@ -193,9 +183,12 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
 {
     UploadHook *hook = (UploadHook *)ptr;
 
-    if (!(upload->fp || ApacheRequest_tmpfile(upload->req, upload))) {
+#ifdef dTHX
+    dTHX;  /* crude 5005thread support */
+#endif
+
+    if (!(upload->fp || ApacheRequest_tmpfile(upload->req, upload)))
         return -1; /* error */
-    }
 
     {
     	SV *sv;
@@ -226,9 +219,8 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
     	LEAVE;
     }
 
-    if (SvTRUE(ERRSV)) {
+    if (SvTRUE(ERRSV))
         return -1;
-    }
 
     return PerlIO_write(PerlIO_importFILE(upload->fp,0), buf, len);
 }
@@ -473,9 +465,8 @@ ApacheRequest_upload(req, sv=Nullsv)
 
 	if (name) {
 	    uptr = ApacheUpload_find(req->upload, name);
-	    if (!uptr) {
+	    if (!uptr)
 		XSRETURN_UNDEF;
-	    }
 	}
 	else {
 	    uptr = req->upload;
@@ -483,9 +474,8 @@ ApacheRequest_upload(req, sv=Nullsv)
 	upload_push(uptr);
     }
     else {
-	for (uptr = req->upload; uptr; uptr = uptr->next) {
+	for (uptr = req->upload; uptr; uptr = uptr->next)
 	    upload_push(uptr);
-	}
     }
 
 char *
@@ -568,9 +558,9 @@ ApacheUpload_info(upload, key=NULL)
     CODE:
     if (key) {
 	const char *val = ApacheUpload_info(upload, key);
-	if (!val) {
+	if (!val)
 	    XSRETURN_UNDEF;
-	}
+
 	ST(0) = sv_2mortal(newSVpv((char *)val,0));
     }   
     else {

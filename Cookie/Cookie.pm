@@ -6,7 +6,7 @@ use Apache::Table ();
 
 {
     no strict;
-    $VERSION = '0.01';
+    $VERSION = '1.0';
     __PACKAGE__->mod_perl::boot($VERSION);
 }
 
@@ -139,6 +139,8 @@ Get or set the secure flag for the cookie:
 =item RFC 2964-5 are not fully implemented.
 
 =item C<value> should also accept a hash ref as argument.
+
+=item Reportedly does not run (linking problem?) on Apple's OSX
 
 =back
 

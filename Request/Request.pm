@@ -6,7 +6,7 @@ use Apache::Table ();
 
 {
     no strict;
-    $VERSION = '0.3301';
+    $VERSION = '1.0';
     @ISA = qw(Apache);
     __PACKAGE__->mod_perl::boot($VERSION);
 }

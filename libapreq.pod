@@ -333,6 +333,18 @@ Returns a string version of the cookie:
 
 =back
 
+=head1 BUGS
+
+=over 4
+
+=item * multi-select file uploads are currently unsupported
+
+=item * header-folding is unsupported for multipart/form-data
+
+=item * newer XML-based MIME-encodings are not supported
+
+=back
+
 =head1 CREDITS
 
 This library is based on Perl modules by Lincoln Stein.
