@@ -209,6 +209,23 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
     return c->req;
 }
 
+APR_INLINE
+static void apreq_filter_make_context(ap_filter_t *f)
+{
+    request_rec *r = f->r;
+    apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
+    struct filter_ctx *ctx = apr_palloc(r->pool, sizeof *ctx);
+    f->ctx      = ctx;
+    ctx->bb     = apr_brigade_create(r->pool, alloc);
+    ctx->spool  = apr_brigade_create(r->pool, alloc);
+    ctx->bytes_seen = 0;
+    ctx->status = APR_INCOMPLETE;
+    ctx->mode = AP_MODE_SPECULATIVE;
+
+    apreq_log(APREQ_DEBUG 0, r, 
+              "apreq filter context created." );    
+}
+
 /**
  * Reads data directly into the parser.
  *@bug  This function is badly broken.  It needs to use
@@ -226,27 +243,13 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
 
     if (f == NULL)
         return APR_NOTFOUND;
+    if (f->ctx == NULL)
+        apreq_filter_make_context(f);
     ctx = f->ctx;
 
     return ap_get_brigade(f, NULL, ctx->mode, block, bytes);
 }
 
-APR_INLINE
-static void apreq_filter_make_context(ap_filter_t *f)
-{
-    request_rec *r = f->r;
-    apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
-    struct filter_ctx *ctx = apr_palloc(r->pool, sizeof *ctx);
-    f->ctx      = ctx;
-    ctx->bb     = apr_brigade_create(r->pool, alloc);
-    ctx->spool  = apr_brigade_create(r->pool, alloc);
-    ctx->bytes_seen = 0;
-    ctx->status = APR_INCOMPLETE;
-    ctx->mode = AP_MODE_SPECULATIVE;
-
-    apreq_log(APREQ_DEBUG 0, r, 
-              "apreq filter context created." );    
-}
 
 APR_INLINE
 static void apreq_filter_relocate(ap_filter_t *f)
