@@ -189,7 +189,7 @@ static APR_INLINE apr_status_t get_pair(const char **data,
     *n = d;
 
     while( *d != '=' && !apr_isspace(*d) )
-        if (*d++ == 0)  /*error: no '=' sign */
+        if (*d++ == 0)  /*error: no '=' sign detected */
             return APR_EGENERAL;
 
     *nlen = d - *n;
@@ -209,27 +209,30 @@ static APR_INLINE apr_status_t get_pair(const char **data,
             goto pair_result;
 
         case '\\':
-            if (d[1])
-                ++d;
-            break;
+            if (*++d)
+                break;
+            else
+                return APR_EGENERAL; /* shouldn't end on a sour note */                
 
         case '"':
             in_quotes = ! in_quotes;
+
         }
     }
 
  pair_result:
 
-    *data = d;
     *vlen = d - *v;
 
-    /* shouldn't still be in_quotes */
+    if (in_quotes)
+        return APR_EGENERAL;
 
-    return in_quotes ? APR_EGENERAL : APR_SUCCESS;
+    *data = d;
+    return APR_SUCCESS;
 }
 
 APREQ_DECLARE(apreq_jar_t *) apreq_jar_parse(void *ctx, 
-                                             const char *d)
+                                             const char *data)
 {
     apr_pool_t *p = apreq_env_pool(ctx);
 
@@ -237,20 +240,20 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar_parse(void *ctx,
     apreq_jar_t *j = NULL;
     apreq_cookie_t *c;
 
+    const char *origin;
     const char *name, *value; 
     apr_ssize_t nlen, vlen;
 
-
     /* initialize jar */
     
-    if (d == NULL) {
+    if (data == NULL) {
         /* use the environment's cookie data */
 
         /* fetch ctx->jar (cached jar) */
-        if ( apreq_env_jar(ctx, &j) == APR_SUCCESS && j != NULL)
+        if ( apreq_env_jar(ctx, &j) == APR_SUCCESS && j != NULL )
             return j;
         
-        d = apreq_env_cookie(ctx);
+        data = apreq_env_cookie(ctx);
         j = apreq_table_make(apreq_env_pool(ctx), APREQ_DEFAULT_NELTS);
 
         /* XXX: potential race condition here 
@@ -258,63 +261,71 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar_parse(void *ctx,
 
         apreq_env_jar(ctx,&j);      /* set (cache) ctx->jar */
 
-        if (d == NULL)
+        if (data == NULL)
             return j;
     }
     else {
         j = apreq_table_make(p, APREQ_DEFAULT_NELTS);
     }
 
+    origin = data;
+
 #ifdef DEBUG
-    apreq_log(APREQ_DEBUG(ctx), "parsing cookie data: %s",d);
+    apreq_debug(ctx, "parsing cookie data: %s", data);
 #endif
 
 
     /* parse d */
 
- parse_header:
+ parse_cookie_header:
 
     c = NULL;
     version = NETSCAPE;
 
-    while (apr_isspace(*d))
-        ++d;
+    while (apr_isspace(*data))
+        ++data;
 
     /* XXX cheat: assume "$..." => "$Version" => RFC Cookie header */
 
-    if (*d == '$') { 
+    if (*data == '$') { 
         version = RFC;
-        while (*d && !apr_isspace(*d))
-            ++d;
+        while (*data && !apr_isspace(*data))
+            ++data;
     }
 
     for (;;) {
 
-        while (*d == ';' || apr_isspace(*d))
-            ++d;
+        while (*data == ';' || apr_isspace(*data))
+            ++data;
 
-        switch (*d) {
+        switch (*data) {
 
         case 0:
             return j;
 
         case ',':
-            ++d;
-            goto parse_header;
+            ++data;
+            goto parse_cookie_header;
 
         case '$':
             if ( c == NULL || version == NETSCAPE ||
-                 get_pair(&d, &name, &nlen, &value, &vlen) != APR_SUCCESS )
-                return j; /* XXX: log error? */
-
+                 get_pair(&data, &name, &nlen, &value, &vlen) != 
+                 APR_SUCCESS ) 
+            {
+                apreq_warn(ctx, "b0rked Cookie segment: %s", data);
+                return j;
+            }
             apreq_cookie_attr(c, apr_pstrmemdup(p, name, nlen),
                                  apr_pstrmemdup(p, value, vlen));
             break;
 
         default:
-            if ( get_pair(&d, &name, &nlen, &value, &vlen) != APR_SUCCESS )
+            if ( get_pair(&data, &name, &nlen, &value, &vlen) 
+                 != APR_SUCCESS ) 
+            {
+                apreq_warn(ctx, "Bad Cookie segment: %s", data);
                 return j; /* XXX: log error? */
-
+            }
             c = apreq_cookie_make(ctx, version, name, nlen, value, vlen);
             apreq_jar_add(j, c);
 
@@ -375,7 +386,7 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
      * just for certainty though.
      */
 
-    strcpy(f, c->time.max_age >= 0 ? "; max_age=%ld" : "%.0s");
+    strcpy(f, c->time.max_age >= 0 ? "; max-age=%ld" : "%.0s");
 
     f += strlen(f);
 
