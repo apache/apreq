@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/06/22 15:34:43 $]
+Last modified at [$Date: 2003/06/27 16:33:20 $]
 
      2.0.0  in development
 
@@ -15,11 +15,12 @@ CURRENT RELEASE NOTES:
 
 RELEASE SHOWSTOPPERS:
 
-    * Missing API components: 
+    * Missing Perl API components: 
 
-        1. Key safety features ("disable uploads", "max body", "temp dir",
-           etc.) are not fully unimplemented.
-
+        1. What should $req->parse do?
+        2. How should we encode/decode $cookie->value?
+        3. What about CGI?  We can use import() to autoload 
+           an environment if none exists, but should we?
 
 CURRENT VOTES:
 
@@ -34,14 +35,6 @@ TODO:
       - doxygen for C API (header comments).
       - perldoc for Perl glue (pod).
     
-
-    * Populate the glue/ directory.
-
-      - Improve test suite to ensure all glue/perl/t tests pass.
-      - ExtUtils::XSBuilder framework for glue/perl is in place.
-        Now perl developers should be able to build & compile
-        Request.xs & Cookie.xs.
-
     * Add XForms logic to the mfd parser.
 
     * symbol exports files:
@@ -53,14 +46,8 @@ TODO:
       and Apache::Request don't need to be linked against mod_apreq
       to resolve missing apreq_env* symbols. 
 
-    * perl ../build/test_config.pl -apxs ...  
-      ignores the command-line (apxs) arguments on some platforms.
-      This prevents the env/ tests from building on those systems.
-
 
 OPEN ISSUES:
-
-    * Documentation system.
 
     * Should we bundle an apr-based "application/xml" parser?  
       If so, how should we parse the xml data into an apr_table?
