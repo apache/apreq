@@ -2,6 +2,10 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.15 - July 13, 2003
+
+Experimental support for SFIO is withdrawn.
+
 =item 1.14 - April 30, 2003
 
 Add documentation for subclassing Apache::Request. [Steve Hay]
