@@ -2,7 +2,7 @@ Revision history for Perl extension Apache::Request.
 
 =over 4
 
-=item 0.31
+=item 0.31 - July 2, 1999
 
 CGI.pm 2.53's path/domain defaults will be used with -DDEFINE=CGI_253
 
