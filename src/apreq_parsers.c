@@ -751,10 +751,11 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 #define MFD_ERROR   -1
 
     if (parser->v.size == 0) {
-        const char *bdry, *ct = apreq_env_content_type(req->env);
+        const char *bdry, *ct;
         apr_size_t blen;
         apr_status_t s;
 
+        ct = apreq_env_content_type(req->env);
         memcpy(ctx->bdry, CRLF "--", 4);
 
         s = nextval(&ct, "boundary", &bdry, &blen);
