@@ -145,7 +145,7 @@ void at_ok(at_t *t, int is_ok, const char *label, const char *file, int line)
 
     if (!is_ok && is_fatal) {
         while (t->current++ < t->plan) {
-            snprintf(buf, 256, "not ok %d # skipped: aborting test %s",
+            apr_snprintf(buf, 256, "not ok %d # skipped: aborting test %s",
                      t->prior + t->current, t->name);
             at_report(t, buf);
         }
@@ -228,7 +228,7 @@ static apr_status_t at_report_local_write(at_report_t *ctx, const char *msg)
         AT->fatal = q->saved_fatal;
         apr_pool_cleanup_kill(q->pool, q, report_local_cleanup);
         while (AT->current++ < AT->plan) {
-            snprintf(buf, 256, "not ok %d # skipped: aborting test %s",
+            apr_snprintf(buf, 256, "not ok %d # skipped: aborting test %s",
                      AT->prior + AT->current, AT->name);
             at_report(AT, buf);
         }
