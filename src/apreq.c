@@ -407,9 +407,11 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, struct iovec *v, int nelts,
 
     *bytes_written = 0;
     for (n = 0; n < nelts; ++n) {
-        apr_size_t slen = v[n].iov_len;
-        apr_size_t dlen;
+        apr_size_t slen, dlen;
 
+    start_decodev:
+
+        slen = v[n].iov_len;
         switch (status = url_decode(d,&dlen,v[n].iov_base, &slen)) {
 
         case APR_SUCCESS:
@@ -428,10 +430,7 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, struct iovec *v, int nelts,
             memcpy(d + dlen, v[n].iov_base, v[n].iov_len);
             v[n].iov_len += dlen;
             v[n].iov_base = d;
-
-            status = apreq_decodev(d, v + n, nelts - n, &dlen);
-            *bytes_written += dlen;
-            return status;
+            goto start_decodev;
 
         default:
             *bytes_written = dlen;
