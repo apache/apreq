@@ -6,7 +6,7 @@ Instructions for the httpd-apreq Release Manager (RM)
         % perl Makefile.PL
         % make dist
 
-   This will generate a libapreq-1.X.tar.gz candidate in the 
+   This will generate a libapreq-1.xx.tar.gz candidate in the 
    current directory.   You should keep this source tree
    intact to generate the final release.
 
@@ -33,37 +33,54 @@ Instructions for the httpd-apreq Release Manager (RM)
 5. The candidate is ok. Now return to the original source tree
    and edit ./Changes:
 
-   =item 1.X - <Today's Date>
+   =item 1.34 - <Today's Date>
 
-   libapreq-1.X released.
+   libapreq-1.34 released.
 
 6.  Tag the tree, s/./_/g in the version number, and roll the release.
 
-    % cvs tag v1_X
+    % svn copy . https://svn.apache.org/repos/asf/httpd/apreq/tags/v1_34
     % make dist
 
 7. Test the release package, repeating step 2.  If all tests pass,
    sign it via gpg:
 
-     % gpg --detach-sign --armor libapreq-1.X.tar.gz
+     % gpg --detach-sign --armor libapreq-1.34.tar.gz
 
    or pgp:
 
-     % pgp -sba libapreq-1.X.tar.gz
+    unix50i1b: % pgps -b --armor libapreq-1.34.tar.gz
+    other:     % pgp -sba libapreq-1.34.tar.gz
 
 8. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
-    % scp libapreq-1.X.tar.gz* \
+    % scp libapreq-1.34.tar.gz* \
       <username>@www.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
-   Ask another developer to confirm the uploaded signature is ok.
+   Ask another developer to confirm the uploaded signature is ok 
 
-    % gpg --verify libapreq-1.X.tar.gz.asc
-    % pgp libapreq-1.X.tar.gz.asc
+    ---------------------------------------------------
+    Subject: please verify sig of libapreq-1.34.tar.gz
+    [Name], could you please verify the sig:
 
-   Check that your public key is among those listed in the
+    http://www.apache.org/dist/httpd/libapreq/libapreq-1.34.tar.gz
+    http://www.apache.org/dist/httpd/libapreq/libapreq-1.34.tar.gz.asc
+
+    Thanks. 
+
+    via gpg:
+
+    % gpg --verify libapreq-1.34.tar.gz.asc
+
+    or pgp:
+
+    unix50i1b: % pgpv libapreq-1.34.tar.gz.asc
+    other:     % pgp libapreq-1.34.tar.gz.asc
+
+    Check that your public key is among those listed in the
    /www/www.apache.org/dist/httpd/KEYS file.
+    ---------------------------------------------------
 
 9. Upload the package to CPAN. Doublecheck that the md5 checksum
    received from PAUSE is correct.
@@ -74,7 +91,32 @@ Instructions for the httpd-apreq Release Manager (RM)
 
 11. Post a final announcement to the modperl@ and apreq-dev@ lists:
 
-        Subject: [ANNOUNCE] libapreq 1.X release
+        Subject: [ANNOUNCE] libapreq 1.34 release
 
     Include the md5 signature in the announcement, as well as
     a list of the latest Changes (since the previous release).
+
+12. Prepare for the next cycle
+
+  a. increment version in Request/Request.pm
+
+  b. edit ./Changes:
+     - start a new item with incremented version + '-dev'
+
+  =item 1.35-dev
+
+  c. add a release entry in STATUS
+
+  d. update this file versions to make it easy to copy-n-paste things
+    on the next release:
+
+   perl -pi -e 's/\.35/\.35/g' RELEASE
+   perl -pi -e 's/_34/_35/g'   RELEASE
+   perl -pi -e 's/\.34/\.35/g' RELEASE
+
+    now reload this file and bump up the last number of the first
+    two commands.
+
+  e. commit the changed files
+
+     % svn ci Changes Request/Request.pm STATUS RELEASE
