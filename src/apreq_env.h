@@ -1,12 +1,11 @@
 #ifndef APREQ_ENV_H
 #define APREQ_ENV_H
 
+#include "apreq.h"
+
 #ifdef  __cplusplus
  extern "C" {
 #endif 
-
-#include "apreq.h"
-#include "apr_buckets.h"
 
 #ifdef HAVE_SYSLOG
 #include <syslog.h>
