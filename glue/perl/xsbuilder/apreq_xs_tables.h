@@ -106,12 +106,13 @@ static int apreq_xs_table_keys(void *data, const char *key,
 #endif
 
     dSP;
-
-    if (key)
-        XPUSHs(sv_2mortal(newSVpv(key,0)));
-    else
-        XPUSHs(&PL_sv_undef);
-
+    SV *sv = newSVpv(key,0);
+#if WRAP_TABLE_DO_INSTEAD
+    SvUPGRADE(sv, SVt_PVMG);
+    sv_magic(sv, Nullsv, PERL_MAGIC_ext, Nullch, -1);
+    SvMAGIC(sv)->mg_ptr = (void *)apreq_strtoval(val);
+#endif
+    XPUSHs(sv_2mortal(sv));
     PUTBACK;
     return 1;
 }
@@ -190,6 +191,8 @@ static XS(apreq_xs_##attr##_get)                                        \
     case G_ARRAY:                                                       \
         PUTBACK;                                                        \
         apreq_xs_##attr##_push(obj, &d, key);                           \
+        if (items == 1)                                                 \
+            SvCUR(obj) = 0;                                             \
         break;                                                          \
                                                                         \
     case G_SCALAR:                                                      \
@@ -199,6 +202,24 @@ static XS(apreq_xs_##attr##_get)                                        \
                 XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class,obj)));     \
             PUTBACK;                                                    \
             break;                                                      \
+        }                                                               \
+        else if (SvCUR(obj) > 0) {                                      \
+            const apr_array_header_t *arr = apr_table_elts(             \
+                                   apreq_xs_##attr##_sv2table(obj));    \
+            apr_table_entry_t *te = (apr_table_entry_t *)arr->elts;     \
+                                                                        \
+            if (SvCUR(obj) <= arr->nelts                                \
+                && strcasecmp(key, te[SvCUR(obj)-1].key) == 0)          \
+            {                                                           \
+                RETVAL = apreq_value_to_##type(                         \
+                               apreq_strtoval(te[SvCUR(obj)-1].val));   \
+                if (COND) {                                             \
+                    XPUSHs(sv_2mortal(apreq_xs_##type##2sv(             \
+                                          RETVAL,subclass,obj)));       \
+                    PUTBACK;                                            \
+                    break;                                              \
+               }                                                        \
+            }                                                           \
         }                                                               \
                                                                         \
         RETVAL = apreq_xs_##attr##_##type(obj, key);                    \
@@ -212,6 +233,27 @@ static XS(apreq_xs_##attr##_get)                                        \
     apreq_xs_##attr##_error_check;                                      \
 }
 
+#define APREQ_XS_DEFINE_TABLE_NEXTKEY(attr)                             \
+static XS(apreq_xs_##attr##_NEXTKEY)                                    \
+{                                                                       \
+    dXSARGS;                                                            \
+    SV *obj;                                                            \
+    if (!SvROK(ST(0)))                                                  \
+        Perl_croak(aTHX_ "Usage: $table->NEXTKEY($prev)");              \
+    obj = apreq_xs_find_obj(aTHX_ ST(0), #attr);                        \
+    const apr_array_header_t *arr = apr_table_elts(                     \
+                                    apreq_xs_##attr##_sv2table(obj));   \
+    apr_table_entry_t *te = (apr_table_entry_t *)arr->elts;             \
+                                                                        \
+    if (items == 1)                                                     \
+        SvCUR(obj) = 0;                                                 \
+                                                                        \
+    if (SvCUR(obj) >= arr->nelts) {                                     \
+        SvCUR(obj) = 0;                                                 \
+        XSRETURN_UNDEF;                                                 \
+    }                                                                   \
+    XSRETURN_PV(te[SvCUR(obj)++].key);                                  \
+}
 
 
 #endif /* APREQ_XS_TABLES_H */

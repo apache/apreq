@@ -21,7 +21,8 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Ta
  DEFINE_STORE   | apreq_xs_table_param_set |
  DEFINE_add     | apreq_xs_table_param_add |
  DEFINE_new     | apreq_xs_table_request_make |
-
+ DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
+ DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
 
 ##########  Apache::Upload:: Functions  ##########
 
@@ -44,6 +45,8 @@ MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table
  DEFINE_STORE   | apreq_xs_table_param_set |
  DEFINE_add     | apreq_xs_table_param_add |
  DEFINE_new     | apreq_xs_table_request_make |
+ DEFINE_NEXTKEY  | apreq_xs_upload_table_NEXTKEY |
+ DEFINE_FIRSTKEY | apreq_xs_upload_table_NEXTKEY |
 
 MODULE=Apache::Upload PACKAGE=Apache::Request PREFIX=Apache__Request_
  DEFINE_upload  | apreq_xs_request_upload_get |
@@ -85,6 +88,8 @@ MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table PREFIX=Apache__Cookie__Table
  DEFINE_STORE   | apreq_xs_table_cookie_set |
  DEFINE_add     | apreq_xs_table_cookie_add |
  DEFINE_new     | apreq_xs_table_jar_make |
+ DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
+ DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
 
 
 ##########  Utility Functions  ##########

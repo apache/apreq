@@ -138,9 +138,13 @@ sub handler {
         $req->config(DISABLE_UPLOADS => 1);
         eval {my $upload = $req->upload('HTTPUPLOAD')};
         if (ref $@ eq "Apache::Request::Error") {
-            my $args = $@->args('test');
+            my $args = $@->{_r}->args('test'); # checks _r is an object ref
             my $upload = $@->upload('HTTPUPLOAD'); # no exception this time!
             $@->print("ok") if $args eq $test;
+            $args = $@->args;
+            $args->add("foo" => "bar1");
+            $args->add("foo" => "bar2");
+            warn "$a => $b" while ($a, $b) = each %$args;
         }
     }
 

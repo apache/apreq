@@ -116,15 +116,15 @@ APREQ_XS_DEFINE_OBJECT(request);
 
 #define apreq_xs_request_sv2table(sv) apreq_params(apreq_env_pool(env), \
                                         (apreq_request_t *)SvIVX(sv))
-#define apreq_xs_request_args_sv2table(sv)  ((apreq_request_t *)SvIVX(sv))->args
-#define apreq_xs_request_body_sv2table(sv)  ((apreq_request_t *)SvIVX(sv))->body
+#define apreq_xs_request_args_sv2table(sv) ((apreq_request_t *)SvIVX(sv))->args
+#define apreq_xs_request_body_sv2table(sv) ((apreq_request_t *)SvIVX(sv))->body
 #define apreq_xs_table_sv2table(sv) ((apr_table_t *)SvIVX(sv))
 #define apreq_xs_request_sv2env(sv) ((apreq_request_t *)SvIVX(sv))->env
-#define apreq_xs_request_args_sv2env(sv)    ((apreq_request_t *)SvIVX(sv))->env
-#define apreq_xs_request_body_sv2env(sv)    ((apreq_request_t *)SvIVX(sv))->env
+#define apreq_xs_request_args_sv2env(sv)   ((apreq_request_t *)SvIVX(sv))->env
+#define apreq_xs_request_body_sv2env(sv)   ((apreq_request_t *)SvIVX(sv))->env
 #define apreq_xs_table_sv2env(sv)   apreq_xs_sv2env(sv)
 
-#define apreq_xs_request_param(sv,k) apreq_param((apreq_request_t *)SvIVX(sv),k)
+#define apreq_xs_request_param(sv,k) apreq_param((apreq_request_t*)SvIVX(sv),k)
 #define apreq_xs_request_args_param(sv,k) \
                      S2P(apr_table_get(apreq_xs_request_args_sv2table(sv),k))
 #define apreq_xs_request_body_param(sv,k) \
@@ -136,6 +136,8 @@ APREQ_XS_DEFINE_TABLE_GET(request,         PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_TABLE_GET(request_args,    PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_TABLE_GET(request_body,    PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_TABLE_GET(table,           PARAM_TABLE, param, NULL, 1);
+
+APREQ_XS_DEFINE_TABLE_NEXTKEY(table);
 
 APREQ_XS_DEFINE_POOL(request);
 APREQ_XS_DEFINE_POOL(table);
@@ -217,7 +219,6 @@ static apr_status_t apreq_xs_upload_hook(APREQ_HOOK_ARGS)
     {
         apr_off_t len;
         const char *data;
-        apreq_log(APREQ_DEBUG 0, env, "looping through buckets");
 
         if (APR_BUCKET_IS_EOS(e)) {  /*last call on this upload */           
             SV *sv = ctx->bucket_data;
@@ -226,14 +227,12 @@ static apr_status_t apreq_xs_upload_hook(APREQ_HOOK_ARGS)
             ctx->bucket_data = sv;
             if (s != APR_SUCCESS)
                 return s;
-            apreq_log(APREQ_DEBUG 0, env, "upload hook saw eos bucket");
 
             break;
         }
 
         s = apr_bucket_read(e, &data, &len, APR_BLOCK_READ);
         if (s != APR_SUCCESS) {
-            apreq_log(APREQ_WARN s, env, "Can't read bucket, skipping it.");
             s = APR_SUCCESS;
             continue;
         }
@@ -295,7 +294,7 @@ static XS(apreq_xs_request_config)
                 req->parser = apreq_parser(req->env, NULL);
                 if (req->parser == NULL) {
                     Perl_warn(aTHX_ "Apache::Request::config: "
-                              "cannot disable/enable uploads (parser not found)");
+                              "cannot disable uploads (parser not found)");
                     continue;
                 }
             }
@@ -313,7 +312,8 @@ static XS(apreq_xs_request_config)
                 /* remove all disable_uploads hooks */
                 apreq_hook_t *first = req->parser->hook;
 
-                while (first != NULL && first->hook == apreq_hook_disable_uploads)
+                while (first != NULL && 
+                       first->hook == apreq_hook_disable_uploads)
                     first = first->next;
 
                 req->parser->hook = first;
@@ -331,7 +331,8 @@ static XS(apreq_xs_request_config)
             }
         }
         else if (strcasecmp(attr, "UPLOAD_HOOK") == 0) {
-            struct hook_ctx *ctx = apr_palloc(apreq_env_pool(req->env), sizeof *ctx);
+            struct hook_ctx *ctx = apr_palloc(apreq_env_pool(req->env),
+                                              sizeof *ctx);
             if (upload_hook)
                 Perl_croak(aTHX_ "Apache::Request::config: "
                            "cannot set UPLOAD_HOOK more than once");
@@ -343,9 +344,11 @@ static XS(apreq_xs_request_config)
 #ifdef USE_ITHREADS
             ctx->perl = aTHX;
 #endif
-            upload_hook = apreq_make_hook(pool, apreq_xs_upload_hook, NULL, ctx);
+            upload_hook = apreq_make_hook(pool, apreq_xs_upload_hook,
+                                          NULL, ctx);
             apreq_add_hook(req->parser, upload_hook);
-            apr_pool_cleanup_register(pool, ctx, upload_hook_cleanup, NULL);
+            apr_pool_cleanup_register(pool, ctx, 
+                                      upload_hook_cleanup, NULL);
         }
 
         else if (strcasecmp(attr, "HOOK_DATA") == 0) {
@@ -386,5 +389,6 @@ static XS(apreq_xs_request_parse)
         XSRETURN_IV(s);
 
     if (s != APR_SUCCESS)
-        APREQ_XS_THROW_ERROR(request, s, "Apache::Request::parse", "Apache::Request::Error");
+        APREQ_XS_THROW_ERROR(request, s, "Apache::Request::parse", 
+                             "Apache::Request::Error");
 }

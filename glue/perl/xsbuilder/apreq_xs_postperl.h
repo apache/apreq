@@ -141,6 +141,7 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
                                  const char *class, SV *parent)
 {
     SV *sv = (SV *)newHV();
+    /*upgrade ensures CUR and LEN are both 0 */
     SV *rv = sv_setref_pv(newSV(0), class, obj);
     if (env) {
         /* We use the old idiom for sv_magic() below,
@@ -274,7 +275,7 @@ void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func,
 #define APREQ_XS_THROW_ERROR(attr, status, func, errpkg)  do {          \
     if (!sv_derived_from(sv, errpkg)) {                                 \
         HV *hv = newHV();                                               \
-        SV *rv = sv_bless(newRV_inc(obj),SvSTASH(obj));                 \
+        SV *rv = newRV_inc(obj);                                        \
         sv_setsv(*hv_fetch(hv, "_" #attr, 2, 1), sv_2mortal(rv));       \
         apreq_xs_croak(aTHX_ hv, status, func, errpkg);                 \
     }                                                                   \

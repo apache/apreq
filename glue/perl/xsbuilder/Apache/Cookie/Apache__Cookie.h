@@ -76,6 +76,7 @@ APREQ_XS_DEFINE_POOL(table);
 APREQ_XS_DEFINE_TABLE_MAKE(jar);
 APREQ_XS_DEFINE_TABLE_METHOD_N(cookie,set);
 APREQ_XS_DEFINE_TABLE_METHOD_N(cookie,add);
+APREQ_XS_DEFINE_TABLE_NEXTKEY(table);
 
 /**
  *Returns serialized version of cookie.

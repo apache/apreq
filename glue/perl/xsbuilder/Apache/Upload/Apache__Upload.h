@@ -115,6 +115,7 @@ APREQ_XS_DEFINE_POOL(upload_table);
 APREQ_XS_DEFINE_TABLE_MAKE(request);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,add);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,set);
+APREQ_XS_DEFINE_TABLE_NEXTKEY(upload_table);
 
 APR_INLINE
 static XS(apreq_xs_upload_link)
@@ -151,20 +152,15 @@ static XS(apreq_xs_upload_link)
                           apreq_env_pool(env));
         if (s == APR_SUCCESS) {
             s = apreq_brigade_fwrite(f, &len, bb);
-            if (s != APR_SUCCESS) {
-                apreq_log(APREQ_ERROR s, env, "apreq_brigade_fwrite failed");
-                goto link_error;
-            }
-            XSRETURN_YES;
+            if (s == APR_SUCCESS)
+                XSRETURN_YES;
         }
-        else
-            goto link_error;
-    }
-    s = apr_file_name_get(&fname, f);
-    if (s != APR_SUCCESS) {
-        apreq_log(APREQ_ERROR s, env, "apr_file_name_get failed");
         goto link_error;
     }
+    s = apr_file_name_get(&fname, f);
+    if (s != APR_SUCCESS)
+        goto link_error;
+
     if (PerlLIO_link(fname, name) >= 0)
         XSRETURN_YES;
     else {
@@ -173,8 +169,6 @@ static XS(apreq_xs_upload_link)
                           apreq_env_pool(env));
         if (s == APR_SUCCESS)
             XSRETURN_YES;
-        else
-            apreq_log(APREQ_ERROR s, env, "apr_file_copy failed");
     }
 
  link_error:
@@ -210,7 +204,6 @@ static XS(apreq_xs_upload_slurp)
 
     s = apr_brigade_length(bb, 0, &len_off);
     if (s != APR_SUCCESS) {
-        apreq_log(APREQ_ERROR s, env, "apr_brigade_length failed");
         APREQ_XS_THROW_ERROR(upload, s, "Apache::Upload::slurp", 
                              "Apache::Upload::Error");
         XSRETURN_UNDEF;
@@ -228,7 +221,6 @@ static XS(apreq_xs_upload_slurp)
     SvPOK_only(ST(1));
     s = apr_brigade_flatten(bb, data, &len_size);
     if (s != APR_SUCCESS) {
-        apreq_log(APREQ_ERROR s, env, "apr_brigade_flatten failed");
         APREQ_XS_THROW_ERROR(upload, s, "Apache::Upload::slurp", 
                              "Apache::Upload::Error");
         XSRETURN_UNDEF;
@@ -261,7 +253,6 @@ static XS(apreq_xs_upload_size)
     s = apr_brigade_length(bb, 1, &len);
 
     if (s != APR_SUCCESS) {
-        apreq_log(APREQ_ERROR s, env, "apr_brigade_length failed");
         APREQ_XS_THROW_ERROR(upload, s, "Apache::Upload::size", 
                              "Apache::Upload::Error");
         XSRETURN_UNDEF;
@@ -497,27 +488,21 @@ static XS(apreq_xs_upload_tempname)
 
         s = apreq_file_mktemp(&file, apreq_env_pool(env), tmpdir);
 
-        if (s != APR_SUCCESS) {
-            apreq_log(APREQ_ERROR s, env, "apreq_file_mktemp failed");
+        if (s != APR_SUCCESS)
             goto tempname_error;
-        }
 
         s = apreq_brigade_fwrite(file, &len, bb);
 
-        if (s != APR_SUCCESS) {
-            apreq_log(APREQ_ERROR s, env, "apreq_brigade_fwrite failed");
+        if (s != APR_SUCCESS)
             goto tempname_error;
-        }
 
         last = apr_bucket_file_create(file, len, 0, bb->p, bb->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(bb, last);
     }
 
     s = apr_file_name_get(&path, file);
-    if (s != APR_SUCCESS) {
-        apreq_log(APREQ_ERROR s, env, "apr_file_name_get failed");
+    if (s != APR_SUCCESS)
         goto tempname_error;
-    }
 
     ST(0) = sv_2mortal(newSVpvn(path, strlen(path)));
     XSRETURN(1);
