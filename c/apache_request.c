@@ -58,6 +58,7 @@
 
 #include "apache_request.h"
 #include "apache_multipart_buffer.h"
+int fill_buffer(multipart_buffer *self); /* needed for mozilla hack */
 
 static void req_plustospace(char *str)
 {
@@ -381,11 +382,6 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
     multipart_buffer *mbuff;
     ApacheUpload *upload = NULL;
 
-    if (req->disable_uploads) {
-	ap_log_rerror(REQ_ERROR, "[libapreq] file upload forbidden");
-	return HTTP_FORBIDDEN;
-    }
-
     if (!ct) {
 	ap_log_rerror(REQ_ERROR, "[libapreq] no Content-type header!");
 	return HTTP_INTERNAL_SERVER_ERROR;
@@ -447,6 +443,12 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 		continue;
 	    }
 	    if (!param) continue; /* shouldn't happen, but just in case. */
+
+            if (req->disable_uploads) {
+                ap_log_rerror(REQ_ERROR, "[libapreq] file upload forbidden");
+                return HTTP_FORBIDDEN;
+            }
+
 	    ap_table_add(req->parms, param, filename);
 
 	    if (upload) {
@@ -465,6 +467,11 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 	    upload->info = header;
 	    upload->filename = ap_pstrdup(req->r->pool, filename);
 	    upload->name = ap_pstrdup(req->r->pool, param);
+
+            /* mozilla empty-file (missing CRLF) hack */
+            fill_buffer(mbuff);
+            if(strEQ(mbuff->buf_begin, mbuff->boundary))
+                continue;
 
 	    while ((blen = multipart_buffer_read(mbuff, buff, sizeof(buff)))) {
 		if (req->upload_hook != NULL) {
