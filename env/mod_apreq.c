@@ -370,6 +370,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     req = apreq_request(r, NULL);
 
     if (bb != NULL) {
+
         if (!ctx->saw_eos) {
             apr_bucket_brigade *tmp;
             rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
@@ -380,6 +381,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             }
             tmp = apreq_copy_brigade(bb);
             APR_BRIGADE_CONCAT(ctx->bb, tmp);
+            if (APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(ctx->bb)))
+                ctx->saw_eos = 1;
         }
 
         if (!APR_BRIGADE_EMPTY(ctx->spool)) {
@@ -405,6 +408,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             }
             return ctx->status;
         }
+
     }
     else if (!ctx->saw_eos) {
         /* prefetch read! */
@@ -413,8 +417,14 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         apr_bucket *last = APR_BRIGADE_LAST(ctx->spool);
         apr_size_t total_read = 0;
 
-        while (!APR_BUCKET_IS_EOS(last) && total_read < readbytes) {
+        while (total_read < readbytes) {
             apr_off_t len;
+
+            if (APR_BUCKET_IS_EOS(last)) {
+                ctx->saw_eos = 1;
+                break;
+            }
+
             rv = ap_get_brigade(f->next, tmp, mode, block, readbytes);
             if (rv != APR_SUCCESS)
                 return rv;
@@ -430,8 +440,6 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     else
         return ctx->status;
 
-    if (APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(ctx->bb)))
-        ctx->saw_eos = 1;
     ctx->status = apreq_parse_request(req, ctx->bb);
     return (ctx->status == APR_INCOMPLETE) ? APR_SUCCESS : ctx->status;
 }
