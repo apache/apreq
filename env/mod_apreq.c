@@ -376,9 +376,12 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     ap_filter_t *in;
 
     if (f != r->proto_input_filters) {
-        if (f == r->input_filters)
+        if (f == r->input_filters) {
+            cfg->f = f;
+            if (cfg->req == NULL)
+                apreq_request(r ,NULL);
             return APR_SUCCESS;
-
+        }
         for (in = r->input_filters; in != r->proto_input_filters; 
              in = in->next)
         {
@@ -389,9 +392,13 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
                         cfg->f = r->input_filters;
                     ap_remove_input_filter(f);
                 }
-                else /* move to top */
+                else {
+                    /* move to top and register it */
                     apreq_filter_relocate(f);
-
+                    cfg->f = f;
+                    if (cfg->req == NULL)
+                        apreq_request(r ,NULL);
+                }
                 return APR_SUCCESS;
             }
         }
@@ -459,7 +466,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     if (bb != NULL) {
 
         if (!ctx->saw_eos) {
-
+ 
             if (ctx->status == APR_INCOMPLETE) {
                 apr_off_t len;
                 rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
