@@ -67,7 +67,8 @@ END
 
 print $make $_ while (<DATA>);
 
-my $apxs = which('apxs');
+my $apxs_trial = catfile $apache, 'bin', 'apxs.bat';
+my $apxs = (-e $apxs_trial) ? $apxs_trial : which('apxs');
 unless ($apxs) {
     $apxs = fetch_apxs() ? which('apxs') : '';
 }
@@ -371,7 +372,7 @@ END
         warn "chdir to $dir failed: $!";
         return;
     };
-    my @args = ($^X, 'Configure.pl');
+    my @args = ($^X, 'Configure.pl', "-with-apache2=$apache");
     print "@args\n\n";
     system(@args) == 0 or do {
          warn "system @args failed: $?";
