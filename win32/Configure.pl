@@ -4,6 +4,7 @@ use warnings;
 use Getopt::Long;
 require File::Spec;
 require Win32;
+use ExtUtils::MakeMaker;
 use File::Basename;
 my ($apache, $debug, $help, $no_perl);
 my $result = GetOptions( 'with-apache=s' => \$apache,
@@ -13,12 +14,10 @@ my $result = GetOptions( 'with-apache=s' => \$apache,
                        );
 usage() if $help;
 
-$apache ||= search();
-check($apache);
-$apache =~ s!/!\\!g;
-
 my @path_ext;
 path_ext();
+$apache ||= search();
+
 my $doxygen = which('doxygen');
 my $cfg = $debug ? 'Debug' : 'Release';
 
@@ -97,7 +96,7 @@ END
 sub usage {
     print <<'END';
 
- Usage: perl Configure.pl [--with-apache=C:\Path\to\Apache] [--debug]
+ Usage: perl Configure.pl [--with-apache=C:\Path\to\Apache2] [--debug]
         perl Configure.pl --help
 
 Options:
@@ -117,23 +116,37 @@ END
 sub search {
     my $apache;
   SEARCH: {
-        for my $drive ('C' .. 'Z') {
-            for my $p ('Apache2', 'Program Files/Apache2', 
-                       'Program Files/Apache Group/Apache2') {
-                if (-d "$drive:/$p/bin") {
-                    $apache = "$drive:/$p";
+        my $candidate;
+        my $bin = which('Apache');
+        if (my $bin = which('Apache')) {
+            ($candidate = $bin) =~ s!bin$!!;
+            if (-d $candidate and check($candidate)) {
+                $apache = $candidate;
+                last SEARCH;
+            }
+        }
+        my @drives = drives();
+        last SEARCH unless (@drives > 0);
+        for my $drive (@drives) {
+            for ('Apache2', 'Program Files/Apache2',
+                 'Program Files/Apache Group/Apache2') {
+                $candidate = File::Spec->catpath($drive, $_);
+                if (-d $candidate and check($candidate)) {
+                    $apache = $candidate;
                     last SEARCH;
                 }
             }
         }
     }
-    require ExtUtils::MakeMaker;
-    ExtUtils::MakeMaker->import('prompt');
     unless (-d $apache) {
-        $apache = prompt("Where is your Apache2 installed?", $apache);
+        $apache = prompt("Please give the path to your Apache2 installation:",
+                         $apache);
     }
-    die "Can't find a suitable Apache2 directory!" unless -d $apache;
-
+    die "Can't find a suitable Apache2 installation!" 
+        unless (-d $apache and check($apache));
+    
+    $apache = Win32::GetShortPathName($apache);
+    $apache =~ s!\\!/!g;
     my $ans = prompt(qq{Use "$apache" for your Apache2 directory?}, 'yes');
     unless ($ans =~ /^y/i) {
         die <<'END';
@@ -143,8 +156,22 @@ the --with-apache=C:\Path\to\Apache2 option to specify
 the desired top-level Apache2 directory.
 
 END
+
     }
-    return Win32::GetShortPathName($apache);
+    return $apache;
+}
+
+sub drives {
+    my @drives = ();
+    eval{require Win32API::File;};
+    return map {"$_:\\"} ('C' .. 'Z') if $@;
+    my @r = Win32API::File::getLogicalDrives();
+    return unless @r > 0;
+    for (@r) {
+        my $t = Win32API::File::GetDriveType($_);
+        push @drives, $_ if ($t == 3 or $t == 4);
+    }
+    return @drives > 0 ? @drives : undef;
 }
 
 sub check {
