@@ -8,3 +8,10 @@ config.log
 config.cache
 configure
 Makefile.in
+aclocal.m4
+autom4te-2.5*.cache
+config.guess
+config.sub
+depcomp
+ltmain.sh
+missing
