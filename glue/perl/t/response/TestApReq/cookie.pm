@@ -1,7 +1,7 @@
 package TestApReq::cookie;
 
 use strict;
-use warnings;# FATAL => 'all';
+use warnings FATAL => 'all';
 
 use Apache::Request ();
 use Apache::RequestIO;
@@ -18,7 +18,6 @@ sub handler {
     my %cookies = Apache::Cookie->fetch($r);
 
     $r->content_type('text/plain');
-    warn "apache => $cookies{apache}";
     my $test = $apr->param('test');
     my $key  = $apr->param('key');
 

@@ -75,6 +75,8 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
         sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, env, 0);
 
     sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
+    SvREFCNT_dec(rv); /* corrects SvREFCNT_inc(rv) implicit in sv_magic */
+
     return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
 }
 

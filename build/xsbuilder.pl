@@ -137,8 +137,8 @@ sub parse {
 }
 
 
-
 package My::WrapXS;
+
 use base qw/ExtUtils::XSBuilder::WrapXS/;
 our $VERSION = '0.1';
 __PACKAGE__ -> $_ for @ARGV;
@@ -238,28 +238,28 @@ sub typemap_code
 {
     {
         T_APREQ_COOKIE  => {
-                            INPUT  => '$var = apreq_xs_sv2cookie($arg)',
-                            perl2c => 'apreq_xs_sv2cookie(sv)',
-                            OUTPUT => '$arg = apreq_xs_cookie2sv($var,apreq_xs_class);',
-                            c2perl => 'apreq_xs_cookie2sv(ptr,apreq_xs_class);',
+                            INPUT  => '$var = apreq_xs_sv2(cookie,$arg)',
+                            perl2c => 'apreq_xs_sv2(cookie,sv)',
+                            OUTPUT => '$arg = apreq_xs_2sv($var,"\${ntype}\");',
+                            c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
                            },
         T_APREQ_PARAM   => {
                             INPUT  => '$var = apreq_xs_sv2param($arg)',
                             perl2c => 'apreq_xs_sv2param(sv)',
-                            OUTPUT => '$arg = apreq_xs_param2sv($var,apreq_xs_class);',
-                            c2perl => 'apreq_xs_param2sv(ptr,apreq_xs_class)',
+                            OUTPUT => '$arg = apreq_xs_param2sv($var);',
+                            c2perl => 'apreq_xs_param2sv(ptr)',
                            },
         T_APREQ_REQUEST => {
-                            INPUT  => '$var = apreq_xs_sv2request($arg)',
-                            perl2c => 'apreq_xs_sv2request(sv)',
-                            OUTPUT => '$arg = apreq_xs_request2sv($var,apreq_xs_class);',
-                            c2perl => 'apreq_xs_request2sv(ptr,apreq_xs_class)',
+                            INPUT  => '$var = apreq_xs_sv2(request,$arg)',
+                            perl2c => 'apreq_xs_sv2(request,sv)',
+                            OUTPUT => '$arg = apreq_xs_2sv($var,\"${ntype}\");',
+                            c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
                            },
         T_APREQ_JAR     => {
-                            INPUT  => '$var = apreq_xs_sv2jar($arg)',
-                            perl2c => 'apreq_xs_sv2jar(sv)',
-                            OUTPUT => '$arg = apreq_xs_jar2sv($var,apreq_xs_class);',
-                            c2perl => 'apreq_xs_jar2sv(ptr,apreq_xs_class)',
+                            INPUT  => '$var = apreq_xs_sv2(jar,$arg)',
+                            perl2c => 'apreq_xs_sv2(jar,sv)',
+                            OUTPUT => '$arg = apreq_xs_2sv($var,\"${ntype}\");',
+                            c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
                            },
     }
 }
