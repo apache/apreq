@@ -136,8 +136,11 @@ You can now run
   nmake mod_apreq     - builds mod_apreq
   nmake libapreq_cgi  - builds libapreq_cgi
   nmake clean         - clean
+  nmake install       - install the C libraries
   nmake perl_glue     - build the perl glue
   nmake perl_test     - test the perl glue
+  nmake perl_install  - install the perl glue
+  nmake help          - list the nmake targets
 END
     if ($doxygen) {
 print << 'END';
@@ -373,6 +376,7 @@ NULL=nul
 CFG_HOME=$(APREQ_HOME)\win32
 LIBDIR=$(CFG_HOME)\libs
 PERLGLUE=$(APREQ_HOME)\glue\perl
+APACHE_LIB=$(APACHE)\lib
 
 ALL : "$(LIBAPREQ)"
 
@@ -398,3 +402,38 @@ PERL_TEST: $(MOD)
 !ENDIF
         $(MAKE) /nologo test
         cd $(APREQ_HOME)
+
+PERL_INSTALL: $(MOD)
+        cd $(PERLGLUE)
+!IF !EXIST("$(PERLGLUE)\Makefile")
+	$(PERL) Makefile.PL
+!ENDIF
+        $(MAKE) /nologo install
+        cd $(APREQ_HOME)
+
+INSTALL: $(LIBAPREQ)
+        cd $(LIBDIR)
+!IF EXIST("$(LIBDIR)\$(MOD).so")
+	copy "$(MOD).so" "$(APACHE)\modules\$(MOD).so"
+	copy "$(MOD).lib" "$(APACHE_LIB)\$(MOD).lib"
+!ENDIF
+!IF EXIST("$(LIBDIR)\$(LIBAPREQ).lib")
+	copy "$(LIBAPREQ).lib" "$(APACHE_LIB)\$(LIBAPREQ).lib"
+!ENDIF
+!IF EXIST("$(LIBDIR)\$(CGI).lib")
+	copy "$(CGI).lib" "$(APACHE_LIB)\$(CGI).lib"
+!ENDIF
+        cd $(APREQ_HOME)
+
+HELP:
+	@echo nmake               - builds the libapreq library
+	@echo nmake               - builds the libapreq library
+	@echo nmake test          - runs the supplied tests
+	@echo nmake mod_apreq     - builds mod_apreq
+	@echo nmake libapreq_cgi  - builds libapreq_cgi
+	@echo nmake clean         - clean
+	@echo nmake install       - install the C libraries
+	@echo nmake perl_glue     - build the perl glue
+	@echo nmake perl_test     - test the perl glue
+	@echo nmake perl_install  - install the perl glue
+	@nmake docs               - builds documents (requires doxygen)
