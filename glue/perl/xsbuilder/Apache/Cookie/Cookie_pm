@@ -58,7 +58,7 @@ EOD
         }
     }
     my $jar = $class->jar($env, @_);
-    return wantarray ? %{(scalar $jar->cookie) || {}} : $jar->cookie;
+    return wantarray ? %{(scalar $jar->cookies) || {}} : $jar->cookies;
 }
 
 sub freeze {

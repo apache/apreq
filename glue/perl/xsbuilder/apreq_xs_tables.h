@@ -137,31 +137,33 @@ static XS(apreq_xs_table_##attr##_##method)                             \
     STRLEN klen, vlen;                                                  \
     apreq_##attr##_t *RETVAL;                                           \
                                                                         \
-    if (items != 3 || !SvROK(ST(0)) || !SvPOK(ST(1)))                   \
-        Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val)");     \
+    switch (items) {                                                    \
+    case 2:                                                             \
+    case 3:                                                             \
+        if (!SvROK(ST(0)))                                              \
+           break;                                                       \
+        sv  = ST(0);                                                    \
+        obj = apreq_xs_find_obj(aTHX_ sv, #attr);                       \
+        env = apreq_xs_sv2env(obj);                                     \
+         t   = (apr_table_t *)SvIVX(obj);                               \
                                                                         \
-    sv  = ST(0);                                                        \
-    obj = apreq_xs_find_obj(aTHX_ sv, #attr);                           \
-    if (obj == NULL)                                                    \
-         Perl_croak(aTHX_ "$table->" #method ": cannot find object");   \
-    env = apreq_xs_sv2env(obj);                                         \
-    t   = (apr_table_t *)SvIVX(obj);                                    \
-    key = SvPV(ST(1), klen);                                            \
-                                                                        \
-    if (SvROK(ST(2))) {                                                 \
-        RETVAL = (apreq_##attr##_t *) SvIVX(SvRV(ST(2)));               \
+        if (SvROK(ST(items-1))) {                                       \
+            RETVAL = (apreq_##attr##_t *)SvIVX(SvRV(ST(items-1)));      \
+        }                                                               \
+        else if (items == 3) {                                          \
+            key = SvPV(ST(1),klen);                                     \
+            val = SvPV(ST(2),vlen);                                     \
+            RETVAL = apreq_make_##attr(apreq_env_pool(env), key, klen,  \
+                                       val, vlen);                      \
+        }                                                               \
+        apr_table_##method##n(t, RETVAL->v.name, RETVAL->v.data);       \
+        XSRETURN_EMPTY;                                                 \
+    default:                                                            \
+        ; /* usage */                                                   \
     }                                                                   \
-    else if (SvOK(ST(2))) {                                             \
-        val = SvPV(ST(2), vlen);                                        \
-        RETVAL = apreq_make_##attr(apreq_env_pool(env), key, klen,      \
-                                                     val, vlen);        \
-    }                                                                   \
-    else                                                                \
-        Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val): "     \
-                   "cannot store an undefined $val in the table");      \
                                                                         \
-    apr_table_##method##n(t, RETVAL->v.name, RETVAL->v.data);           \
-    XSRETURN_EMPTY;                                                     \
+    Perl_croak(aTHX_ "Usage: $table->" #method                          \
+           "([$key,] $val))");                                          \
 }
 
 
