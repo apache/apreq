@@ -24,9 +24,9 @@ static apreq_request_t *r = NULL;
 
 static void request_make(CuTest *tc)
 {
-    r = apreq_request(NULL,"a=1;quux=foo+bar&plus=%2B;uplus=%U002b;okie=dokie;novalue1;novalue2=");
+    r = apreq_request(NULL,"a=1;quux=foo+bar&a=2&plus=%2B;uplus=%U002b;okie=dokie;novalue1;novalue2=");
     CuAssertPtrNotNull(tc, r);
-    CuAssertIntEquals(tc,7, apr_table_elts(r->args)->nelts);
+    CuAssertIntEquals(tc,8, apr_table_elts(r->args)->nelts);
 }
 
 static void request_args_get(CuTest *tc)
@@ -53,6 +53,13 @@ static void request_args_get(CuTest *tc)
 
 }
 
+static void params_as(CuTest *tc)
+{
+    const char *val;
+    val = apreq_params_as_string(p,r,"a",APREQ_JOIN_AS_IS);
+    CuAssertStrEquals(tc,"1, 2", val);
+}
+
 static void string_decoding_in_place(CuTest *tc)
 {
     char *s1 = apr_palloc(p,4096);
@@ -77,6 +84,7 @@ CuSuite *testparam(void)
 
     SUITE_ADD_TEST(suite, request_make);
     SUITE_ADD_TEST(suite, request_args_get);
+    SUITE_ADD_TEST(suite, params_as);
     SUITE_ADD_TEST(suite, string_decoding_in_place);
     return suite;
 }

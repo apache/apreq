@@ -134,7 +134,7 @@ static int param_push(void *data, const char *key, const char *val)
     apr_array_header_t *arr = data;
     *(apreq_param_t **)apr_array_push(arr) = 
         apreq_value_to_param(apreq_strtoval(val));
-    return 0;
+    return 1;
 }
 
 
