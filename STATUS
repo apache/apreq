@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/29 17:53:40 $]   -*-text-*-
+Last modified at [$Date: 2004/08/03 20:02:24 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -82,6 +82,10 @@ TODO:
 
     - Rework glue/perl build system to use apreq2-config instead of
       relying on paths like "../../src".
+
+    - Taint checks need to be extended to APR objects, like
+      $upload->bb and $upload->info.  We may need be able to
+      do that with additional typemaps.
 
 
 OPEN ISSUES:
