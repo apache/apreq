@@ -206,16 +206,16 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
  * Add the cookie to the outgoing "Set-Cookie" headers.
  *
  * @param c The cookie.
+ * @param env Environment.
  */
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c, 
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
                                               void *env);
-
-/* XXX: how about baking whole cookie jars, too ??? */
 
 /**
  * Add the cookie to the outgoing "Set-Cookie2" headers.
  *
  * @param c The cookie.
+ * @param env Environment.
  */
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
                                                void *env);

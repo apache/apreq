@@ -67,7 +67,8 @@ apreq_value_t * apreq_merge_values(apr_pool_t *p,
                                    const apr_array_header_t *arr)
 {
     apreq_value_t *a = *(apreq_value_t **)(arr->elts);
-    apreq_value_t *v = apreq_char_to_value( apreq_join(p, ", ", arr, AS_IS) );
+    apreq_value_t *v = apreq_char_to_value( 
+        apreq_join(p, ", ", arr, APREQ_JOIN_AS_IS) );
     if (arr->nelts > 0)
         v->name = a->name;
     return v;
@@ -97,7 +98,7 @@ APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,
 {
     apr_time_t when;
     apr_time_exp_t tms;
-    char sep = (type == HTTP) ? ' ' : '-';
+    char sep = (type == APREQ_EXPIRES_HTTP) ? ' ' : '-';
 
     if (time_str == NULL) {
 	return NULL;
@@ -196,7 +197,7 @@ APREQ_DECLARE(char *) apreq_memmem(char* hay, apr_size_t hlen,
 
 	/* done if matches up to capacity of buffer */
 	if ( memcmp(hay, ndl, MIN(nlen, len)) == 0 ) {
-            if (type == FULL && len < nlen)
+            if (type == APREQ_MATCH_FULL && len < nlen)
                 hay = NULL;     /* insufficient room for match */
 	    break;
         }
@@ -220,7 +221,7 @@ APREQ_DECLARE(apr_ssize_t ) apreq_index(const char* hay, apr_size_t hlen,
 
 	/* done if matches up to capacity of buffer */
 	if ( memcmp(hay, ndl, MIN(nlen, len)) == 0 ) {
-            if (type == FULL && len < nlen)
+            if (type == APREQ_MATCH_FULL && len < nlen)
                 hay = NULL;     /* insufficient room for match */
 	    break;
         }
@@ -478,10 +479,10 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
     /* Allocated the required space */
 
     switch (mode) {
-    case ENCODE:
+    case APREQ_JOIN_ENCODE:
         len += 2 * len;
         break;
-    case QUOTE:
+    case APREQ_JOIN_QUOTE:
         len = 2 * (len + n);
         break;
     default:
@@ -504,7 +505,7 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
 
     switch (mode) {
 
-    case ENCODE:
+    case APREQ_JOIN_ENCODE:
         d += apreq_encode(d, a[0]->data, a[0]->size);
 
         for (j = 1; j < n; ++j) {
@@ -514,7 +515,7 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
         }
         break;
 
-    case DECODE:
+    case APREQ_JOIN_DECODE:
         len = apreq_decode(d, a[0]->data, a[0]->size);
 
         if (len < 0) {
@@ -540,7 +541,7 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
         break;
 
 
-    case QUOTE:
+    case APREQ_JOIN_QUOTE:
 
         d += apreq_quote_once(d, a[0]->data, a[0]->size);
 
@@ -552,7 +553,7 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
         break;
 
 
-    case AS_IS:
+    case APREQ_JOIN_AS_IS:
         memcpy(d,a[0]->data,a[0]->size);
         d += a[0]->size;
 

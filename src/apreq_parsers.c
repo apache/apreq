@@ -702,13 +702,14 @@ static apr_status_t split_on_bdry(apr_bucket_brigade *out,
             if (match != NULL)
                 idx = match - buf;
             else {
-                idx = apreq_index(buf + len-blen, blen, bdry, blen, PARTIAL);
+                idx = apreq_index(buf + len-blen, blen, bdry, blen, 
+                                  APREQ_MATCH_PARTIAL);
                 if (idx >= 0)
                     idx += len-blen;
             }
         }
         else
-            idx = apreq_index(buf, len, bdry, blen, PARTIAL);
+            idx = apreq_index(buf, len, bdry, blen, APREQ_MATCH_PARTIAL);
 
         if (idx > 0)
             apr_bucket_split(e, idx);

@@ -91,11 +91,12 @@ APREQ_DECLARE(apreq_request_t *)apreq_request(void *env, const char *qs);
 
 
 /**
- * Returns the first parameter value for the requested key,
- * NULL if none found. The key is case-insensitive.
+ * Returns the first parameter value with the desired name,
+ * NULL if none found. The name is case-insensitive.
  * @param req The current apreq_request_t object.
- * @param key Nul-terminated search key.  Returns the first table value 
+ * @param name Nul-terminated search key.  Returns the first table value 
  * if NULL.
+ * @return First matching parameter.
  * @remark Also parses the request as necessary.
  */
 APREQ_DECLARE(apreq_param_t *) apreq_param(const apreq_request_t *req, 
@@ -171,7 +172,7 @@ APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool,
 /**
  * Parse a url-encoded string into a param table.
  * @param pool    pool used to allocate the param data.
- * @param table   table to which the params are added.
+ * @param t       table to which the params are added.
  * @param qs      Query string to url-decode.
  * @return        APR_SUCCESS if successful, error otherwise.
  * @remark        This function uses [&;] as the set of tokens
@@ -346,7 +347,7 @@ APREQ_DECLARE(apreq_parser_t *)
 /**
  * Construct a hook.
  *
- * @param Pool used to allocate the hook.
+ * @param pool used to allocate the hook.
  * @param hook The hook function.
  * @param next List of other hooks for this hook to call on.
  * @param ctx Hook's internal scratch pad.
@@ -357,6 +358,7 @@ APREQ_DECLARE(apreq_hook_t *)
                         apr_status_t (*hook) APREQ_HOOK_ARGS,
                         apreq_hook_t *next,
                         void *ctx);
+
 
 /**
  * Add a new hook to the end of the parser's hook list.

@@ -41,31 +41,15 @@
  * @verbinclude LICENSE
  */
 /** 
+ * @page NOTICE
+ * @verbinclude NOTICE
+ */
+/** 
  * @page INSTALL 
  * @verbinclude INSTALL
  */
-/** 
- * @page FAQ
- * @include FAQ
- */
 /**
  * @defgroup XS Perl
- * @ingroup GLUE
- */
-/**
- * @defgroup TCL TCL
- * @ingroup GLUE
- */
-/**
- * @defgroup PYTHON Python
- * @ingroup GLUE
- */
-/**
- * @defgroup PHP PHP
- * @ingroup GLUE
- */
-/**
- * @defgroup RUBY Ruby
  * @ingroup GLUE
  */
 /** 
@@ -83,7 +67,6 @@
  * @ingroup XS
  * @htmlinclude Cookie.html
  */
-
 /**
  * The objects in apreq.h are used in various contexts:
  *
@@ -97,7 +80,7 @@
  */
 /**
  * @defgroup Utils Common functions, structures and macros
- * @ingroup LIBRARY
+ * @ingroup libapreq2
  * @{
  */
 
@@ -199,19 +182,20 @@ APREQ_DECLARE(const char *)apreq_enctype(void *env);
 
 /** @enum apreq_join_t Join type */
 typedef enum { 
-    AS_IS,      /**< Join the strings without modification */
-    ENCODE,     /**< Url-encode the strings before joining them */
-    DECODE,     /**< Url-decode the strings before joining them */
-    QUOTE       /**< Quote the strings, backslashing existing quote marks. */
+    APREQ_JOIN_AS_IS,      /**< Join the strings without modification */
+    APREQ_JOIN_ENCODE,     /**< Url-encode the strings before joining them */
+    APREQ_JOIN_DECODE,     /**< Url-decode the strings before joining them */
+    APREQ_JOIN_QUOTE       /**< Quote the strings, backslashing existing quote marks. */
 } apreq_join_t;
 
 /**
  * Join an array of values.
- * @param p   Pool to allocate return value.
- * @param sep String that is inserted between the joined values.
- * @param arr Array of values.
- * @remark    Return string can be upgraded to an apreq_value_t 
- *            with apreq_stroval.
+ * @param p    Pool to allocate return value.
+ * @param sep  String that is inserted between the joined values.
+ * @param arr  Array of values.
+ * @param mode Join type- see apreq_join_t.
+ * @remark     Return string can be upgraded to an apreq_value_t 
+ *             with apreq_stroval.
  */
 APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 
                                        const char *sep, 
@@ -221,8 +205,8 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
 
 /** @enum apreq_match_t Match type */
 typedef enum {
-    FULL,       /**< Full match only. */
-    PARTIAL     /**< Partial matches are ok. */
+    APREQ_MATCH_FULL,       /**< Full match only. */
+    APREQ_MATCH_PARTIAL     /**< Partial matches are ok. */
 } apreq_match_t;
 
 /**
@@ -323,21 +307,23 @@ APREQ_DECLARE(apr_ssize_t) apreq_unescape(char *str);
 
 /** @enum apreq_expires_t Expiration date format */
 typedef enum {
-    HTTP,       /**< Use date formatting consistent with RFC 2616 */
-    NSCOOKIE    /**< Use format consistent with Netscape's Cookie Spec */
+    APREQ_EXPIRES_HTTP,       /**< Use date formatting consistent with RFC 2616 */
+    APREQ_EXPIRES_NSCOOKIE    /**< Use format consistent with Netscape's Cookie Spec */
 } apreq_expires_t;
 
 /**
  * Returns an RFC-822 formatted time string. Similar to ap_gm_timestr_822.
  *
- * @param req       The current apreq_request_t object.
+ * @param p       Pool to allocate return string.
  * @param time_str  YMDhms time units (from now) until expiry.
  *                  Understands "now".
- * @param  type     ::HTTP for RFC822 dates, ::NSCOOKIE for cookie dates.
+ * @param  type     ::APREQ_EXPIRES_HTTP for RFC822 dates,
+ *                  ::APREQ_EXPIRES_NSCOOKIE for Netscape cookie dates.
  * @return      Date string, (time_str is offset from "now") formatted
- *              either as an ::NSCOOKIE or ::HTTP date
- * @deprecated  Use apr_rfc822_date instead.  ::NSCOOKIE strings are formatted
- *              with a '-' (instead of a ' ') character at offsets 7 and 11.
+ *              according to type.
+ * @deprecated  Use apr_rfc822_date instead.  ::APREQ_EXPIRES_NSCOOKIE strings
+ *              are formatted with a '-' (instead of a ' ') character at
+ *              offsets 7 and 11.
  */
 
 APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str, 
