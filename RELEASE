@@ -62,8 +62,8 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
    Currently I've been adding the two-digit release candidate number (RC) to 
    the package name at this point, eg.
 
-        mv libapreq2-2.XX-dev.tar.gz libapreq2-2.XX_RC.tar.gz
-        mv libapreq2-2.XX-dev.tar.gz.asc libapreq2-2.XX_RC.tar.gz.asc
+        mv libapreq2-2.XX-dev.tar.gz libapreq2-2.XX_RC-dev.tar.gz
+        mv libapreq2-2.XX-dev.tar.gz.asc libapreq2-2.XX_RC-dev.tar.gz.asc
 
    It isn't pretty, but it does the job.
 
