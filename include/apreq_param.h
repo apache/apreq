@@ -77,7 +77,7 @@ void apreq_param_utf8_on(apreq_param_t *p) {
 /** Turns off the taint flag. */
 static APR_INLINE
 void apreq_param_utf8_off(apreq_param_t *p) {
-    APREQ_FLAGS_SET(p->flags, APREQ_CHARSET, APREQ_CHARSET_UNKNOWN);
+    APREQ_FLAGS_SET(p->flags, APREQ_CHARSET, APREQ_CHARSET_ASCII);
 }
 
 
