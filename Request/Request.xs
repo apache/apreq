@@ -114,7 +114,7 @@ ApacheRequest_new(class, r, ...)
 
     CODE:
     class = class; /* -Wall */ 
-    RETVAL = ApacheRequest_new(r);
+    RETVAL = ApacheRequest_new(r->main ? r->main : r);
     register_uploads(RETVAL);
 
     for (i=2; i<items; i+=2) { 

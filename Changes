@@ -2,6 +2,10 @@ Revision history for Perl extension Apache::Request.
 
 =over 4
 
+=item 0.30_04 - May 11, 1999
+
+make sure ApacheRequest_new() is handed the main request_rec
+
 =item 0.30_03 - May 5, 1999
 
 when attaching request_rec* to Apache::Request object, dont let Perl copy it
