@@ -16,7 +16,12 @@ o mmap upload files ?
 
 o improve/automate build process for dtcl
 
-o Convert our test suite back to Apache::Test.
+o $r->status reportedly returns success when a large upload is
+  cancelled by the user (clicks stop) before the upload is complete.
+  See http://marc.theaimsgroup.com/?l=apache-modperl&m=105561094424410&w=2
+  The problem is likely to show up in fill_buffer's return value,
+  but since we never check it...?  It would be nice if we had an 
+  "interrupted upload" test to work from.
 
 o solve the memory leak for:
   my $r = shift;
