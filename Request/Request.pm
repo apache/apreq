@@ -97,6 +97,29 @@ file system as the final destination file:
  my $upload = $apr->upload('file');
  $upload->link("/home/user/myfile") || warn "link failed: $!";
 
+=item HOOK_DATA
+
+Extra configuration info to be passed to and upload hook.
+See next item for details.
+
+=item UPLOAD_HOOK
+
+Sets up a callback to run whenever file upload data is read. This
+can be used to provide an upload progress meter during file uploads.
+Apache will automatically continue writing the original data to
+$upload->fh after the hook exits.
+
+ my $transparent_hook = sub {
+   my ($upload, $buf, $len, $hook_data) = @_;
+   warn "$hook_data: got $len bytes for " . $upload->name;
+ };
+
+ my $apr = Apache::Request->new($r, 
+                                HOOK_DATA => "Note",
+                                UPLOAD_HOOK => $transparent_hook,
+                               );
+ $apr->parse;
+
 =back
 
 =head2 instance

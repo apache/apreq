@@ -10,6 +10,28 @@
 #include "http_protocol.h"
 #include "util_script.h"
 
+#ifdef  SFIO
+#include "sfio.h"
+
+/* sfio 2000 changed _stdopen to _stdfdopen */
+#if SFIO_VERSION >= 20000101L
+#define _stdopen _stdfdopen
+#endif
+
+extern Sfio_t*  _stdopen _ARG_((int, const char*)); /*1999*/
+
+#undef  FILE
+#define FILE 			Sfio_t
+#undef  fwrite
+#define fwrite(p,s,n,f)		sfwrite((f),(p),(s)*(n))
+#undef  fseek
+#define fseek(f,a,b)		sfseek((f),(a),(b))
+#undef  ap_pfdopen
+#define ap_pfdopen(p,q,r) 	_stdopen((q),(r))
+#undef  ap_pfclose
+#define ap_pfclose(p,q)		sfclose(q)
+#endif /*SFIO*/
+
 typedef struct ApacheUpload ApacheUpload;
 
 typedef struct {
@@ -19,7 +41,7 @@ typedef struct {
     int parsed;
     int post_max;
     int disable_uploads;
-    int (*upload_hook)(void *ptr, char *buf, int len, const ApacheUpload *upload);
+    int (*upload_hook)(void *ptr, char *buf, int len, ApacheUpload *upload);
     void *hook_data;
     char* temp_dir;
     request_rec *r;

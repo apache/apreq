@@ -268,8 +268,7 @@ static void split_to_parms(ApacheRequest *req, const char *data)
 int ApacheRequest___parse(ApacheRequest *req)
 {
     request_rec *r = req->r;
-
-    req->parsed = 1;
+    int result;
 
     if (r->args) {
         split_to_parms(req, r->args);
@@ -278,20 +277,24 @@ int ApacheRequest___parse(ApacheRequest *req)
     if (r->method_number == M_POST) { 
 	const char *ct = ap_table_get(r->headers_in, "Content-type"); 
 	if (ct && strcaseEQN(ct, DEFAULT_ENCTYPE, DEFAULT_ENCTYPE_LENGTH)) {
-	    return ApacheRequest_parse_urlencoded(req); 
+	    result = ApacheRequest_parse_urlencoded(req); 
 	}
 	else if (ct && strcaseEQN(ct, MULTIPART_ENCTYPE, MULTIPART_ENCTYPE_LENGTH)) {
-	   return ApacheRequest_parse_multipart(req); 
+	   result = ApacheRequest_parse_multipart(req); 
 	}
 	else {
 	    ap_log_rerror(REQ_ERROR, 
 			  "[libapreq] unknown content-type: `%s'", ct); 
-	    return HTTP_INTERNAL_SERVER_ERROR;
+	    result = HTTP_INTERNAL_SERVER_ERROR;
 	}
     } 
     else {
-	return ApacheRequest_parse_urlencoded(req); 
+	result = ApacheRequest_parse_urlencoded(req); 
     }
+
+    req->parsed = 1;
+    return result;
+
 }
 
 int ApacheRequest_parse_urlencoded(ApacheRequest *req)
@@ -319,8 +322,17 @@ int ApacheRequest_parse_urlencoded(ApacheRequest *req)
 }
 
 static void remove_tmpfile(void *data) {
-    remove((char *) data);
-    free((char *) data);
+    ApacheUpload *upload = (ApacheUpload *) data;
+    ApacheRequest *req = upload->req;
+
+    if( ap_pfclose(req->r->pool, upload->fp) )
+	ap_log_rerror(REQ_ERROR,
+		      "[libapreq] close error on '%s'", upload->tempname);	
+    if( remove(upload->tempname) )
+	ap_log_rerror(REQ_ERROR,
+		      "[libapreq] remove error on '%s'", upload->tempname);
+
+    free(upload->tempname);
 }
 
 FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
@@ -332,7 +344,8 @@ FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
     int fd, tries = 100;
     
     while (--tries > 0) {
-	if ( (name = tempnam(req->temp_dir, prefix)) == NULL ) continue;
+	if ( (name = tempnam(req->temp_dir, prefix)) == NULL )
+	    continue;
 	fd = ap_popenf(r->pool, name, O_CREAT|O_EXCL|O_RDWR, 0600);
 	if ( fd >= 0 )
 	    break; /* success */
@@ -340,7 +353,7 @@ FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
 	    free(name);
     }
     
-    if ( tries == 0  || (fp = ap_pfdopen(r->pool, fd, "w+") ) == NULL ) {
+    if ( tries == 0  || (fp = ap_pfdopen(r->pool, fd, "wb+") ) == NULL ) {
 	ap_log_rerror(REQ_ERROR,
 		      "[libapreq] could not open temp file '%s'", name); 	
 	if ( fd >= 0 ) { remove(name); free(name); }
@@ -349,7 +362,7 @@ FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
 
     upload->fp = fp;
     upload->tempname = name;
-    ap_register_cleanup(r->pool, (void *)upload->tempname, 
+    ap_register_cleanup(r->pool, (void *)upload, 
 			remove_tmpfile, ap_null_cleanup);
     return fp;
 
@@ -462,11 +475,8 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 		upload->size += wlen;
 	    }
 
-	    if (upload->size > 0 && (req->upload_hook == NULL)) {
+	    if (upload->size > 0 && (upload->fp != NULL)) {
 		fseek(upload->fp, 0, 0);
-	    }
-	    else {
-		upload->fp = NULL;
 	    }
 	}
     }

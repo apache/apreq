@@ -70,13 +70,17 @@
 
 typedef ApacheRequest * Apache__Request;
 typedef ApacheUpload  * Apache__Upload;
+typedef struct { 
+	SV* data;
+	SV* sub; 
+	} Hook;
 
 #define ApacheUpload_fh(upload)       upload->fp
 #define ApacheUpload_size(upload)     upload->size
 #define ApacheUpload_name(upload)     upload->name
 #define ApacheUpload_filename(upload) upload->filename
 #define ApacheUpload_next(upload)     upload->next
-#define ApacheUpload_tempname(upload)   upload->tempname
+#define ApacheUpload_tempname(upload) upload->tempname
 
 #ifndef PerlLIO_dup
 #define PerlLIO_dup(fd)   dup((fd)) 
@@ -90,6 +94,7 @@ typedef PerlIO * InputStream;
 #else
 typedef FILE * InputStream;
 #define PerlIO_importFILE(fp,flags) fp
+#define PerlIO_write(a,b,c)  fwrite((b),1,(c),(a))
 #endif
 
 static char *r_keys[] = { "_r", "r", NULL };
@@ -140,6 +145,52 @@ static SV *upload_bless(ApacheUpload *upload)
     return sv; 
 } 
 
+static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
+{
+    Hook *hook = (Hook*) ptr;
+
+    if ( upload->fp == NULL && ! ApacheRequest_tmpfile(upload->req, upload) )
+	    return -1; /* error */
+
+    {
+    	dTARG;
+    	dSP;
+
+    	PUSHMARK(SP);
+    	EXTEND(SP, 4);
+        ENTER;
+    	SAVETMPS;
+
+    	TARG = sv_newmortal();
+    	sv_setref_pv( TARG, "Apache::Upload", (void*)upload );
+    	PUSHTARG;
+
+    	TARG = sv_2mortal( newSVpvn(buf,len) );
+    	SvTAINT(TARG);
+    	PUSHTARG;
+
+    	TARG = sv_2mortal( newSViv(len) );
+    	SvTAINT(TARG);
+    	PUSHTARG;
+
+    	PUSHs(hook->data);
+
+    	PUTBACK;
+    	perl_call_sv(hook->sub, G_EVAL|G_DISCARD);
+    	FREETMPS;
+    	LEAVE;
+    }
+
+    return SvTRUE(ERRSV) ? -1 : PerlIO_write(upload->fp, buf, len);
+}
+
+static void clear_hook(void *ptr) {
+   Hook *hook = (Hook*) ptr;
+   hook->sub != Nullsv && sv_2mortal(hook->sub);
+   hook->data != Nullsv && sv_2mortal(hook->data);
+}
+
+
 #define upload_push(upload) \
     XPUSHs(sv_2mortal(upload_bless(upload))) 
 
@@ -155,6 +206,7 @@ static void apreq_close_handle(void *data)
     (void)hv_delete(GvSTASH(handle),
 		    GvNAME(handle), GvNAMELEN(handle), G_DISCARD);
 }
+
 
 #ifdef CGI_COMPAT
 static void register_uploads (ApacheRequest *req) {
@@ -189,7 +241,7 @@ ApacheRequest_new(class, r, ...)
     PREINIT:
     int i;
     SV *robj;
-
+	
     CODE:
     class = class; /* -Wall */ 
     robj = ST(1);
@@ -204,6 +256,17 @@ ApacheRequest_new(class, r, ...)
 		RETVAL->disable_uploads = (int)SvIV(ST(i+1));
 		break;
 	    }
+
+	case 'h':
+	   if (strcasecmp(key, "hook_data") == 0) {
+		if (RETVAL->hook_data == NULL) {
+		  RETVAL->hook_data = (void *)ap_pcalloc(r->pool, sizeof(Hook));
+		  ((Hook*)RETVAL->hook_data)->sub = Nullsv;
+ 		}
+		((Hook*)RETVAL->hook_data)->data = newSVsv(ST(i+1));	
+		break;
+	   }
+
 	case 'p':
 	    if (strcasecmp(key, "post_max") == 0) {
 		RETVAL->post_max = (int)SvIV(ST(i+1));
@@ -214,16 +277,31 @@ ApacheRequest_new(class, r, ...)
 		RETVAL->temp_dir = (char *)SvPV(ST(i+1), PL_na);
 		break;
 	    }
+	case 'u':
+	    if (strcasecmp(key, "upload_hook") == 0) {
+		if (RETVAL->hook_data == NULL) {
+		  RETVAL->hook_data = (void *)ap_pcalloc(r->pool, sizeof(Hook));
+	          ((Hook*)RETVAL->hook_data)->data = Nullsv;
+ 		}
+		((Hook*)RETVAL->hook_data)->sub = newSVsv(ST(i+1));
+		RETVAL->upload_hook = &upload_hook;
+		break;
+	    }
 	default:
 	    croak("[libapreq] unknown attribute: `%s'", key);
 	}
     }
+
 
     OUTPUT:
     RETVAL
 
     CLEANUP:
     apreq_add_magic(ST(0), robj, RETVAL);
+    if ( RETVAL->hook_data != NULL ) {
+    	ap_register_cleanup(r->pool, RETVAL->hook_data, 
+			   clear_hook, ap_null_cleanup);    
+    }
 
 char *
 ApacheRequest_script_name(req)
@@ -347,7 +425,9 @@ ApacheRequest_upload(req, sv=Nullsv)
         req->upload = (ApacheUpload *)SvIV((SV*)SvRV(sv));
         XSRETURN_EMPTY;
     }
-    ApacheRequest_parse(req);
+
+    if ( !req->parsed ) ApacheRequest_parse(req);
+
     if (GIMME == G_SCALAR) {
         STRLEN n_a;
         char *name = sv ? SvPV(sv, n_a) : NULL;
@@ -383,28 +463,29 @@ ApacheUpload_fh(upload)
     Apache::Upload upload
 
     CODE:
-    if (!(RETVAL = PerlIO_importFILE(ApacheUpload_fh(upload),0))) {
-	XSRETURN_UNDEF;
-    }
+    if (  ( RETVAL = ApacheUpload_fh(upload) ) == NULL  )
+	    XSRETURN_UNDEF;
 
     OUTPUT:
     RETVAL
 
     CLEANUP:
-    if (ST(0) != &sv_undef) {
-	IO *io = GvIOn((GV*)SvRV(ST(0))); 
+    if (ST(0) != &PL_sv_undef) {
+	IO *io = GvIOn((GV*)SvRV(ST(0)));
 	int fd = PerlIO_fileno(IoIFP(io));
 	PerlIO *fp;
 
-	fd = PerlLIO_dup(fd); 
+	fd = PerlLIO_dup(fd);
 	if (!(fp = PerlIO_fdopen(fd, "r"))) { 
 	    PerlLIO_close(fd);
 	    croak("fdopen failed!");
-	} 
-	PerlIO_seek(fp, 0, 0); 
-	IoIFP(GvIOn((GV*)SvRV(ST(0)))) = fp;
+	}
+	if (upload->req->parsed)
+	    PerlIO_seek(fp, 0, 0);
+
+	IoIFP(GvIOn((GV*)SvRV(ST(0)))) = fp;  	
 	ap_register_cleanup(upload->req->r->pool, (void*)SvRV(ST(0)), 
-			    apreq_close_handle, ap_null_cleanup);    
+			    apreq_close_handle, ap_null_cleanup);      
     }
 
 long
