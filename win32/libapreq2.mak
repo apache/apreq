@@ -67,6 +67,7 @@ LINK32_OBJS= \
         "$(INTDIR)\module.obj" \
         "$(INTDIR)\module_custom.obj" \
         "$(INTDIR)\module_cgi.obj" \
+        "$(INTDIR)\error.obj" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
 
@@ -197,6 +198,11 @@ SOURCE=$(LIBDIR)\util.c
 
 "$(INTDIR)\util.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) /Fo"$(INTDIR)\util.obj" $(CPP_PROJ) $(SOURCE)
+
+SOURCE=$(LIBDIR)\error.c
+
+"$(INTDIR)\error.obj" : $(SOURCE) "$(INTDIR)"
+        $(CPP) /Fo"$(INTDIR)\error.obj" $(CPP_PROJ) $(SOURCE)
 
 !ENDIF 
 
