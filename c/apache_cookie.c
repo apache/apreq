@@ -60,11 +60,8 @@
 static char *cookie_path(request_rec *r)
 {
     int path_info_start = ap_find_path_info(r->uri, r->path_info); 
-    int uri_len = strlen(r->uri);
-    char *retval, *tmp = r->uri;
-    tmp += (uri_len - path_info_start);
-    retval = ap_make_dirstr_parent(r->pool, tmp);
-    return retval;
+    char *tmp = ap_pstrndup(r->pool, r->uri, path_info_start);
+    return ap_make_dirstr_parent(r->pool, tmp);
 }
 
 char *ApacheCookie_expires(ApacheCookie *c, char *time_str)
