@@ -68,7 +68,6 @@
 #endif
 #include "apr_signal.h"
 
-#include <assert.h>
 /********************* table_entry structure ********************/
 
 /* private struct */
@@ -262,7 +261,6 @@ static int insert(apreq_table_entry_t *o, int *root, int x,
     if (parent >= 0 && parent[o].color == RED) {        \
         int parent_direction = LR(parent);              \
         int grandparent = parent[o].tree[UP];           \
-        assert(parent >=0 && grandparent >= 0);         \
         if (parent_direction != LR(x)) {                \
             rotate(o, root, parent, parent_direction);  \
             parent = x;                                 \
@@ -430,8 +428,7 @@ static void delete(apreq_table_entry_t *o,
         int parent = x[o].tree[UP];
         register const int direction = LR(x);
         int sibling = parent[o].tree[!direction];
-        assert(parent >= 0);
-        assert(sibling >= 0);
+
         if (sibling[o].color == RED) {
             sibling[o].color = BLACK;
             parent[o].color  = RED;
