@@ -4,7 +4,7 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
 
         % make release
 
-   This will generate a libapreq2-2.XX.tar.gz candidate in the 
+   This will generate a libapreq2-2.XX-dev.tar.gz candidate in the 
    current directory.   You should keep this source tree
    intact to tag the final release.
 
@@ -14,12 +14,10 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
 
    Make sure all perl tests pass.
 
-3. Upload a release candidate to httpd.apache.org/~username
-   and post a candidate announcement to apreq-dev@.  The RM
-   or any other apreq committer may call for a formal vote on the 
-   candidate, but a formal vote is not a requirement for the release. 
-   Also, it is strongly recommended that the RM crosspost the 
-   candidate announcement to the modperl@ list, to solicit feedback
+3. Upload the release candidate to httpd.apache.org/~username
+   and post a candidate announcement to apreq-dev@. Also, it is 
+   strongly recommended that the RM crosspost the candidate 
+   announcement to the modperl@ list, to solicit feedback
    from a much larger audience.
 
 4. Give the mailing list participants 48-72 hours to comment and
@@ -29,26 +27,26 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
 
 5.  Tag the tree, s/./_/g in the version number
 
-    % cvs tag v2_XX
+    % cvs tag v2_XX_dev
 
 6. Sign the release via gpg:
 
-     % gpg --detach-sign --armor libapreq2-2.XX.tar.gz
+     % gpg --detach-sign --armor libapreq2-2.XX-dev.tar.gz
 
    or pgp:
 
-     % pgp -sba libapreq2-2.XX.tar.gz
+     % pgp -sba libapreq2-2.XX-dev.tar.gz
 
 7. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
-    % scp libapreq2-2.XX.tar.gz* \
+    % scp libapreq2-2.XX-dev.tar.gz* \
       <username>@www.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
    Ask another developer to confirm the uploaded signature is ok.
 
-    % gpg --verify libapreq2-2.XX.tar.gz.asc
-    % pgp libapreq2-2.XX.tar.gz.asc
+    % gpg --verify libapreq2-2.XX-dev.tar.gz.asc
+    % pgp libapreq2-2.XX-dev.tar.gz.asc
 
    Check that your public key is among those listed in the
    /www/www.apache.org/dist/httpd/KEYS file.
@@ -62,7 +60,7 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
 
 10. Post a final announcement to the modperl@ and apreq-dev@ lists:
 
-        Subject: [ANNOUNCE] libapreq2-2.XX release
+        Subject: [ANNOUNCE] libapreq2-2.XX-dev release
 
     Include the md5 signature in the announcement, as well as
     a list of the latest version info and changes since the 
