@@ -126,7 +126,7 @@ APREQ_DECLARE(const apreq_param_t *) apreq_param(const apreq_request_t *req,
 
 APREQ_DECLARE(const char *) apreq_arg(const apreq_request_t *req, 
                                       const char *name);
-#define apreq_arg(r,k) apreq_table_get((req)->arg, k)
+#define apreq_arg(req,k) apreq_table_get((req)->args, k)
 
 
 APREQ_DECLARE(const apreq_table_t *) apreq_args(const apreq_request_t *req);
@@ -178,6 +178,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool,
                                                   const char *word,
                                                   const apr_size_t nlen, 
                                                   const apr_size_t vlen);
+
 APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool, 
                                          const apreq_param_t *param);
 

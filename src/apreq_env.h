@@ -70,8 +70,8 @@ extern const struct apreq_env {
     const char          *(*args)(void *ctx);
 
     /* (get/set) cached core objects */
-    void                *(*jar)(void *ctx, void *j);
-    void                *(*request)(void *ctx, void *r);
+    void                *(*jar)(void *ctx, void *jar);
+    void                *(*request)(void *ctx, void *req);
 
     /* environment configuration */
     apreq_cfg_t         *(*config)(void *ctx);

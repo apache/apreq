@@ -900,6 +900,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 
     case MFD_UPLOAD:
         {
+            apr_bucket *eos;
             apr_status_t s = split_on_bdry(pool, ctx->bb, bb, ctx->bdry);
             apreq_param_t *param;
             const apreq_value_t *v;
@@ -922,7 +923,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
                 apreq_table_last(req->body, &v, &dummy);
                 param = apreq_value_to_param(v);
 
-                /* XXX: push an eos bucket onto ctx->bb */
+                eos = apr_bucket_eos_create(ctx->bb->bucket_alloc);
+                APR_BRIGADE_INSERT_TAIL(ctx->bb, eos);
 
                 if (parser->hook) {
                     do s = parser->hook(pool, param->bb, ctx->bb, parser);

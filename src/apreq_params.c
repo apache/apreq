@@ -155,6 +155,17 @@ APREQ_DECLARE(const apreq_param_t *)apreq_param(const apreq_request_t *req,
 }
 
 
+APREQ_DECLARE(const apreq_table_t *) (apreq_args)(const apreq_request_t *req)
+{
+    return apreq_args(req);
+}
+
+
+APREQ_DECLARE(const apreq_table_t *) (apreq_body)(const apreq_request_t *req)
+{
+    return apreq_body(req);
+}
+
 APREQ_DECLARE(apr_array_header_t *) apreq_params(apr_pool_t *pool,
                                                  const apreq_request_t *req, 
                                                  const char *name)
