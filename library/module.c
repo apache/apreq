@@ -14,7 +14,8 @@
 **  limitations under the License.
 */
 
-#include "apreq.h"
+#include "apreq_module.h"
+#include "apreq_error.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_file_io.h"
@@ -28,10 +29,10 @@ static int has_rfc_cookie(void *ctx, const char *key, const char *val)
     /* 0 -> non-netscape cookie found, stop.
        1 -> not found, keep going. */
 
-    return c->version == APREQ_COOKIE_VERSION_NETSCAPE;
+    return apreq_cookie_version(c);
 }
 
-APREQ_DECLARE(apreq_cookie_version_t)
+APREQ_DECLARE(unsigned)
     apreq_ua_cookie_version(apreq_handle_t *env)
 {
 
@@ -40,13 +41,13 @@ APREQ_DECLARE(apreq_cookie_version_t)
 
         if (apreq_jar(env, &j) != APR_SUCCESS
             || apr_table_do(has_rfc_cookie, NULL, j, NULL) == 1)
-            return APREQ_COOKIE_VERSION_NETSCAPE;
+            return 0;
 
         else
-            return APREQ_COOKIE_VERSION_RFC;
+            return 1;
     }
     else
-        return APREQ_COOKIE_VERSION_RFC;
+        return 1;
 }
 
 
@@ -54,7 +55,11 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
                                               apreq_handle_t *env)
 {
     char s[APREQ_COOKIE_MAX_LENGTH];
-    int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
+    int len;
+    if (apreq_cookie_is_tainted(c))
+        return APREQ_ERROR_TAINTED;
+
+    len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
 
     if (len >= APREQ_COOKIE_MAX_LENGTH)
         return APREQ_ERROR_OVERLIMIT;
@@ -66,9 +71,14 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
                                                apreq_handle_t *env)
 {
     char s[APREQ_COOKIE_MAX_LENGTH];
-    int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
+    int len;
 
-    if (c->version == APREQ_COOKIE_VERSION_NETSCAPE)
+    if (apreq_cookie_is_tainted(c))
+        return APREQ_ERROR_TAINTED;
+
+    len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
+
+    if (apreq_cookie_version(c) == 0)
         return APREQ_ERROR_CONFLICT;
 
     if (len >= APREQ_COOKIE_MAX_LENGTH)

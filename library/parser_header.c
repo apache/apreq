@@ -1,4 +1,6 @@
 #include "apreq_parser.h"
+#include "apreq_error.h"
+#include "apreq_util.h"
 
 #define PARSER_STATUS_CHECK(PREFIX)   do {         \
     if (ctx->status == PREFIX##_ERROR)             \
@@ -40,14 +42,8 @@ static apr_status_t split_header_line(apreq_param_t **p,
     if (nlen == 0)
         return APR_EBADARG;
 
-    param = apr_palloc(pool, nlen + vlen + sizeof *param);
-    param->upload = NULL;
-    param->info = NULL;
-
+    param = apreq_param_make(pool, NULL, nlen, NULL, vlen);
     *(const apreq_value_t **)&v = &param->v;
-    v->name = v->data + vlen; /* no +1, since vlen includes extra (CR)LF */
-
-    /* copy name */
 
     off = 0;
     while (off < nlen) {
@@ -120,7 +116,7 @@ static apr_status_t split_header_line(apreq_param_t **p,
         v->size--;
 
     v->data[v->size] = 0;
-
+    APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
     *p = param;
     return APR_SUCCESS;
 
@@ -271,7 +267,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                         apr_bucket_split(e, off);
                     s = split_header_line(&param, pool, ctx->bb, nlen, glen, vlen);
                     if (parser->hook != NULL && s == APR_SUCCESS)
-                        s = apreq_run_hook(parser->hook, param, NULL);
+                        s = apreq_hook_run(parser->hook, param, NULL);
 
                     if (s != APR_SUCCESS) {
                         ctx->status = HDR_ERROR;

@@ -17,7 +17,8 @@
 #ifndef APREQ_PARAM_H
 #define APREQ_PARAM_H
 
-#include "apreq_util.h"
+#include "apreq.h"
+#include "apr_buckets.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,9 +36,34 @@ extern "C" {
 typedef struct apreq_param_t {
     apr_table_t         *info;   /**< header table associated with the param */
     apr_bucket_brigade  *upload; /**< brigade used to spool upload files */
-    unsigned char        flags;  /**< charsets, taint marks, app-specific bits */
+    unsigned             flags;  /**< charsets, taint marks, app-specific bits */
     const apreq_value_t  v;      /**< underlying name/value/status info */
 } apreq_param_t;
+
+static APR_INLINE
+const char *apreq_param_name(const apreq_param_t *p) { return p->v.name; }
+
+static APR_INLINE
+const char *apreq_param_value(const apreq_param_t *p) { return p->v.data; }
+
+
+/** @return 1 if the taint flag is set, 0 otherwise. */
+static APR_INLINE
+unsigned apreq_param_is_tainted(const apreq_param_t *p) {
+    return APREQ_FLAGS_GET(p->flags, APREQ_TAINT);
+}
+
+/** Sets the tainted flag. */
+static APR_INLINE
+void apreq_param_taint_on(apreq_param_t *p) {
+    APREQ_FLAGS_ON(p->flags, APREQ_TAINT);
+}
+
+/** Turns off the taint flag. */
+static APR_INLINE
+void apreq_param_taint_off(apreq_param_t *p) {
+    APREQ_FLAGS_OFF(p->flags, APREQ_TAINT);
+}
 
 
 /** Upgrades args and body table values to apreq_param_t structs. */
@@ -52,36 +78,8 @@ apreq_param_t *apreq_value_to_param(const char *val)
 }
 
 
-static APR_INLINE
-const char *apreq_param_name(const apreq_param_t *p) {
-    return p->v.name;
-}
-
-static APR_INLINE
-const char *apreq_param_value(const apreq_param_t *p) {
-    return p->v.data;
-}
-
-static APR_INLINE
-const apr_table_t *apreq_param_info(const apreq_param_t *p) {
-    return p->info;
-}
-
-static APR_INLINE
-apr_bucket_brigade *apreq_param_brigade(const apreq_param_t *p) {
-    apr_bucket_brigade *bb;
-
-    if (p->upload == NULL)
-        return NULL;
-
-    bb = apr_brigade_create(p->upload->p, p->upload->bucket_alloc);
-    apreq_brigade_copy(bb, p->upload);
-
-    return bb;
-}
-
 /** creates a param from name/value information */
-APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
+APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p, 
                                                 const char *name, 
                                                 const apr_size_t nlen, 
                                                 const char *val, 
@@ -97,7 +95,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
  *              exactly one character ('=') which separates the pair.
  *            
  */
-APREQ_DECLARE(apr_status_t) apreq_decode_param(apreq_param_t **param,
+APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
                                                apr_pool_t *pool, 
                                                const char *word,
                                                const apr_size_t nlen, 
@@ -109,7 +107,7 @@ APREQ_DECLARE(apr_status_t) apreq_decode_param(apreq_param_t **param,
  * @return name-value pair representing the param.
  */
 
-APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool, 
+APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool, 
                                          const apreq_param_t *param);
 
 /**

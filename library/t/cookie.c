@@ -15,7 +15,10 @@
 */
 
 #include "apr_strings.h"
-#include "apreq.h"
+#include "apreq_cookie.h"
+#include "apreq_error.h"
+#include "apreq_module.h"
+#include "apreq_util.h"
 #include "at.h"
 
 static const char nscookies[] = "a=1; foo=bar; fl=left; fr=right;bad; "
@@ -81,7 +84,7 @@ static void netscape_cookie(dAT)
     c = apreq_value_to_cookie(val);
 
     AT_str_eq(apreq_cookie_value(c), "bar");
-    AT_int_eq(c->version, APREQ_COOKIE_VERSION_NETSCAPE);
+    AT_int_eq(apreq_cookie_version(c), 0);
     AT_str_eq(apreq_cookie_as_string(c, p), "foo=bar");
 
     c->domain = apr_pstrdup(p, "example.com");
@@ -106,7 +109,8 @@ static void rfc_cookie(dAT)
 
     AT_str_eq(apreq_cookie_value(c), "out");
 
-    c->version = APREQ_COOKIE_VERSION_RFC;
+    apreq_cookie_version_set(c, 1);
+    AT_int_eq(apreq_cookie_version(c), 1);
     AT_str_eq(apreq_cookie_as_string(c,p),"rfc=out; Version=1");
 
     c->domain = apr_pstrdup(p, "example.com");
@@ -151,10 +155,10 @@ static void ua_version(dAT)
     apreq_handle_t *ns, *rfc;
 
     ns  = apreq_handle_custom(p, NULL, NULL, NULL, NULL, 0, NULL);
-    AT_int_eq(apreq_ua_cookie_version(ns), APREQ_COOKIE_VERSION_NETSCAPE);
+    AT_int_eq(apreq_ua_cookie_version(ns), 0);
 
     rfc = apreq_handle_custom(p, NULL, NULL, "$Version=\"1\"", NULL, 0, NULL);
-    AT_int_eq(apreq_ua_cookie_version(rfc), APREQ_COOKIE_VERSION_RFC);
+    AT_int_eq(apreq_ua_cookie_version(rfc), 1);
 }
 
 #define dT(func, plan) #func, func, plan
@@ -169,7 +173,7 @@ int main(int argc, char *argv[])
         { dT(jar_get_rfc, 6), "1 3 5" },
         { dT(jar_get_ns, 9) },
         { dT(netscape_cookie, 7) },
-        { dT(rfc_cookie, 5) },
+        { dT(rfc_cookie, 6) },
         { dT(ua_version, 2) }
     };
 

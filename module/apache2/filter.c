@@ -27,6 +27,8 @@
 
 #include "apreq_module_apache2.h"
 #include "apreq_private_apache2.h"
+#include "apreq_error.h"
+#include "apreq_util.h"
 
 /**
  * @defgroup mod_apreq Apache 2.X Filter Module
@@ -229,7 +231,7 @@ void apreq_filter_init_context(ap_filter_t *f)
             apreq_parser_function_t pf = apreq_parser(ct_header);
 
             if (pf != NULL) {
-                ctx->parser = apreq_make_parser(r->pool, ba, ct_header, pf,
+                ctx->parser = apreq_parser_make(r->pool, ba, ct_header, pf,
                                                 ctx->brigade_limit,
                                                 ctx->temp_dir,
                                                 ctx->hook_queue,
@@ -489,7 +491,7 @@ apr_status_t apreq_filter(ap_filter_t *f,
         return APR_SUCCESS;
 
     if (ctx->status == APR_INCOMPLETE) {
-        ctx->status = apreq_run_parser(ctx->parser, ctx->body, ctx->bb);
+        ctx->status = apreq_parser_run(ctx->parser, ctx->body, ctx->bb);
         apr_brigade_cleanup(ctx->bb);
     }
 

@@ -559,6 +559,11 @@ EOT
                             INPUT  => '$var = ((apreq_cookie_version_t)SvTRUE($arg))',
                             OUTPUT => '$arg = boolSV((bool)$var);',
                            },
+    T_APREQ_ERROR => {
+                          INPUT => '$var = (HV *)SvRV($arg)',
+                          OUTPUT => '$arg = sv_bless(newRV_noinc((SV*)$var), gv_stashpvn(\"${ntype}\", sizeof(\"${ntype}\") - 1, FALSE);'
+                     },
+
         T_HASHOBJ       => {
                             INPUT => <<'EOT', # '$var = modperl_hash_tied_object(aTHX_ \"${ntype}\", $arg)'
     if (sv_derived_from($arg, \"${ntype}\")) {

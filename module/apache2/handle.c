@@ -27,7 +27,7 @@
 
 #include "apreq_module_apache2.h"
 #include "apreq_private_apache2.h"
-
+#include "apreq_error.h"
 
 static apr_status_t apache2_jar(apreq_handle_t *env, const apr_table_t **t)
 {

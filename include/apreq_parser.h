@@ -92,7 +92,7 @@ struct apreq_parser_t {
  * public status: APR_INCOMPLETE, APR_SUCCESS, or an error code.
  */
 static APR_INLINE
-apr_status_t apreq_run_parser(struct apreq_parser_t *psr, apr_table_t *t,
+apr_status_t apreq_parser_run(struct apreq_parser_t *psr, apr_table_t *t,
                               apr_bucket_brigade *bb) {
     return psr->parser(psr, t, bb);
 }
@@ -105,7 +105,7 @@ apr_status_t apreq_run_parser(struct apreq_parser_t *psr, apr_table_t *t,
  * @return APR_SUCCESS on success. All other values represent errors.
  */
 static APR_INLINE
-apr_status_t apreq_run_hook(struct apreq_hook_t *h, apreq_param_t *param,
+apr_status_t apreq_hook_run(struct apreq_hook_t *h, apreq_param_t *param,
                             apr_bucket_brigade *bb) {
     return h->hook(h, param, bb);
 }
@@ -161,7 +161,7 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser);
  * @return New parser.
  */
 APREQ_DECLARE(apreq_parser_t *)
-        apreq_make_parser(apr_pool_t *pool,
+        apreq_parser_make(apr_pool_t *pool,
                           apr_bucket_alloc_t *bucket_alloc,
                           const char *content_type,
                           apreq_parser_function_t parser,
@@ -180,7 +180,7 @@ APREQ_DECLARE(apreq_parser_t *)
  * @return New hook.
  */
 APREQ_DECLARE(apreq_hook_t *)
-        apreq_make_hook(apr_pool_t *pool,
+        apreq_hook_make(apr_pool_t *pool,
                         apreq_hook_function_t hook,
                         apreq_hook_t *next,
                         void *ctx);
@@ -197,17 +197,10 @@ APREQ_DECLARE(apr_status_t) apreq_parser_add_hook(apreq_parser_t *p,
 
 
 /**
- * Create the default parser associated with the
- * current request's Content-Type (if possible).
- * @param env The current environment.
- * @param hook Hook(s) to add to the parser.
- * @return New parser, NULL if the Content-Type is
- * unrecognized.
- *
- * @param env The current environment.
- * @param hook Additional hooks to supply the parser with.
- * @return The parser; NULL if the environment's
- * Content-Type is unrecognized.
+ * Fetch the default parser function associated with the given MIME type.
+ * @param encytpe The desired enctype (can also be a full "Content-Type"
+ *        header).
+ * @return The parser function, or NULL if the enctype is unrecognized.
  */
 APREQ_DECLARE(apreq_parser_function_t)apreq_parser(const char *enctype);
 
@@ -248,5 +241,3 @@ APREQ_DECLARE_HOOK(apreq_hook_discard_brigade);
 
 #endif
 #endif /* APREQ_PARSERS_H */
-
-

@@ -9,11 +9,24 @@ SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c, const char *class, SV *handle)
 }
 
 static APR_INLINE
-SV *apreq_xs_jar2sv(pTHX_ const apr_table_t *t, const char *class, SV *handle)
+SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *handle)
 {
+    SV *sv = (SV *)newHV();
     SV *rv = sv_setref_pv(newSV(0), class, (void *)t);
     sv_magic(SvRV(rv), handle, PERL_MAGIC_ext, Nullch, 0);
-    return rv;
+
+#if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
+
+    sv_magic(sv, NULL, PERL_MAGIC_ext, Nullch, -1);
+    SvMAGIC(sv)->mg_virtual = (MGVTBL *)&apreq_xs_table_magic;
+    SvMAGIC(sv)->mg_flags |= MGf_COPY;
+
+#endif
+
+    sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
+    SvREFCNT_dec(rv); /* corrects SvREFCNT_inc(rv) implicit in sv_magic */
+
+    return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
 }
 
 static int apreq_xs_table_values(void *data, const char *key, const char *val)
@@ -60,8 +73,8 @@ static XS(apreq_xs_jar)
             apr_status_t s;
 
             s = apreq_jar(req, &t);
-            if (s != APR_SUCCESS && !sv_derived_from(sv, error_pkg))
-                APREQ_XS_THROW_ERROR("r", s, "APR::Request::jar", error_pkg);
+            if (apreq_status_is_error(s))
+                APREQ_XS_THROW_ERROR(r, s, "APR::Request::jar", error_pkg);
 
             XSRETURN_UNDEF;
         }
@@ -72,8 +85,12 @@ static XS(apreq_xs_jar)
         apr_status_t s;
 
         s = apreq_jar(req, &t);
-        if (s != APR_SUCCESS && !sv_derived_from(sv, error_pkg))
-            APREQ_XS_THROW_ERROR("r", s, "APR::Request::jar", error_pkg);
+
+        if (apreq_status_is_error(s))
+            APREQ_XS_THROW_ERROR(r, s, "APR::Request::jar", error_pkg);
+
+        if (t == NULL)
+            XSRETURN_EMPTY;
 
         d.pkg = cookie_pkg;
         d.parent = obj;
@@ -91,7 +108,7 @@ static XS(apreq_xs_jar)
             return;
 
         case G_SCALAR:
-            ST(0) = apreq_xs_jar2sv(aTHX_ t, jar_pkg, obj);
+            ST(0) = apreq_xs_table2sv(aTHX_ t, jar_pkg, obj);
             sv_2mortal(ST(0));
             XSRETURN(1);
 

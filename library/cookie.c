@@ -15,13 +15,14 @@
 */
 
 #include "apreq_cookie.h"
+#include "apreq_error.h"
+#include "apreq_util.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_date.h"
 
-#define RFC      APREQ_COOKIE_VERSION_RFC
-#define NETSCAPE APREQ_COOKIE_VERSION_NETSCAPE
-#define DEFAULT  APREQ_COOKIE_VERSION_DEFAULT
+#define RFC      1
+#define NETSCAPE 0
 
 #define ADD_COOKIE(j,c) apr_table_addn(j, c->v.name, c->v.data)
 
@@ -73,7 +74,7 @@ APREQ_DECLARE(apr_status_t)
             ++val;
             --vlen;
         }
-        c->version = *val - '0';
+        apreq_cookie_version_set(c, *val - '0');
         return APR_SUCCESS;
 
     case 'e': case 'm': /* expires, max-age */
@@ -109,8 +110,10 @@ APREQ_DECLARE(apr_status_t)
         break;
 
     case 's':
-        c->secure = (vlen > 0 && *val != '0' 
-                     && strncasecmp("off",val,vlen));
+        if (vlen > 0 && *val != '0' && strncasecmp("off",val,vlen))
+            apreq_cookie_secure_on(c);
+        else
+            apreq_cookie_secure_off(c);
         return APR_SUCCESS;
 
     };
@@ -141,15 +144,13 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
     memcpy (v->name, name, nlen);
     v->name[nlen] = 0;
 
-    c->version = DEFAULT;
-
     /* session cookie is the default */
     c->max_age = -1;
 
     c->path = NULL;
     c->domain = NULL;
     c->port = NULL;
-    c->secure = 0; 
+    c->flags = 0; 
 
     c->comment = NULL;
     c->commentURL = NULL;
@@ -260,7 +261,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
                                                      const char *hdr)
 {
     apreq_cookie_t *c;
-    apreq_cookie_version_t version;
+    unsigned version;
 
  parse_cookie_header:
 
@@ -350,7 +351,9 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
                 return status;
 
             c = apreq_make_cookie(p, name, nlen, value, vlen);
-            c->version = version;
+            APREQ_FLAGS_ON(c->flags, APREQ_TAINT);
+            if (version != NETSCAPE)
+                apreq_cookie_version_set(c, version);
         }
     }
 
@@ -368,6 +371,7 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
      *  over 100 should be fine.
      */
 
+    unsigned version = apreq_cookie_version(c);
     char format[128] = "%s=%s";
     char *f = format + strlen(format);
 
@@ -379,7 +383,7 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
 #define NULL2EMPTY(attr) (attr ? attr : "")
 
 
-    if (c->version == NETSCAPE) {
+    if (version == NETSCAPE) {
         char expires[APR_RFC822_DATE_LEN] = {0};
 
 #define ADD_NS_ATTR(name) do {                  \
@@ -404,7 +408,7 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
 
         f += strlen(f);
 
-        if (c->secure)
+        if (apreq_cookie_is_secure(c))
             strcpy(f, "; secure");
 
         return apr_snprintf(buf, len, format, c->v.name, c->v.data,
@@ -413,7 +417,7 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
 
     /* c->version == RFC */
 
-    strcpy(f,"; Version=%d");
+    strcpy(f,"; Version=%u");
     f += strlen(f);
 
 /* ensure RFC attributes are always quoted */
@@ -438,10 +442,10 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
 
     f += strlen(f);
 
-    if (c->secure)
+    if (apreq_cookie_is_secure(c))
         strcpy(f, "; secure");
 
-    return apr_snprintf(buf, len, format, c->v.name, c->v.data, c->version,
+    return apr_snprintf(buf, len, format, c->v.name, c->v.data, version,
                         NULL2EMPTY(c->path), NULL2EMPTY(c->domain), 
                         NULL2EMPTY(c->port), NULL2EMPTY(c->comment), 
                         NULL2EMPTY(c->commentURL), apr_time_sec(c->max_age));

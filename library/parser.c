@@ -15,6 +15,7 @@
 */
 
 #include "apreq_parser.h"
+#include "apreq_util.h"
 #include "apr_strings.h"
 #include "apr_xml.h"
 #include "apr_hash.h"
@@ -30,7 +31,7 @@
 } while (0);
 
 APREQ_DECLARE(apreq_parser_t *)
-    apreq_make_parser(apr_pool_t *pool,
+    apreq_parser_make(apr_pool_t *pool,
                       apr_bucket_alloc_t *ba,
                       const char *content_type,
                       apreq_parser_function_t parser,
@@ -52,7 +53,7 @@ APREQ_DECLARE(apreq_parser_t *)
 }
 
 APREQ_DECLARE(apreq_hook_t *)
-    apreq_make_hook(apr_pool_t *pool,
+    apreq_hook_make(apr_pool_t *pool,
                     apreq_hook_function_t hook,
                     apreq_hook_t *next,
                     void *ctx)
@@ -189,7 +190,7 @@ APREQ_DECLARE_HOOK(apreq_hook_discard_brigade)
 {
     apr_status_t s = APR_SUCCESS;
     if (hook->next)
-        s = apreq_run_hook(hook->next, param, bb);
+        s = apreq_hook_run(hook->next, param, bb);
     if (bb != NULL)
         apr_brigade_cleanup(bb);
     return s;
@@ -218,7 +219,7 @@ APREQ_DECLARE_PARSER(apreq_parse_generic)
     if (ctx == NULL) {
         parser->ctx = ctx = apr_palloc(pool, sizeof *ctx);
         ctx->status = GEN_INCOMPLETE;
-        ctx->param = apreq_make_param(pool, 
+        ctx->param = apreq_param_make(pool, 
                                       "_dummy_", strlen("_dummy_"), "", 0);
         ctx->param->upload = apr_brigade_create(pool, parser->bucket_alloc);
         ctx->param->info = apr_table_make(pool, APREQ_DEFAULT_NELTS);
@@ -236,7 +237,7 @@ APREQ_DECLARE_PARSER(apreq_parse_generic)
     }
 
     if (parser->hook != NULL) {
-        s = apreq_run_hook(parser->hook, ctx->param, bb);
+        s = apreq_hook_run(parser->hook, ctx->param, bb);
         if (s != APR_SUCCESS) {
             ctx->status = GEN_ERROR;
             return s;
@@ -299,7 +300,7 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser)
             if (s == APR_SUCCESS) {
                 ctx->status = XML_COMPLETE;
                 if (hook->next)
-                    s = apreq_run_hook(hook->next, param, bb);
+                    s = apreq_hook_run(hook->next, param, bb);
             }
             else {
                 ctx->status = XML_ERROR;
@@ -327,7 +328,7 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser)
     }
 
     if (hook->next)
-        return apreq_run_hook(hook->next, param, bb);
+        return apreq_hook_run(hook->next, param, bb);
 
     return APR_SUCCESS;
 }

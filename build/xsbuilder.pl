@@ -115,7 +115,7 @@ sub preprocess
     # ExtUtils::XSBuilder::C::grammar
 
     for ($_[1]) {
-        ::c_macro("APREQ_DECLARE", "apreq_util.h")->();
+        ::c_macro("APREQ_DECLARE", "apreq.h")->();
         ::c_macro("APREQ_DECLARE_HOOK", "apreq_parser.h")->();
         ::c_macro("APREQ_DECLARE_PARSER", "apreq_parser.h")->();
         ::c_macro("APR_DECLARE")->();

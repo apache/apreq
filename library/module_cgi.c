@@ -15,7 +15,8 @@
 */
 #include <assert.h>
 
-#include "apreq.h"
+#include "apreq_module.h"
+#include "apreq_error.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_env.h"
@@ -233,7 +234,7 @@ static void init_body(apreq_handle_t *env)
             apreq_parser_function_t pf = apreq_parser(ct_header);
 
             if (pf != NULL) {
-                handle->parser = apreq_make_parser(handle->pool,
+                handle->parser = apreq_parser_make(handle->pool,
                                                    ba,
                                                    ct_header, 
                                                    pf,
@@ -308,7 +309,7 @@ static apr_status_t cgi_read(apreq_handle_t *env,
         }
 
         handle->body_status =
-            apreq_run_parser(handle->parser, handle->body, bb);
+            apreq_parser_run(handle->parser, handle->body, bb);
         apr_brigade_destroy(bb);
         break;
 
@@ -336,7 +337,7 @@ static apr_status_t cgi_read(apreq_handle_t *env,
         }
 
         handle->body_status =
-            apreq_run_parser(handle->parser, handle->body, bb);
+            apreq_parser_run(handle->parser, handle->body, bb);
         apr_brigade_destroy(bb);
         break;
 

@@ -17,7 +17,7 @@
 #ifndef APREQ_APACHE2_H
 #define APREQ_APACHE2_H
 
-#include "apreq.h"
+#include "apreq_module.h"
 #include <httpd.h>
 
 #ifdef  __cplusplus

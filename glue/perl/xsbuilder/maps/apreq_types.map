@@ -12,7 +12,7 @@ unsigned | UV
 #apreq_cookie_version_t | APREQ_COOKIE_VERSION
 
 #data structure stuff
-struct request_rec | Apache::RequestRec | T_PTR | r
+struct request_rec | Apache::RequestRec | T_APACHEOBJ | r
 struct apr_pool_t           | APR::Pool | T_POOLOBJ
 struct apr_array_header_t   | APR::ArrayHeader
 struct apr_table_t          | APR::Table | T_HASHOBJ
@@ -26,4 +26,5 @@ struct apreq_cookie_t       | APR::Request::Cookie
 struct apreq_handle_t         | APR::Request          | T_APREQ_HANDLE
 struct apreq_handle_apache2_t | APR::Request::Apache2 | T_APREQ_HANDLE_APACHE2
 struct apreq_handle_cgi_t     | APR::Request::CGI     | T_APREQ_HANDLE
+struct apreq_xs_error_t       | APR::Request::Error   | T_APREQ_ERROR
 

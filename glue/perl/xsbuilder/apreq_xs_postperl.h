@@ -31,6 +31,7 @@ typedef apreq_handle_t apreq_handle_cgi_t;
 typedef apreq_handle_t apreq_handle_apache2_t;
 typedef apr_table_t    apreq_param_table_t;
 typedef apr_table_t    apreq_cookie_table_t;
+typedef HV apreq_xs_error_t;
 
 /**
  * @file apreq_xs_postperl.h
@@ -288,11 +289,18 @@ void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func,
 #define APREQ_XS_THROW_ERROR(attr, status, func, errpkg)  do {          \
     if (!sv_derived_from(sv, errpkg)) {                                 \
         HV *hv = newHV();                                               \
-        SV *rv = newRV_inc(obj);                                        \
+        SV *rv = newRV_inc(SvRV(obj));                                  \
         sv_setsv(*hv_fetch(hv, "_" #attr, 2, 1), sv_2mortal(rv));       \
         apreq_xs_croak(aTHX_ hv, status, func, errpkg);                 \
     }                                                                   \
 } while (0)
+
+static APR_INLINE
+SV *apreq_xs_strerror(pTHX_ apr_status_t s) {
+    char buf[256];
+    apreq_strerror(s, buf, sizeof buf);
+    return newSVpv(buf, 0);
+}
 
 
 /** @} */

@@ -74,10 +74,10 @@ static XS(apreq_xs_args)
             apr_status_t s;
             s = apreq_args(req, &t);
 
-            if (s != APR_SUCCESS && !sv_derived_from(sv, error_pkg))
-                APREQ_XS_THROW_ERROR("r", s, "APR::Request::args", error_pkg);
+            if (apreq_status_is_error(s))
+                APREQ_XS_THROW_ERROR(r, s, "APR::Request::args", error_pkg);
 
-        XSRETURN_UNDEF;
+            XSRETURN_UNDEF;
         }
     }
     else {
@@ -87,8 +87,11 @@ static XS(apreq_xs_args)
 
         s = apreq_args(req, &t);
 
-        if (s != APR_SUCCESS && !sv_derived_from(sv, error_pkg))
-            APREQ_XS_THROW_ERROR("r", s, "APR::Request::args", error_pkg);
+        if (apreq_status_is_error(s))
+            APREQ_XS_THROW_ERROR(r, s, "APR::Request::args", error_pkg);
+
+        if (t == NULL)
+            XSRETURN_EMPTY;
 
         d.pkg = elt_pkg;
         d.parent = obj;
@@ -148,10 +151,10 @@ static XS(apreq_xs_body)
             apr_status_t s;
             s = apreq_body(req, &t);
 
-            if (s != APR_SUCCESS && !sv_derived_from(sv, error_pkg))
-                APREQ_XS_THROW_ERROR("r", s, "APR::Request::args", error_pkg);
+            if (apreq_status_is_error(s))
+                APREQ_XS_THROW_ERROR(r, s, "APR::Request::body", error_pkg);
 
-        XSRETURN_UNDEF;
+            XSRETURN_UNDEF;
         }
     }
     else {
@@ -161,8 +164,11 @@ static XS(apreq_xs_body)
 
         s = apreq_body(req, &t);
 
-        if (s != APR_SUCCESS && !sv_derived_from(sv, error_pkg))
-            APREQ_XS_THROW_ERROR("r", s, "APR::Request::body", error_pkg);
+        if (apreq_status_is_error(s))
+            APREQ_XS_THROW_ERROR(r, s, "APR::Request::body", error_pkg);
+
+        if (t == NULL)
+            XSRETURN_EMPTY;
 
         d.pkg = elt_pkg;
         d.parent = obj;

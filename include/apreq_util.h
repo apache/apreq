@@ -17,10 +17,9 @@
 #ifndef APREQ_UTIL_H
 #define APREQ_UTIL_H
 
-#include "apr_tables.h" 
 #include "apr_file_io.h"
 #include "apr_buckets.h"
-#include <stddef.h>
+#include "apreq.h"
 
 #ifdef  __cplusplus
  extern "C" {
@@ -39,15 +38,6 @@
  * @ingroup libapreq2
  */
 
-#ifndef WIN32
-#define APREQ_DECLARE(d)                APR_DECLARE(d)
-#define APREQ_DECLARE_NONSTD(d)         APR_DECLARE_NONSTD(d)
-#define APREQ_DECLARE_DATA
-#else
-#define APREQ_DECLARE(type)             __declspec(dllexport) type __stdcall
-#define APREQ_DECLARE_NONSTD(type)      __declspec(dllexport) type
-#define APREQ_DECLARE_DATA              __declspec(dllexport)
-#endif
 
 
 /**
@@ -56,82 +46,7 @@
  * buckets
 */
 
-#define APREQ_DEFAULT_READ_BLOCK_SIZE   (64  * 1024)
-#define APREQ_DEFAULT_READ_LIMIT        (64 * 1024 * 1024)
-#define APREQ_DEFAULT_BRIGADE_LIMIT     (256 * 1024)
-#define APREQ_DEFAULT_NELTS              8
 
-/**
- * Beginning work on error-codes ...
- *
- *
- */
-#ifndef APR_EBADARG
-#define APR_EBADARG                APR_BADARG   /* apr's unfixed booboo */
-#endif
-
-/* 0's: generic error status codes */
-#define APREQ_ERROR_GENERAL        APR_OS_START_USERERR
-#define APREQ_ERROR_INTERRUPT      APREQ_ERROR_GENERAL + 1
-
-/* 10's: malformed input */
-#define APREQ_ERROR_NODATA         APREQ_ERROR_GENERAL + 10
-#define APREQ_ERROR_BADSEQ         APREQ_ERROR_GENERAL + 11
-#define APREQ_ERROR_BADCHAR        APREQ_ERROR_GENERAL + 12
-#define APREQ_ERROR_BADTOKEN       APREQ_ERROR_GENERAL + 13
-#define APREQ_ERROR_NOTOKEN        APREQ_ERROR_GENERAL + 14
-#define APREQ_ERROR_BADATTR        APREQ_ERROR_GENERAL + 15
-#define APREQ_ERROR_BADHEADER      APREQ_ERROR_GENERAL + 16
-#define APREQ_ERROR_NOHEADER       APREQ_ERROR_GENERAL + 17
-
-/* 20's: misconfiguration */
-#define APREQ_ERROR_CONFLICT       APREQ_ERROR_GENERAL + 20
-#define APREQ_ERROR_NOPARSER       APREQ_ERROR_GENERAL + 21
-
-
-/* 30's: limit violations */
-#define APREQ_ERROR_OVERLIMIT      APREQ_ERROR_GENERAL + 30
-#define APREQ_ERROR_UNDERLIMIT     APREQ_ERROR_GENERAL + 31
-
-
-
-
-/** @brief libapreq's pre-extensible string type */
-typedef struct apreq_value_t {
-    char             *name;    /**< value name */
-    apr_size_t        size;    /**< value length (in bytes) */
-    char              data[1]; /**< value data  */
-} apreq_value_t;
-
-
-#define apreq_attr_to_type(T,A,P) ( (T*) ((char*)(P)-offsetof(T,A)) )
-
-/**
- * Construcs an apreq_value_t from the name/value info
- * supplied by the arguments.
- *
- * @param p     Pool for allocating the name and value.
- * @param name  Name of value.
- * @param nlen  Length of name.
- * @param val   Value data.
- * @param vlen  Length of val.
- * @return      apreq_value_t allocated from pool, 
- *              with v->data holding a copy of val, v->status = 0, and
- *              v->name pointing to a nul-terminated copy of name.
- */
-APREQ_DECLARE(apreq_value_t *) apreq_make_value(apr_pool_t *p, 
-                                                const char *name,
-                                                const apr_size_t nlen,
-                                                const char *val, 
-                                                const apr_size_t vlen);
-
-/** @enum apreq_join_t Join type */
-typedef enum { 
-    APREQ_JOIN_AS_IS,      /**< Join the strings without modification */
-    APREQ_JOIN_ENCODE,     /**< Url-encode the strings before joining them */
-    APREQ_JOIN_DECODE,     /**< Url-decode the strings before joining them */
-    APREQ_JOIN_QUOTE       /**< Quote the strings, backslashing existing quote marks. */
-} apreq_join_t;
 
 /**
  * Join an array of values.
@@ -145,13 +60,6 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
                                        const char *sep, 
                                        const apr_array_header_t *arr, 
                                        apreq_join_t mode);
-
-
-/** @enum apreq_match_t Match type */
-typedef enum {
-    APREQ_MATCH_FULL,       /**< Full match only. */
-    APREQ_MATCH_PARTIAL     /**< Partial matches are ok. */
-} apreq_match_t;
 
 /**
  * Returns offset of match string's location, or -1 if no match is found.
@@ -271,13 +179,6 @@ apr_ssize_t apreq_unescape(char *str)
     else
         return -1;
 }
-
-
-/** @enum apreq_expires_t Expiration date format */
-typedef enum {
-    APREQ_EXPIRES_HTTP,       /**< Use date formatting consistent with RFC 2616 */
-    APREQ_EXPIRES_NSCOOKIE    /**< Use format consistent with Netscape's Cookie Spec */
-} apreq_expires_t;
 
 /**
  * Returns an RFC-822 formatted time string. Similar to ap_gm_timestr_822.
@@ -414,17 +315,6 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
                                                  apr_bucket_brigade *out, 
                                                  apr_bucket_brigade *in);
 
-
-/**
- * Initialize libapreq2. Applications (except apache modules using
- * mod_apreq) have to call this exactly once before they use
- * libapreq2.
- *
- * @param pool a base pool persisting while libapreq2 is used
- * @remark after you detroyed the pool, you have to call this function again
- *    with a new pool if you still plan to use libapreq2
- */
-APREQ_DECLARE(apr_status_t) apreq_initialize(apr_pool_t *pool);
 
 
 #ifdef __cplusplus

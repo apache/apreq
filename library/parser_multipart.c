@@ -1,4 +1,6 @@
 #include "apreq_parser.h"
+#include "apreq_error.h"
+#include "apreq_util.h"
 #include "apr_strings.h"
 #include "apr_strmatch.h"
 
@@ -214,7 +216,7 @@ struct mfd_ctx * create_multipart_context(const char *content_type,
 
     ctx->status = MFD_INIT;
     ctx->pattern = apr_strmatch_precompile(pool, ctx->bdry, 1);
-    ctx->hdr_parser = apreq_make_parser(pool, ba, "", apreq_parse_headers,
+    ctx->hdr_parser = apreq_parser_make(pool, ba, "", apreq_parse_headers,
                                         brigade_limit, temp_dir, NULL, NULL);
     ctx->info = NULL;
     ctx->bb = apr_brigade_create(pool, ba);
@@ -243,7 +245,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             return APR_EGENERAL;
 
 
-        ctx->mix_parser = apreq_make_parser(pool, ba, "", 
+        ctx->mix_parser = apreq_parser_make(pool, ba, "", 
                                             apreq_parse_multipart,
                                             parser->brigade_limit,
                                             parser->temp_dir,
@@ -304,7 +306,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 /* flush out old header parser internal structs for reuse */
                 ctx->hdr_parser->ctx = NULL;
             }
-            s = apreq_run_parser(ctx->hdr_parser, ctx->info, ctx->in);
+            s = apreq_parser_run(ctx->hdr_parser, ctx->info, ctx->in);
             switch (s) {
             case APR_SUCCESS:
                 ctx->status = MFD_POST_HEADER;
@@ -398,8 +400,9 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     else {
                         apreq_param_t *param;
 
-                        param = apreq_make_param(pool, name, nlen, 
+                        param = apreq_param_make(pool, name, nlen, 
                                                  filename, flen);
+                        APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
                         param->info = ctx->info;
                         param->upload = apr_brigade_create(pool, 
                                                        ctx->bb->bucket_alloc);
@@ -420,8 +423,9 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                         apreq_param_t *param;
                         name = ctx->param_name;
                         nlen = strlen(name);
-                        param = apreq_make_param(pool, name, nlen, 
+                        param = apreq_param_make(pool, name, nlen, 
                                                  filename, flen);
+                        APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
                         param->info = ctx->info;
                         param->upload = apr_brigade_create(pool, 
                                                        ctx->bb->bucket_alloc);
@@ -443,8 +447,9 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 nlen = strlen(name);
                 filename = "";
                 flen = 0;
-                param = apreq_make_param(pool, name, nlen, 
+                param = apreq_param_make(pool, name, nlen, 
                                          filename, flen);
+                APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
                 param->info = ctx->info;
                 param->upload = apr_brigade_create(pool, 
                                                ctx->bb->bucket_alloc);
@@ -479,8 +484,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     return s;
                 }
                 len = off;
-                param = apr_palloc(pool, len + sizeof *param);
-                param->upload = NULL;
+                param = apreq_param_make(pool, NULL, 0, NULL, len);
+                APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
                 param->info = ctx->info;
 
                 *(const apreq_value_t **)&v = &param->v;
@@ -490,7 +495,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 v->data[v->size] = 0;
 
                 if (parser->hook != NULL) {
-                    s = apreq_run_hook(parser->hook, param, NULL);
+                    s = apreq_hook_run(parser->hook, param, NULL);
                     if (s != APR_SUCCESS) {
                         ctx->status = MFD_ERROR;
                         return s;
@@ -521,7 +526,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             case APR_INCOMPLETE:
                 if (parser->hook != NULL) {
-                    s = apreq_run_hook(parser->hook, param, ctx->bb);
+                    s = apreq_hook_run(parser->hook, param, ctx->bb);
                     if (s != APR_SUCCESS) {
                         ctx->status = MFD_ERROR;
                         return s;
@@ -536,7 +541,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             case APR_SUCCESS:
                 if (parser->hook != NULL) {
                     APR_BRIGADE_INSERT_TAIL(ctx->bb, ctx->eos);
-                    s = apreq_run_hook(parser->hook, param, ctx->bb);
+                    s = apreq_hook_run(parser->hook, param, ctx->bb);
                     APR_BUCKET_REMOVE(ctx->eos);
                     if (s != APR_SUCCESS) {
                         ctx->status = MFD_ERROR;
@@ -565,7 +570,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
     case MFD_MIXED:
         {
-            s = apreq_run_parser(ctx->mix_parser, t, ctx->in);
+            s = apreq_parser_run(ctx->mix_parser, t, ctx->in);
             switch (s) {
             case APR_SUCCESS:
                 ctx->status = MFD_INIT;

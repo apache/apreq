@@ -14,7 +14,8 @@
 **  limitations under the License.
 */
 
-#include "apreq.h"
+#include "apreq_parser.h"
+#include "apreq_error.h"
 #include "apr_strings.h"
 #include "apr_xml.h"
 #include "at.h"
@@ -133,14 +134,14 @@ static void parse_urlencoded(dAT)
     body = apr_table_make(p, APREQ_DEFAULT_NELTS);
     ba = apr_bucket_alloc_create(p);
     bb = apr_brigade_create(p, ba);
-    parser = apreq_make_parser(p, ba, URL_ENCTYPE, apreq_parse_urlencoded,
+    parser = apreq_parser_make(p, ba, URL_ENCTYPE, apreq_parse_urlencoded,
                                100, NULL, NULL, NULL);
 
     APR_BRIGADE_INSERT_HEAD(bb,
         apr_bucket_immortal_create(url_data,strlen(url_data), 
                                    bb->bucket_alloc));
 
-    rv = apreq_run_parser(parser, body, bb);
+    rv = apreq_parser_run(parser, body, bb);
     AT_int_eq(rv, APR_INCOMPLETE);
 
     APR_BRIGADE_INSERT_HEAD(bb,
@@ -149,7 +150,7 @@ static void parse_urlencoded(dAT)
     APR_BRIGADE_INSERT_TAIL(bb,
            apr_bucket_eos_create(bb->bucket_alloc));
 
-    rv = apreq_run_parser(parser, body, bb);
+    rv = apreq_parser_run(parser, body, bb);
     AT_int_eq(rv, APR_SUCCESS);
 
     AT_str_eq(apr_table_get(body,"alpha"), "one");
@@ -188,7 +189,7 @@ static void parse_multipart(dAT)
 
             bb = apr_brigade_create(p, ba);
             body = apr_table_make(p, APREQ_DEFAULT_NELTS);
-            parser = apreq_make_parser(p, ba, MFD_ENCTYPE
+            parser = apreq_parser_make(p, ba, MFD_ENCTYPE
                                        "; charset=\"iso-8859-1\""
                                        "; boundary=\"AaB03x\"",
                                        apreq_parse_multipart,
@@ -209,9 +210,9 @@ static void parse_multipart(dAT)
                 apr_bucket_split(f, i - j);
 
             tail = apr_brigade_split(bb, f);
-            rv = apreq_run_parser(parser, body, bb);
+            rv = apreq_parser_run(parser, body, bb);
             AT_int_eq(rv, (j < strlen(form_data)) ? APR_INCOMPLETE : APR_SUCCESS);
-            rv = apreq_run_parser(parser, body, tail);
+            rv = apreq_parser_run(parser, body, tail);
             AT_int_eq(rv, APR_SUCCESS);
             AT_int_eq(apr_table_elts(body)->nelts, 2);
 
@@ -258,16 +259,16 @@ static void parse_disable_uploads(dAT)
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
     body = apr_table_make(p, APREQ_DEFAULT_NELTS);
-    hook = apreq_make_hook(p, apreq_hook_disable_uploads, NULL, NULL);
+    hook = apreq_hook_make(p, apreq_hook_disable_uploads, NULL, NULL);
 
-    parser = apreq_make_parser(p, ba, MFD_ENCTYPE
+    parser = apreq_parser_make(p, ba, MFD_ENCTYPE
                                "; charset=\"iso-8859-1\""
                                "; boundary=\"AaB03x\"",
                                apreq_parse_multipart,
                                1000, NULL, hook, NULL);
 
 
-    rv = apreq_run_parser(parser, body, bb);
+    rv = apreq_parser_run(parser, body, bb);
     AT_int_eq(rv, APR_EGENERAL);
     AT_int_eq(apr_table_elts(body)->nelts, 1);
 
@@ -301,10 +302,10 @@ static void parse_generic(dAT)
 
     body = apr_table_make(p, APREQ_DEFAULT_NELTS);
 
-    parser = apreq_make_parser(p, ba, "application/xml", 
+    parser = apreq_parser_make(p, ba, "application/xml", 
                                apreq_parse_generic, 1000, NULL, NULL, NULL);
 
-    rv = apreq_run_parser(parser, body, bb);
+    rv = apreq_parser_run(parser, body, bb);
     AT_int_eq(rv, APR_SUCCESS);
     dummy = *(apreq_param_t **)parser->ctx;
     AT_not_null(dummy);
@@ -332,12 +333,12 @@ static void hook_discard(dAT)
 
     body = apr_table_make(p, APREQ_DEFAULT_NELTS);
 
-    hook = apreq_make_hook(p, apreq_hook_discard_brigade, NULL, NULL);
-    parser = apreq_make_parser(p, ba, "application/xml", 
+    hook = apreq_hook_make(p, apreq_hook_discard_brigade, NULL, NULL);
+    parser = apreq_parser_make(p, ba, "application/xml", 
                                apreq_parse_generic, 1000, NULL, hook, NULL);
 
 
-    rv = apreq_run_parser(parser, body, bb);
+    rv = apreq_parser_run(parser, body, bb);
     AT_int_eq(rv, APR_SUCCESS);
     dummy = *(apreq_param_t **)parser->ctx;
     AT_not_null(dummy);
@@ -370,13 +371,13 @@ static void parse_related(dAT)
 
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
-    xml_hook = apreq_make_hook(p, apreq_hook_apr_xml_parser, NULL, NULL);
+    xml_hook = apreq_hook_make(p, apreq_hook_apr_xml_parser, NULL, NULL);
 
     body =   apr_table_make(p, APREQ_DEFAULT_NELTS);
-    parser = apreq_make_parser(p, ba, ct, apreq_parse_multipart, 
+    parser = apreq_parser_make(p, ba, ct, apreq_parse_multipart, 
                                1000, NULL, xml_hook, NULL);
 
-    rv = apreq_run_parser(parser, body, bb);
+    rv = apreq_parser_run(parser, body, bb);
     AT_int_eq(rv, APR_SUCCESS);
 
     val = apr_table_get(body, "<980119.X53GGT@example.com>");
@@ -445,10 +446,10 @@ static void parse_mixed(dAT)
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
-    parser = apreq_make_parser(p, ba, ct, apreq_parse_multipart, 
+    parser = apreq_parser_make(p, ba, ct, apreq_parse_multipart, 
                                1000, NULL, NULL, NULL);
 
-    rv = apreq_run_parser(parser, body, bb);
+    rv = apreq_parser_run(parser, body, bb);
     AT_int_eq(rv, APR_SUCCESS);
 
     val = apr_table_get(body, "submit-name");

@@ -17,8 +17,8 @@
 #ifndef APREQ_COOKIE_H
 #define APREQ_COOKIE_H
 
-#include "apreq_util.h"
-#include "apr_tables.h"
+#include "apreq.h"
+#include "apr_time.h"
 
 #ifdef  __cplusplus
 extern "C" {
@@ -40,44 +40,26 @@ extern "C" {
  *
  */
 
-
-/**
- * Cookie Version.  libapreq does not distinguish between
- * rfc2109 and its successor rfc2965; both are referred to
- * as APREQ_COOKIE_VERSION_RFC.  Users can distinguish between
- * them in their outgoing cookies by using apreq_cookie_bake()
- * for sending rfc2109 cookies, or apreq_cookie_bake2() for rfc2965.
- * The original Netscape cookie spec is still preferred for its
- * greater portability, it is named APREQ_COOKIE_VERSION_NETSCAPE.
- *
- */
-typedef enum { APREQ_COOKIE_VERSION_NETSCAPE, 
-               APREQ_COOKIE_VERSION_RFC } apreq_cookie_version_t;
-
-
-/** Default version, used when creating a new cookie. See apreq_cookie_make().*/
-#define APREQ_COOKIE_VERSION_DEFAULT       APREQ_COOKIE_VERSION_NETSCAPE
-
-/** Maximum length of a single Set-Cookie(2) header */
+/** XXX: move this to apreq_module_t ...
+    Maximum length of a single Set-Cookie(2) header */
 #define APREQ_COOKIE_MAX_LENGTH            4096
 
 /** @brief Cookie type, supporting both Netscape and RFC cookie specifications.
  */
-typedef struct apreq_cookie_t {
 
-    apreq_cookie_version_t version; /**< RFC or Netscape compliant cookie */
+typedef struct apreq_cookie_t {
 
     char           *path;        /**< Restricts url path */
     char           *domain;      /**< Restricts server domain */
     char           *port;        /**< Restricts server port */
-    unsigned        secure;      /**< Notify browser of "https" requirement */
     char           *comment;     /**< RFC cookies may send a comment */
     char           *commentURL;  /**< RFC cookies may place an URL here */
     apr_time_t      max_age;     /**< total duration of cookie: -1 == session */
-    unsigned char   flags;       /**< charsets, taint marks, app-specific bits */
+    unsigned        flags;       /**< charsets, taint marks, app-specific bits */
     const apreq_value_t   v;     /**< "raw" cookie value */
 
 } apreq_cookie_t;
+
 
 /** Upgrades cookie jar table values to apreq_cookie_t structs. */
 static APR_INLINE
@@ -91,14 +73,63 @@ apreq_cookie_t *apreq_value_to_cookie(const char *val)
 }
 
 static APR_INLINE
-const char *apreq_cookie_name(const apreq_cookie_t *c) {
-    return c->v.name;
-}
+const char *apreq_cookie_name(const apreq_cookie_t *c) { return c->v.name; }
 
 static APR_INLINE
-const char *apreq_cookie_value(const apreq_cookie_t *c) {
-    return c->v.data;
+const char *apreq_cookie_value(const apreq_cookie_t *c) { return c->v.data; }
+
+
+/**@return 1 if this is an RFC cookie, 0 if its a Netscape cookie. */
+static APR_INLINE
+unsigned apreq_cookie_version(const apreq_cookie_t *c) {
+    return APREQ_FLAGS_GET(c->flags, APREQ_COOKIE_VERSION);
 }
+
+/** Sets the cookie's protocol version. */
+static APR_INLINE
+void apreq_cookie_version_set(apreq_cookie_t *c, unsigned v) {
+    APREQ_FLAGS_SET(c->flags, APREQ_COOKIE_VERSION, v);
+}
+
+/** @return 1 if the secure flag is set, 0 otherwise. */
+static APR_INLINE
+unsigned apreq_cookie_is_secure(const apreq_cookie_t *c) {
+    return APREQ_FLAGS_GET(c->flags, APREQ_COOKIE_SECURE);
+}
+
+/** Sets the cookie's secure flag, meaning it only
+ *  comes back over an SSL-encrypted connction.
+ */
+static APR_INLINE
+void apreq_cookie_secure_on(apreq_cookie_t *c) {
+    APREQ_FLAGS_ON(c->flags, APREQ_COOKIE_SECURE);
+}
+
+/** Turns off the cookie's secure flag. */
+static APR_INLINE
+void apreq_cookie_secure_off(apreq_cookie_t *c) {
+    APREQ_FLAGS_OFF(c->flags, APREQ_COOKIE_SECURE);
+}
+
+
+/** @return 1 if the taint flag is set, 0 otherwise. */
+static APR_INLINE
+unsigned apreq_cookie_is_tainted(const apreq_cookie_t *c) {
+    return APREQ_FLAGS_GET(c->flags, APREQ_TAINT);
+}
+
+/** Sets the cookie's tainted flag. */
+static APR_INLINE
+void apreq_cookie_taint_on(apreq_cookie_t *c) {
+    APREQ_FLAGS_ON(c->flags, APREQ_TAINT);
+}
+
+/** Turns off the cookie's taint flag. */
+static APR_INLINE
+void apreq_cookie_taint_off(apreq_cookie_t *c) {
+    APREQ_FLAGS_OFF(c->flags, APREQ_TAINT);
+}
+
 
 APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *pool,
                                                      apr_table_t *jar,

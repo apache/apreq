@@ -1,4 +1,6 @@
 #include "apreq_parser.h"
+#include "apreq_util.h"
+#include "apreq_error.h"
 
 #define PARSER_STATUS_CHECK(PREFIX)   do {         \
     if (ctx->status == PREFIX##_ERROR)             \
@@ -26,8 +28,8 @@ struct url_ctx {
 
 static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
                                   apr_bucket_brigade *bb,
-                                  const apr_size_t nlen,
-                                  const apr_size_t vlen)
+                                  apr_size_t nlen,
+                                  apr_size_t vlen)
 {
     apreq_param_t *param;
     apreq_value_t *v;
@@ -39,7 +41,7 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
     if (nlen == 0)
         return APR_EBADARG;
 
-    param = apr_palloc(pool, nlen + vlen + 1 + sizeof *param);
+    param = apreq_param_make(pool, NULL, nlen, NULL, vlen);
     *(const apreq_value_t **)&v = &param->v;
 
     arr.pool     = pool;
@@ -47,11 +49,6 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
     arr.nelts    = 0;
     arr.nalloc   = APREQ_DEFAULT_NELTS;
     arr.elts     = (char *)vec;
-
-    param->upload = NULL;
-    param->info = NULL;
-
-    v->name = v->data + vlen + 1;
 
     apr_brigade_partition(bb, nlen+1, &end);
 
@@ -67,7 +64,7 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
 
     ((struct iovec *)arr.elts)[arr.nelts - 1].iov_len--; /* drop '=' sign */
 
-    s = apreq_decodev(v->name, &v->size,
+    s = apreq_decodev(v->name, &nlen,
                       (struct iovec *)arr.elts, arr.nelts);
     if (s != APR_SUCCESS)
         return s;
@@ -91,7 +88,7 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
     if (end != APR_BRIGADE_SENTINEL(bb))
         ((struct iovec *)arr.elts)[arr.nelts - 1].iov_len--; /* drop [&;] */
 
-    s = apreq_decodev(v->data, &v->size,
+    s = apreq_decodev(v->data, &vlen,
                       (struct iovec *)arr.elts, arr.nelts);
 
     if (s != APR_SUCCESS)
@@ -100,6 +97,7 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
     while ((e = APR_BRIGADE_FIRST(bb)) != end)
         apr_bucket_delete(e);
 
+    APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
     *p = param;
     return APR_SUCCESS;
 }
@@ -143,7 +141,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
             else {
                 s = split_urlword(&param, pool, ctx->bb, nlen, vlen);
                 if (parser->hook != NULL && s == APR_SUCCESS)
-                    s = apreq_run_hook(parser->hook, param, NULL);
+                    s = apreq_hook_run(parser->hook, param, NULL);
 
                 if (s == APR_SUCCESS) {
                     apr_table_addn(t, param->v.name,  param->v.data);
@@ -188,7 +186,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
                 case ';':
                     s = split_urlword(&param, pool, ctx->bb, nlen, vlen);
                     if (parser->hook != NULL && s == APR_SUCCESS)
-                        s = apreq_run_hook(parser->hook, param, NULL);
+                        s = apreq_hook_run(parser->hook, param, NULL);
 
                     if (s != APR_SUCCESS) {
                         ctx->status = URL_ERROR;

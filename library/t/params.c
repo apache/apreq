@@ -14,7 +14,9 @@
 **  limitations under the License.
 */
 
-#include "apreq.h"
+#include "apreq_param.h"
+#include "apreq_util.h"
+#include "apreq_error.h"
 #include "apr_strings.h"
 #include "at.h"
 
@@ -132,22 +134,6 @@ static void header_attributes(dAT)
 
 }
 
-static void make_values(dAT)
-{
-    apreq_value_t *v;
-    apr_size_t len = 4;
-    char *name = apr_palloc(p,len);
-    char *val = apr_palloc(p,len);
-    strcpy(name, "foo");
-    strcpy(val, "bar");
- 
-    v = apreq_make_value(p, name, len, val, len);
-    AT_str_eq(v->name, name);
-    AT_int_eq(v->size, len);
-    AT_str_eq(v->data, val);
-
-}
-
 
 static void make_param(dAT)
 {
@@ -160,15 +146,15 @@ static void make_param(dAT)
     strcpy(name, "foo");
     strcpy(val, "bar > alpha");
  
-    param = apreq_make_param(p, name, nlen, val, vlen);
+    param = apreq_param_make(p, name, nlen, val, vlen);
     AT_str_eq(param->v.name, name);
     AT_int_eq(param->v.size, vlen);
     AT_str_eq(param->v.data, val);
 
-    encode = apreq_encode_param(p, param);
+    encode = apreq_param_encode(p, param);
     AT_str_eq(encode, "foo=bar+%3e+alpha");
 
-    s = apreq_decode_param(&decode, p, encode, nlen, vlen+2);
+    s = apreq_param_decode(&decode, p, encode, nlen, vlen+2);
     AT_int_eq(s, APR_SUCCESS);
     AT_str_eq(decode->v.name, name);
     AT_int_eq(decode->v.size, vlen);
@@ -215,10 +201,8 @@ int main(int argc, char *argv[])
         dT(params_as, 2),
         dT(string_decoding_in_place, 8),
         dT(header_attributes, 13),
-        dT(make_values, 3),
         dT(make_param, 8),
         dT(quote_strings, 24),
-//        dT(test_memmem, 7),
     };
 
     apr_initialize();

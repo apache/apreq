@@ -15,6 +15,8 @@
 */
 
 #include "apreq_param.h"
+#include "apreq_error.h"
+#include "apreq_util.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 
@@ -22,7 +24,7 @@
 #define MAX_BRIGADE_LEN (1024 * 256)
 #define MAX_READ_AHEAD  (1024 * 64)
 
-APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
+APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p, 
                                                 const char *name, 
                                                 const apr_size_t nlen, 
                                                 const char *val, 
@@ -32,14 +34,15 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
     apreq_value_t *v;
     param->info = NULL;
     param->upload = NULL;
+    param->flags = 0; 
 
     *(const apreq_value_t **)&v = &param->v;
     v->size = vlen;
-    if (vlen)
+    if (vlen && val != NULL)
         memcpy(v->data, val, vlen);
     v->data[vlen] = 0;
     v->name = v->data + vlen + 1;
-    if (nlen)
+    if (nlen && name != NULL)
         memcpy(v->name, name, nlen);
     v->name[nlen] = 0;
 
@@ -47,7 +50,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
 }
 
 
-APREQ_DECLARE(apr_status_t) apreq_decode_param(apreq_param_t **param,
+APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
                                                apr_pool_t *pool, 
                                                const char *word,
                                                const apr_size_t nlen, 
@@ -84,7 +87,7 @@ APREQ_DECLARE(apr_status_t) apreq_decode_param(apreq_param_t **param,
 }
 
 
-APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool, 
+APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool, 
                                          const apreq_param_t *param)
 {
     apreq_value_t *v;
@@ -132,10 +135,11 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
                 else
                     vlen = qs - start - nlen - 1;
 
-                s = apreq_decode_param(&param, pool, start, nlen, vlen);
+                s = apreq_param_decode(&param, pool, start, nlen, vlen);
                 if (s != APR_SUCCESS)
                     return s;
 
+                APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
                 apr_table_addn(t, param->v.name, param->v.data);
             }
 

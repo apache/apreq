@@ -2,8 +2,16 @@
 @brief List of major changes.
 
 
-@section v2_05 Changes with libapreq2-2.05
+@section v2_05_dev Changes with libapreq2-2.05-dev
 
+
+- C API [joes]
+  - Add apreq_error.h, apreq_module.h.
+  - Rename apreq_run* and apreq_make* funcs to conform with 
+    apreq_$obj_$meth scheme.
+  - Replace c->version & c->secure with flags.
+  - Parsers are assumed to be working with external data, so the
+    cookies & params they produce are marked tainted.
 
 - C API [joes]
   apreq_parse_cookie_header() failed to parse RFC Cookie headers which

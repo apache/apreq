@@ -15,34 +15,13 @@
 */
 
 #include "apreq_util.h"
+#include "apreq_error.h"
 #include "apr_time.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include <assert.h>
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 #define MAX(a,b) ( (a) > (b) ? (a) : (b) )
-
-APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t  *p, 
-                                               const char  *name,
-                                               const apr_size_t nlen,
-                                               const char  *val, 
-                                               const apr_size_t vlen)
-{
-    apreq_value_t *v = apr_palloc(p, vlen + nlen + 1 + sizeof *v);
-
-    if (v == NULL)
-        return NULL;
-
-    memcpy(v->data, val, vlen);
-    v->data[vlen] = 0;
-    v->size = vlen;
-
-    v->name = v->data + vlen + 1;
-    memcpy(v->name, name, nlen);
-    v->name[nlen] = 0;
-
-    return v;
-}
 
 
 APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,

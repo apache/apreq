@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 #include "apr_version.h"
-#include "apreq_util.h"
+#include "apreq.h"
 
 /**
  * @file apreq_version.h

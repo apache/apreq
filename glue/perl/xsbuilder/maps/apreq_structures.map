@@ -25,11 +25,9 @@
 </apreq_handle_t>
 
 <apreq_cookie_t MODULE=APR::Request::Cookie>
-  version
   path
   domain
   port
-  secure
   comment
   commentURL
 ! max_age

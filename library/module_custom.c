@@ -15,7 +15,8 @@
 */
 
 #include "apr_strings.h"
-#include "apreq.h"
+#include "apreq_module.h"
+#include "apreq_error.h"
 
 #define READ_BYTES (64 * 1024)
 
@@ -59,7 +60,7 @@ static apr_status_t custom_parse_brigade(apreq_handle_t *env, apr_uint64_t bytes
         }
 
         handle->body_status = 
-            apreq_run_parser(handle->parser, handle->body, handle->in);
+            apreq_parser_run(handle->parser, handle->body, handle->in);
 
         apr_brigade_cleanup(handle->in);
         APR_BRIGADE_CONCAT(handle->in, bb);
@@ -79,7 +80,7 @@ static apr_status_t custom_parse_brigade(apreq_handle_t *env, apr_uint64_t bytes
             break;
         }
         handle->body_status = 
-            apreq_run_parser(handle->parser, handle->body, handle->in);
+            apreq_parser_run(handle->parser, handle->body, handle->in);
 
         apr_brigade_cleanup(handle->in);
         APR_BRIGADE_CONCAT(handle->in, bb);
