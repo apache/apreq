@@ -66,9 +66,18 @@ static apr_pool_t *test_pool(void *env)
     return p;
 }
 
+static apr_status_t bucket_alloc_cleanup(void *data)
+{
+    apr_bucket_alloc_t *ba = data;
+    apr_bucket_alloc_destroy(ba);
+    return APR_SUCCESS;
+}
+
 static apr_bucket_alloc_t *test_bucket_alloc(void *env)
 {
-    return apr_bucket_alloc_create(p);
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
+    apr_pool_cleanup_register(p, ba, bucket_alloc_cleanup, NULL);
+    return ba;
 }
 
 static const char *test_header_in(void *env, const char *name)

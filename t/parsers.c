@@ -176,6 +176,7 @@ static void parse_multipart(CuTest *tc)
 {
     apr_status_t rv;
     apr_size_t i, j;
+    apr_bucket_alloc_t *ba;
 
     for (j = 0; j <= strlen(form_data); ++j) {
         const char *enctype;
@@ -189,7 +190,8 @@ static void parse_multipart(CuTest *tc)
         enctype = apreq_enctype(req->env);
         CuAssertStrEquals(tc, APREQ_MFD_ENCTYPE, enctype);
 
-        bb = apr_brigade_create(p, apr_bucket_alloc_create(p));
+        ba = apr_bucket_alloc_create(p);
+        bb = apr_brigade_create(p, ba);
 
         for (i = 0; i <= strlen(form_data); ++i) {
             const char *val;
@@ -241,10 +243,11 @@ static void parse_multipart(CuTest *tc)
             CuAssertStrEquals(tc, "text/plain", val);
             apr_brigade_cleanup(bb);
         }
-
+        apr_bucket_alloc_destroy(ba);
         apr_pool_clear(p);
     }
 }
+
 static void parse_disable_uploads(CuTest *tc)
 {
     const char *val;
