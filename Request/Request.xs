@@ -41,14 +41,16 @@ static SV *r_key_sv(SV *in)
 static ApacheRequest *sv_2apreq(SV *sv)
 {
     if (SvROK(sv) && sv_derived_from(sv, "Apache::Request")) { 
-	SV *obj;
+	SV *obj = sv;
 
-	switch (SvTYPE(SvRV(sv))) {
+	switch (SvTYPE(SvRV(obj))) {
 	case SVt_PVHV :
-	    obj = r_key_sv(sv);
+            do {
+                obj = r_key_sv(obj);
+            } while (SvROK(obj) && (SvTYPE(SvRV(obj)) == SVt_PVHV));
 	    break;
 	default:
-	    obj = sv;
+	    break;
 	};
 	return (ApacheRequest *)SvIV((SV*)SvRV(obj)); 
     }

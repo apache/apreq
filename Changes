@@ -4,6 +4,9 @@ Revision history for libapreq
 
 =item 0.32 - ?
 
+fix subclassing mechanism so the the value of an `r' or `_r' key can
+be a hash ref [dougm]
+
 fix win32 build (requires mod_perl later than 1.24_01)
 [Randy Kobes <randy@theoryx5.uwinnipeg.ca>]
 
