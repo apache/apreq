@@ -100,6 +100,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\CuTest.obj" \
 	"$(INTDIR)\params.obj" \
 	"$(INTDIR)\testall.obj" \
+        "$(INTDIR)\version.obj" \
 	"$(OUTDIR)\libapreq2.lib" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)" \
@@ -161,6 +162,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\CuTest.obj" \
 	"$(INTDIR)\params.obj" \
 	"$(INTDIR)\testall.obj" \
+        "$(INTDIR)\version.obj" \
 	"$(OUTDIR)\libapreq2.lib" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)" \
@@ -197,6 +199,12 @@ SOURCE=$(APREQ_HOME)\t\params.c
 SOURCE=$(APREQ_HOME)\t\parsers.c
 
 "$(INTDIR)\parsers.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=$(APREQ_HOME)\t\version.c
+
+"$(INTDIR)\version.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
