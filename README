@@ -1,0 +1,78 @@
+
+                    libapreq - Apache Request Library
+
+  What is it?
+  -----------
+  httpd-apreq (aka `apreq') is subproject of the Apache Server Project 
+  whose membership (aka apreq's `committers') develops and maintains the 
+  libapreq software library.
+
+  libapreq is a safe, standards-compliant, high-performance library 
+  used for parsing HTTP cookies, query-strings and POST data.  The 
+  original version (libapreq-1) was designed by Lincoln Stein and Doug 
+  MacEachern.  The perl APIs Apache::Request and Apache::Cookie are the
+  lightweight mod_perl analogs of the CGI and CGI::Cookie perl modules.
+
+  The 2.0 version of libapreq is an improved version that's been
+  completely redesigned around Apache-2's input filter API.  Here's 
+  a brief list of new features:
+
+  * provides overridable parsers for "application/x-www-form-urlencoded",
+    "multipart/form-data", and in the future "application/xml" enctypes.
+
+  * accepts chunked POST data.
+
+  * Support for RFC-based Cookies.
+
+  * XForms?
+
+
+  The Latest Version
+  ------------------
+
+  Details of the latest version can be found on the libapreq
+  project page under http://httpd.apache.org/apreq.
+
+  Documentation
+  -------------
+
+  XXX
+
+  Installation
+  ------------
+
+  XXX
+
+  Licensing
+  ---------
+
+  Please see the file called LICENSE.
+
+  Contacts
+  --------
+
+     o Project homepage:
+
+        http://httpd.apache.org/apreq/
+
+     o Mailing Lists:
+
+        user lists:
+               C/C++ API - modules@httpd.apache.org
+                Perl API - modperl@perl.apache.org
+                 Tcl API - XXX
+                Java API - XXX
+
+        developer list (bugs, patches, etc.):
+                apreq-dev@cvs.apache.org
+
+
+  Acknowledgments
+  ----------------
+
+  We wish to acknowledge the following copyrighted works that
+  make up portions of the Apache software:
+
+  libapreq relies heavily on the use of GNU autoconf, automake and 
+  libtool to provide a build environment.  The core unit tests for 
+  libapreq are based upon CuTest.
