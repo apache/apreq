@@ -14,8 +14,6 @@
 */
 
 #define PERL_NO_GET_CONTEXT     /* we want efficiency */
-#include "apache_request.h"
-#include "patchlevel.h"
 
 #ifdef WIN32
 
@@ -55,6 +53,8 @@
 
 #undef __attribute__
 #include "mod_perl.h"
+#include "apache_request.h"
+#include "patchlevel.h"
 
 #ifdef WIN32
 

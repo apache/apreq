@@ -14,7 +14,6 @@
 */
 
 #define PERL_NO_GET_CONTEXT     /* we want efficiency */
-#include "apache_cookie.h"
 
 #ifdef WIN32
 
@@ -54,6 +53,7 @@
 
 #undef __attribute__
 #include "mod_perl.h"
+#include "apache_cookie.h"
 
 #ifdef WIN32
 
