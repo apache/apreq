@@ -6,6 +6,10 @@ mod_apreq_la_LDFLAGS = -export-dynamic -module -avoid-version -rpath `@APACHE2_A
 
 check_PROGRAMS = test_cgi
 
+if MAINTAINER_MODE
+    AM_CPPFLAGS= -DAP_HAVE_DESIGNATED_INITIALIZER
+endif
+
 if BUILD_HTTPD
 
 # mod_apreq.c needs to be built from httpd-2.X, e.g.
