@@ -103,7 +103,7 @@ APREQ_DECLARE(apr_size_t) apreq_quote_once(char *dest, const char *src,
  * Url-encodes a string.
  *
  * @param dest Location of url-encoded result string. Caller must ensure it
- *             is large enough to hold the encoded string and trailing '\0'.
+ *             is large enough to hold the encoded string and trailing '\\0'.
  * @param src  Original string.
  * @param slen Length of original string.
  *
@@ -199,7 +199,7 @@ static APR_INLINE apr_ssize_t apreq_unescape(char *str)
 /**
  * Converts file sizes (KMG) to bytes
  *
- * @param s  file size matching m/^\d+[KMG]b?$/i
+ * @param s  file size matching m/^\\d+[KMG]b?$/i
  *
  * @return 64-bit integer representation of s.
  *
@@ -212,7 +212,7 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s);
 /**
  * Converts time strings (YMDhms) to seconds
  *
- * @param s time string matching m/^\+?\d+[YMDhms]$/
+ * @param s time string matching m/^\\+?\\d+[YMDhms]$/
  *
  * @return 64-bit integer representation of s as seconds.
  *
@@ -347,6 +347,14 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
                                                  apr_bucket_brigade *out, 
                                                  apr_bucket_brigade *in);
 
+/**
+ * Determines the spool file used by the brigade. Returns NULL if the
+ * brigade is not spooled in a file (does not use a APREQ_SPOOL
+ * bucket).
+ *
+ * @param bb the bucket brigade
+ * @return the spool file, or NULL
+ */
 APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 
 #ifdef __cplusplus

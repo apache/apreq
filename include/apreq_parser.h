@@ -24,7 +24,22 @@
 extern "C" {
 #endif /* __cplusplus */
 
+/**
+ * @file apreq_parser.h
+ * @brief Request body parser API
+ * @ingroup libapreq2
+ */
+
+/**
+ * A hook is called by the parser whenever data arrives in a file
+ * upload parameter of the request body. You may associate any number
+ * of hooks with a parser instance with apreq_parser_add_hook().
+ */
 typedef struct apreq_hook_t apreq_hook_t;
+
+/**
+ * A request body parser instance.
+ */
 typedef struct apreq_parser_t apreq_parser_t;
 
 /** Parser arguments. */
@@ -37,7 +52,14 @@ typedef struct apreq_parser_t apreq_parser_t;
                            apreq_param_t *param,       \
                            apr_bucket_brigade *bb
 
+/**
+ * The callback function implementing a request body parser.
+ */
 typedef apr_status_t (*apreq_parser_function_t)(APREQ_PARSER_ARGS);
+
+/**
+ * The callback function of a hook. See apreq_hook_t.
+ */
 typedef apr_status_t (*apreq_hook_function_t)(APREQ_HOOK_ARGS);
 
 /**
@@ -53,28 +75,36 @@ typedef apr_status_t (*apreq_hook_function_t)(APREQ_HOOK_ARGS);
                                 (f) (APREQ_HOOK_ARGS)
 
 /**
- * Singly linked list of hooks.
- *
+ * A hook is called by the parser whenever data arrives in a file
+ * upload parameter of the request body. You may associate any number
+ * of hooks with a parser instance with apreq_parser_add_hook().
  */
 struct apreq_hook_t {
-    apreq_hook_function_t hook;
-    apreq_hook_t         *next;
-    apr_pool_t           *pool;
-    void                 *ctx;
+    apreq_hook_function_t hook; /**< the hook function */
+    apreq_hook_t         *next; /**< next item in the linked list */
+    apr_pool_t           *pool; /**< pool which allocated this hook */
+    void *ctx; /**< a user defined pointer passed to the hook function */
 };
 
 /**
- * Request parser with associated enctype and hooks. 
- *
+ * A request body parser instance.
  */
 struct apreq_parser_t {
+    /** the function which parses chunks of body data */
     apreq_parser_function_t parser;
+    /** the Content-Type request header */
     const char             *content_type;
+    /** a pool used by the parser */
     apr_pool_t             *pool;
+    /** bucket allocator used to create bucket brigades */
     apr_bucket_alloc_t     *bucket_alloc;
+    /** the maximum in-memory bytes a brigade may use */
     apr_size_t              brigade_limit;
+    /** the directory used by the parser for temporary files */
     const char             *temp_dir;
+    /** linked list of hooks */
     apreq_hook_t           *hook;
+    /** internal context pointer used by the parser function */
     void                   *ctx;
 };
 
@@ -154,8 +184,11 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser);
  * Construct a parser.
  *
  * @param pool Pool used to allocate the parser.
- * @param enctype Content-type that this parser can deal with.
- * @param parser The parser function.
+ * @param ba bucket allocator used to create bucket brigades
+ * @param content_type Content-type that this parser can deal with.
+ * @param pfn The parser function.
+ * @param brigade_limit the maximum in-memory bytes a brigade may use
+ * @param temp_dir the directory used by the parser for temporary files
  * @param hook Hooks to asssociate this parser with.
  * @param ctx Parser's internal scratch pad.
  * @return New parser.
@@ -196,7 +229,7 @@ APREQ_DECLARE(apr_status_t) apreq_parser_add_hook(apreq_parser_t *p,
 
 /**
  * Fetch the default parser function associated with the given MIME type.
- * @param encytpe The desired enctype (can also be a full "Content-Type"
+ * @param enctype The desired enctype (can also be a full "Content-Type"
  *        header).
  * @return The parser function, or NULL if the enctype is unrecognized.
  */
@@ -209,7 +242,7 @@ APREQ_DECLARE(apreq_parser_function_t)apreq_parser(const char *enctype);
  * internal lookup table.
  *
  * @param enctype The MIME type.
- * @param parser  The function to use during parsing. Setting
+ * @param pfn     The function to use during parsing. Setting
  *                parser == NULL will remove an existing parser.
  * @remark This is not a thread-safe operation, so applications 
  * should only call this during process startup,

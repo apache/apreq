@@ -61,20 +61,20 @@ void apreq_param_taint_off(apreq_param_t *p) {
     APREQ_FLAGS_OFF(p->flags, APREQ_TAINT);
 }
 
-/** @return 1 if the taint flag is set, 0 otherwise. */
+/** @return 1 if the UTF-8 flag is set, 0 otherwise. */
 static APR_INLINE
 unsigned apreq_param_is_utf8(const apreq_param_t *p) {
     return APREQ_CHARSET_UTF8
         & APREQ_FLAGS_GET(p->flags, APREQ_CHARSET);
 }
 
-/** Sets the tainted flag. */
+/** Sets the charset of this parameter to UTf-8. */
 static APR_INLINE
 void apreq_param_utf8_on(apreq_param_t *p) {
     APREQ_FLAGS_SET(p->flags, APREQ_CHARSET, APREQ_CHARSET_UTF8);
 }
 
-/** Turns off the taint flag. */
+/** Sets the charset of this parameter to 8 bit ASCII. */
 static APR_INLINE
 void apreq_param_utf8_off(apreq_param_t *p) {
     APREQ_FLAGS_SET(p->flags, APREQ_CHARSET, APREQ_CHARSET_ASCII);
@@ -103,6 +103,8 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
 
 /**
  * Url-decodes a name=value pair into a param.
+ *
+ * @param param points to the decoded parameter on success
  * @param pool  Pool from which the param is allocated.
  * @param word  Start of the name=value pair.
  * @param nlen  Length of urlencoded name.
@@ -146,8 +148,11 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
  * Returns an array of parameters (apreq_param_t *) matching the given key.
  * The key is case-insensitive.
  * @param p Allocates the returned array.
- * @param req The current apreq_request_t object.
- * @param key Null-terminated search key.  key==NULL fetches all parameters.
+ * @param t the parameter table returned by apreq_args(), apreq_body()
+ *    or apreq_params()
+ * @param key Null-terminated search key, case insensitive.
+ *    key==NULL fetches all parameters.
+ * @return an array of apreq_param_t* (pointers)
  * @remark Also parses the request if necessary.
  */
 APREQ_DECLARE(apr_array_header_t *) apreq_params_as_array(apr_pool_t *p,
@@ -155,14 +160,15 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params_as_array(apr_pool_t *p,
                                                           const char *key);
 
 /**
- * Returns a ", " -separated string containing all parameters 
+ * Returns a ", " -joined string containing all parameters
  * for the requested key, NULL if none are found.  The key is case-insensitive.
  * @param p Allocates the return string.
- * @param req The current apreq_request_t object.
- * @param key Null-terminated parameter name. key==NULL fetches all values. 
+ * @param t the parameter table returned by apreq_args(), apreq_body()
+ *    or apreq_params()
+ * @param key Null-terminated parameter name, case insensitive.
+ *    key==NULL fetches all values.
  * @param mode Join type- see apreq_join().
- * @return Returned string is the data attribute of an apreq_value_t,
- *         so it is safe to use in apreq_strlen() and apreq_strtoval().
+ * @return the joined string
  * @remark Also parses the request if necessary.
  */
 APREQ_DECLARE(const char *) apreq_params_as_string(apr_pool_t *p,
@@ -172,8 +178,8 @@ APREQ_DECLARE(const char *) apreq_params_as_string(apr_pool_t *p,
 
 /**
  * Returns a table of all params in req->body with non-NULL upload brigades.
+ * @param body parameter table returned by apreq_body() or apreq_params()
  * @param pool Pool which allocates the table struct.
- * @param req  Current request.
  * @return Upload table.
  * @remark Will parse the request if necessary.
  */
@@ -182,9 +188,9 @@ APREQ_DECLARE(const apr_table_t *) apreq_uploads(const apr_table_t *body,
 
 /**
  * Returns the first param in req->body which has both param->v.name 
- * matching key and param->upload != NULL.
- * @param req The current request.
- * @param key Parameter name. key == NULL returns first upload.
+ * matching key (case insensitive) and param->upload != NULL.
+ * @param body parameter table returned by apreq_body() or apreq_params()
+ * @param name Parameter name. key == NULL returns first upload.
  * @return Corresponding upload, NULL if none found.
  * @remark Will parse the request as necessary.
  */

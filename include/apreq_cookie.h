@@ -125,7 +125,14 @@ void apreq_cookie_taint_off(apreq_cookie_t *c) {
     APREQ_FLAGS_OFF(c->flags, APREQ_TAINT);
 }
 
-
+/**
+ * Parse a cookie header and store the cookies in an apr_table_t.
+ *
+ * @param pool pool which allocates the cookies
+ * @param jar table where parsed cookies are stored
+ * @param header the header value
+ * @return APR_SUCCESS or an error code
+ */
 APREQ_DECLARE(apr_status_t) apreq_parse_cookie_header(apr_pool_t *pool,
                                                       apr_table_t *jar,
                                                       const char *header);
@@ -138,6 +145,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_cookie_header(apr_pool_t *pool,
  * @param nlen  Length of name.
  * @param value The cookie's value.
  * @param vlen  Length of value.
+ * @return the new cookie
  */
 APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *pool, 
                                                   const char *name,
@@ -179,7 +187,7 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
  * attribute will appear in the cookie's serialized form. If time_str
  * is not NULL, the expiration date will be reset to the offset (from now)
  * represented by time_str.  The time_str should be in a format that 
- * apreq_atoi64t() can understand, namely /[+-]?\d+\s*[YMDhms]/.
+ * apreq_atoi64t() can understand, namely /[+-]?\\d+\\s*[YMDhms]/.
  *
  * @remarks Now time_str may also be a fixed date; see apr_date_parse_rfc()
  * for admissible formats.
