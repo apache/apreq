@@ -1,11 +1,11 @@
-#Makefile.in
+Makefile.in
 libtool
 acconfig.h
 acinclude.m4
 aclocal.m4
 config.guess
 config.sub
-#configure
+configure
 configure.in
 install-sh
 ltconfig
@@ -38,7 +38,7 @@ c/apache_cookie.c
 c/apache_multipart_buffer.h
 c/apache_multipart_buffer.c
 c/Makefile.am
-#c/Makefile.in
+c/Makefile.in
 c/libapreq_config.h.in
 c/stamp-h.in
 eg/c/testapreq/mod_testapreq.c

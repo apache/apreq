@@ -11,18 +11,6 @@ the Apache API with Perl and C.  Functionality includes:
 See libapreq.pod for the C API documentation and
 eg/c/ for examples.
 
-To build libapreq.a without perl, first be sure the appropriate 
-apxs binary is in your $PATH. Then
-
-        % cd c/
-        % cp Makefile.noperl Makefile
-        % make
-
-should build a static libapreq.a library, which together with the
-*.h header files forms the C API for libapreq.  There is no default
-installation process for libapreq.a; the library and header files should
-be manually copied into whatever location you feel is appropriate.
-
 The Perl modules are simply a thin xs layer on top of libapreq,
 making them a lighter and faster alternative to CGI.pm and
 CGI::Cookie.  See the Apache::Request and Apache::Cookie documentation
@@ -33,7 +21,7 @@ originally implemented as a pure Perl Apache::Request module.
 The C implementation has a similar look-and-feel, including structures
 modeled from Lincoln's Perl design.
 
-The Perl interface also includes cursory support for Perl+sfio builds:
+The Perl interface also includes experimental support for Perl+sfio builds:
 
         % perl Makefile.PL DEFINE=-DSFIO
         % make
