@@ -154,7 +154,7 @@ APREQ_DECLARE(apreq_request_t *)apreq_env_request(void *env,
 }
 
 
-APREQ_DECLARE_LOG(env_log)
+APREQ_DECLARE_LOG(apreq_log)
 {
     dCTX;
     va_list vp;
