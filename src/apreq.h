@@ -396,14 +396,13 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
 
 APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 
-
 APREQ_DECLARE(apr_bucket_brigade *)
          apreq_copy_brigade(const apr_bucket_brigade *bb);
 
 APREQ_DECLARE(apr_status_t)
-    apreq_header_attribute(const char *const hdr,
-                           const char *name, const apr_size_t nlen,
-                           const char **val, apr_size_t *vlen);
+         apreq_header_attribute(const char *hdr,
+                                const char *name, const apr_size_t nlen,
+                                const char **val, apr_size_t *vlen);
 
 /** @} */
 

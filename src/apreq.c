@@ -753,7 +753,7 @@ APREQ_DECLARE(apr_bucket_brigade *)
 }
 
 APREQ_DECLARE(apr_status_t)
-    apreq_header_attribute(const char *const hdr,
+    apreq_header_attribute(const char *hdr,
                            const char *name, const apr_size_t nlen,
                            const char **val, apr_size_t *vlen)
 {
