@@ -9,7 +9,9 @@ use lib qw(Apache-Test/lib);
 use constant HAS_APACHE_TEST => eval {require Apache::Test};
 
 use constant WIN32 => ($^O eq "MSWin32") || $ENV{WIN32_TEST};
-win32_setup() if WIN32;
+if (WIN32) {
+    win32_setup() unless ($ENV{APACHE} || grep /^-httpd$/, @ARGV);
+}
 
 # enable 'make test|clean'
 if (HAS_APACHE_TEST) {
@@ -132,43 +134,33 @@ EOF
 }
 
 sub win32_setup {
+  require Win32;
   my $apache;
-  unless ($ENV{APACHE}) {
-  SEARCH: {
-      for my $drive ('C'..'G') {
-	for my $p ('Apache', 'Program Files/Apache', 
-		   'Program Files/Apache Group/Apache') {
-	  if (-e "$drive:/$p/Apache.exe") {
-	    $apache = "$drive:/$p/Apache.exe";
+ SEARCH: {
+    for my $drive ('C'..'G') {
+      for my $p ('Apache', 'Program Files/Apache', 
+		 'Program Files/Apache Group/Apache') {
+	if (-e "$drive:/$p/Apache.exe") {
+	  $apache = "$drive:/$p/Apache.exe";
 	  last SEARCH;
-	  }
 	}
       }
     }
-    unless (-e $apache) {
-      require ExtUtils::MakeMaker;
-      ExtUtils::MakeMaker->import('prompt');
-      $apache = prompt("Where is your apache.exe located?", $apache);
-    }
-    
-    die "Can't find Apache.exe!" unless -e $apache;
-    
-    my $vers = qx{"$apache" -v};
-    die qq{"$apache" does not appear to be version 1.3}
-      unless $vers =~ m!Apache/1.3!;
-    $ENV{APACHE} = $apache;
   }
-  my $test = 't/TEST.PL';
-  my $orig = $test . '.orig';
-  rename($test, $orig) unless -e $orig;
-  open(ORIG, $orig) or die "Cannot open $orig: $!";
-  open(NEW, ">$test") or die "Cannot open $test: $!";
-  while (<ORIG>) {
-    s/(use warnings.*)/$1\n\n\$ENV{APACHE} = "$apache";/;
-    print NEW $_;
+  unless (-e $apache) {
+    require ExtUtils::MakeMaker;
+    ExtUtils::MakeMaker->import('prompt');
+    $apache = prompt("Where is your apache.exe located?", $apache);
   }
-  close ORIG;
-  close NEW;
+  
+  die "Can't find Apache.exe!" unless -e $apache;
+  
+  my $vers = qx{"$apache" -v};
+  die qq{"$apache" does not appear to be version 1.3}
+    unless $vers =~ m!Apache/1.3!;
+  $apache = Win32::GetShortPathName($apache);
+  $apache =~ s!\\!/!g;
+  push @ARGV, '-httpd', $apache;
 }
 
 __DATA__
