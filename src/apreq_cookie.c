@@ -65,8 +65,10 @@
 APREQ_DECLARE(apreq_cookie_t *) apreq_cookie(const apreq_jar_t *jar, 
                                              const char *name)
 {
-    return apreq_value_to_cookie(apreq_char_to_value(apr_table_get(jar->cookies,
-                                                                   name)));
+    const char *val = apr_table_get(jar->cookies, name);
+    if (val == NULL)
+        return NULL;
+    return apreq_value_to_cookie(apreq_char_to_value(val));
 }
 
 APREQ_DECLARE(void) apreq_add_cookie(apreq_jar_t *jar, 
