@@ -1,11 +1,14 @@
-libapreq is written and maintained by Doug MacEachern (dougm@cp.net)
+libapreq is written and maintained by Doug MacEachern (dougm@covalent.net)
 with contributions from:
 
+Covalent Technologies Inc. (http://www.covalent.net/) sponsors
+development of this packet, version 0.32-current
+
 Critical Path Inc. (http://www.cp.net/) - sponsored development of
-this package
+this package, versions 0.01-0.31
 
 Lincoln Stein (lstein@cshl.org) - author of the original
-Apache::Request
+Apache::Request pure-Perl module
 
 Brian Moseley (ix@maz.org) - help with the interface design
 
@@ -15,4 +18,7 @@ Ross Becker (beckerr@softrends.com) - the 1st alpha tester of the Perl
 interface, spotting many bugs, and who's suggestions helped to shape
 the Apache::Upload API 
 
-Andreas J. Koenig (andreas.koenig@anima.de) - various patches and suggestions
+Andreas J. Koenig (andreas.koenig@anima.de) - various patches and
+suggestions
+
+other contributors are listed in the Changes file
