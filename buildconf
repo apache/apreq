@@ -11,5 +11,6 @@ libtool="libtoolize --automake --copy --force"
 echo "running $libtool" && $libtool && \
 echo "running aclocal"  && aclocal && \
 echo "running autoconf" && autoconf && \
+echo "running autoheader" && autoheader && \
 echo "running automake -a -c" && automake -a -c && \
 echo "buildconf successful."

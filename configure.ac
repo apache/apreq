@@ -22,7 +22,7 @@ AC_PROG_LN_S
 AM_MAINTAINER_MODE
 
 dnl Checks for header files.
-
+AM_CONFIG_HEADER(src/apreq_config.h)
 dnl Checks for typedefs, structures, and compiler characteristics.
 
 dnl Checks for library functions.
