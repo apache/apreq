@@ -44,7 +44,7 @@ my $preamble = <<EOT;
 
 The Apache Software Foundation and The Apache HTTP Server Project
 are pleased to announce the $PACKAGE_VERSION release of libapreq2.  This
-Announcement notes significant changes introduced in this release.
+Announcement notes significant changes introduced by this release.
 
 The package $PACKAGE_NAME is released under the Apache License
 version $LICENSE_VERSION.  It is now available through the ASF mirrors
@@ -70,7 +70,7 @@ query-strings and POST data.  The package $PACKAGE_NAME provides
        within the Apache HTTP Server,
 
     3) the Apache::Request, Apache::Cookie, and Apache::Upload
-       perl modules for using libapreq2 within modperl-2.
+       perl modules for using libapreq2 with modperl-2.
 
 ========================================================================
 
