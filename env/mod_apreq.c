@@ -169,7 +169,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME               "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER       20041130
+#define APREQ_MODULE_MAGIC_NUMBER       20050105
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -665,7 +665,13 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
             apr_brigade_length(bb, 1, &len);
             total_read += len;
-            apreq_brigade_concat(r, ctx->spool, bb);
+
+            rv = apreq_brigade_concat(r, ctx->spool, bb);
+            if (rv != APR_SUCCESS && rv != APR_EOF) {
+                apreq_log(APREQ_ERROR rv, r,
+                          "apreq_brigade_concat failed; APREQ_TempDir problem?");
+                return rv;
+            }
         }
 
         ctx->bytes_read += total_read;
