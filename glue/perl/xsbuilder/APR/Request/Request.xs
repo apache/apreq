@@ -173,3 +173,54 @@ temp_dir(req, val=NULL)
 
   OUTPUT:
     RETVAL
+
+SV*
+jar_status(req)
+    APR::Request req
+  PREINIT:
+    const apr_table_t *t;
+
+  CODE:
+    RETVAL = apreq_xs_error2sv(aTHX_ apreq_jar(req, &t));
+
+  OUTPUT:
+    RETVAL
+
+SV*
+args_status(req)
+    APR::Request req
+  PREINIT:
+    const apr_table_t *t;
+
+  CODE:
+    RETVAL = apreq_xs_error2sv(aTHX_ apreq_args(req, &t));
+
+  OUTPUT:
+    RETVAL
+
+SV*
+body_status(req)
+    APR::Request req
+  PREINIT:
+    const apr_table_t *t;
+
+  CODE:
+    RETVAL = apreq_xs_error2sv(aTHX_ apreq_body(req, &t));
+
+  OUTPUT:
+    RETVAL
+
+SV*
+disable_uploads(req, pool)
+    APR::Request req
+    APR::Pool pool
+  PREINIT:
+    apreq_hook_t *h;
+    apr_status_t s;
+  CODE:
+    h = apreq_hook_make(pool, apreq_hook_disable_uploads, NULL, NULL);
+    s = apreq_hook_add(req, h);
+    RETVAL = apreq_xs_error2sv(aTHX_ s);
+
+  OUTPUT:
+    RETVAL

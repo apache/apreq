@@ -1,5 +1,70 @@
 #include "apreq_xs_tables.h"
 #define TABLE_CLASS "APR::Request::Param::Table"
+static int apreq_xs_table_do_sub(void *data, const char *key,
+                                 const char *val)
+{
+    struct apreq_xs_do_arg *d = data;
+    apreq_param_t *p = apreq_value_to_param(val);
+    dTHXa(d->perl);
+    dSP;
+    SV *sv = apreq_xs_param2sv(aTHX_ p, d->pkg, d->parent);
+    int rv;
+
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP,2);
+
+    PUSHs(sv_2mortal(newSVpvn(p->v.name, p->v.nlen)));
+    PUSHs(sv_2mortal(sv));
+
+    PUTBACK;
+    rv = call_sv(d->sub, G_SCALAR);
+    SPAGAIN;
+    rv = (1 == rv) ? POPi : 1;
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
+
+    return rv;
+}
+
+static XS(apreq_xs_table_do)
+{
+    dXSARGS;
+    struct apreq_xs_do_arg d = { NULL, NULL, NULL, aTHX };
+    const apr_table_t *t;
+    int i, rv = 1;
+    SV *sv, *t_obj;
+    IV iv;
+    MAGIC *mg;
+
+    if (items < 2 || !SvROK(ST(0)) || !SvROK(ST(1)))
+        Perl_croak(aTHX_ "Usage: $object->do(\\&callback, @keys)");
+    sv = ST(0);
+
+    t_obj = apreq_xs_sv2object(aTHX_ sv, TABLE_CLASS, 't');
+    iv = SvIVX(t_obj);
+    t = INT2PTR(const apr_table_t *, iv);
+    mg = mg_find(t_obj, PERL_MAGIC_ext);
+    d.parent = mg->mg_obj;
+    d.pkg = mg->mg_ptr;
+    d.sub = ST(1);
+
+    if (items == 2) {
+        rv = apr_table_do(apreq_xs_table_do_sub, &d, t, NULL);
+        XSRETURN_IV(rv);
+    }
+
+    for (i = 2; i < items; ++i) {
+        const char *key = SvPV_nolen(ST(i));
+        rv = apr_table_do(apreq_xs_table_do_sub, &d, t, key, NULL);
+        if (rv == 0)
+            break;
+    }
+    XSRETURN_IV(rv);
+}
 
 static int apreq_xs_table_keys(void *data, const char *key, const char *val)
 {
@@ -329,6 +394,7 @@ BOOT:
     );
     newXS("APR::Request::Param::()", XS_APR__Request__Param_nil, file);
     newXS("APR::Request::Param::(\"\"", XS_APR__Request__Param_value, file);
+    newXS("APR::Request::Param::Table::do", apreq_xs_table_do, file);
 
 
 MODULE = APR::Request::Param   PACKAGE = APR::Request::Param
@@ -659,3 +725,5 @@ uploads(t, pool)
                                parent, mg->mg_ptr, mg->mg_len);
   OUTPUT:
     RETVAL
+
+

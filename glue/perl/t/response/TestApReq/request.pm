@@ -136,15 +136,13 @@ sub handler {
         $r->print($upload->type);
     }
     elsif ($test eq 'disable_uploads') {
-        $req->config(DISABLE_UPLOADS => 1);
+        $req->disable_uploads;
         eval {my $upload = $req->upload('HTTPUPLOAD')};
-        if (ref $@ eq "Apache2::Request::Error") {
+        if (ref $@ eq "APR::Request::Error") {
             my $args = $@->{_r}->args('test'); # checks _r is an object ref
-            my $upload = $@->upload('HTTPUPLOAD'); # no exception this time!
+            my $upload = $@->body('HTTPUPLOAD'); # no exception this time!
             die "args test failed" unless $args eq $test;
             $args = $@->args;
-#            $args->add("foo" => "bar1");
-#            $args->add("foo" => "bar2");
             my $test_string = "";
 
             # MAGIC ITERATOR TESTS
@@ -172,7 +170,7 @@ sub handler {
             }
 
 
-            $@->print("ok");
+            $req->print("ok");
         }
     }
 

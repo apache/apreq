@@ -9,3 +9,9 @@ sub import {
             or die "Can't find method $_ in class $class";
     }
 }
+
+sub param_status {
+    my $req = shift;
+    return $req->args_status || $req->body_status if wantarray;
+    return ($req->args_status, $req->body_status);
+}

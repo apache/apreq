@@ -42,6 +42,11 @@ APR::Request
     temp_dir
     header_in
     header_out
+    jar_status
+    args_status
+    body_status
+    param_status
+    disable_uploads
 
   missing:
     add_hook (requires APR::Request::Hook)
@@ -129,8 +134,9 @@ APR::Request::Param
         FIRSTKEY, NEXTKEY
         param_class
         uploads
+        do
       missing:
-        rest of const apr_table_t * API (do, etc)
+        rest of const apr_table_t * API
 
     APR::Request::Brigade
       methods:
@@ -153,13 +159,16 @@ APR::Request::Param
     upload_tempname
     upload_io
     upload_fh
-
+    disable_uploads
 
 --------------------------------------------------
 Current (pure-perl) Apache2:: module breakdown
 --------------------------------------------------
 
 Apache2::Request @ISA=(Apache2::RequestRec, APR::Request::Apache2)
+
+  ctor:
+    new
 
 ==================================================
 

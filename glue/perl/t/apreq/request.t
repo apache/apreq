@@ -41,16 +41,17 @@ for my $test (qw/slurp bb tempname link fh io bad;query=string%%/) {
     ok t_cmp($result, "text/plain", "type");
 }
 
-skip 1, "- config() API not yet implemented" for 1..2;
-exit 0;
-
 {
+    skip 1, "- hook API not yet implemented";
+    last;
     my $value = 'DataUpload' x 100;
     my $result = UPLOAD_BODY("$location?test=hook", content => $value); 
     ok t_cmp($result, $value, "type");
 }
+
 {
     my $value = 'DataUpload' x 100;
-    my $result = UPLOAD_BODY("$location?test=disable_uploads", content => $value); 
+    my $result = UPLOAD_BODY("$location?test=disable_uploads;foo=bar1;foo=bar2", 
+        content => $value); 
     ok t_cmp($result, "ok", "disabled uploads");
 }

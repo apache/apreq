@@ -279,3 +279,4 @@ static XS(apreq_xs_brigade_readline)
 
     PUTBACK;
 }
+
