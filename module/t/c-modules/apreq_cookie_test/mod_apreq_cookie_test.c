@@ -28,6 +28,7 @@
 
 #include "apache_httpd_test.h"
 #include "apreq_module_apache2.h"
+#include "apreq_util.h"
 #include "httpd.h"
 #include <assert.h>
 
