@@ -73,7 +73,7 @@ sub MY::postamble {
 	pod2test $< $@
 
 doc_test : %s
-	$(FULLPERL) -Mblib -MTest::Harness -e 'runtests(@ARGV)' $^
+        $(FULLPERL) -Mblib -MTest::Harness -e 'runtests(@ARGV)' "@tests"
 
 test :: doc_test
 
