@@ -17,9 +17,9 @@ if test $# != 3; then
   exit 1
 fi
 
-major_sed="/#define.*$3_MAJOR_VERSION/s/^.*\([0-9][0-9]*\).*$/\1/p"
-minor_sed="/#define.*$3_MINOR_VERSION/s/^.*\([0-9][0-9]*\).*$/\1/p"
-patch_sed="/#define.*$3_PATCH_VERSION/s/^.*\([0-9][0-9]*\).*$/\1/p"
+major_sed="/#define.*$3_MAJOR_VERSION/s/^[^0-9]*\([0-9]*\).*$/\1/p"
+minor_sed="/#define.*$3_MINOR_VERSION/s/^[^0-9]*\([0-9]*\).*$/\1/p"
+patch_sed="/#define.*$3_PATCH_VERSION/s/^[^0-9]*\([0-9]*\).*$/\1/p"
 major="`sed -n $major_sed $2`"
 minor="`sed -n $minor_sed $2`"
 patch="`sed -n $patch_sed $2`"
