@@ -35,6 +35,11 @@ if (my $upload = $apr->upload) {
     my $fh = $upload->fh;
     my $size = $upload->size;
 
+    unless ($filename) {
+	print "no file specified";
+	return;
+    }
+
     print <<EOF;
 <hr>
 <h2>$name</h2>
