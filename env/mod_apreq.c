@@ -126,16 +126,15 @@ module AP_MODULE_DECLARE_DATA apreq_module;
  *
  * If you want to use other input filters to transform the incoming HTTP
  * request data, is important to register those filters with Apache
- * as having type AP_FTYPE_RESOURCE.  Due to limitations in Apache's 
- * current input filter design, the other possibly relevant filter types - 
- * AP_FTYPE_CONTENT_SET or AP_FTYPE_PROTOCOL - may not work properly
- * whenever the apreq filter is active.
+ * as having type AP_FTYPE_CONTENT_SET or AP_FTYPE_RESOURCE.  Due to the 
+ * limitations of Apache's current input filter design, types higher than 
+ * AP_FTYPE_CONTENT_SET may not work properly whenever the apreq filter is active.
  *
  * This is especially true when a content handler uses libapreq2 to parse 
  * some of the post data before doing an internal redirect.  Any input filter
  * subsequently added to the redirected request will bypass the original apreq 
  * filter (and therefore lose access to some of the original post data), unless 
- * its type is AP_FTYPE_RESOURCE.
+ * its type is less than the type of the apreq filter (currently AP_FTYPE_PROTOCOL-1).
  *
  *
  * <h2>Server Configuration Directives</h2>
@@ -709,7 +708,7 @@ static void register_hooks (apr_pool_t *p)
     const apreq_env_t *old_env;
     old_env = apreq_env_module(&apache2_module);
     ap_register_input_filter(filter_name, apreq_filter, apreq_filter_init,
-                             AP_FTYPE_CONTENT_SET);
+                             AP_FTYPE_PROTOCOL-1);
 }
 
 
