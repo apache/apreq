@@ -1,0 +1,16 @@
+This is where "ports" of apreq-2 go.
+
+To port apreq-2 to a particular application, you need
+to populate 
+
+         extern struct apreq_env APReq;
+
+See apreq_env.h in core/ for details.
+
+Layout:
+
+        env/<port>/
+                   <stuff for libtool>
+                   <source files>
+                   t/* <unit tests for the port>
+
