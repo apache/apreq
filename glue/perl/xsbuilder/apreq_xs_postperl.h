@@ -4,7 +4,7 @@
 
 /* conversion function template based on modperl-2's sv2request_rec */
 
-#define APREQ_XS_DEFINE_SV2(type)                                        \
+#define APREQ_XS_DEFINE_SV2(type, class)                                 \
 static                                                                   \
 SV *apreq_xs_hv_find_##type(pTHX_ SV *in)                                \
 {                                                                        \
@@ -69,16 +69,16 @@ SV *apreq_xs_##type##2sv(apreq_##type##_t *t)                            \
     SvIOK_on(sv);                                                        \
     SvPOK_on(sv);                                                        \
     sv_magic(sv, Nullsv, PERL_MAGIC_ext, (char *)t->env, 0);             \
+                                                                         \
+    /* initialize sv as an object */                                     \
+    SvSTASH(sv) = gv_stashpv(class, TRUE);                               \
+    SvOBJECT_on(sv);                                                     \
     return newRV_noinc(sv);                                              \
 }
 
 
 #define APREQ_XS_DEFINE_TIEDSV(type, class)                              \
-static int apreq_xs_##type##_free(SV* sv, MAGIC *mg);                    \
-const static MGVTBL apreq_xs_##type##_magic = { 0, 0, 0, 0,              \
-                                               apreq_xs_##type##_free }; \
-                                                                         \
-static int apreq_xs_##type##_free(SV* sv, MAGIC *mg)                     \
+static int apreq_xs_##type##_free(pTHX_ SV* sv, MAGIC *mg)               \
 {                                                                        \
     /* need to prevent perl from freeing the apreq value */              \
     SvPVX(sv) = NULL;                                                    \
@@ -86,7 +86,8 @@ static int apreq_xs_##type##_free(SV* sv, MAGIC *mg)                     \
     SvPOK_off(sv);                                                       \
     return 0;                                                            \
 }                                                                        \
-                                                                         \
+const static MGVTBL apreq_xs_##type##_magic = { 0, 0, 0, 0,              \
+                                               apreq_xs_##type##_free }; \
                                                                          \
 APR_INLINE                                                               \
 static SV *apreq_xs_##type##2sv(apreq_##type##_t *t)                     \
