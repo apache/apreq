@@ -103,7 +103,6 @@ typedef struct {
      XsUploadHook->slot = SvREFCNT_inc(sv)
 
 #define ApacheUpload_fh(upload)       upload->fp
-#define ApacheUpload_size(upload)     upload->size
 #define ApacheUpload_name(upload)     upload->name
 #define ApacheUpload_filename(upload) upload->filename
 #define ApacheUpload_next(upload)     upload->next
