@@ -68,6 +68,11 @@ extern "C" {
  * @file apreq_cookie.h
  * @brief Cookies and Jars.
  */
+/**
+ *@defgroup cookies Cookies (request and response)
+ *@ingroup LIBRARY
+ * @{
+ */
 
 /** Cookie Jar */
 typedef struct apreq_jar_t {
@@ -231,6 +236,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
 
 APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env);
 
+/** @} */
 
 #ifdef __cplusplus
  }

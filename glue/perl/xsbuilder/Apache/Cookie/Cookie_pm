@@ -12,10 +12,13 @@ use base 'APR::Table';
 
 
 package Apache::Cookie;
-push our(@ISA), __PACKAGE__ -> env;
+#push our(@ISA), __PACKAGE__ -> env;
 use Devel::Peek;
 
-sub status { ${$_[0]} + 0 }
+sub jar {
+    my $self = shift;
+    return Apache::Cookie::Jar->new(@_);
+}
 
 sub new {
     my ($class, $env, %attrs) = @_;

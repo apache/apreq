@@ -11,7 +11,7 @@ APREQ_XS_DEFINE_ENV(jar);
 
 /* jar */
 
-APREQ_XS_DEFINE_OBJECT(jar, "Apache::Cookie::Jar");
+APREQ_XS_DEFINE_OBJECT(jar);
 APREQ_XS_DEFINE_TABLE(jar, cookies);
 APREQ_XS_DEFINE_GET(jar, cookie, "Apache::Cookie");
 

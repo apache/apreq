@@ -66,6 +66,10 @@
  extern "C" {
 #endif 
 
+/** @defgroup LIBRARY libapreq.so.2 */
+/** @defgroup MODULES Environments  */
+/** @defgroup GLUE Language Bindings*/
+
 /**
  * @mainpage
  * @verbinclude README
@@ -82,11 +86,15 @@
  * @file apreq.h
  * @brief Common functions, structures and macros.
  */
+/**
+ * @defgroup Utils Common functions, structures and macros
+ * @ingroup LIBRARY
+ * @{
+ */
 
 /* XXX temporary workaround for Win32 */
 #ifndef WIN32
 
-/** @def */
 #define APREQ_DECLARE(d)                APR_DECLARE(d)
 #define APREQ_DECLARE_NONSTD(d)         APR_DECLARE_NONSTD(d)
 #else
@@ -312,6 +320,8 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s);
  */
 
 APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s);
+
+/** @} */
 
 #ifdef __cplusplus
  }

@@ -69,21 +69,27 @@
 
 #define dR  request_rec *r = (request_rec *)env
 
-/*      the "warehouse"
- *   The parser body is attached to the filter-selected parser.
- * 
- *  request & jar are in r->request_config;
- *  parser config data inside parser_t
- *     (may need to be merged with server/request cfg)
- *
+/**
+ * @file mod_apreq.c
+ * @brief Source for mod_apreq.so.
  */
 
+/**
+ * Uses apxs to compile and install.
+ * @defgroup mod_apreq mod_apreq.so
+ * @ingroup MODULES
+ * @brief Apache-2 filter module.
+ * @{
+ */
+
+/** The warehouse. */
 struct env_config {
     apreq_jar_t        *jar;
     apreq_request_t    *req;
     ap_filter_t        *f;
 };
 
+/** Tracks the filter state */
 struct filter_ctx {
     apr_bucket_brigade *bb;
     apr_off_t           bytes_seen;
@@ -91,10 +97,11 @@ struct filter_ctx {
 };
 
 
-const char apreq_env[] = "APACHE2";
+const char apreq_env[] = "APACHE2"; /**< internal name of module */
 static const char filter_name[] = "APREQ";
 module AP_MODULE_DECLARE_DATA apreq_module;
 
+/** request logger */
 APREQ_DECLARE_LOG(apreq_log)
 {
     dR;
@@ -124,6 +131,11 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env, const char *name)
     return apr_table_get(r->headers_in, name);
 }
 
+/**
+ * r->headers_out.
+ * @bug Sending a Set-Cookie header on a 304
+ * requires a different header table.
+ */
 APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, const char *name, 
                                                  char *value)
 {
@@ -195,6 +207,13 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
     return c->req;
 }
 
+/**
+ * Reads data directly into the parser.
+ *@bug  This function is badly broken.  It needs to use
+ *      SPECULATIVE mode when doing readsin pre-content-handler
+ *      phase, but should use a normal (READBYTES) read otherwise.
+ */
+
 APREQ_DECLARE(apr_status_t) apreq_env_read(void *env, 
                                            apr_read_type_e block,
                                            apr_off_t bytes)
@@ -207,34 +226,49 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
     return ap_get_brigade(f, NULL, AP_MODE_SPECULATIVE, block, bytes);
 }
 
+APR_INLINE
+static void apreq_filter_make_context(ap_filter_t *f)
+{
+    request_rec *r = f->r;
+    apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
+    struct filter_ctx *ctx = apr_palloc(r->pool, sizeof *ctx);
+    f->ctx      = ctx;
+    ctx->bb     = apr_brigade_create(r->pool, alloc);
+    ctx->bytes_seen = 0;
+    ctx->status = APR_INCOMPLETE;
+
+    apreq_log(APREQ_DEBUG 0, r, 
+              "apreq filter context created." );    
+}
+
+APR_INLINE
+static void apreq_filter_relocate(ap_filter_t *f)
+{
+    request_rec *r = f->r;
+    if (f != r->input_filters) {
+        ap_filter_t *top = r->input_filters;
+        ap_remove_input_filter(f);
+        r->input_filters = f;
+        f->next = top;
+    }
+}
 
 static apr_status_t apreq_filter_init(ap_filter_t *f)
 {
     request_rec *r = f->r;
     struct filter_ctx *ctx;
 
-    /* Now we have to deal with the possibility that apreq may have
+    /* We must be inside config.c:ap_invoke_handler -> 
+     * ap_invoke_filter_init (r->input_filters), and
+     * we have to deal with the possibility that apreq may have
      * prefetched data prior to apache running the ap_invoke_filter_init
      * hook.
      */
 
     if (f->ctx) {
-
-        /* must be inside config.c:ap_invoke_handler -> 
-         * ap_invoke_filter_init (r->input_filters)
-         */
         ctx = f->ctx;
-
-        /*
-         * first we relocate the filter to the top of the chain.
-         */
-
-        if (f != r->input_filters) {
-            ap_filter_t *top = r->input_filters;
-            ap_remove_input_filter(f);
-            r->input_filters = f;
-            f->next = top;
-        }
+        /* first we relocate the filter to the top of the chain. */
+        apreq_filter_relocate(f);
 
         /* We may have already prefetched some data, perhaps
          * at the behest of an aaa handler, or during a speculative
@@ -277,6 +311,7 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
 }
 
 
+
 static apr_status_t apreq_filter(ap_filter_t *f,
                                  apr_bucket_brigade *bb,
                                  ap_input_mode_t mode,
@@ -290,7 +325,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     apr_status_t rv;
 
     if (f->ctx == NULL)
-        apreq_filter_init(f);
+        apreq_filter_make_context(f);
 
     ctx = f->ctx;
 
@@ -436,3 +471,5 @@ module AP_MODULE_DECLARE_DATA apreq_module =
 	NULL,
 	register_hooks,			/* callback for registering hooks */
 };
+
+/** @} */

@@ -63,7 +63,21 @@
 #include <stdio.h>
 
 #define dCTX struct env_ctx *ctx = (struct env_ctx *)env
-/* the "warehouse" */
+
+/**
+ * @file libapreq_cgi.c
+ * @brief Source for libapreq_cgi.a.
+ */
+
+/**
+ * libapreq_cgi is a static library that CGI "scripts" (written
+ * in C) can link against to to have libapreq work in a CGI environment.
+ *
+ * @defgroup libapreq_cgi libapreq_cgi.a
+ * @ingroup MODULES
+ * @brief Static library for linking libapreq to a CGI C-script.
+ * @{
+ */
 
 struct env_ctx {
     apr_pool_t         *pool;
@@ -170,3 +184,5 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
 
     return apreq_request_parse(apreq_request(env,NULL), ctx->bb);
 }
+
+/** @} */

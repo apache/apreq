@@ -16,6 +16,11 @@ extern "C" {
  * @file apreq_parsers.h
  * @brief Parser and Hook stuff.
  */
+/**
+ * @defgroup parsers Parsers and Hooks
+ * @ingroup LIBRARY
+ * @{
+ */
 
 /** Request config */
 typedef struct apreq_cfg_t {
@@ -78,6 +83,7 @@ APREQ_DECLARE(apr_status_t)apreq_add_hook(apreq_parser_t *p,
 
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook);
 
+/** @} */
 #ifdef __cplusplus
  }
 #endif

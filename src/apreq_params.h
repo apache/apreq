@@ -71,6 +71,11 @@ extern "C" {
  * @file apreq_params.h
  * @brief Request and param stuff.
  */
+/**
+ * @defgroup params Request params
+ * @ingroup LIBRARY
+ * @{
+ */
 
 #define APREQ_CHARSET  UTF_8;
 
@@ -176,6 +181,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
 APREQ_DECLARE(apr_status_t)apreq_parse_request(apreq_request_t *req, 
                                                apr_bucket_brigade *bb);
 
+/** @} */
 #ifdef __cplusplus
 }
 #endif

@@ -17,7 +17,7 @@ APR_INLINE static SV *apreq_xs_param2sv(const apreq_param_t *param,
 }
 
 APREQ_XS_DEFINE_ENV(request);
-APREQ_XS_DEFINE_OBJECT(request, "Apache::Request");
+APREQ_XS_DEFINE_OBJECT(request);
 
 APREQ_XS_DEFINE_MAKE(param);
 

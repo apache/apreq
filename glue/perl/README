@@ -1,14 +1,19 @@
+NOTES on xsbuilder/
+
+                   maps/ - stores
+
+
 
 
 current class diagram:
 
-                         apreq_env
+                        apreq_xs_env
 
-                       /            \
+                       //          \\
                                      
-               fetch /                \ new
+               fetch //              \\ new
                                               
-                   /                    \
+                   //                  \\
 
            Apache::Cookie::Jar       Apache::Request
 
@@ -21,10 +26,10 @@ current class diagram:
                   Apache::Cookie
 
 
+legend: double lines ("//" or "\\") represent an inheritance relationship.
+        single lines ("/"  or  "\") represent method calls.
+
 
 missing components:  Apache::Request::Upload
                      Apache::Request::Parser
-
-
-Can/should we collapse Apache::Cookie::Jar & Apache::Cookie::Table
-into a single package?
+                     Apache::Request::Util

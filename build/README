@@ -1,14 +1,14 @@
 build/
-        General Info on the httpd-apreq community.
+        General Info on the apreq community.
         Utility scripts for building & packaging httpd-apreq-2.
 
 
 
-UPDATING THE httpd-apreq WEBSITE:
+UPDATING THE WEBSITE:
         (cf: http://jakarta.apache.org/site/jakarta-site2.html )
 
+  RedHat Linux Instructions:
 
-RedHat Linux Instructions:
   1) Download and install j2re and j2sdk rpms from Sun's
      website:
 
@@ -38,3 +38,18 @@ RedHat Linux Instructions:
 
     $ cd /www/httpd.apache.org
     $ cvs update index.html apreq/
+
+
+
+BUILDING THE DOXYGEN DOCUMENTATION:
+
+  Be sure doxygen is installed on your machine.  Then cd to 
+  the base directory (httpd-apreq-2) and run
+
+        % make docs
+
+  This will generate the C documentation in the docs/ directory
+  using build/doxygen.conf as the config file for doxygen.
+
+
+

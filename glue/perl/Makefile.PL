@@ -2,8 +2,6 @@ use ExtUtils::MakeMaker;
 
 use 5.005;
 
-use lib qw(/home/joe/src/apache/httpd-test/perl-framework/Apache-Test/lib);
-
 use Apache::Test5005compat;
 
 use Apache::TestMM qw(test clean);
@@ -32,7 +30,7 @@ WriteMakefile(
     NAME => 'httpd-apreq-2',
     VERSION => '0.01',
     DIR => [qw(xs)],
-    clean => { DIRS => "blib", FILES => "@scripts" },
+    clean => { DIRS => "blib", FILES => "t/TEST @scripts" },
 );
 
 __END__

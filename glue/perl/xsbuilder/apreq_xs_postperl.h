@@ -1,7 +1,24 @@
 #ifndef APREQ_XS_POSTPERL_H
 #define APREQ_XS_POSTPERL_H
 
+/**
+ * @file apreq_xs_postperl.h
+ * @brief XS include file for making Cookie.so and Request.so
+ *
+ */
+/**
+ * @defgroup XS Perl
+ * @ingroup GLUE
+ * @{
+ */
 
+/** 
+ * Trace through magic objects & hashrefs looking for original object.
+ * @param in  The starting SV *.
+ * @param key The first letter of key is used to search a hashref for 
+ *            the desired object.
+ * @return    The object, if found;  otherwise NULL.
+ */
 APR_INLINE
 static SV *apreq_xs_find_obj(SV *in, const char *key)
 {
@@ -36,6 +53,10 @@ static SV *apreq_xs_find_obj(SV *in, const char *key)
 
 /* conversion function templates based on modperl-2's sv2request_rec */
 
+/**
+ * Searches a perl object ref with apreq_xs_find_obj 
+ * and produces a pointer to the object's C analog.
+ */
 APR_INLINE
 static void *apreq_xs_perl2c(SV* in, const char *name)
 {
@@ -46,6 +67,10 @@ static void *apreq_xs_perl2c(SV* in, const char *name)
         return (void *)SvIVX(sv);
 }
 
+/** 
+ * Searches a perl object ref with apreq_xs_find_obj
+ * and produces a pointer to the underlying C environment.
+ */ 
 APR_INLINE
 static void *apreq_xs_perl2env(SV *sv, const char *name)
 {
@@ -56,6 +81,13 @@ static void *apreq_xs_perl2env(SV *sv, const char *name)
     return NULL;
 }
 
+/**
+ * Converts a C object, with environment, to a Perl object.
+ * @param obj C object.
+ * @param env C environment.
+ * @param class Class perl object will be blessed into.
+ * @return Reference to the new Perl object in class.
+ */
 APR_INLINE
 static SV *apreq_xs_c2perl(pTHX_ void *obj, void *env, const char *class)
 {
@@ -65,6 +97,13 @@ static SV *apreq_xs_c2perl(pTHX_ void *obj, void *env, const char *class)
     return rv;
 }
 
+/**
+ * Converts a C object, with environment, to a TIEHASH object.
+ * @param obj C object.
+ * @param env C environment.
+ * @param class Class perl object will be blessed and tied to.
+ * @return Reference to a new TIEHASH object in class.
+ */
 APR_INLINE
 static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env, 
                                  const char *class)
@@ -85,6 +124,9 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
 #define apreq_xs_sv2(type,sv)((apreq_##type##_t *)apreq_xs_perl2c(sv, #type))
 #define apreq_xs_sv2env(type,sv) apreq_xs_perl2env(sv,#type)
 
+/** Converts apreq_env to a Perl package, which forms the
+ * base class for Apache::Request and Apache::Jar objects.
+ */
 #define APREQ_XS_DEFINE_ENV(type)                       \
 APR_INLINE                                              \
 static XS(apreq_xs_##type##_env)                        \
@@ -117,9 +159,9 @@ static XS(apreq_xs_##type##_env)                        \
 }
 
 
-/* requires type##2sv macro */
+/** requires type##2sv macro */
 
-#define APREQ_XS_DEFINE_OBJECT(type,class)                              \
+#define APREQ_XS_DEFINE_OBJECT(type)                                    \
 static XS(apreq_xs_##type)                                              \
 {                                                                       \
     dXSARGS;                                                            \
@@ -135,13 +177,13 @@ static XS(apreq_xs_##type)                                              \
     data = (items == 3)  ?  SvPV_nolen(ST(2)) :  NULL;                  \
     obj = apreq_##type(env, data);                                      \
                                                                         \
-    ST(0) = obj ? sv_2mortal(apreq_xs_2sv(obj,class)) :                 \
+    ST(0) = obj ? sv_2mortal( apreq_xs_2sv(obj, SvPV_nolen(ST(0))) ) :  \
                   &PL_sv_undef;                                         \
     XSRETURN(1);                                                        \
 }
 
 
-/* requires definition of apreq_xs_##type##2sv(t,class) macro */
+/** requires definition of apreq_xs_##type##2sv(t,class) macro */
 
 #define APREQ_XS_DEFINE_MAKE(type)                                      \
 static XS(apreq_xs_make_##type)                                         \
@@ -188,9 +230,11 @@ static int apreq_xs_table_keys(void *data, const char *key,
     return 1;
 }
 
-/* requires definition of type##2sv macro */
+
 #define apreq_table_t apr_table_t
 #define apreq_xs_table_sv2table(sv) apreq_xs_sv2(table,sv)
+
+/** requires definition of type##2sv macro */
 
 #define APREQ_XS_DEFINE_GET(type, subtype, subclass)                    \
 static int apreq_xs_##type##_table_values(void *data, const char *key,  \
@@ -209,7 +253,6 @@ static int apreq_xs_##type##_table_values(void *data, const char *key,  \
     PUTBACK;                                                            \
     return 1;                                                           \
 }                                                                       \
-                                                                        \
 static XS(apreq_xs_##type##_table_get)                                  \
 {                                                                       \
     dXSARGS;                                                            \
@@ -279,6 +322,6 @@ static XS(apreq_xs_##type##_##subtype)                                  \
     XSRETURN(1);                                                        \
 }
 
-
+/** @} */
 
 #endif /* APREQ_XS_POSTPERL_H */
