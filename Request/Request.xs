@@ -1,4 +1,5 @@
 #include "apache_request.h"
+#undef __attribute__
 #include "mod_perl.h"
 
 typedef ApacheRequest * Apache__Request;

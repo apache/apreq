@@ -2,6 +2,10 @@ Revision history for libapreq
 
 =over 4
 
+=item 0.32 - ?
+
+AIX compile fixes [Jens-Uwe Mager <jum@helios.de>]
+
 =item 0.31_03 - December 23, 2000
 
 Apache::Request->instance [Matt Sergeant <matt@sergeant.org>]

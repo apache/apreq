@@ -28,6 +28,9 @@ else {
         'INC'	=> "-I../c ". $src->inc,
         'TYPEMAPS'  => $src->typemaps,
         'LIBS' => "-L$root -lapreq",
+	'dynamic_lib' => {
+		'OTHERLDFLAGS' => $src->otherldflags,
+	},
     );
     unlink "$root/libapreq.a";
 }

@@ -102,4 +102,4 @@ char *ApacheRequest_expires(ApacheRequest *req, char *time_str);
 #define REQ_DEBUG(a)
 #endif
 
-#endif // _APACHE_REQUEST_H
+#endif /* _APACHE_REQUEST_H */

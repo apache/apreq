@@ -69,12 +69,12 @@ void* my_memstr(void* haystack, int haystacklen, const char* needle,
 {
     int needlen = strlen(needle);
     int len = haystacklen;
-    void *ptr = haystack;
+    unsigned char *ptr = haystack;
     
     /* iterate through first character matches */
     while( (ptr = memchr(ptr, needle[0], len)) ) {
 	/* calculate length after match */
-	len = haystacklen - (ptr - haystack);
+	len = haystacklen - (ptr - (unsigned char *)haystack);
 
 	/* done if matches up to capacity of buffer */
 	if(memcmp(needle, ptr, needlen < len ? needlen : len) == 0 &&
