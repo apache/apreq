@@ -4,6 +4,8 @@ Revision history for Perl extension Apache::Request.
 
 =item 0.30_02
 
+fixed another bug related to path_info
+
 fixed Apache::Cookie->path bug spotted by Jeffrey W. Baker
  
 =item 0.30_01 - January, 27 - 1999

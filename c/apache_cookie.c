@@ -59,8 +59,15 @@
 
 static char *cookie_path(request_rec *r)
 {
-    int path_info_start = ap_find_path_info(r->uri, r->path_info); 
-    char *tmp = ap_pstrndup(r->pool, r->uri, path_info_start);
+    int path_info_start;
+    char *tmp;
+    if (r->path_info && *r->path_info) {
+	path_info_start = ap_find_path_info(r->uri, r->path_info); 
+	tmp = ap_pstrndup(r->pool, r->uri, path_info_start);
+    }
+    else {
+	tmp = r->uri;
+    }
     return ap_make_dirstr_parent(r->pool, tmp);
 }
 
