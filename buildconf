@@ -1,0 +1,15 @@
+#!/bin/sh
+
+
+echo "removing stale config files"
+touch .deps
+rm -f aclocal.m4
+rm -f generated_lists
+rm -rf autom4te*.cache
+
+libtool="libtoolize --automake --copy --force"
+echo "running $libtool" && $libtool && \
+echo "running aclocal"  && aclocal  && \
+echo "running autoconf" && autoconf && \
+echo "running automake -a -c" && automake -a -c && \
+echo "buildconf successful."
