@@ -167,7 +167,7 @@ static SV *apreq_xs_sv2object(pTHX_ SV *sv, const char *class, const char attr)
         && (obj = mg->mg_obj) != NULL
         && SvOBJECT(obj))
     {
-        sv = sv_2mortal(newRV_noinc(obj));
+        sv = sv_2mortal(newRV_inc(obj));
         if (sv_derived_from(sv, class))
             return obj;
     }
