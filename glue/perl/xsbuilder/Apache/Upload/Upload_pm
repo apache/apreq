@@ -9,7 +9,7 @@ package Apache::Upload;
 
 sub io {
     tie local (*FH), "Apache::Upload::Brigade", shift->bb;
-    return *FH{IO};
+    return bless *FH{IO}, "Apache::Upload::IO";
 }
 
 sub fh {
@@ -36,3 +36,9 @@ BEGIN {
 
 package Apache::Upload::Brigade;
 push our(@ISA), "APR::Brigade";
+
+package Apache::Upload::IO;
+sub AUTOLOAD {
+    s/.*:://, tr/a-z/A-Z/ for our $AUTOLOAD;
+    tied(*{shift()})->$AUTOLOAD(@_);
+}
