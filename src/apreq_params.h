@@ -243,6 +243,10 @@ APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
 APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
                                             const char *key);
 
+APREQ_DECLARE(apr_status_t) 
+    apreq_request_config(apreq_request_t *req, 
+                         const char *attr, apr_size_t alen,
+                         const char *val, apr_size_t vlen);
 
 /** @} */
 #ifdef __cplusplus

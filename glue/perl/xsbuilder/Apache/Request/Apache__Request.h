@@ -180,3 +180,27 @@ static XS(apreq_xs_upload_link)
     XSRETURN_UNDEF;
 }
 
+
+static XS(apreq_xs_request_config)
+{
+    dXSARGS;
+    apreq_request_t *req;
+    apr_status_t status = APR_SUCCESS;
+    int j = 1;
+    if (items == 0)
+        XSRETURN_UNDEF;
+    if (!SvROK(ST(0)))
+        Perl_croak(aTHX_ "usage: $req->config(@settings)");
+
+    req = apreq_xs_sv2(request,ST(0));
+
+    for (j = 1; j + 1 < items; j += 2) {
+        STRLEN alen, vlen;
+        const char *attr = SvPV(ST(j),alen), *val = SvPV(ST(j+1),vlen);
+        status = apreq_request_config(req, attr, alen, val, vlen); 
+        if (status != APR_SUCCESS)
+            break;
+    }
+    XSRETURN_IV(status);
+}
+

@@ -58,6 +58,10 @@
 #define apreq_xs_cookie2sv(c,class) apreq_xs_2sv(c,class)
 #define apreq_xs_sv2cookie(sv) ((apreq_cookie_t *)SvIVX(SvRV(sv)))
 
+/** 
+ * env 
+ * @param The CooKIE
+ */
 APREQ_XS_DEFINE_ENV(cookie);
 APREQ_XS_DEFINE_ENV(jar);
 APREQ_XS_DEFINE_MAKE(cookie);
@@ -83,7 +87,10 @@ APREQ_XS_DEFINE_OBJECT(jar);
 APREQ_XS_DEFINE_GET(jar,   TABLE_PKG, cookie, COOKIE_PKG, 1);
 APREQ_XS_DEFINE_GET(table, TABLE_PKG, cookie, COOKIE_PKG, 1);
 
-
+/**
+ *Returns serialized version of cookie.
+ *@param $cookie cookie
+ */
 static XS(apreq_xs_cookie_as_string)
 {
     dXSARGS;
@@ -101,6 +108,12 @@ static XS(apreq_xs_cookie_as_string)
     ST(0) = sv_2mortal(sv);
     XSRETURN(1);
 }
+
+/**
+ * Cookie exipiration time.  Depends on cookie version.
+ * @param cookie
+ * @return expiration date.
+ */
 
 static XS(apreq_xs_cookie_expires)
 {

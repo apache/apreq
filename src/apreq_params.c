@@ -60,7 +60,7 @@
 #include "apreq_parsers.h"
 #include "apreq_env.h"
 #include "apr_strings.h"
-
+#include "apr_lib.h"
 
 /** default parser configuration */
 
@@ -182,8 +182,8 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
     if (val == NULL) {
         apreq_cfg_t *cfg = req->cfg;
 
-        if (cfg && cfg->read_bytes) {
-            apreq_env_read(req->env, APR_NONBLOCK_READ, cfg->read_bytes);
+        if (cfg && cfg->read_ahead) {
+            apreq_env_read(req->env, APR_NONBLOCK_READ, cfg->read_ahead);
             val = apr_table_get(req->body, name);
         }
     }
@@ -365,4 +365,64 @@ APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
         return NULL;
     apr_table_do(upload_get, &param, req->body, key, NULL);
     return param;
+}
+
+APREQ_DECLARE(apr_status_t) 
+    apreq_request_config(apreq_request_t *req, 
+                         const char *attr, apr_size_t alen,
+                         const char *val, apr_size_t vlen)
+{
+    apreq_cfg_t *cfg = req->cfg;
+    apr_pool_t *p;
+
+    if (alen < 2)
+        return APR_BADARG;
+
+    if ( attr[0] ==  '-' || attr[0] == '$' ) {
+        ++attr;
+        --alen;
+    }
+
+    switch (apr_tolower(*attr)) {
+
+    case 'p': /* POST_MAX */
+        cfg->max_len = apreq_atoi64f(val);
+        break;
+
+    case 'd': /* DISABLE_UPLOADS */
+        while (!apr_isdigit(*val)) {
+            if (vlen == 0)
+                return APR_BADARG;
+            ++val;
+            --vlen;
+        }
+        cfg->disable_uploads = *val - '0';
+        break;
+
+    case 'f': /* FIELD_LIMIT */
+        cfg->max_fields = apreq_atoi64f(val);
+        break;
+
+    case 'b': /* BRIGADE_LIMIT */
+        cfg->max_brigade_len = apreq_atoi64f(val);
+        break;
+
+    case 'r': /* READ_AHEAD */
+        cfg->read_ahead = apreq_atoi64f(val);
+        break;
+
+    case 't': /* TEMP_DIR */
+        p = apreq_env_pool(req->env);
+        cfg->temp_dir = (vlen ? apr_pstrmemdup(p,val,vlen) : NULL);
+        break;
+
+    case 'u': /* UPLOAD_HOOK */
+        /* XXX not implemented yet */
+
+    default:
+        return APR_ENOTIMPL;
+
+    };
+
+    return APR_SUCCESS;
 }

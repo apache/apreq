@@ -82,7 +82,7 @@ typedef struct apreq_cfg_t {
     apr_off_t      max_len;
     apr_size_t     max_brigade_len; /* in-memory cutoff */
     int            max_fields;
-    int            read_bytes; /* prefetch length */
+    int            read_ahead; /* prefetch length */
     int            disable_uploads;
     char          *temp_dir;
 } apreq_cfg_t;

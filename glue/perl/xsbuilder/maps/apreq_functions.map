@@ -11,6 +11,7 @@ MODULE=Apache::Request PACKAGE=Apache::Request
  DEFINE_args    | apreq_xs_args_get |
  DEFINE_body    | apreq_xs_body_get |
  DEFINE_upload  | apreq_xs_upload_get |
+ DEFINE_config  | apreq_xs_request_config |
 
 MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Table_
  DEFINE_get     | apreq_xs_table_get |

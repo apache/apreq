@@ -13,7 +13,6 @@ use base 'APR::Table';
 package Apache::Request;
 push our(@ISA), __PACKAGE__ -> env;
 
-sub config {}
 sub new {
     my $class = shift;
     my $env = shift;
