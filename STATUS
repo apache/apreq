@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/11 01:36:06 $]   -*-text-*-
+Last modified at [$Date: 2004/07/13 21:09:18 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -82,6 +82,23 @@ OPEN ISSUES:
 
     - Should we bundle an apr-based "application/xml" parser?  
       If so, how should we parse the xml data into an apr_table?
+
+    - For 5.8.1+, the current perl-glue implementation enables 
+      MAGIC KEYS for all the @keys = $obj->get() calls.  The entries 
+      in @keys are scalars with vstring-magic which is survives
+      assignment.  The magic contains a pointer to the perl object
+      $obj references, and a pointer to the table value associated
+      with the key. A subsequent call to $val = $obj->get($key[$n])
+      bypasses the normal table lookups, using the magic in $key[$n] 
+      to retrieve $val.
+      .
+      I don't know if the faster lookups balance out the overhead
+      of attaching the v-string magic, so it's something that probably
+      should be benchmarked.  However the real motivation for this
+      was to provide better support for multivalued keys (since a
+      magic key "knows" which value it's associated with).  Whether
+      or not users will appreciate this feature, or find it too confusing,
+      is presently unknown.
 
 
 BUGS:
