@@ -10,10 +10,13 @@ use Apache::Connection;
 use Apache::Upload;
 use APR::Pool;
 use APR::PerlIO;
+use Apache::ServerUtil;
+use File::Spec;
 
 sub handler {
     my $r = shift;
-    my $req = Apache::Request->new($r);
+    my $temp_dir = $r->server->server_root_relative('logs');
+    my $req = Apache::Request->new($r, TEMP_DIR => $temp_dir);
 
     $req->content_type('text/plain');
 
@@ -46,7 +49,21 @@ sub handler {
     elsif ($test eq 'tempname') {
         my $upload = $req->upload("HTTPUPLOAD");
         my $name = $upload->tempname;
+        my ($dir) = $name =~ /^(.+)apreq\w{6}$/;
+        chop $dir;
+        die "Tempfile in wrong temp_dir (expected $temp_dir, saw $dir)" unless
+            $dir eq $temp_dir;
+
         open my $fh, "<:APR", $name, $upload->pool or die "Can't open $name: $!";
+        $r->print(<$fh>);
+    }
+    elsif ($test eq 'link') {
+        my $upload = $req->upload("HTTPUPLOAD");
+        my $link_file = File::Spec->catfile("$temp_dir", "linktest");
+        unlink $link_file if -f $link_file;
+        $upload->link($link_file) or die "Can't link to $link_file: $!";
+        open my $fh, "<:APR", $link_file, $upload->pool
+            or die "Can't open $link_file: $!";
         $r->print(<$fh>);
     }
     elsif ($test eq 'fh') {
@@ -89,7 +106,7 @@ sub handler {
     }
     elsif ($test eq 'type') {
         my $upload = $req->upload("HTTPUPLOAD");
-        die "content-type mismatch" 
+        die "content-type mismatch"
             unless $upload->info->{"Content-Type"} eq $upload->type;
         $r->print($upload->type);
     }
