@@ -4,6 +4,7 @@ use Config;
 use Getopt::Long;
 require Win32;
 use ExtUtils::MakeMaker;
+use File::Spec::Functions qw(catfile catdir);
 use warnings;
 use FindBin;
 
@@ -88,10 +89,13 @@ die "Can't find a suitable Apache2 installation!"
     unless (-d $prefix and check($prefix));
 
 $prefix = Win32::GetShortPathName($prefix);
-$prefix =~ s!\\!/!g;
+my %ap_dir;
+foreach (qw(bin lib include build)) {
+    $ap_dir{$_} = catdir $prefix, $_;
+}
 
-my $src_version = "$apreq_home/src/apreq_version.h";
-my $apache_version = "$prefix/include/apreq_version.h";
+my $src_version = catfile $apreq_home, 'src', 'apreq_version.h';
+my $apache_version = catfile $ap_dir{include}, 'apreq_version.h';
 
 my $apreq_version = -e $src_version ? $src_version : $apache_version;
 open(my $inc, $apreq_version)
@@ -111,11 +115,11 @@ my %apreq_args = (APREQ_MAJOR_VERSION => $vers{MAJOR},
                   APREQ_LIBNAME => 'libapreq2.lib',
                   prefix => $prefix,
                   exec_prefix => $prefix,
-                  bindir => "$prefix/bin",
-                  libdir => "$prefix/lib",
+                  bindir => $ap_dir{bin},
+                  libdir => $ap_dir{lib},
                   datadir => $prefix,
-                  installbuilddir => "$prefix/build",
-                  includedir => "$prefix/include",
+                  installbuilddir => $ap_dir{build},
+                  includedir => $ap_dir{include},
                 
                   CC => $Config{cc},
                   CPP => $Config{cpp},
@@ -151,6 +155,7 @@ Known values for OPTION are:
   --installbuilddir print APR-util build helper directory
   --link-ld         print link switch(es) for linking to APREQ
   --apreq-so-ext    print the extensions of shared objects on this platform
+  --apreq-lib-file  print the name of the apreq lib file
   --version         print the APR-util version as a dotted triple
   --help            print this help
 
@@ -161,13 +166,14 @@ An application should use the results of --cflags, --cppflags, --includes,
 and --ldflags in their build process.
 EOF
 
-my $full = "$prefix/bin/$file";
-open(my $fh, ">$full") or die "Cannot open $full: $!";
+my $full = catfile $ap_dir{bin}, $file;
+open(my $fh, '>', $full) or die "Cannot open $full: $!";
 print $fh <<"END";
 #!$^X
 use strict;
 use warnings;
 use Getopt::Long;
+use File::Spec::Functions qw(catfile catdir);
 
 $license
 sub usage {
@@ -209,6 +215,7 @@ GetOptions(\%opts,
            'installbuilddir',
            'link-ld',
            'apreq-so-ext',
+           'apreq-lib-file',
            'version',
            'help'
           ) or usage();
@@ -220,24 +227,30 @@ if (exists $opts{prefix} and $opts{prefix} eq "") {
     exit(0);
 }
 my $user_prefix = defined $opts{prefix} ? $opts{prefix} : '';
+my %user_dir;
+if ($user_prefix) {
+    foreach (qw(lib bin include build)) {
+        $user_dir{$_} = catdir $user_prefix, $_;
+    }
+}
 my $flags = '';
 
 SWITCH : {
     local $\ = "\n";
     $opts{bindir} and do {
-        print $user_prefix ? "$user_prefix/bin" : $bindir;
+        print $user_prefix ? $user_dir{bin} : $bindir;
         last SWITCH;
     };
     $opts{includedir} and do {
-        print $user_prefix ? "$user_prefix/include" : $includedir;
+        print $user_prefix ? $user_dir{include} : $includedir;
         last SWITCH;
     };
     $opts{libdir} and do {
-        print $user_prefix ? "$user_prefix/lib" : $libdir;
+        print $user_prefix ? $user_dir{lib} : $libdir;
         last SWITCH;
     };
     $opts{installbuilddir} and do {
-        print $user_prefix ? "$user_prefix/build" : $installbuilddir;
+        print $user_prefix ? $user_dir{build} : $installbuilddir;
         last SWITCH;
     };
     $opts{srcdir} and do {
@@ -259,17 +272,24 @@ SWITCH : {
     $opts{cflags} and $flags .= " $CFLAGS ";
     $opts{cppflags} and $flags .= " $CPPFLAGS ";
     $opts{includes} and do {
-        my $inc = $user_prefix ? "$user_prefix/include" : $includedir;
+        my $inc = $user_prefix ? $user_dir{include} : $includedir;
         $flags .= qq{ /I"$inc" $EXTRA_INCLUDES };
     };
     $opts{ldflags} and $flags .= " $LDFLAGS ";
     $opts{libs} and $flags .= " $LIBS ";
     $opts{'link-ld'} and do {
-        my $libpath = $user_prefix ? "$user_prefix/lib" : $libdir;
+        my $libpath = $user_prefix ? $user_dir{lib} : $libdir;
         $flags .= qq{ /libpath:"$libpath" $APREQ_LIBNAME };
     };
     $opts{'apreq-so-ext'} and do {
         print $APREQ_SO_EXT;
+        last SWITCH;
+    };
+    $opts{'apreq-lib-file'} and do {
+        my $full_apreqlib = $user_prefix ? 
+            (catfile $user_dir{lib}, $APREQ_LIBNAME) :
+                (catfile $libdir, $APREQ_LIBNAME);
+        print $full_apreqlib;
         last SWITCH;
     };
     $opts{version} and do {
