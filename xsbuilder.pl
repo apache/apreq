@@ -100,6 +100,9 @@ package My::ParseSource;
 my @dirs = ("$base_dir/src", "$base_dir/glue/perl/xsbuilder");
 use base qw/ExtUtils::XSBuilder::ParseSource/;
 __PACKAGE__->$_ for shift || ();
+system("touch $base_dir/glue/perl/xsbuilder") == 0
+    or die "touch $base_dir/glue/perl/xsbuilder failed: $!"
+    unless Apache::Build::WIN32;
 
 sub package {'Apache::libapreq2'}
 sub unwanted_includes {["apreq_tables.h"]}
@@ -234,11 +237,11 @@ if (-f '$mmargspath')
 
 
 ModPerl::MM::WriteMakefile(
-    'NAME'    => '$class',
-    'VERSION' => '0.01',
-    'TYPEMAPS' => [qw(@$mp2_typemaps $typemap)],
-    'INC'      => "-I.. -I../.. -I../../.. -I$src_dir -I$xs_dir $apache_includes",
-    'LIBS'     => "$apreq_lib_flags $apr_lib_flags",
+    'NAME'      => '$class',
+    'VERSION'   => '0.01',
+    'TYPEMAPS'  => [qw(@$mp2_typemaps $typemap)],
+    'INC'       => "-I.. -I../.. -I../../.. -I$src_dir -I$xs_dir $apache_includes",
+    'LIBS'      => "$apreq_lib_flags $apr_lib_flags",
 } ;
 $txt .= "'depend'  => $deps,\n" if ($deps) ;
 $txt .= qq{    
