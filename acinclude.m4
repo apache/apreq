@@ -68,6 +68,9 @@ AC_DEFUN([AC_APREQ], [
             if test -z "`$prereq_check Apache::Test`"; then
                 AC_MSG_ERROR([Bad Apache::Test version])
             fi
+            if test -z "`$prereq_check ExtUtils::MakeMaker`"; then
+                AC_MSG_ERROR([Bad ExtUtils::MakeMaker version])
+            fi
         fi
 
         AC_CONFIG_COMMANDS_POST([test "x$PERL_GLUE" != "xno" && 
