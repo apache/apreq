@@ -3,6 +3,11 @@
 
 @section v2_04_dev Changes with libapreq2-2.04-dev
 
+- Perl API [joes]
+  Add exceptions to $upload->link, $upload->tempname, $upload->slurp, 
+  and $cookie->set_attr.  Return value of $upload->slurp is now the 
+  upload length.  Also document new $upload->io.
+
 - C API [joes]
   Restrict all apr_status_t codes to APR_SUCCESS, APR_INCOMPLETE,
   APR_EGENERAL, APR_EINIT, APR_ENOTIMPL, since any others will

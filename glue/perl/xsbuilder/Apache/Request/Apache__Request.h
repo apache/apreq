@@ -181,7 +181,7 @@ static XS(apreq_xs_request_config)
         }
         else {
             Perl_warn(aTHX_ "Apache::Request::config: "
-                      "Unrecognized attribute %s", attr);
+                      "Unrecognized attribute %s, skipped", attr);
         }
     }
     XSRETURN(0);
@@ -199,9 +199,12 @@ static XS(apreq_xs_request_parse)
 
     do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);
     while (s == APR_INCOMPLETE);
-    if (GIMME_V != G_VOID)
+
+    if (GIMME_V != GVOID)
         XSRETURN_IV(s);
+
     if (s != APR_SUCCESS)
         apreq_xs_croak(aTHX_ newHV(), s, "Apache::Request::parse", 
                        "Apache::Request::Error");
+
 }

@@ -120,6 +120,7 @@ static XS(apreq_xs_upload_link)
     const char *name, *fname;
     apr_bucket_brigade *bb;
     apr_file_t *f;
+    apr_status_t s = APR_SUCCESS;
 
     if (items != 2 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $upload->link($name)");
@@ -134,32 +135,45 @@ static XS(apreq_xs_upload_link)
     f = apreq_brigade_spoolfile(bb);
     if (f == NULL) {
         apr_off_t len;
-        apr_status_t s;
 
         s = apr_file_open(&f, name, APR_CREATE | APR_EXCL | APR_WRITE |
                           APR_READ | APR_BINARY | APR_BUFFERED,
                           APR_OS_DEFAULT,
                           apreq_env_pool(env));
-        if (s != APR_SUCCESS || 
-            apreq_brigade_fwrite(f, &len, bb) != APR_SUCCESS)
-            XSRETURN_UNDEF;
-    
-        XSRETURN_YES;
+        if (s == APR_SUCCESS) {
+            s = apreq_brigade_fwrite(f, &len, bb);
+            if (s != APR_SUCCESS) {
+                if (GIMME_V != G_VOID)
+                    XSRETURN_UNDEF;
+                apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::link", 
+                               "Apache::Upload::Error");
+            }
+            XSRETURN_YES;
+        }
+        else
+            goto link_error;
     }
-    if (apr_file_name_get(&fname, f) != APR_SUCCESS)
-        XSRETURN_UNDEF;
+    s = apr_file_name_get(&fname, f);
+    if (s != APR_SUCCESS)
+        goto link_error;
 
     if (PerlLIO_link(fname, name) >= 0)
         XSRETURN_YES;
     else {
-        apr_status_t s = apr_file_copy(fname, name,
-                                       APR_OS_DEFAULT, 
-                                       apreq_env_pool(env));
+        s = apr_file_copy(fname, name,
+                          APR_OS_DEFAULT, 
+                          apreq_env_pool(env));
         if (s == APR_SUCCESS)
             XSRETURN_YES;
     }
 
-    XSRETURN_UNDEF;
+ link_error:
+    if (GIMME_V != G_VOID)
+        XSRETURN_UNDEF;
+
+    apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::link", 
+                   "APR::Error");
+
 }
 
 
@@ -185,7 +199,9 @@ static XS(apreq_xs_upload_slurp)
 
     s = apr_brigade_length(bb, 0, &len_off);
     if (s != APR_SUCCESS)
-        XSRETURN_IV(s);
+        apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::slurp", 
+                       "Apache::Upload::Error");
+
 
     len_size = len_off; /* max_body setting will be low enough to prevent
                          * overflow, but even if it wasn't the code below will
@@ -198,7 +214,11 @@ static XS(apreq_xs_upload_slurp)
     SvCUR_set(ST(1), len_size);
     SvPOK_only(ST(1));
     s = apr_brigade_flatten(bb, data, &len_size);
-    XSRETURN_IV(s);
+    if (s != APR_SUCCESS)
+        apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::slurp", 
+                       "APR::Error");
+
+    XSRETURN_IV(len_size);
 }
 
 static XS(apreq_xs_upload_size)
@@ -221,11 +241,10 @@ static XS(apreq_xs_upload_size)
 
     s = apr_brigade_length(bb, 1, &len);
 
-    if (s != APR_SUCCESS) {
-        apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_size:"
-                  "apr_brigade_length failed");
-        Perl_croak(aTHX_ "$upload->size: can't get brigade length");
-    }
+    if (s != APR_SUCCESS)
+        apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::size", 
+                       "APR::Error");
+
     XSRETURN_IV((IV)len);
 }
 
@@ -308,8 +327,8 @@ static XS(apreq_xs_upload_brigade_read)
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
             apreq_xs_croak(aTHX_ newHV(), s, 
-                           "Apache::Request::Upload::Brigade::READ "
-                           "apr_bucket_read failed", "APR::Error");
+                           "Apache::Request::Upload::Brigade::READ", 
+                           "APR::Error");
         want = dlen;
         end = APR_BUCKET_NEXT(e);
     }
@@ -321,8 +340,8 @@ static XS(apreq_xs_upload_brigade_read)
             s = apr_brigade_length(bb, 1, &len);
             if (s != APR_SUCCESS)
                 apreq_xs_croak(aTHX_ newHV(), s, 
-                               "Apache::Request::Upload::Brigade::READ "
-                               "apr_brigade_length failed", "APR::Error");
+                               "Apache::Request::Upload::Brigade::READ", 
+                               "APR::Error");
             want = len;
 
         case APR_SUCCESS:
@@ -330,8 +349,8 @@ static XS(apreq_xs_upload_brigade_read)
 
         default:
             apreq_xs_croak(aTHX_ newHV(), s, 
-                           "Apache::Request::Upload::Brigade::READ "
-                           "apr_brigade_partition failed", "APR::Error");
+                           "Apache::Request::Upload::Brigade::READ",
+                           "APR::Error");
         }
     }
 
@@ -346,8 +365,7 @@ static XS(apreq_xs_upload_brigade_read)
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
             apreq_xs_croak(aTHX_ newHV(), s, 
-                           "Apache::Request::Upload::Brigade::READ "
-                           "apr_bucket_read failed", "APR::Error");
+                           "Apache::Request::Upload::Brigade::READ", "APR::Error");
         memcpy(buf, data, dlen);
         buf += dlen;
         apr_bucket_delete(e);
@@ -388,8 +406,8 @@ static XS(apreq_xs_upload_brigade_readline)
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
             apreq_xs_croak(aTHX_ newHV(), s, 
-                           "Apache::Request::Upload::Brigade::READLINE "
-                           "apr_bucket_read failed", "APR::Error");
+                           "Apache::Request::Upload::Brigade::READLINE",
+                           "APR::Error");
 
         eol = memchr(data, '\012', dlen); /* look for LF (linefeed) */
 
@@ -445,20 +463,15 @@ static XS(apreq_xs_upload_tempname)
 
         s = apreq_file_mktemp(&file, apreq_env_pool(env), tmpdir);
 
-        if (s != APR_SUCCESS) {
-            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_tempname: "
-                      "apreq_file_mktemp failed");
-            Perl_croak(aTHX_ "$upload->tempname: can't make tempfile");
-        }
+        if (s != APR_SUCCESS)
+            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::tempname", 
+                           "Apache::Upload::Error");
 
         s = apreq_brigade_fwrite(file, &len, bb);
 
-        if (s != APR_SUCCESS) {
-            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_tempname: "
-                      "apreq_brigade_fwrite failed");
-            Perl_croak(aTHX_ "$upload->tempname: "
-                       "can't write brigade to tempfile");
-        }
+        if (s != APR_SUCCESS)
+            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::tempname", 
+                           "Apache::Upload::Error");
 
         last = apr_bucket_file_create(file, len, 0, bb->p, bb->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(bb, last);
@@ -466,7 +479,8 @@ static XS(apreq_xs_upload_tempname)
 
     s = apr_file_name_get(&path, file);
     if (s != APR_SUCCESS)
-        XSRETURN_UNDEF;
+        apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::tempname", 
+                       "APR::Error");
 
     ST(0) = sv_2mortal(newSVpvn(path, strlen(path)));
     XSRETURN(1);

@@ -137,8 +137,9 @@ static XS(apreq_xs_cookie_set_attr)
     apr_pool_t *p;
     apr_status_t status = APR_SUCCESS;
     int j = 1;
-    if (items == 0)
-        XSRETURN_UNDEF;
+
+    if (items % 2 != 1 || ! SvROK(ST(0)))
+        Perl_croak(aTHX_ "usage: $cookie->set_attr(%attrs)");
 
     c = apreq_xs_sv2(cookie,ST(0));
     p = apreq_env_pool(apreq_xs_sv2env(SvRV(ST(0))));
@@ -147,9 +148,18 @@ static XS(apreq_xs_cookie_set_attr)
         STRLEN alen, vlen;
         const char *attr = SvPVbyte(ST(j),alen), 
                     *val = SvPVbyte(ST(j+1),vlen);
-        status = apreq_cookie_attr(p, c, attr, alen, val, vlen); 
-        if (status != APR_SUCCESS)
+
+        switch (status = apreq_cookie_attr(p, c, attr, alen, val, vlen)) {
+        case APR_ENOTIMPL:
+            Perl_warn(aTHX_ "Skipping unrecognized cookie attribute %s", attr);
+        case APR_SUCCESS:
             break;
+        default:
+            if (GIMME_V == G_VOID)
+                apreq_xs_croak(aTHX_ newHV(), status, "Apache::Cookie::set_attr",
+                               "Apache::Cookie::Error");
+            XSRETURN_IV(status);
+        }
     }
     XSRETURN_IV(status);
 }

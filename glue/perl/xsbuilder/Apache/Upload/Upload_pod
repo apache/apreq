@@ -36,6 +36,14 @@ The filename of the uploaded file:
 Create an I<APR::PerlIO> filehandle from which the upload's contents 
 may be read.
 
+=head2 C<io>
+
+Creates a tied IO handle.  This method is much more efficient 
+than C<fh>, but the handle itself is not seekable.  The handle
+is tied to an Apache::Upload::Brigade object, which is a subclass
+of APR::Brigade.  Use the brigade API on the tied object if you
+want to manipulate the IO stream beyond simply reading from it.
+
 =head2 C<bb([$new_brigade])>
 
 Returns an I<APR::Brigade> which represents the upload's contents.
@@ -97,13 +105,11 @@ copy the temporary file to the specified location.
 =head2 C<slurp($contents)>
 
 Reads the full contents of a file upload into the scalar argument.
-The return value is currently an I<APR> status code (0 on success, 
-error otherwise), but this may change in a future release (to bring 
-this function in line with similar read-type functions in mp2).
+The return value is the length of the file.
 
   # print out the upload file
-  my $contents;
-  print $contents if $upload->slurp($contents) == 0;
+  $upload->slurp(my $contents);
+  print $contents; 
 
 =head2 C<tempname()>
 
