@@ -280,7 +280,7 @@ static APR_INLINE unsigned int x2ui(const char *what) {
     digit *= 16;
     digit += (what[2] >= 'A' ? ((what[2] & 0xdf) - 'A') + 10 : (what[2] - '0'));
     digit *= 16;
-    digit += (what[3] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[3] - '0'));
+    digit += (what[3] >= 'A' ? ((what[3] & 0xdf) - 'A') + 10 : (what[3] - '0'));
 
 #else /*APR_CHARSET_EBCDIC*/
     char xstr[7];

@@ -62,9 +62,9 @@ static apreq_request_t *r = NULL;
 
 static void request_make(CuTest *tc)
 {
-    r = apreq_request(NULL,"a=1;quux=foo+bar&plus=%2B;okie=dokie;novalue1;novalue2=");
+    r = apreq_request(NULL,"a=1;quux=foo+bar&plus=%2B;uplus=%U002b;okie=dokie;novalue1;novalue2=");
     CuAssertPtrNotNull(tc, r);
-    CuAssertIntEquals(tc,6, apreq_table_nelts(r->args));
+    CuAssertIntEquals(tc,7, apreq_table_nelts(r->args));
 }
 
 static void request_args_get(CuTest *tc)
@@ -77,6 +77,8 @@ static void request_args_get(CuTest *tc)
     CuAssertStrEquals(tc,"foo bar",val);
 
     val = apreq_table_get(r->args,"plus");
+    CuAssertStrEquals(tc,"+",val);
+    val = apreq_table_get(r->args,"uplus");
     CuAssertStrEquals(tc,"+",val);
     val = apreq_table_get(r->args,"okie");
     CuAssertStrEquals(tc,"dokie",val);
