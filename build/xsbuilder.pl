@@ -6,12 +6,13 @@
 
 use strict;
 use warnings FATAL => 'all';
+my $version = "2.XX-dev"; # DUMMY VALUE
+use File::Basename;
 use Apache2;
 use Apache::Build;
-require Win32 if Apache::Build::WIN32;
-my $version = "2.XX-dev"; # DUMMY VALUE
+use constant WIN32 => Apache::Build::WIN32;
 use Cwd;
-my $cwd = Apache::Build::WIN32 ?
+my $cwd = WIN32 ?
     Win32::GetLongPathName(cwd) : cwd;
 $cwd =~ m{^(.+)/glue/perl$} or die "Can't find base directory";
 my $base_dir = $1;
@@ -25,16 +26,25 @@ sub slurp($$)
 
 my ($apache_includes, $apr_libs, $apreq_libname);
 
-if (Apache::Build::WIN32) {
+if (WIN32) {
     # XXX May need fixing, Randy!
     slurp my $config => "$base_dir/configure.ac";
     $config =~ /^AC_INIT[^,]+,\s*([^,\s]+)/m or 
         die "Can't find version string";
     $version = $1;
-    my $apache_dir = Apache::Build->build_config()->dir;
+    slurp my $make => "$base_dir/Makefile";
+    $make =~ /^APACHE=(\S+)/m or
+        die "Cannot find top-level Apache directory";
+    my $apache_dir = $1;
     ($apache_includes = "-I$apache_dir" . '/include') =~ s!\\!/!g;
-    ($apr_libs = $apache_dir . '/lib') =~ s!\\!/!g;
-    $apreq_libname = "apreq2";
+    ($apr_libs = "-L$apache_dir" . '/lib') =~ s!\\!/!g;
+    $make =~ /^APR_LIB=(\S+)/m or
+        die "Cannot find apr lib";
+    $apr_libs .= ' -l' . basename($1, '.lib');
+    $make =~ /^APU_LIB=(\S+)/m or
+        die "Cannot find aprutil lib";
+    $apr_libs .= ' -l' . basename($1, '.lib');
+    $apreq_libname = 'apreq2';
 }
 else {
     slurp my $config => "$base_dir/config.status";
@@ -64,10 +74,8 @@ else {
     $version = $1;
 
 }
-my $apr_lib_flags = Apache::Build::WIN32 ? 
-    qq{-L$apr_libs -llibapr -llibaprutil} : 
-    qq{$apr_libs};
-my $apreq_lib_flags = Apache::Build::WIN32 ?
+
+my $apreq_libs = WIN32 ?
     qq{-L$base_dir/win32/libs -llib$apreq_libname } :
     qq{-L$src_dir/.libs -l$apreq_libname};
 
@@ -106,12 +114,13 @@ sub c_macro
 
 
 package My::ParseSource;
+use constant WIN32 => ($^O =~ /Win32/i);
 my @dirs = ("$base_dir/src", "$base_dir/glue/perl/xsbuilder");
 use base qw/ExtUtils::XSBuilder::ParseSource/;
 __PACKAGE__->$_ for shift || ();
 system("touch $base_dir/glue/perl/xsbuilder") == 0
     or die "touch $base_dir/glue/perl/xsbuilder failed: $!"
-    unless Apache::Build::WIN32;
+    unless WIN32;
 
 sub package {'Apache::libapreq2'}
 sub unwanted_includes {[qw/apreq_tables.h apreq_config.h/]}
@@ -290,7 +299,7 @@ ModPerl::MM::WriteMakefile(
     'VERSION'   => '$version',
     'TYPEMAPS'  => [qw(@$mp2_typemaps $typemap)],
     'INC'       => "-I.. -I../.. -I../../.. -I$src_dir -I$xs_dir $apache_includes",
-    'LIBS'      => "$apreq_lib_flags $apr_lib_flags",
+    'LIBS'      => "$apreq_libs $apr_libs",
 } ;
 $txt .= "'depend'  => $deps,\n" if ($deps) ;
 $txt .= qq{    

@@ -32,13 +32,6 @@ my $cfg = $debug ? 'Debug' : 'Release';
 
 check_depends();
 
-if (not $no_perl and $] >= 5.008) {
-    my @args = ($^X, "$apreq_home/build/xsbuilder.pl", 'run', 'run');
-    chdir "$apreq_home/glue/perl";
-    system(@args) == 0 or die "system @args failed: $?";
-    chdir $apreq_home;
-}
-
 my %apr_libs;
 my %map = (apr => 'libapr.lib', apu => 'libaprutil.lib');
 my $devnull = devnull();
@@ -144,6 +137,13 @@ END
 
 close $make;
 # generate_defs();
+
+if (not $no_perl and $] >= 5.008) {
+    my @args = ($^X, "$apreq_home/build/xsbuilder.pl", 'run', 'run');
+    chdir "$apreq_home/glue/perl";
+    system(@args) == 0 or die "system @args failed: $?";
+    chdir $apreq_home;
+}
 
 print << "END";
 
