@@ -46,10 +46,10 @@ Apache::Cookie - HTTP Cookies Class
 =head1 DESCRIPTION
 
 
-The new Apache::Cookie module is based on the original 1.X versions, which mimic 
+The 2.X Apache::Cookie module is based on the original 1.X versions, which mimic 
 the CGI::Cookie API.  The current version of this module includes several packages 
 and methods which are patterned after Apache::Request, yet remain largely 
-backwards-compatible with the original 1.X API (see the L<PORTING> section 
+backwards-compatible with the original 1.X API (see the L<PORTING from 1.X> section 
 below for known issues).
 
 This manpage documents the Apache::Cookie and Apache::Cookie::Jar packages.  
@@ -65,7 +65,7 @@ listed in L<SEE ALSO>).
 
 
 
-=head2 new($env, %settings)
+=head2 C<< new($env, %settings) >>
 
 
 Class method that retrieves the parsed cookie jar from the current 
@@ -95,7 +95,7 @@ and pass that subclass's name in the VALUE_CLASS argument.
 
 
 
-=head2 cookies(), cookies($key)
+=head2 C<< cookies(), cookies($key) >>
 
 Retrieve cookies named $key with from the jar object.  In scalar
 context the first such cookie is returned, and in list context the
@@ -141,7 +141,7 @@ C<cookies> will croak if the parser failed to successfully parse the
 
 
 
-=head2 status(), status($set)
+=head2 C<< status(), status($set) >>
 
 Get or set the I<APR> status code of the cookie parser:
 APR_SUCCESS on success, error otherwise.
@@ -164,7 +164,7 @@ APR_SUCCESS on success, error otherwise.
 
 
 
-=head2 env()
+=head2 C<< env() >>
 
 As a class method C<< Apache::Cookie::Jar->env >> returns
 the environment class associated with Apache::Cookie::Jar. 
@@ -188,7 +188,7 @@ object which first created the $jar (via C<new>).
 
 
 
-=head2 new($env, %attributes)
+=head2 C<< new($env, %attributes) >>
 
 Just like CGI::Cookie::new, but requires an environment argument $r:
 
@@ -221,7 +221,7 @@ and whitespace characters in its output.
 
 
 
-=head2 as_string()
+=head2 C<< as_string() >>
 
 Format the cookie object as a string:
 
@@ -237,7 +237,7 @@ Format the cookie object as a string:
 
 
 
-=head2 name()
+=head2 C<< name() >>
 
 Get the name of the cookie:
 
@@ -253,7 +253,7 @@ Get the name of the cookie:
 
 
 
-=head2 value()
+=head2 C<< value() >>
 
 Get the (unswizzled) value of the cookie:
 
@@ -289,7 +289,7 @@ Apache::Cookie with a package that provides the associated C<thaw> sub:
 
 
 
-=head2 raw_value()
+=head2 C<< raw_value() >>
 
 Gets the raw (opaque) value string as it appears in the incoming
 "Cookie" header.  The quote-operator for Apache::Cookie is 
@@ -308,7 +308,7 @@ overloaded to run this method whenever a cookie appears in quotes.
 
 
 
-=head2 bake()
+=head2 C<< bake() >>
 
 Adds a I<Set-Cookie> header to the outgoing headers table.
 
@@ -317,7 +317,7 @@ Adds a I<Set-Cookie> header to the outgoing headers table.
 
 
 
-=head2 bake2()
+=head2 C<< bake2() >>
 
 Adds a I<Set-Cookie2> header to the outgoing headers table.
 
@@ -326,7 +326,7 @@ Adds a I<Set-Cookie2> header to the outgoing headers table.
 
 
 
-=head2 domain, domain($set)
+=head2 C<< domain(), domain($set) >>
 
 Get or set the domain for the cookie:
 
@@ -344,7 +344,7 @@ Get or set the domain for the cookie:
 
 
 
-=head2 path(), path($set)
+=head2 C<< path(), path($set) >>
 
 Get or set the path for the cookie:
 
@@ -362,7 +362,7 @@ Get or set the path for the cookie:
 
 
 
-=head2 version(), version($set)
+=head2 C<< version(), version($set) >>
 
 Get or set the cookie version for this cookie.
 Netscape spec cookies have version = 0; 
@@ -382,7 +382,7 @@ RFC-compliant cookies have version = 1.
 
 
 
-=head2 expires(), expires($set)
+=head2 C<< expires(), expires($set) >>
 
 Get or set the future expire time for the cookie.  When
 assigning, the new value ($set) should match /^\+?(\d+)([YMDhms]?)$/
@@ -405,7 +405,7 @@ As a special case, $set = "now" is equivalent to $set = "0".
 
 
 
-=head2 secure
+=head2 C<< secure(), secure($set) >>
 
 Get or set the secure flag for the cookie:
 
@@ -424,7 +424,7 @@ Get or set the secure flag for the cookie:
 
 
 
-=head2 fetch
+=head2 C<< fetch($env) >>
 
 Fetch and parse the incoming I<Cookie> header:
 
@@ -445,7 +445,7 @@ Fetch and parse the incoming I<Cookie> header:
 
 
 
-=head1 PORTING
+=head1 PORTING from 1.X
 
 Changes to the 1.X API:
 
