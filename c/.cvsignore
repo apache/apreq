@@ -6,3 +6,4 @@ Makefile
 *.lo
 *.la
 libapreq_config.h
+Makefile.in
