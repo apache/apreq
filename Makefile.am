@@ -45,6 +45,7 @@ docs_clean:
 	-rm -rf docs
 
 docs:	src env glue build/doxygen.conf apr_tags pod2html
+	@PERL@ build/version_check.pl doxygen
 	doxygen build/doxygen.conf
 
 docs_install: docs
