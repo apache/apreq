@@ -34,7 +34,7 @@ sub mp2_version {
 my %cvs = (
                 libtool => { version => "1.4.2",   test => \&gnu_version },
                autoconf => { version => "2.53",    test => \&gnu_version },
-               automake => { version => "1.6.3",   test => \&gnu_version },
+               automake => { version => "1.4.0",   test => \&gnu_version },
                 doxygen => { version => "1.3",     test => \&gnu_version },
           );
 
