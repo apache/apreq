@@ -188,6 +188,14 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
 
     switch (ctx->body_status) {
 
+    case APR_SUCCESS:
+
+        val = apr_table_get(ctx->body, name);
+        if (val != NULL)
+            return apreq_value_to_param(val);
+        return NULL;
+
+
     case APR_EINIT:
 
         apreq_filter_init_context(f);
@@ -225,13 +233,6 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
         ctx->parser->hook = h->next;
         return NULL;
 
-
-    case APR_SUCCESS:
-
-        val = apr_table_get(ctx->body, name);
-        if (val != NULL)
-            return apreq_value_to_param(val);
-        return NULL;
 
     default:
 
