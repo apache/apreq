@@ -23,22 +23,11 @@
 static int apreq_xs_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv, 
                                   const char *name, int namelen)
 {
-    /* clone the object */
+    /* prefetch the object */
     MAGIC *tie_magic = mg_find(nsv, PERL_MAGIC_tiedelem);
-    SV *rv = tie_magic->mg_obj;
-    SV *obj = SvRV(rv);
-    SV *parent = SvMAGIC(obj)->mg_obj;
-    void *env  = (void *)SvMAGIC(obj)->mg_ptr;        
-    SV *new_rv = sv_setref_iv(newSV(0), HvNAME(SvSTASH(obj)), SvIVX(obj));
-    SV *new_obj = SvRV(new_rv);
-    sv_magic(new_obj, parent, PERL_MAGIC_ext, Nullch, -1);
-    SvMAGIC(new_obj)->mg_ptr = env;
-    SvCUR(new_obj) = SvCUR(obj);
-    SvREFCNT_dec(rv);
-    tie_magic->mg_obj = new_rv;
-    return 0;
+    Perl_magic_getpack(aTHX_ nsv, tie_magic);
+    return -1;
 }
-
 
 static const MGVTBL apreq_xs_table_magic = {0, 0, 0, 0, 0, 
                                             apreq_xs_table_magic_copy};
