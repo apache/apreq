@@ -147,30 +147,6 @@ AC_DEFUN([AC_APREQ], [
         AC_SUBST(PERL)
 ])
 
-dnl Iteratively interpolate the contents of the second argument
-dnl until interpolation offers no new result. Then assign the
-dnl final result to $1.
-dnl
-dnl Example:
-dnl
-dnl foo=1
-dnl bar='${foo}/2'
-dnl baz='${bar}/3'
-dnl APR_EXPAND_VAR(fraz, $baz)
-dnl   $fraz is now "1/2/3"
-dnl 
-AC_DEFUN(APR_EXPAND_VAR,[
-ap_last=
-ap_cur="$2"
-while test "x${ap_cur}" != "x${ap_last}";
-do
-  ap_last="${ap_cur}"
-  ap_cur=`eval "echo ${ap_cur}"`
-done
-$1="${ap_cur}"
-])
-
-
 dnl APR_CONFIG_NICE(filename)
 dnl
 dnl Saves a snapshot of the configure command-line for later reuse
@@ -217,10 +193,6 @@ EOF
     echo "NOTEST_LIBS=\"$NOTEST_LIBS\"; export NOTEST_LIBS" >> $1
   fi
 
-  for arg in [$]0 "[$]@"; do
-    APR_EXPAND_VAR(arg, $arg)
-    echo "\"[$]arg\" \\" >> $1
-  done
-  echo '"[$]@"' >> $1
+  echo [$]0 [$]ac_configure_args '"[$]@"' >> $1
   chmod +x $1
 ])dnl
