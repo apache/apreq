@@ -65,7 +65,7 @@
 #define APREQ_CHARSET_MASK        255
 
 #define APREQ_CHARSET_ASCII         0
-#define APREQ_CHARSET_ISO_8529_1    1
+#define APREQ_CHARSET_ISO_8859_1    1
 #define APREQ_CHARSET_UTF8          8
 
 #define APREQ_TAINTED_BIT           8
