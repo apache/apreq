@@ -1,24 +1,29 @@
 #include "apache_request.h"
 
+/*#define DEBUG 1*/
+#define FILLUNIT (1024 * 5)
+#define MPB_ERROR APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, self->r
+
 typedef struct {
+    /* request info */
     request_rec *r;
-    pool *subp;
-    long length;
-    long total;
-    long boundary_length;
-    char *boundary;
-    char *boundary_end;
+    long request_length;
+
+    /* read buffer */
     char *buffer;
-    long buffer_len;
+    char *buf_begin;
+    int  bufsize;
+    int  bytes_in_buffer;
+
+    /* boundary info */
+    char *boundary;
+    char *boundary_next;
+    char *boundary_end;
 } multipart_buffer;
 
-#define multipart_buffer_eof(self) \
-(((self->buffer == NULL) || (*self->buffer == '\0')) && (self->length <= 0))
-
-char *multipart_buffer_read_body(multipart_buffer *self); 
+multipart_buffer *
+    multipart_buffer_new(char *boundary, long length, request_rec *r);
 table *multipart_buffer_headers(multipart_buffer *self);
-void multipart_buffer_fill(multipart_buffer *self, long bytes);
-char *multipart_buffer_read(multipart_buffer *self, long bytes, int *blen);
-multipart_buffer *multipart_buffer_new(char *boundary, long length, request_rec *r);
-
-#define MPB_ERROR APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, self->r
+int multipart_buffer_read(multipart_buffer *self, char *buf, int bytes);
+char *multipart_buffer_read_body(multipart_buffer *self); 
+int multipart_buffer_eof(multipart_buffer *self);

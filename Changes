@@ -2,7 +2,16 @@ Revision history for Perl extension Apache::Request.
 
 =over 4
 
-=item 0.32 - August 16, 1999
+=item 0.32 - tbd
+
+keep reusing same buffer when handling file uploads to prevent overzealous
+memory allocation [Yeasah Pell, Jim Winstead <jimw@apache.org>]
+
+handle internet explorer for the macintosh bug that sends corrupt mime
+boundaries when image submit buttons are used in multipart/form-data forms
+[Yeasah Pell]
+
+fix uninitialized variable in ApacheRequest_parse_urlencoded [Yeasah Pell]
 
 multipart_buffer.[ch] renamed to apache_multipart_buffer.[ch]
 

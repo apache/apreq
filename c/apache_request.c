@@ -269,8 +269,8 @@ int ApacheRequest___parse(ApacheRequest *req)
     req->parsed = 1;
 
     if (r->args) {
-	split_to_parms(req, r->args);
-    }        
+        split_to_parms(req, r->args);
+    }
 
     if (r->method_number == M_POST) { 
 	const char *ct = ap_table_get(r->headers_in, "Content-type"); 
@@ -297,7 +297,7 @@ int ApacheRequest_parse_urlencoded(ApacheRequest *req)
     int rc = OK;
 
     if (r->method_number == M_POST) { 
-	const char *data, *type;
+	const char *data = NULL, *type;
 
 	type = ap_table_get(r->headers_in, "Content-Type");
 
@@ -374,7 +374,8 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 
     while (!multipart_buffer_eof(mbuff)) {
 	table *header = multipart_buffer_headers(mbuff);	
-	const char *cd, *param=NULL, *filename=NULL, *buff;
+	const char *cd, *param=NULL, *filename=NULL;
+	char buff[FILLUNIT];
 	int blen;
 
 	if (!header) {
@@ -401,10 +402,11 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 		}
 	    }
 	    if (!filename) {
-		char *value = multipart_buffer_read_body(mbuff);
-		ap_table_add(req->parms, param, value);
+	        char *value = multipart_buffer_read_body(mbuff);
+	        ap_table_add(req->parms, param, value);
 		continue;
 	    }
+	    if (!param) continue; /* shouldn't happen, but just in case. */
 	    ap_table_add(req->parms, param, filename);
 
 	    if (upload) {
@@ -424,8 +426,9 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 	    upload->filename = ap_pstrdup(req->r->pool, filename);
 	    upload->name = ap_pstrdup(req->r->pool, param);
 
-	    while ((buff = multipart_buffer_read(mbuff, 0, &blen))) {
+	    while ((blen = multipart_buffer_read(mbuff, buff, sizeof(buff)))) {
 		/* write the file */
+	        /* XXX: do better error-checking on the fwrite? */
 		upload->size += fwrite(buff, 1, blen, upload->fp); 	
 	    }
 
@@ -437,10 +440,6 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 	    }
 	}
     }
-
-    if (r->args) {
-	split_to_parms(req, r->args);
-    }        
 
     return OK;
 }

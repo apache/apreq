@@ -57,271 +57,275 @@
 
 #include "apache_multipart_buffer.h"
 
-#define FILLUNIT (1024 * 5)
-#ifndef CRLF
-#define CRLF "\015\012"
-#endif
-#define CRLF_CRLF "\015\012\015\012"
-
-static char *my_join(pool *p, char *one, int lenone, char *two, int lentwo)
-{
-    char *res; 
-    int len = lenone+lentwo;
-    res = (char *)ap_palloc(p, len + 1); 
-    memcpy(res, one, lenone);  
-    memcpy(res+lenone, two, lentwo);
-    return res;
-}
-
-static char * 
-my_ninstr(register char *big, register char *bigend, char *little, char *lend) 
-{ 
-    register char *s, *x; 
-    register int first = *little; 
-    register char *littleend = lend; 
- 
-    if (!first && little >= littleend) {
-        return big; 
-    }
-    if (bigend - big < littleend - little) {
-        return NULL; 
-    }
-    bigend -= littleend - little++; 
-    while (big <= bigend) { 
-	if (*big++ != first) {
-	    continue; 
-	}
-	for (x=big,s=little; s < littleend; /**/ ) { 
-	    if (*s++ != *x++) { 
-		s--; 
-		break; 
-	    }
-	}
-	if (s >= littleend) {
-	    return big-1; 
-	}
-    }
-    return NULL; 
-} 
+/*********************** internal functions *********************/
 
 /*
- * This fills up our internal buffer in such a way that the
- * boundary is never split between reads
- */
-void multipart_buffer_fill(multipart_buffer *self, long bytes)
+  search for a string in a fixed-length byte string.
+  if partial is true, partial matches are allowed at the end of the buffer.
+  returns NULL if not found, or a pointer to the start of the first match.
+*/
+void* my_memstr(void* haystack, int haystacklen, const char* needle,
+		int partial)
 {
-    int len_read, length, bytes_to_read;
-    int buffer_len = self->buffer_len;
+    int needlen = strlen(needle);
+    int len = haystacklen;
+    void *ptr = haystack;
+    
+    /* iterate through first character matches */
+    while( (ptr = memchr(ptr, needle[0], len)) ) {
+	/* calculate length after match */
+	len = haystacklen - (ptr - haystack);
 
-    if (!self->length) {
-	return;
-    }
-    length = (bytes - buffer_len) + self->boundary_length + 2;
-    if (self->length < length) {
-	length = self->length;
-    }
-    bytes_to_read = length;
-
-    ap_hard_timeout("multipart_buffer_fill", self->r);
-    while (bytes_to_read > 0) {
-	/*XXX: we can optimize this loop*/ 
-	char *buff = (char *)ap_pcalloc(self->subp,
-					sizeof(char) * bytes_to_read + 1);
-	len_read = ap_get_client_block(self->r, buff, bytes_to_read);
-
-	if (len_read <= 0) {
-	    ap_log_rerror(MPB_ERROR,
-			  "[libapreq] client dropped connection during read");
-	    self->length = 0;
-	    self->buffer = NULL;
-	    self->buffer_len = 0;
+	/* done if matches up to capacity of buffer */
+	if(memcmp(needle, ptr, needlen < len ? needlen : len) == 0 &&
+	   (partial || len >= needlen))
 	    break;
-	}
 
-	self->buffer = self->buffer ? 
-	    my_join(self->r->pool, 
-		    self->buffer, self->buffer_len, 
-		    buff, len_read) :
-	    ap_pstrndup(self->r->pool, buff, len_read);
-
-	self->total      += len_read;
-	self->buffer_len += len_read;
-	self->length     -= len_read;
-	bytes_to_read    -= len_read;
-
-	ap_reset_timeout(self->r);
+	/* next character */
+	ptr++; len--;
     }
-    ap_kill_timeout(self->r);
-    ap_clear_pool(self->subp);
+
+    return ptr;
 }
 
-char *multipart_buffer_read(multipart_buffer *self, long bytes, int *blen)
+/*
+  fill up the buffer with client data.
+  returns number of bytes added to buffer.
+*/
+int fill_buffer(multipart_buffer *self)
 {
-    int start = -1;
-    char *retval, *str;
+    int bytes_to_read, actual_read = 0;
 
-    /* default number of bytes to read */
-    if (!bytes) {
-	bytes = FILLUNIT;       
-    }
-
-    /*
-     * Fill up our internal buffer in such a way that the boundary
-     * is never split between reads.
-     */
-    multipart_buffer_fill(self, bytes);
-
-    /* Find the boundary in the buffer (it may not be there). */
-    if (self->buffer) {
-	if ((str = my_ninstr(self->buffer, 
-			    self->buffer+self->buffer_len, 
-			    self->boundary, 
-			    self->boundary+self->boundary_length))) 
-	{
-	    start = str - self->buffer;
-	}
-    }
-
-    /* protect against malformed multipart POST operations */
-    if (!(start >= 0 || self->length > 0)) {
-	ap_log_rerror(MPB_ERROR, 
-		      "[libapreq] malformed upload: start=%d, self->length=%d", 
-		      start, (int)self->length);
-	return NULL;
-    }
-
-    /*
-     * If the boundary begins the data, then skip past it
-     * and return NULL.  The +2 here is a fiendish plot to
-     * remove the CR/LF pair at the end of the boundary.
-     */
-    if (start == 0) {
-        /* clear us out completely if we've hit the last boundary. */
-	if (strEQ(self->buffer, self->boundary_end)) {
-	    self->buffer = NULL;
-	    self->buffer_len = 0;
-	    self->length = 0;
-	    return NULL;
-	}
-
-        /* otherwise just remove the boundary. */
-	self->buffer += (self->boundary_length + 2);
-	self->buffer_len -= (self->boundary_length + 2);
-	return NULL;
-    }
-
-    if (start > 0) {           /* read up to the boundary */
-	*blen = start > bytes ? bytes : start;
-    } 
-    else {    /* read the requested number of bytes */
-	/*
-	 * leave enough bytes in the buffer to allow us to read
-	 * the boundary.  Thanks to Kevin Hendrick for finding
-	 * this one.
-	 */
-	*blen = bytes - (self->boundary_length + 1);
-    }
+    /* shift the existing data if necessary */
+    if(self->bytes_in_buffer > 0 && self->buf_begin != self->buffer)
+	memmove(self->buffer, self->buf_begin, self->bytes_in_buffer);
+    self->buf_begin = self->buffer;
     
-    retval = ap_pstrndup(self->r->pool, self->buffer, *blen); 
+    /* calculate the free space in the buffer */
+    bytes_to_read = self->bufsize - self->bytes_in_buffer;
     
-    self->buffer += *blen;
-    self->buffer_len -= *blen;
+    /* read the required number of bytes */
+    if(bytes_to_read > 0) {
+	char *buf = self->buffer + self->bytes_in_buffer;
+	ap_hard_timeout("[libapreq] multipart_buffer.c:fill_buffer", self->r);
+	actual_read = ap_get_client_block(self->r, buf, bytes_to_read);
+	ap_kill_timeout(self->r);
 
-    /* If we hit the boundary, remove the CRLF from the end. */
-    if (start > 0) {
-	*blen -= 2;
-	retval[*blen] = '\0';
+	/* update the buffer length */
+	if(actual_read > 0)
+	  self->bytes_in_buffer += actual_read;
     }
 
-    return retval;
+    return actual_read;
 }
 
+/*
+  gets the next CRLF terminated line from the input buffer.
+  if it doesn't find a CRLF, and the buffer isn't completely full, returns
+  NULL; otherwise, returns the beginning of the null-terminated line,
+  minus the CRLF.
+
+  note that we really just look for LF terminated lines. this works
+  around a bug in internet explorer for the macintosh which sends mime
+  boundaries that are only LF terminated when you use an image submit
+  button in a multipart/form-data form.
+ */
+char* next_line(multipart_buffer *self)
+{
+    /* look for LF in the data */
+    char* line = self->buf_begin;
+    char* ptr = memchr(self->buf_begin, '\n', self->bytes_in_buffer);
+
+    /* LF found */
+    if(ptr) {
+	/* terminate the string, remove CRLF */
+	if((ptr - line) > 0 && *(ptr-1) == '\r') *(ptr-1) = 0;
+	else *ptr = 0;
+
+	/* bump the pointer */
+	self->buf_begin = ptr + 1;
+	self->bytes_in_buffer -= (self->buf_begin - line);
+    }
+
+    /* no LF found */
+    else {
+	/* buffer isn't completely full, fail */
+	if(self->bytes_in_buffer < self->bufsize)
+	  return NULL;
+
+	/* return entire buffer as a partial line */
+	line[self->bufsize] = 0;
+	self->buf_begin = ptr;
+	self->bytes_in_buffer = 0;
+    }
+    
+    return line;
+}
+
+/* returns the next CRLF terminated line from the client */
+char* get_line(multipart_buffer *self)
+{
+    char* ptr = next_line(self);
+
+    if(!ptr) {
+	fill_buffer(self);
+	ptr = next_line(self);
+    }
+    
+#ifdef DEBUG
+    ap_log_rerror(MPB_ERROR, "get_line: '%s'", ptr);
+#endif
+
+    return ptr;
+}
+
+/* finds a boundary */
+int find_boundary(multipart_buffer *self, char *boundary)
+{
+    int len, bound_len = strlen(boundary);
+    char *line;
+    
+    /* loop thru lines */
+    while( (line = get_line(self)) ) {
+#ifdef DEBUG
+      ap_log_rerror(MPB_ERROR, "find_boundary: '%s' ?= '%s'",
+		    line, boundary);
+#endif
+
+      /* finished if we found the boundary */
+      if(strcmp(line, boundary) == 0)
+	  return 1;
+    }
+
+    /* didn't find the boundary */
+    return 0;
+}
+
+/*********************** external functions *********************/
+
+/* create new multipart_buffer structure */
+multipart_buffer *multipart_buffer_new(char *boundary, long length, request_rec *r)
+{
+    multipart_buffer *self = (multipart_buffer *)
+	ap_pcalloc(r->pool, sizeof(multipart_buffer));
+
+    int minsize = strlen(boundary)+6;
+    if(minsize < FILLUNIT) minsize = FILLUNIT;
+
+    self->r = r;
+    self->buffer = (char *) ap_pcalloc(r->pool, minsize+1);
+    self->bufsize = minsize;
+    self->request_length = length;
+    self->boundary = ap_pstrcat(r->pool, "--", boundary, NULL);
+    self->boundary_next = ap_pstrcat(r->pool, "\n", self->boundary, NULL);
+    self->buf_begin = self->buffer;
+    self->bytes_in_buffer = 0;
+
+    return self;
+}
+
+/* parse headers and return them in an apache table */
 table *multipart_buffer_headers(multipart_buffer *self)
 {
-    int end=0, ok=0, bad=0;
     table *tab;
-    char *header;
+    char *line;
 
-    do {
-	char *str;
-	multipart_buffer_fill(self, FILLUNIT);
-	if ((str = strstr(self->buffer, CRLF_CRLF))) {
-	    ++ok;
-	    end = str - self->buffer;
-	}
-	if (self->buffer == NULL || *self->buffer == '\0') {
-	    ++ok;
-	}
-	if (!ok && self->length <= 0) {
-	    ++bad;
-	}
-    } while (!ok && !bad);
+    /* didn't find boundary, abort */
+    if(!find_boundary(self, self->boundary)) return NULL;
 
-    if (bad) {
-	return NULL;
-    }
-
-    header = ap_pstrndup(self->r->pool, self->buffer, end+2);
-    /*XXX: need to merge continuation lines here?*/
-
+    /* get lines of text, or CRLF_CRLF */
     tab = ap_make_table(self->r->pool, 10);
-    self->buffer += end+4;
-    self->buffer_len -= end+4;
+    while( (line = get_line(self)) && strlen(line) > 0 ) {
+	/* add header to table */
+	char *key = line;
+	char *value = strchr(line, ':');
 
-    {
-	char *entry;
-	while ((entry = ap_getword_nc(self->r->pool, &header, '\r')) && *header) {
-	    char *key;
-	    key = ap_getword_nc(self->r->pool, &entry, ':');
-	    while (ap_isspace(*entry)) {
-		++entry;
-	    }
-	    if (*header == '\n') {
-		++header;
-	    }
-	    ap_table_add(tab, key, entry);
+	if(value) {
+	    *value = 0;
+	    do { value++; } while(ap_isspace(*value));
+
+#ifdef DEBUG
+	    ap_log_rerror(MPB_ERROR,
+			  "multipart_buffer_headers: '%s' = '%s'",
+			  key, value);
+#endif
+	    
+	    ap_table_add(tab, key, value);
+	}
+	else {
+#ifdef DEBUG
+	    ap_log_rerror(MPB_ERROR,
+			  "multipart_buffer_headers: '%s' = ''", key);
+#endif
+
+	    ap_table_add(tab, key, "");
 	}
     }
 
     return tab;
 }
 
-char *multipart_buffer_read_body(multipart_buffer *self) 
+/* read until a boundary condition */
+int multipart_buffer_read(multipart_buffer *self, char *buf, int bytes)
 {
-    char *data, *retval=NULL;
-    int blen = 0, old_len = 0;
+    int len, max;
+    char *bound;
 
-    while ((data = multipart_buffer_read(self, 0, &blen))) {
-	retval = retval ?
-	    my_join(self->r->pool, retval, old_len, data, blen) :
-	    ap_pstrndup(self->r->pool, data, blen);
-	old_len = blen;
+    /* fill buffer if needed */
+    if(bytes > self->bytes_in_buffer) fill_buffer(self);
+
+    /* look for a potential boundary match, only read data up to that point */
+    if( (bound = my_memstr(self->buf_begin, self->bytes_in_buffer,
+			   self->boundary_next, 1)) )
+	max = bound - self->buf_begin;
+    else
+	max = self->bytes_in_buffer;
+
+    /* maximum number of bytes we are reading */
+    len = max < bytes-1 ? max : bytes-1;
+    
+    /* if we read any data... */
+    if(len > 0) {
+	/* copy the data */
+	memcpy(buf, self->buf_begin, len);
+	buf[len] = 0;
+	if(bound && len > 0 && buf[len-1] == '\r') buf[len--] = 0;
+
+	/* update the buffer */
+	self->bytes_in_buffer -= len;
+	self->buf_begin += len;
     }
 
-    return retval;
+#ifdef DEBUG
+    ap_log_rerror(MPB_ERROR, "multipart_buffer_read: %d bytes", len);
+#endif
+
+    return len;
 }
 
-multipart_buffer *multipart_buffer_new(char *boundary, long length, request_rec *r)
+/*
+  XXX: this is horrible memory-usage-wise, but we only expect
+  to do this on small pieces of form data.
+*/
+char *multipart_buffer_read_body(multipart_buffer *self)
 {
-    int blen;
-    multipart_buffer *self = (multipart_buffer *)
-	ap_pcalloc(r->pool, sizeof(multipart_buffer));
+    char buf[FILLUNIT], *out = "";
 
-    self->r = r;
-    self->length = length;
-    self->boundary = ap_pstrcat(r->pool, "--", boundary, NULL);
-    self->boundary_length = strlen(self->boundary);
-    self->boundary_end = ap_pstrcat(r->pool, self->boundary, "--", NULL);
-    self->buffer = NULL;
-    self->buffer_len = 0;
-    self->subp = ap_make_sub_pool(self->r->pool);
+    while(multipart_buffer_read(self, buf, sizeof(buf)))
+	out = ap_pstrcat(self->r->pool, out, buf, NULL);
 
-    /* Read the preamble and the topmost (boundary) line plus the CRLF. */
-    (void)multipart_buffer_read(self, 0, &blen);
+#ifdef DEBUG
+    ap_log_rerror(MPB_ERROR, "multipart_buffer_read_body: '%s'", out);
+#endif
 
-    if (multipart_buffer_eof(self)) {
-	return NULL;
-    }
+    return out;
+}
 
-    return self;
+/* eof if we are out of bytes, or if we hit the final boundary */
+int multipart_buffer_eof(multipart_buffer *self)
+{
+    if( (self->bytes_in_buffer == 0 && fill_buffer(self) < 1) )
+	return 1;
+    else
+	return 0;
 }
