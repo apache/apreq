@@ -93,20 +93,37 @@ typedef struct {
 #define ApacheUpload_next(upload)     upload->next
 #define ApacheUpload_tempname(upload) upload->tempname
 
-#ifndef PerlLIO_dup
-#define PerlLIO_dup(fd)   dup((fd)) 
-#endif
-#ifndef PerlLIO_close
-#define PerlLIO_close(fd) close((fd)) 
-#endif
 
 #ifdef PerlIO
 typedef PerlIO * InputStream;
-#else
-typedef FILE * InputStream;
-#define PerlIO_importFILE(fp,flags) fp
-#define PerlIO_write(a,b,c)  fwrite((b),1,(c),(a))
+
+#ifndef PerlIO_importFILE
+#define PerlIO_importFILE(fp,flags)	(PerlIO*)fp
 #endif
+
+#ifdef SFIO
+#undef PerlIO_importFILE
+#define PerlIO_importFILE(fp,flags) 	(PerlIO*)fp
+#endif /*SFIO*/
+
+#else /*PerlIO not defined*/
+
+typedef FILE * InputStream;
+#define PerlIO_importFILE(fp,flags) 	fp
+#define PerlIO_write(a,b,c)  		fwrite((b),1,(c),(a))
+
+#endif /*PerlIO*/
+
+/* PerlLIO stuff that does not belong, but might be needed anyway
+ *
+ *#define PerlLIO_dup(f)   		dup((f)) 
+ *#define PerlLIO_close(f) 		close((f)) 
+ *#define PerlLIO_fileno(f) 		fileno((f)) 
+ *#define PerlLIO_fdopen(f) 		fdopen((f)) 
+ *#define PerlLIO_seek(f) 		seek((f)) 
+ *
+ */
+
 
 static char *r_keys[] = { "_r", "r", NULL };
 
@@ -192,7 +209,7 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
     	LEAVE;
     }
 
-    return SvTRUE(ERRSV) ? -1 : PerlIO_write(upload->fp, buf, len);
+    return SvTRUE(ERRSV) ? -1 : PerlIO_write(PerlIO_importFILE(upload->fp,0), buf, len);
 }
 
 static void clear_hook(void *ptr) {
@@ -474,7 +491,7 @@ ApacheUpload_fh(upload)
     Apache::Upload upload
 
     CODE:
-    if (  ( RETVAL = ApacheUpload_fh(upload) ) == NULL  )
+    if (  ( RETVAL = PerlIO_importFILE(ApacheUpload_fh(upload),0) ) == NULL  )
 	    XSRETURN_UNDEF;
 
     OUTPUT:

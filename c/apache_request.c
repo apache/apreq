@@ -328,9 +328,11 @@ static void remove_tmpfile(void *data) {
     if( ap_pfclose(req->r->pool, upload->fp) )
 	ap_log_rerror(REQ_ERROR,
 		      "[libapreq] close error on '%s'", upload->tempname);	
+#ifndef DEBUG
     if( remove(upload->tempname) )
 	ap_log_rerror(REQ_ERROR,
 		      "[libapreq] remove error on '%s'", upload->tempname);
+#endif
 
     free(upload->tempname);
 }
@@ -346,16 +348,15 @@ FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
     while (--tries > 0) {
 	if ( (name = tempnam(req->temp_dir, prefix)) == NULL )
 	    continue;
-	fd = ap_popenf(r->pool, name, O_CREAT|O_EXCL|O_RDWR, 0600);
+	fd = ap_popenf(r->pool, name, O_CREAT|O_EXCL|O_RDWR|O_BINARY, 0600);
 	if ( fd >= 0 )
 	    break; /* success */
 	else
 	    free(name);
     }
     
-    if ( tries == 0  || (fp = ap_pfdopen(r->pool, fd, "wb+") ) == NULL ) {
-	ap_log_rerror(REQ_ERROR,
-		      "[libapreq] could not open temp file '%s'", name); 	
+    if ( tries == 0  || (fp = ap_pfdopen(r->pool, fd, "w+" "b") ) == NULL ) {
+	ap_log_rerror(REQ_ERROR, "[libapreq] could not create/open temp file"); 	
 	if ( fd >= 0 ) { remove(name); free(name); }
 	return NULL;
     }
