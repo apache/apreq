@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/05/22 14:56:17 $]   -*-text-*-
+Last modified at [$Date: 2004/05/22 15:25:43 $]   -*-text-*-
 /** @page STATUS
 
      2.03-dev under development
@@ -50,6 +50,13 @@ CURRENT VOTES:
              0:
             -1:
 
+    - We are moving from cvs to subversion as soon as it is convenient.
+      Vote was taken in March 2004 (http://marc.theaimsgroup.com/?t=107919363000001&r=1&w=2)
+      and the results were as follows:
+
+            +1: joes, randyk, stas
+             0:
+            -1:
 
 TODO:
 
@@ -81,9 +88,9 @@ BUGS:
         http://marc.theaimsgroup.com/?t=107766265600001&r=1&w=2
 
     - Fix build automake/libtool/autoconf build system so it works
-      properly on OSX & AIX.
-
-    - Apache::Request::config() is broken.
+      properly on OSX & AIX.  FreeBSD cannot build httpd-apreq2 either,
+      but there are too many problems with the current (May 2004)
+      ports of the auto* tools for us to accomodate FreeBSD (yet).
 
 
 WISH LIST:
