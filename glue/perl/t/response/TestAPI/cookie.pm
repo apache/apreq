@@ -1,5 +1,5 @@
 package TestAPI::cookie;
-
+push our @ISA, "APR::Request::Cookie";
 use strict;
 use warnings FATAL => 'all';
 
@@ -12,7 +12,7 @@ use APR::Table;
 
 sub handler {
     my $r = shift;
-    plan $r, tests => 26;
+    plan $r, tests => 28;
     $r->headers_in->{Cookie} = "foo=1;bar=2;foo=3;quux=4";
 
     my $req = APR::Request::Apache2->new($r);
@@ -49,6 +49,12 @@ sub handler {
     ok t_cmp $_->tainted, 1, "is tainted: $_" for values %$jar;
     $_->tainted(0) for values %$jar;
     ok t_cmp $_->tainted, 0, "not tainted: $_" for values %$jar;
+
+    eval { $jar->cookie_class("APR::Request::Param") };
+    ok t_cmp qr/^Usage/, $@, "Bad class name";
+
+    $jar->cookie_class(__PACKAGE__);
+    ok $jar->{foo}->isa(__PACKAGE__);
 
     return 0;
 }

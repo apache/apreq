@@ -514,17 +514,25 @@ sub null_type {
 sub typemap_code
 {
     {
+        T_SUBCLASS => {
+                          INPUT => <<'EOT',
+    if (SvROK($arg) || !sv_derived_from($arg, \"$Package\"))
+        Perl_croak(aTHX_ \"Usage: argument is not a subclass of $Package\");
+    $var = SvPV_nolen($arg)
+EOT
+                          },
+
         T_APREQ_COOKIE  => {
-                            INPUT  => '$var = apreq_xs_sv2(cookie,$arg)',
-                            perl2c => 'apreq_xs_sv2(cookie,sv)',
-                            OUTPUT => '$arg = apreq_xs_2sv($var,"\${ntype}\");',
-                            c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
+                            INPUT  => '$var = apreq_xs_sv2cookie(aTHX_ $arg)',
+                            perl2c => 'apreq_xs_sv2cookie(aTHX_ sv)',
+                            OUTPUT => '$arg = apreq_xs_cookie2sv(aTHX_ $var, class, parent);',
+                            c2perl => 'apreq_xs_cookie2sv(aTHX_ ptr, class, parent)',
                            },
         T_APREQ_PARAM   => {
-                            INPUT  => '$var = apreq_xs_sv2param($arg)',
-                            perl2c => 'apreq_xs_sv2param(sv)',
-                            OUTPUT => '$arg = apreq_xs_param2sv($var);',
-                            c2perl => 'apreq_xs_param2sv(ptr)',
+                            INPUT  => '$var = apreq_xs_sv2param(aTHX_ $arg)',
+                            perl2c => 'apreq_xs_sv2param(aTHX_ sv)',
+                            OUTPUT => '$arg = apreq_xs_param2sv(aTHX_ $var, class, parent);',
+                            c2perl => 'apreq_xs_param2sv(aTHX_ ptr, class, parent)',
                            },
         T_APREQ_HANDLE => {
                             INPUT  => '$var = apreq_xs_perl2c(aTHX_ $arg, \"r\")',

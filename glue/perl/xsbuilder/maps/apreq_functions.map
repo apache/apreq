@@ -119,23 +119,23 @@ MODULE=APR::Request  PACKAGE=APR::Request PREFIX=APR__Request_
 DEFINE_parse | apreq_xs_parse |
 
 MODULE=APR::Request::Apache2 PACKAGE=APR::Request::Apache2
-apreq_handle_apache2_t *:DEFINE_new | apreq_handle_apache2 (r) | const char *:class, request_rec *:r
+apreq_xs_handle_apache2_t *:DEFINE_new | apreq_handle_apache2 (r) | const char *:class, request_rec *:r
 
 MODULE=APR::Request::CGI PACKAGE=APR::Request::CGI
-apreq_handle_cgi_t *:DEFINE_new | apreq_handle_cgi (p) | const char *:class, apr_pool_t *:p
+apreq_xs_handle_cgi_t *:DEFINE_new | apreq_handle_cgi (p) | const char *:class, apr_pool_t *:p
 
 
 #################### APR::Request::Cookie stuff ####################
-
+# | apreq_cookie_bake(c, req) | apreq_cookie_t *:c, apreq_handle_t *:req=apreq_xs_get_handle(aTHX_ ST(0))
 MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie PREFIX=apreq_cookie_
-apreq_cookie_bake | apreq_cookie_bake(c, req) | apreq_cookie_t *:c, apreq_handle_t *:req=apreq_xs_get_handle(aTHX_ ST(0))
-apreq_cookie_bake2 | apreq_cookie_bake2(c, req) | apreq_cookie_t *:c, apreq_handle_t *:req=apreq_xs_get_handle(aTHX_ ST(0))
+apreq_cookie_bake
+apreq_cookie_bake2
 
 MODULE=APR::Request::Cookie PACKAGE=APR::Request PREFIX=APR__Request_
 DEFINE_jar | apreq_xs_jar |
 
 MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie::Table PREFIX=APR__Request__Cookie__Table_
-DEFINE_get      | apreq_xs_table_get |
+DEFINE_get      | apreq_xs_table_FETCH |
 DEFINE_FETCH    | apreq_xs_table_FETCH |
 #DEFINE_new      | apreq_xs_table_make |
 DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
@@ -150,7 +150,7 @@ DEFINE_args   | apreq_xs_args |
 DEFINE_body   | apreq_xs_body |
 
 MODULE=APR::Request::Param PACKAGE=APR::Request::Param::Table PREFIX=APR__Request__Param__Table_
-DEFINE_get      | apreq_xs_table_get |
+DEFINE_get      | apreq_xs_table_FETCH |
 DEFINE_FETCH    | apreq_xs_table_FETCH |
 #DEFINE_new      | apreq_xs_table_make |
 DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |

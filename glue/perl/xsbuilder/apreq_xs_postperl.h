@@ -27,11 +27,13 @@
 #include "ppport.h"
 
 /* ExtUtils::XSBuilder::ParseSoure trickery... */
-typedef apreq_handle_t apreq_handle_cgi_t;
-typedef apreq_handle_t apreq_handle_apache2_t;
-typedef apr_table_t    apreq_param_table_t;
-typedef apr_table_t    apreq_cookie_table_t;
-typedef HV apreq_xs_error_t;
+typedef apreq_handle_t apreq_xs_handle_cgi_t;
+typedef apreq_handle_t apreq_xs_handle_apache2_t;
+typedef apr_table_t    apreq_xs_param_table_t;
+typedef apr_table_t    apreq_xs_cookie_table_t;
+typedef HV             apreq_xs_error_t;
+typedef char*          apreq_xs_subclass_t;
+
 
 /**
  * @file apreq_xs_postperl.h
@@ -301,6 +303,21 @@ SV *apreq_xs_strerror(pTHX_ apr_status_t s) {
     apreq_strerror(s, buf, sizeof buf);
     return newSVpv(buf, 0);
 }
+
+
+static APR_INLINE
+const char *apreq_xs_helper_class(pTHX_ SV **SP, SV *sv, const char *method)
+{
+        PUSHMARK(SP);
+        XPUSHs(sv);
+        PUTBACK;
+        call_method(method, G_SCALAR);
+        SPAGAIN;
+        sv = POPs;
+        PUTBACK;
+        return SvPV_nolen(sv);
+}
+
 
 
 /** @} */

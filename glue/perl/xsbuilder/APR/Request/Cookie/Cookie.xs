@@ -1,19 +1,31 @@
 #include "apreq_xs_tables.h"
+#define TABLE_CLASS "APR::Request::Cookie::Table"
+#define COOKIE_CLASS "APR::Request::Cookie"
+#define ERROR_CLASS "APR::Request::Error"
 
 static APR_INLINE
-SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c, const char *class, SV *handle)
+SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c, const char *class, SV *parent)
 {
+ 
     SV *rv = sv_setref_pv(newSV(0), class, (void *)c);
-    sv_magic(SvRV(rv), handle, PERL_MAGIC_ext, Nullch, 0);
+    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, Nullch, 0);
     return rv;
 }
 
 static APR_INLINE
-SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *handle)
+apreq_cookie_t *apreq_xs_sv2cookie(pTHX_ SV *sv)
+{
+    IV iv = SvIVX(SvRV(sv));
+    return INT2PTR(apreq_cookie_t *, iv);
+}
+
+static APR_INLINE
+SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *handle,
+                      const char *cookie_class, I32 clen)
 {
     SV *sv = (SV *)newHV();
     SV *rv = sv_setref_pv(newSV(0), class, (void *)t);
-    sv_magic(SvRV(rv), handle, PERL_MAGIC_ext, Nullch, 0);
+    sv_magic(SvRV(rv), handle, PERL_MAGIC_ext, cookie_class, clen);
 
 #if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
 
@@ -61,13 +73,11 @@ static XS(apreq_xs_jar)
 {
     dXSARGS;
     apreq_handle_t *req;
-    const char *error_pkg  = "APR::Request::Error", 
-               *jar_pkg    = "APR::Request::Cookie::Table", 
-               *cookie_pkg = "APR::Request::Cookie";
     SV *sv, *obj;
     IV iv;
 
-    if (items == 0 || items > 2 || !SvROK(ST(0)))
+    if (items == 0 || items > 2 || !SvROK(ST(0))
+        || !sv_derived_from(ST(0), "APR::Request"))
         Perl_croak(aTHX_ "Usage: APR::Request::jar($req [,$name])");
 
     sv = ST(0);
@@ -75,11 +85,10 @@ static XS(apreq_xs_jar)
     iv = SvIVX(SvRV(obj));
     req = INT2PTR(apreq_handle_t *, iv);
 
-
     if (items == 2 && GIMME_V == G_SCALAR) {
         apreq_cookie_t *c = apreq_jar_get(req, SvPV_nolen(ST(1)));
         if (c != NULL) {
-            ST(0) = apreq_xs_cookie2sv(aTHX_ c, cookie_pkg, obj);
+            ST(0) = apreq_xs_cookie2sv(aTHX_ c, COOKIE_CLASS, obj);
             sv_2mortal(ST(0));
             XSRETURN(1);
         }
@@ -89,7 +98,7 @@ static XS(apreq_xs_jar)
 
             s = apreq_jar(req, &t);
             if (apreq_module_status_is_error(s))
-                APREQ_XS_THROW_ERROR(r, s, "APR::Request::jar", error_pkg);
+                APREQ_XS_THROW_ERROR(r, s, "APR::Request::jar", ERROR_CLASS);
 
             XSRETURN_UNDEF;
         }
@@ -102,12 +111,12 @@ static XS(apreq_xs_jar)
         s = apreq_jar(req, &t);
 
         if (apreq_module_status_is_error(s))
-            APREQ_XS_THROW_ERROR(r, s, "APR::Request::jar", error_pkg);
+            APREQ_XS_THROW_ERROR(r, s, "APR::Request::jar", ERROR_CLASS);
 
         if (t == NULL)
             XSRETURN_EMPTY;
 
-        d.pkg = cookie_pkg;
+        d.pkg = COOKIE_CLASS;
         d.parent = obj;
 
         switch (GIMME_V) {
@@ -123,7 +132,8 @@ static XS(apreq_xs_jar)
             return;
 
         case G_SCALAR:
-            ST(0) = apreq_xs_table2sv(aTHX_ t, jar_pkg, obj);
+            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj,
+                                      COOKIE_CLASS, sizeof(COOKIE_CLASS)-1);
             sv_2mortal(ST(0));
             XSRETURN(1);
 
@@ -134,33 +144,50 @@ static XS(apreq_xs_jar)
 }
 
 
-static XS(apreq_xs_table_get)
+static XS(apreq_xs_table_FETCH)
 {
     dXSARGS;
     const apr_table_t *t;
-    apreq_handle_t *req;
-    const char *elt_pkg = "APR::Request::Cookie";
-    SV *sv, *t_obj, *r_obj;
+    const char *cookie_class;
+    SV *sv, *t_obj, *parent;
     IV iv;
+    MAGIC *mg;
 
-    if (items == 0 || items > 2 || !SvROK(ST(0)))
-        Perl_croak(aTHX_ "Usage: APR::Request::Cookie::Table::get($req [,$name])");
+    if (items != 2 || !SvROK(ST(0))
+        || !sv_derived_from(ST(0), TABLE_CLASS))
+        Perl_croak(aTHX_ "Usage: " TABLE_CLASS "::FETCH($table, $key)");
 
     sv = ST(0);
 
-    t_obj = apreq_xs_find_obj(aTHX_ sv, "cookie");
+    t_obj = apreq_xs_find_obj(aTHX_ sv, "param");
     iv = SvIVX(SvRV(t_obj));
     t = INT2PTR(const apr_table_t *, iv);
 
-    r_obj = apreq_xs_find_obj(aTHX_ t_obj, "request");
-    iv = SvIVX(SvRV(r_obj));
-    req = INT2PTR(apreq_handle_t *, iv);
+    mg = mg_find(SvRV(t_obj), PERL_MAGIC_ext);
+    cookie_class = mg->mg_ptr;
+    parent = mg->mg_obj;
 
-    if (items == 2 && GIMME_V == G_SCALAR) {
-        const char *v = apr_table_get(t, SvPV_nolen(ST(1)));
 
-        if (v != NULL) {
-            ST(0) = apreq_xs_cookie2sv(aTHX_ apreq_value_to_cookie(v), elt_pkg, r_obj);
+    if (GIMME_V == G_SCALAR) {
+        IV idx;
+        const char *key, *val;
+        const apr_array_header_t *arr;
+        apr_table_entry_t *te;
+        key = SvPV_nolen(ST(1));
+
+        idx = SvCUR(SvRV(t_obj));
+        arr = apr_table_elts(t);
+        te  = (apr_table_entry_t *)arr->elts;
+
+        if (idx > 0 && idx <= arr->nelts
+            && !strcasecmp(key, te[idx-1].key))
+            val = te[idx-1].val;
+        else
+            val = apr_table_get(t, key);
+
+        if (val != NULL) {
+            apreq_cookie_t *c = apreq_value_to_cookie(val);
+            ST(0) = apreq_xs_cookie2sv(aTHX_ c, cookie_class, parent);
             sv_2mortal(ST(0));
             XSRETURN(1);
         }
@@ -170,65 +197,15 @@ static XS(apreq_xs_table_get)
     }
     else if (GIMME_V == G_ARRAY) {
         struct apreq_xs_do_arg d = {NULL, NULL, NULL, aTHX};
-
-        d.pkg = elt_pkg;
-        d.parent = r_obj;
+        d.pkg = cookie_class;
+        d.parent = parent;
         XSprePUSH;
         PUTBACK;
-        if (items == 1)
-            apr_table_do(apreq_xs_table_keys, &d, t, NULL);
-        else
-            apr_table_do(apreq_xs_table_values, &d, t, 
-                         SvPV_nolen(ST(1)), NULL);
+        apr_table_do(apreq_xs_table_values, &d, t, 
+                     SvPV_nolen(ST(1)), NULL);
     }
     else
         XSRETURN(0);
-}
-
-static XS(apreq_xs_table_FETCH)
-{
-    dXSARGS;
-    SV *sv, *t_obj, *r_obj;
-    IV iv, idx;
-    const char *key, *pkg;
-    const char *val;
-    const apr_table_t *t;
-    const apr_array_header_t *arr;
-    apr_table_entry_t *te;
-    apreq_handle_t *req;
-
-    if (items != 2 || !SvROK(ST(0)) || !SvOK(ST(1)))
-        Perl_croak(aTHX_ "Usage: $table->FETCH($key)");
-
-    sv  = ST(0);
-    t_obj = apreq_xs_find_obj(aTHX_ sv, "cookie");
-    iv = SvIVX(SvRV(t_obj));
-    t = INT2PTR(const apr_table_t *, iv);
-
-    r_obj = apreq_xs_find_obj(aTHX_ t_obj, "request");
-    iv = SvIVX(SvRV(r_obj));
-    req = INT2PTR(apreq_handle_t *, iv);
-
-    pkg = "APR::Request::Cookie";
-
-    key = SvPV_nolen(ST(1));
-    idx = SvCUR(SvRV(r_obj));
-    arr = apr_table_elts(t);
-    te  = (apr_table_entry_t *)arr->elts;
-
-    if (idx > 0 && idx <= arr->nelts
-        && !strcasecmp(key, te[idx-1].key))
-        val = te[idx-1].val;
-    else
-        val = apr_table_get(t, key);
-
-    if (val != NULL) {
-        ST(0) = apreq_xs_cookie2sv(aTHX_ apreq_value_to_cookie(val), pkg, r_obj);
-        sv_2mortal(ST(0));
-        XSRETURN(1);
-    }
-    else
-        XSRETURN_UNDEF;
 }
 
 static XS(apreq_xs_table_NEXTKEY)
@@ -367,6 +344,52 @@ tainted(obj, val=NULL)
            apreq_cookie_taint_on(obj);
         else
            apreq_cookie_taint_off(obj);
+    }
+
+  OUTPUT:
+    RETVAL
+
+
+APR::Request::Cookie
+make(class, pool, name, val)
+    apreq_xs_subclass_t class
+    APR::Pool pool
+    SV *name
+    SV *val
+  PREINIT:
+    STRLEN nlen, vlen;
+    const char *n, *v;
+    SV *parent = ST(1);
+
+  CODE:
+    n = SvPV(name, nlen);
+    v = SvPV(val, vlen);
+    RETVAL = apreq_cookie_make(pool, n, nlen, v, vlen);
+    if (SvTAINTED(name) || SvTAINTED(val))
+        apreq_cookie_taint_on(RETVAL);
+
+  OUTPUT:
+    RETVAL
+
+MODULE = APR::Request::Cookie PACKAGE = APR::Request::Cookie::Table
+
+SV *
+cookie_class(t, newclass=NULL)
+    APR::Request::Cookie::Table t
+    char *newclass
+  PREINIT:
+    SV *obj = apreq_xs_find_obj(aTHX_ ST(0), "table");
+    MAGIC *mg = mg_find(SvRV(obj), PERL_MAGIC_ext);
+    char *curclass = mg->mg_ptr;
+
+  CODE:
+    RETVAL = newSVpv(curclass, 0);
+    if (items == 2) {
+        if (!sv_derived_from(ST(1), curclass))
+            Perl_croak(aTHX_ "Usage: " TABLE_CLASS "::cookie_class($table, $class): "
+                             "class %s is not derived from %s", newclass, curclass);
+        Safefree(curclass);
+        mg->mg_ptr = savepv(newclass);
     }
 
   OUTPUT:
