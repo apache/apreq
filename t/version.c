@@ -27,25 +27,36 @@ static void version_string(CuTest *tc)
     CuAssertPtrNotNull(tc, vstring);
     CuAssertStrEquals(tc, APREQ_VERSION_STRING, vstring);
 }
-static void version_number(CuTest *tc)
+static void version_major(CuTest *tc)
 {
     apreq_version(&v);
     CuAssertIntEquals(tc, APREQ_MAJOR_VERSION, v.major);
+}
+static void version_minor(CuTest *tc)
+{
     CuAssertIntEquals(tc, APREQ_MINOR_VERSION, v.minor);
+}
+static void version_patch(CuTest *tc)
+{
     CuAssertIntEquals(tc, APREQ_PATCH_VERSION, v.patch);
+}
+static void version_is_dev(CuTest *tc)
+{
 #ifdef APREQ_IS_DEV_VERSION
     CuAssertIntEquals(tc, 1, v.is_dev);
 #else
     CuAssertIntEquals(tc, 0, v.is_dev);
 #endif
-
 }
 
 CuSuite *testversion(void)
 {
     CuSuite *suite = CuSuiteNew("Version");
     SUITE_ADD_TEST(suite, version_string);
-    SUITE_ADD_TEST(suite, version_number);
+    SUITE_ADD_TEST(suite, version_major);
+    SUITE_ADD_TEST(suite, version_minor);
+    SUITE_ADD_TEST(suite, version_patch);
+    SUITE_ADD_TEST(suite, version_is_dev);
     return suite;
 }
 
