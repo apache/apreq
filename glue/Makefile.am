@@ -19,11 +19,16 @@ perl_test: perl/Makefile
 perl_install:
 	cd perl; make install
 
+perl_clean:
+	cd perl; make clean
+
 if BUILD_PERL_GLUE
 
 all-local: perl_glue
 
 install-exec-local: perl_install
+
+clean-local: perl_clean
 
 test: perl_test
 
