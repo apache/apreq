@@ -1,0 +1,10 @@
+<div id="footer">
+<p class="apache">
+Copyright &copy; 2003-2004 <a href="http://www.apache.org">The Apache Software Foundation</a>.<br/>
+See <a href="LICENSE.html">LICENSE</a>.</p>
+<p class="menu">
+   <a href="http://www.apache.org/">Apache Software Foundation</a> &gt; <a href="http://httpd.apache.org">HTTP Server Project</a> &gt;
+<a href="http://httpd.apache.org/apreq/">Request Library Subproject</a></p>
+</div>
+</body>
+</html>
