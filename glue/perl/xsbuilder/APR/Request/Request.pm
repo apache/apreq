@@ -1,15 +1,11 @@
-{
-    package APR::Request::Error;
-    require APR::Error;
-    push our @ISA, qw/APR::Error APR::Request/;
-}
-
 sub import {
     my $class = shift;
     return unless @_;
     my $pkg = caller;
     no strict 'refs';
+
     for (@_) {
-        *{"$pkg\::$_"} = *{"$class\::$_"};
+        *{"$pkg\::$_"} = $class->can($_)
+            or die "Can't find method $_ in class $class";
     }
 }

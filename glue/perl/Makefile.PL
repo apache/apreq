@@ -173,6 +173,11 @@ ModPerl::MM::WriteMakefile(
 
 # That's the whole script - below is just a bunch of local overrides
 ##################################################
+sub get_functions {
+    my $self = shift;
+    $self->{XS}->{"APR::Request::Error"} ||= [];
+    $self->SUPER::get_functions;
+}
 
 sub copy_docs {
     my @lines;

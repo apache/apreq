@@ -53,7 +53,7 @@ sub set_attr {
 
 sub freeze {
     my ($class, $value) = @_;
-    die "Usage: Apache::Cookie->freeze($value)" unless @_ == 2;
+    die 'Usage: Apache::Cookie->freeze($value)' unless @_ == 2;
 
     if (not ref $value) {
         return encode($value);

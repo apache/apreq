@@ -9,6 +9,7 @@ void | VOID
 void * | PTR
 const void * | PTR
 unsigned | UV
+unsigned char | UV
 #apreq_cookie_version_t | APREQ_COOKIE_VERSION
 
 #data structure stuff

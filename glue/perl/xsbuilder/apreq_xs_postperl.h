@@ -169,6 +169,26 @@ static SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c,
 
 
 APR_INLINE
+static SV* apreq_xs_error2sv(pTHX_ apr_status_t s)
+{
+    char buf[256];
+    SV *sv = newSV(0);
+
+    sv_upgrade(sv, SVt_PVIV);
+
+    apreq_strerror(s, buf, sizeof buf);
+    sv_setpvn(sv, buf, strlen(buf));
+    SvPOK_on(sv);
+
+    SvIVX(sv) = s;
+    SvIOK_on(sv);
+
+    SvREADONLY_on(sv);
+
+    return sv;
+}
+
+APR_INLINE
 static SV *apreq_xs_sv2object(pTHX_ SV *sv, const char *class, const char attr)
 {
     SV *obj;
@@ -388,13 +408,6 @@ void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func,
         apreq_xs_croak(aTHX_ hv, status, func, errpkg);                 \
     }                                                                   \
 } while (0)
-
-static APR_INLINE
-SV *apreq_xs_strerror(pTHX_ apr_status_t s) {
-    char buf[256];
-    apreq_strerror(s, buf, sizeof buf);
-    return newSVpv(buf, 0);
-}
 
 
 static APR_INLINE
