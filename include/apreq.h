@@ -314,7 +314,7 @@ APREQ_DECLARE(apr_table_t *)apreq_cookies(apr_pool_t *p,
  */
 
 static APR_INLINE
-apr_status_t apreq_parse_request(apreq_handle_t *req)
+apr_status_t apreq_parse(apreq_handle_t *req)
 {
     const apr_table_t *dummy;
     apr_status_t jar_status, args_status, body_status;

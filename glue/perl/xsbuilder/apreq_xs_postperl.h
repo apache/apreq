@@ -48,7 +48,7 @@ typedef apr_table_t    apreq_cookie_table_t;
  * @param in  The starting SV *.
  * @param key The first letter of key is used to search a hashref for 
  *            the desired object.
- * @return    The object, if found;  otherwise NULL.
+ * @return    Reference to the object.
  */
 APR_INLINE
 static SV *apreq_xs_find_obj(pTHX_ SV *in, const char *key)
@@ -74,13 +74,14 @@ static SV *apreq_xs_find_obj(pTHX_ SV *in, const char *key)
             Perl_croak(aTHX_ "attribute hash has no '%s' key!", key);
         case SVt_PVMG:
             if (SvOBJECT(sv) && SvIOKp(sv))
-                return sv;
+                return in;
         default:
              Perl_croak(aTHX_ "panic: unsupported SV type: %d", SvTYPE(sv));
        }
     }
 
-    return in;
+    Perl_croak(aTHX_ "apreq_xs_find_obj: object `%s' not found", key);
+    return NULL;
 }
 
 /* conversion function templates based on modperl-2's sv2request_rec */
@@ -93,10 +94,8 @@ APR_INLINE
 static void *apreq_xs_perl2c(pTHX_ SV* in, const char *name)
 {
     SV *sv = apreq_xs_find_obj(aTHX_ in, name);
-    if (sv == NULL)
-        return NULL;
-    else 
-        return (void *)SvIVX(sv);
+    IV iv = SvIVX(SvRV(sv));
+    return INT2PTR(void *, iv);
 }
 
 APR_INLINE
@@ -113,8 +112,9 @@ static SV *apreq_xs_perl_sv2env(pTHX_ SV *sv)
 APR_INLINE
 static apreq_handle_t *apreq_xs_get_handle(pTHX_ SV *sv)
 {
-    MAGIC *mg = mg_find(sv, PERL_MAGIC_ext);
-    IV iv = SvIVX(mg->mg_obj);
+    MAGIC *mg = mg_find(SvRV(sv), PERL_MAGIC_ext);
+    SV *obj = apreq_xs_find_obj(aTHX_ mg->mg_obj, "r");
+    IV iv = SvIVX(SvRV(obj));
     return INT2PTR(apreq_handle_t *,iv);
 }
 

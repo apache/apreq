@@ -57,7 +57,7 @@ static XS(apreq_xs_args)
 
     sv = ST(0);
     obj = apreq_xs_find_obj(aTHX_ sv, "r");
-    iv = SvIVX(obj);
+    iv = SvIVX(SvRV(obj));
     req = INT2PTR(apreq_handle_t *, iv);
 
 
@@ -121,7 +121,7 @@ static XS(apreq_xs_body)
 
     sv = ST(0);
     obj = apreq_xs_find_obj(aTHX_ sv, "r");
-    iv = SvIVX(obj);
+    iv = SvIVX(SvRV(obj));
     req = INT2PTR(apreq_handle_t *, iv);
 
 
