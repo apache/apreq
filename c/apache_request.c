@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -84,7 +84,7 @@ static int util_read(ApacheRequest *req, const char **rbuf)
 	    return HTTP_REQUEST_ENTITY_TOO_LARGE;
 	}
 
-	*rbuf = ap_pcalloc(r->pool, length + 1); 
+	*rbuf = ap_pcalloc(r->pool, length + 1);
 
 	ap_hard_timeout("[libapreq] util_read", r);
 
@@ -112,7 +112,7 @@ char *ApacheRequest_script_name(ApacheRequest *req)
     char *tmp;
 
     if (r->path_info && *r->path_info) {
-	int path_info_start = ap_find_path_info(r->uri, r->path_info); 
+	int path_info_start = ap_find_path_info(r->uri, r->path_info);
 	tmp = ap_pstrndup(r->pool, r->uri, path_info_start);
     }
     else {
@@ -133,18 +133,18 @@ const char *ApacheRequest_param(ApacheRequest *req, const char *key)
     return ap_table_get(req->parms, key);
 }
 
-static int make_params(void *data, const char *key, const char *val) 
-{                        
-    array_header *arr = (array_header *)data; 
-    *(char **)ap_push_array(arr) = (char *)val; 
-    return 1; 
-} 
+static int make_params(void *data, const char *key, const char *val)
+{
+    array_header *arr = (array_header *)data;
+    *(char **)ap_push_array(arr) = (char *)val;
+    return 1;
+}
 
 array_header *ApacheRequest_params(ApacheRequest *req, const char *key)
 {
     array_header *values = ap_make_array(req->r->pool, 4, sizeof(char *));
     ApacheRequest_parse(req);
-    ap_table_do(make_params, (void*)values, req->parms, key, NULL); 
+    ap_table_do(make_params, (void*)values, req->parms, key, NULL);
     return values;
 }
 
@@ -155,7 +155,7 @@ char *ApacheRequest_params_as_string(ApacheRequest *req, const char *key)
     int i;
 
     for (i=0; i<values->nelts; i++) {
-	retval = ap_pstrcat(req->r->pool, 
+	retval = ap_pstrcat(req->r->pool,
 			    retval ? retval : "",
 			    ((char **)values->elts)[i],
 			    (i == (values->nelts - 1)) ? NULL : ", ",
@@ -249,7 +249,7 @@ static char *my_urlword(pool *p, const char **line)
 
 static void split_to_parms(ApacheRequest *req, const char *data)
 {
-    request_rec *r = req->r; 
+    request_rec *r = req->r;
     const char *val;
 
     while (*data && (val = my_urlword(r->pool, &data))) {
@@ -274,22 +274,22 @@ int ApacheRequest___parse(ApacheRequest *req)
         split_to_parms(req, r->args);
     }
 
-    if (r->method_number == M_POST) { 
-	const char *ct = ap_table_get(r->headers_in, "Content-type"); 
+    if (r->method_number == M_POST) {
+	const char *ct = ap_table_get(r->headers_in, "Content-type");
 	if (ct && strncaseEQ(ct, DEFAULT_ENCTYPE, DEFAULT_ENCTYPE_LENGTH)) {
-	    result = ApacheRequest_parse_urlencoded(req); 
+	    result = ApacheRequest_parse_urlencoded(req);
 	}
 	else if (ct && strncaseEQ(ct, MULTIPART_ENCTYPE, MULTIPART_ENCTYPE_LENGTH)) {
-	   result = ApacheRequest_parse_multipart(req); 
+	   result = ApacheRequest_parse_multipart(req);
 	}
 	else {
-	    ap_log_rerror(REQ_ERROR, 
-			  "[libapreq] unknown content-type: `%s'", ct); 
+	    ap_log_rerror(REQ_ERROR,
+			  "[libapreq] unknown content-type: `%s'", ct);
 	    result = HTTP_INTERNAL_SERVER_ERROR;
 	}
-    } 
+    }
     else {
-	result = ApacheRequest_parse_urlencoded(req); 
+	result = ApacheRequest_parse_urlencoded(req);
     }
 
     req->parsed = 1;
@@ -299,10 +299,10 @@ int ApacheRequest___parse(ApacheRequest *req)
 
 int ApacheRequest_parse_urlencoded(ApacheRequest *req)
 {
-    request_rec *r = req->r; 
+    request_rec *r = req->r;
     int rc = OK;
 
-    if (r->method_number == M_POST) { 
+    if (r->method_number == M_POST) {
 	const char *data = NULL, *type;
 
 	type = ap_table_get(r->headers_in, "Content-Type");
@@ -327,7 +327,7 @@ static void remove_tmpfile(void *data) {
 
     if( ap_pfclose(req->r->pool, upload->fp) )
 	ap_log_rerror(REQ_ERROR,
-		      "[libapreq] close error on '%s'", upload->tempname);	
+		      "[libapreq] close error on '%s'", upload->tempname);
 #ifndef DEBUG
     if( remove(upload->tempname) )
 	ap_log_rerror(REQ_ERROR,
@@ -342,9 +342,10 @@ FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
     request_rec *r = req->r;
     FILE *fp;
     char prefix[] = "apreq";
-    char *name;
-    int fd, tries = 100;
-    
+    char *name = NULL;
+    int fd = 0; 
+    int tries = 100;
+
     while (--tries > 0) {
 	if ( (name = tempnam(req->temp_dir, prefix)) == NULL )
 	    continue;
@@ -354,16 +355,16 @@ FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
 	else
 	    free(name);
     }
-    
+
     if ( tries == 0  || (fp = ap_pfdopen(r->pool, fd, "w+" "b") ) == NULL ) {
-	ap_log_rerror(REQ_ERROR, "[libapreq] could not create/open temp file"); 	
+	ap_log_rerror(REQ_ERROR, "[libapreq] could not create/open temp file");
 	if ( fd >= 0 ) { remove(name); free(name); }
 	return NULL;
     }
 
     upload->fp = fp;
     upload->tempname = name;
-    ap_register_cleanup(r->pool, (void *)upload, 
+    ap_register_cleanup(r->pool, (void *)upload,
 			remove_tmpfile, ap_null_cleanup);
     return fp;
 
@@ -404,14 +405,14 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
     }
 
     (void)ap_getword(r->pool, &ct, '=');
-    boundary = ap_getword_conf(r->pool, &ct); 
+    boundary = ap_getword_conf(r->pool, &ct);
 
     if (!(mbuff = multipart_buffer_new(boundary, length, r))) {
 	return DECLINED;
     }
 
     while (!multipart_buffer_eof(mbuff)) {
-	table *header = multipart_buffer_headers(mbuff);	
+	table *header = multipart_buffer_headers(mbuff);
 	const char *cd, *param=NULL, *filename=NULL;
 	char buff[FILLUNIT];
 	int blen, wlen;
@@ -521,7 +522,7 @@ static time_t expire_calc(char *time_str)
     if (*time_str == '-') {
 	is_neg = 1;
 	++time_str;
-    } 
+    }
     else if (*time_str == '+') {
 	++time_str;
     }
@@ -539,7 +540,7 @@ static time_t expire_calc(char *time_str)
     buf[ix] = '\0';
     offset = atoi(buf);
 
-    return time(NULL) + 
+    return time(NULL) +
 	(expire_mult(*time_str) * (is_neg ? (0 - offset) : offset));
 }
 
@@ -559,13 +560,13 @@ char *ApacheUtil_expires(pool *p, char *time_str, int type)
 	return ap_pstrdup(p, time_str);
     }
 
-    tms = gmtime(&when); 
+    tms = gmtime(&when);
     return ap_psprintf(p,
-		       "%s, %.2d%c%s%c%.2d %.2d:%.2d:%.2d GMT", 
-		       ap_day_snames[tms->tm_wday], 
+		       "%s, %.2d%c%s%c%.2d %.2d:%.2d:%.2d GMT",
+		       ap_day_snames[tms->tm_wday],
 		       tms->tm_mday, sep, ap_month_snames[tms->tm_mon], sep,
-		       tms->tm_year + 1900, 
-		       tms->tm_hour, tms->tm_min, tms->tm_sec); 
+		       tms->tm_year + 1900,
+		       tms->tm_hour, tms->tm_min, tms->tm_sec);
 }
 
 char *ApacheRequest_expires(ApacheRequest *req, char *time_str)

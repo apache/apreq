@@ -105,11 +105,17 @@ ApacheUpload *ApacheUpload_find(ApacheUpload *upload, char *name);
 #define ApacheRequest_upload(req) \
     ((req->parsed || (ApacheRequest_parse(req) == OK)) ? req->upload : NULL)
 
+#define ApacheUpload_FILE(upload) (upload->fp)
+
+#define ApacheUpload_size(upload) (upload->size)
+
 #define ApacheUpload_info(upload, key) \
 ap_table_get(upload->info, key)
 
 #define ApacheUpload_type(upload) \
 ApacheUpload_info(upload, "Content-Type")
+
+#define ApacheRequest_set_post_max(req, max) (req->post_max = max)
 
 char *ApacheUtil_expires(pool *p, char *time_str, int type);
 #define EXPIRES_HTTP   1

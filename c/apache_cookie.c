@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -78,7 +78,7 @@ char *ApacheCookie_attr(ApacheCookie *c, char *key, char *val)
     char *retval = NULL;
     int ix = key[0] == '-' ? 1 : 0;
 
-    switch (key[ix]) { 
+    switch (key[ix]) {
     case 'n':
 	cookie_get_set(c->name, val);
 	break;
@@ -96,14 +96,14 @@ char *ApacheCookie_attr(ApacheCookie *c, char *key, char *val)
 	break;
     case 's':
 	if(val) {
-	    c->secure = 
+	    c->secure =
 		!strcaseEQ(val, "off") &&
 		!strcaseEQ(val, "0");
 	}
 	retval = c->secure ? "on" : "";
 	break;
     default:
-	ap_log_rerror(APC_ERROR, 
+	ap_log_rerror(APC_ERROR,
 		      "[libapreq] unknown cookie pair: `%s' => `%s'", key, val);
     };
 
@@ -114,7 +114,7 @@ ApacheCookie *ApacheCookie_new(request_rec *r, ...)
 {
     va_list args;
     ApacheRequest req;
-    ApacheCookie *c = 
+    ApacheCookie *c =
 	ap_pcalloc(r->pool, sizeof(ApacheCookie));
 
     req.r = r;
@@ -144,7 +144,7 @@ ApacheCookie *ApacheCookie_new(request_rec *r, ...)
 ApacheCookieJar *ApacheCookie_parse(request_rec *r, const char *data)
 {
     const char *pair;
-    ApacheCookieJar *retval = 
+    ApacheCookieJar *retval =
 	ap_make_array(r->pool, 1, sizeof(ApacheCookie *));
 
     if (!data) {
@@ -192,7 +192,7 @@ ApacheCookieJar *ApacheCookie_parse(request_rec *r, const char *data)
         cookie_push_arr(arr, ap_pstrcat(p, name, "=", val, NULL)); \
     }
 
-static char * escape_url(pool *p, char *val) 
+static char * escape_url(pool *p, char *val)
 {
   char *result = ap_os_escape_path(p, val?val:"", 1);
   char *end = result + strlen(result);
@@ -248,15 +248,15 @@ char *ApacheCookie_as_string(ApacheCookie *c)
 
     cookie = ap_pstrcat(p, escape_url(p, c->name), "=", NULL);
     for (i=0; i<c->values->nelts; i++) {
-	cookie = ap_pstrcat(p, cookie, 
-			    escape_url(p, ((char**)c->values->elts)[i]), 
+	cookie = ap_pstrcat(p, cookie,
+			    escape_url(p, ((char**)c->values->elts)[i]),
 			    (i < (c->values->nelts-1) ? "&" : NULL),
 			    NULL);
     }
 
     retval = cookie;
     for (i=0; i<values->nelts; i++) {
-	retval = ap_pstrcat(p, retval, "; ", 
+	retval = ap_pstrcat(p, retval, "; ",
 			    ((char**)values->elts)[i], NULL);
     }
 
