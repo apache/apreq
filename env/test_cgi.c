@@ -21,6 +21,7 @@
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_tables.h"
+#include <stdlib.h>
 
 static int dump_table(void *count, const char *key, const char *value)
 {
