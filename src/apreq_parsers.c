@@ -60,6 +60,7 @@
 #include "apreq_env.h"
 #include "apr_lib.h"
 #include "apr_strings.h"
+#include "apr_strmatch.h"
 
 #ifndef MAX
 #define MAX(A,B)  ( (A) > (B) ? (A) : (B) )
@@ -580,16 +581,18 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *pool,
 /********************* multipart/form-data *********************/
 
 struct mfd_ctx {
-    void                *hook_data;
-    apreq_table_t       *t;
-    apr_bucket_brigade  *bb;
-    char                bdry[1];
+    void                        *hook_data;
+    apreq_table_t               *t;
+    apr_bucket_brigade          *bb;
+    const apr_strmatch_pattern  *pattern;
+    char                         bdry[1];
 };
 
 
 static apr_status_t split_on_bdry(apr_pool_t *pool, 
                                   apr_bucket_brigade *out,
                                   apr_bucket_brigade *in,
+                                  const apr_strmatch_pattern *pattern,
                                   const char *bdry)
 {
     apr_bucket *e = APR_BRIGADE_FIRST(in);
@@ -641,7 +644,18 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
             off = 0;
         }
 
-        idx = apreq_index(buf, len, bdry, blen, PARTIAL);
+        if (pattern != NULL && len >= blen) {
+            const char *match = apr_strmatch(pattern, buf, len);
+            if (match != NULL)
+                idx = match - buf;
+            else {
+                idx = apreq_index(buf + len-blen, blen, bdry, blen, PARTIAL);
+                if (idx >= 0)
+                    idx += len-blen;
+            }
+        }
+        else
+            idx = apreq_index(buf, len, bdry, blen, PARTIAL);
 
         if (idx > 0)
             apr_bucket_split(e, idx);
@@ -768,6 +782,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 
         memcpy(ctx->bdry + 4, bdry, blen);
         ctx->bdry[4 + blen] = 0;
+        ctx->pattern = apr_strmatch_precompile(pool,ctx->bdry,1);
 
         APR_BRIGADE_INSERT_HEAD(bb,
                   apr_bucket_immortal_create(crlf,2,bb->bucket_alloc));
@@ -787,7 +802,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
     case MFD_INIT:
         {
             apr_status_t s;
-            s = split_on_bdry(pool, ctx->bb, bb, ctx->bdry);
+            s = split_on_bdry(pool, ctx->bb, bb, ctx->pattern, ctx->bdry);
             if (s != APR_SUCCESS)
                 return s;
 
@@ -798,7 +813,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
     case MFD_NEXTLINE:
         {
             apr_status_t s;
-            s = split_on_bdry(pool, ctx->bb, bb, crlf);
+            s = split_on_bdry(pool, ctx->bb, bb, NULL, crlf);
             if (s != APR_SUCCESS)
                 return s;
 
@@ -863,7 +878,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 
     case MFD_PARAM:
         {
-            apr_status_t s = split_on_bdry(pool, ctx->bb, bb, ctx->bdry);
+            apr_status_t s = split_on_bdry(pool, ctx->bb, bb, 
+                                           ctx->pattern, ctx->bdry);
             apr_bucket *e;
             apreq_param_t *param;
             apreq_value_t *v;
@@ -915,7 +931,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
     case MFD_UPLOAD:
         {
             apr_bucket *eos;
-            apr_status_t s = split_on_bdry(pool, ctx->bb, bb, ctx->bdry);
+            apr_status_t s = split_on_bdry(pool, ctx->bb, bb, 
+                                           ctx->pattern, ctx->bdry);
             apreq_param_t *param;
             const apr_array_header_t *arr;
 
