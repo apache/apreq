@@ -159,14 +159,16 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params_as_array(apr_pool_t *p,
 
 /**
  * Returns a ", " -joined string containing all parameters
- * for the requested key, NULL if none are found.  The key is case-insensitive.
+ * for the requested key, an empty string if none are found.
+ * The key is case-insensitive.
+ *
  * @param p Allocates the return string.
  * @param t the parameter table returned by apreq_args(), apreq_body()
  *    or apreq_params()
  * @param key Null-terminated parameter name, case insensitive.
  *    key==NULL fetches all values.
  * @param mode Join type- see apreq_join().
- * @return the joined string
+ * @return the joined string or NULL on error
  * @remark Also parses the request if necessary.
  */
 APREQ_DECLARE(const char *) apreq_params_as_string(apr_pool_t *p,

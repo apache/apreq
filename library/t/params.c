@@ -66,6 +66,8 @@ static void params_as(dAT)
     AT_int_eq(arr->nelts, 2);
     val = apreq_params_as_string(p,args,"a",APREQ_JOIN_AS_IS);
     AT_str_eq(val, "1, 2");
+    val = apreq_params_as_string(p,args,"does_not_exist",APREQ_JOIN_AS_IS);
+    AT_str_eq(val, "");
 }
 
 static void string_decoding_in_place(dAT)
@@ -196,7 +198,7 @@ int main(int argc, char *argv[])
     at_test_t test_list [] = {
         dT(request_make, 3),
         dT(request_args_get, 8),
-        dT(params_as, 2),
+        dT(params_as, 3),
         dT(string_decoding_in_place, 8),
         dT(header_attributes, 13),
         dT(make_param, 8),

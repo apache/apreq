@@ -414,7 +414,7 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
     slen = sep ? strlen(sep) : 0;
 
     if (n == 0)
-        return NULL;
+        return apr_pstrdup(p, "");
 
     for (j=0, len=0; j < n; ++j)
         len += a[j]->dlen + slen + 1;

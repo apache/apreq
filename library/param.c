@@ -199,7 +199,7 @@ APREQ_DECLARE(const char *) apreq_params_as_string(apr_pool_t *p,
     apreq_param_t **elt = (apreq_param_t **)arr->elts;
     apreq_param_t **const end = elt + arr->nelts;
     if (arr->nelts == 0)
-        return NULL;
+        return apr_pstrdup(p, "");
 
     while (elt < end) {
         *(const apreq_value_t **)elt = &(**elt).v;
