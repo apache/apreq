@@ -122,8 +122,9 @@ MODULE=APR::Request::Apache2 PACKAGE=APR::Request::Apache2 PREFIX=APR__Request__
 apreq_xs_handle_apache2_t *:DEFINE_new | apreq_handle_apache2 (r) | const char *:class, request_rec *:r
 DEFINE_param | apreq_xs_apache2_param |
 
-MODULE=APR::Request::CGI PACKAGE=APR::Request::CGI
+MODULE=APR::Request::CGI PACKAGE=APR::Request::CGI PREFIX=APR__Request__CGI_
 apreq_xs_handle_cgi_t *:DEFINE_new | apreq_handle_cgi (p) | const char *:class, apr_pool_t *:p
+DEFINE_param | apreq_xs_cgi_param |
 
 
 #################### APR::Request::Cookie stuff ####################

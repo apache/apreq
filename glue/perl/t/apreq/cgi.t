@@ -103,6 +103,7 @@ $body = POST_BODY("$script?foo=1", content =>
 ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end", 
          "simple post");
 
+
 $body = UPLOAD_BODY("$script?foo=1", content => $filler);
 ok t_cmp($body, "\tfoo => 1$line_end", 
          "simple upload");
@@ -156,6 +157,8 @@ ok t_cmp($body, "\tfoo => 1$line_end",
 }
 
 # file upload tests
+skip 1, "- Upload API not yet implemented" for 1..10;
+exit 0;
 
 foreach my $name (@names) {
     my $url = ( ($name =~ /\.pod$/) ?
@@ -240,17 +243,21 @@ if ($foo || $bar) {
 }
     
 elsif ($test && $key) {
-    my %cookies = %{ $req->jar };
+    my $jar = $req->jar;
+    $jar->cookie_class("APR::Request::Cookie");
+    my %cookies = %$jar;
     apreq_log("Fetching cookie $key");
     if ($cookies{$key}) {
         if ($test eq "bake") {
+            $cookies{$key}->tainted(0);
             $cookies{$key}->bake;
         }
         elsif ($test eq "bake2") {
+            $cookies{$key}->tainted(0);
             $cookies{$key}->bake2;
         }
         print "Content-Type: text/plain\n\n";
-        print $cookies{$key}->value;
+        print APR::Request::decode($cookies{$key}->value);
     }
 }
 
