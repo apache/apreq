@@ -30,7 +30,7 @@ sub new {
 
 
 package Apache::Cookie;
-use overload '""' => sub { shift->raw_value };
+use overload '""' => sub { shift->as_string };
 
 sub jar {
     my ($self, $env) = @_;

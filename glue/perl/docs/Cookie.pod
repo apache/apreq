@@ -68,6 +68,8 @@ the same role for accessing the incoming cookies as Apache::Request does for
 accessing the incoming params and file uploads.
 
 
+
+
 =head2 C<< new($env, %args) >>
 
 
@@ -267,16 +269,18 @@ values created using CGI::Cookie or Apache::Cookie 1.X.
 
 =head2 C<< as_string() >>
 
-Format the cookie object as a string:
+Format the cookie object as a string.  The quote-operator for Apache::Cookie 
+is overloaded to run this method whenever a cookie appears in quotes.
+
 
 =for example begin
 
-    print $cookie->as_string;
+    ok "$cookie" eq $cookie->as_string;
 
 =for example end
 
 =for example_testing
-    ok substr($_STDOUT_, 0, 8) eq "foo=bar;";
+    ok substr("$cookie", 0, 8) eq "foo=bar;";
 
 
 
@@ -336,13 +340,11 @@ Apache::Cookie with a package that provides the associated C<thaw> sub:
 =head2 C<< raw_value() >>
 
 Gets the raw (opaque) value string as it appears in the incoming
-"Cookie" header.  The quote-operator for Apache::Cookie is 
-overloaded to run this method whenever a cookie appears in quotes.
+"Cookie" header.  
 
 =for example begin
 
     ok $cookie->raw_value eq "bar";
-    ok "$cookie" eq "bar";
 
 =for example end
 
@@ -516,9 +518,9 @@ Fetch and parse the incoming I<Cookie> header:
 
 =for example_testing
     ok "foobarfoo" eq join "", keys %$cookies;
-    ok 123 == join "", map "$_", values %$cookies;
+    ok 123 == join "", map $_->value, values %$cookies;
     ok "barfoo" eq join "", sort keys %cookies; # %cookies lost original foo cookie
-    ok 23 == join "", sort map "$_", values %cookies;
+    ok 23 == join "", sort map $_->value, values %cookies;
 
 
 
