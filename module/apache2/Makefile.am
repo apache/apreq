@@ -32,8 +32,18 @@ all-local: @APACHE2_HTTPD@
 
 else
 
+pkgcfgdir = `@APACHE2_APXS@ -q SYSCONFDIR`
 pkgincludedir = `@APACHE2_APXS@ -q INCLUDEDIR`/@APREQ_LIBNAME@
 pkglibdir = `@APACHE2_APXS@ -q LIBEXECDIR`
 pkglib_LTLIBRARIES = mod_apreq2.la
+
+install-exec-local :
+	@echo "----------------------------------------------------------------------"
+	@echo "Before you can use mod_apreq2, you must ensure that an appropriate"
+	@echo "\"LoadModule\" line appears in your webserver's config file:"
+	@echo "$(pkgcfgdir)/httpd.conf"
+	@echo 
+	@echo "LoadModule apreq_module    $(pkglibdir)/mod_apreq2.so"
+	@echo "----------------------------------------------------------------------"
 
 endif

@@ -21,6 +21,7 @@ mod_apreq2_la_SOURCES = apreq_private_apache.h handle.c command.c
 
 if HAVE_APACHE1
 
+pkgcfgdir = `@APACHE1_APXS@ -q SYSCONFDIR`
 pkglibdir = `@APACHE1_APXS@ -q LIBEXECDIR`
 pkgincludedir = `@APACHE1_APXS@ -q INCLUDEDIR`/@APREQ_LIBNAME@
 pkglib_LTLIBRARIES = mod_apreq2.la
@@ -43,5 +44,15 @@ cmodules_clean:
 	-rm c-modules/Makefile c-modules/*/Makefile c-modules/apache_httpd_test.h
 
 clean-local: test_clean
+
+
+install-exec-local :
+	@echo "----------------------------------------------------------------------"
+	@echo "Before you can use mod_apreq2, you must ensure that an appropriate"
+	@echo "\"LoadModule\" line appears in your webserver's config file:"
+	@echo "$(pkgcfgdir)/httpd.conf"
+	@echo 
+	@echo "LoadModule apreq_module    $(pkglibdir)/mod_apreq2.so"
+	@echo "----------------------------------------------------------------------"
 
 endif
