@@ -21,6 +21,8 @@ Example:
 
 =item req->post_max
 
+=item ApacheRequest_set_post_max(req, max)
+
 Limit the size of POST data.  I<ApacheRequest_parse> will return an
 error code if the size is exceeded:
 
@@ -52,10 +54,13 @@ error code if a file upload is attempted:
 
 =item req->temp_dir
 
+=item ApacheRequest_set_temp_dir(req, dir)
+
 Sets the directory where upload files are spooled.
 
   char dir[] = "/usr/tmp";
   req->temp_dir = dir;
+
 
 =item req->hook_data
 
