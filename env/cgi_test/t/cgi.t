@@ -4,8 +4,9 @@ use warnings FATAL => 'all';
 use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestConfig;
-use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC);
+use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC GET_HEAD);
 use constant WIN32 => Apache::TestConfig::WIN32;
+use HTTP::Cookies;
 
 my @key_len = (5, 100, 305);
 my @key_num = (5, 15, 26);
@@ -19,27 +20,7 @@ plan tests => 5 + @key_len * @key_num + @big_key_len * @big_key_num;
 
 my $script = WIN32 ? '/cgi-bin/cgi_test.exe' : '/cgi-bin/cgi_test';
 my $line_end = WIN32 ? "\r\n" : "\n";
-
-ok t_cmp("\tfoo => 1$line_end", 
-         POST_BODY("$script?foo=1"), "simple get");
-ok t_cmp("\tfoo => ?$line_end\tbar => hello world$line_end", 
-         GET_BODY("$script?foo=%3F&bar=hello+world"), "simple get");
-
 my $filler = "0123456789" x 5; # < 64K
-
-my $body = POST_BODY("/$script", content => 
-                     "aaa=$filler;foo=1;bar=2;filler=$filler");
-ok t_cmp("\tfoo => 1$line_end\tbar => 2$line_end", 
-         $body, "simple post");
-
-$body = POST_BODY("/$script?foo=1", content => 
-                  "intro=$filler&bar=2&conclusion=$filler");
-ok t_cmp("\tfoo => 1$line_end\tbar => 2$line_end", 
-         $body, "simple post");
-
-$body = UPLOAD_BODY("/$script?foo=0", content => $filler);
-ok t_cmp("\tfoo => 0$line_end", 
-         $body, "simple upload");
 
 # GET
 for my $key_len (@key_len) {
@@ -77,10 +58,80 @@ for my $big_key_len (@big_key_len) {
         my $query = join ";", @query;
 
         t_debug "# of keys : $big_key_num, big_key_len $big_key_len";
-        $body = POST_BODY($script, content => "$query;$filler");
+        my $body = POST_BODY($script, content => "$query;$filler");
         ok t_cmp($len,
                  $body,
                  "POST big data");
     }
 
+}
+
+ok t_cmp("\tfoo => 1$line_end", 
+         GET_BODY("$script?foo=1", Cookie => "simple=get", Content => 'assa'));
+
+ok t_cmp("\tfoo => ?$line_end\tbar => hello world$line_end", 
+         GET_BODY("$script?foo=%3F&bar=hello+world"), "simple get");
+
+my $body = POST_BODY("/$script", content => 
+                     "aaa=$filler;foo=1;bar=2;filler=$filler");
+ok t_cmp("\tfoo => 1$line_end\tbar => 2$line_end", 
+         $body, "simple post");
+
+$body = POST_BODY("/$script?foo=1", content => 
+                  "intro=$filler&bar=2&conclusion=$filler");
+ok t_cmp("\tfoo => 1$line_end\tbar => 2$line_end", 
+         $body, "simple post");
+
+$body = UPLOAD_BODY("/$script?foo=0", content => $filler);
+ok t_cmp("\tfoo => 0$line_end", 
+         $body, "simple upload");
+
+exit;
+
+{
+    my $test  = 'netscape';
+    my $key   = 'apache';
+    my $value = 'ok';
+    my $cookie = qq{$key=$value};
+    ok t_cmp($value,
+             GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
+             $test);
+}
+{
+    my $test  = 'rfc';
+    my $key   = 'apache';
+    my $value = 'ok';
+    my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$script"};
+    ok t_cmp(qq{"$value"},
+             GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
+             $test);
+}
+{
+    my $test  = 'encoded value with space';
+    my $key   = 'apache';
+    my $value = 'okie dokie';
+    my $cookie = "$key=" . join '',
+        map {/ / ? '+' : sprintf '%%%.2X', ord} split //, $value;
+    ok t_cmp($value,
+             GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
+             $test);
+}
+{
+    my $test  = 'bake';
+    my $key   = 'apache';
+    my $value = 'ok';
+    my $cookie = "$key=$value";
+    my ($header) = GET_HEAD("$script?test=$test&key=$key", 
+                            Cookie => $cookie) =~ /^#Set-Cookie:\s+(.+)/m;
+
+    ok t_cmp($cookie, $header, $test);
+}
+{
+    my $test  = 'bake2';
+    my $key   = 'apache';
+    my $value = 'ok';
+    my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$script"};
+    my ($header) = GET_HEAD("$script?test=$test&key=$key", 
+                            Cookie => $cookie) =~ /^#Set-Cookie2:\s+(.+)/m;
+    ok t_cmp(qq{$key="$value"; Version=1; path="$script"}, $header, $test);
 }

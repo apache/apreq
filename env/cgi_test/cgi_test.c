@@ -52,7 +52,6 @@
  * <http://www.apache.org/>.
  */
 
-
 #include "apreq.h"
 #include "apreq_env.h"
 #include "apreq_params.h"
@@ -74,22 +73,31 @@ typedef struct {
 static int dump_table(void *count, const char *key, const char *value)
 {
     int *c = (int *) count;
-    *c = *c + strlen(key) + strlen(value);
+    int value_len = strlen(value);
+    if(value_len) *c = *c + strlen(key) + value_len;
     return 1;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     env_ctx *ctx;
     apr_pool_t *pool;
-    const apreq_param_t *foo, *bar;
+    const apreq_param_t *foo, *bar, *test, *key;
     apr_table_t *params;
     int count = 0;
+    apr_status_t s;
+    const apreq_jar_t *jar;
+    apreq_cookie_t *cookie;
+    apr_ssize_t ssize;
+    apr_size_t size;
+    char *dest;
 
-    if (apr_initialize() != APR_SUCCESS) {
-        fprintf(stderr, "apr_initialize failed\n");
+    atexit(apr_terminate);
+    if (apr_app_initialize(&argc, &argv, NULL) != APR_SUCCESS) {
+        fprintf(stderr, "apr_app_initialize failed\n");
         exit(-1);
     }
+
     if (apr_pool_create(&pool, NULL) != APR_SUCCESS) {
         fprintf(stderr, "apr_pool_create failed\n");
         exit(-1);
@@ -103,15 +111,58 @@ int main(void)
 
     printf("%s", "Content-Type: text/plain\n\n");
     apreq_log(APREQ_DEBUG 0, ctx, "%s", "Fetching the parameters");
+
     foo = apreq_param(ctx->req, "foo");
     bar = apreq_param(ctx->req, "bar");
+
+    test = apreq_param(ctx->req, "test");
+    key = apreq_param(ctx->req, "key");
+
     if (foo || bar) {
-      if(foo) printf("\t%s => %s\n", "foo", foo->v.data);
-      if(bar) printf("\t%s => %s\n", "bar", bar->v.data);
-      return 0;
+        if(foo) {
+            printf("\t%s => %s\n", "foo", foo->v.data);
+            apreq_log(APREQ_DEBUG 0, ctx, "%s => %s", "foo", foo->v.data);
+        }
+        if(bar) {
+            printf("\t%s => %s\n", "bar", bar->v.data);
+            apreq_log(APREQ_DEBUG 0, ctx, "%s => %s", "bar", bar->v.data);
+        }
     }
-    params = apreq_params(ctx->pool, ctx->req);
-    apr_table_do(dump_table, &count, params, NULL);
-    printf("%d", count);
+    
+    else if (test && key) {
+        jar = apreq_jar(ctx, NULL);
+        apreq_log(APREQ_DEBUG 0, ctx, "Fetching Cookie %s", key->v.data);
+        cookie = apreq_cookie(jar, key->v.data);
+        if (cookie == NULL) {
+            apreq_log(APREQ_DEBUG 0, ctx, 
+                      "No cookie for %s found!", key->v.data);
+            exit(-1);
+        }
+
+        if (strcmp(test->v.data, "bake") == 0) {
+            s = apreq_cookie_bake(cookie, ctx);
+        }
+        else if (strcmp(test->v.data, "bake2") == 0) {
+            s = apreq_cookie_bake2(cookie, ctx);
+        }
+        else {
+            size = strlen(cookie->v.data);
+            dest = apr_palloc(ctx->pool, size + 1);
+            ssize = apreq_decode(dest, cookie->v.data, size);
+            printf("%s", dest);
+        }
+    }
+
+    else { 
+        apreq_log(APREQ_DEBUG 0, ctx, "Fetching all parameters");
+        params = apreq_params(ctx->pool, ctx->req);
+        if (params == NULL) {
+            apreq_log(APREQ_DEBUG 0, ctx, "No parameters found!");
+            exit(-1);
+        }
+        apr_table_do(dump_table, &count, params, NULL);
+        printf("%d", count);
+    }
+    
     return 0;
 }
