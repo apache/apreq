@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.13)
-AC_INIT(libapreq - Apache Request Library, 2.0, apreq-dev@httpd.apache.org, apreq2)
+AC_INIT(libapreq - Apache Request Library, 2.0, apreq-dev@httpd.apache.org, libapreq2)
 
 dnl this:
 dnl AC_CONFIG_AUX_DIR(build)

@@ -4,9 +4,11 @@ BUILT_SOURCES= @APR_LA@ @APU_LA@
 lib_LTLIBRARIES = lib@APREQ_LIBNAME@.la
 lib@APREQ_LIBNAME@_la_SOURCES = apreq.c apreq_version.c apreq_cookie.c \
                        apreq_params.c apreq_parsers.c
-include_HEADERS = apreq.h apreq_version.h apreq_cookie.h \
+pkginclude_HEADERS = apreq.h apreq_version.h apreq_cookie.h \
                   apreq_params.h  apreq_env.h apreq_parsers.h
 lib@APREQ_LIBNAME@_la_LDFLAGS = -version-info @APREQ_LIBTOOL_VERSION@
+
+pkgincludedir = $(includedir)/@APREQ_LIBNAME@
 
 if BUILD_APR
 

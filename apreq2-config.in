@@ -62,7 +62,7 @@ prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 bindir="@bindir@"
 libdir="@libdir@"
-includedir="@includedir@"
+includedir="@includedir@/@APREQ_LIBNAME@"
 
 LIBS="@APREQ_EXPORT_LIBS@"
 INCLUDES="@APREQ_INCLUDES@"

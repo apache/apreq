@@ -8,6 +8,10 @@ APR_DOX = (cd $(APR_SRCDIR); cat - docs/doxygen.conf | doxygen -)
 COOKIE_POD=glue/perl/blib/lib/Apache/Cookie.pod
 REQUEST_POD=glue/perl/blib/lib/Apache/Request.pod
 
+bin_SCRIPTS = apreq2_config
+
+apreq2_config:
+
 docs:	src env glue build/doxygen.conf
 	doxygen build/doxygen.conf
 
