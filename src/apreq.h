@@ -60,10 +60,6 @@
 #include "apr_buckets.h"
 #include <stddef.h>
 
-#ifndef apr_table_nelts
-#define apr_table_nelts(t) apr_table_elts(t)->nelts
-#endif
-
 #ifdef  __cplusplus
  extern "C" {
 #endif 

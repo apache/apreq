@@ -108,8 +108,8 @@ typedef struct apreq_cookie_t {
 #define apreq_cookie_name(c)  ((c)->v.name)
 #define apreq_cookie_value(c) ((c)->v.data)
 
-#define apreq_jar_items(j) apr_table_nelts(j->cookies)
-#define apreq_jar_nelts(j) apr_table_nelts(j->cookies)
+#define apreq_jar_items(j) apr_table_elts(j->cookies)->nelts
+#define apreq_jar_nelts(j) apr_table_elts(j->cookies)->nelts
 
 /**
  * Fetches a cookie from the jar

@@ -133,7 +133,7 @@ static void parse_multipart(CuTest *tc)
 
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
     CuAssertPtrNotNull(tc, req->body);
-    CuAssertIntEquals(tc, 2, apr_table_nelts(req->body));
+    CuAssertIntEquals(tc, 2, apr_table_elts(req->body)->nelts);
 
     val = apr_table_get(req->body,"field1");
     CuAssertStrEquals(tc, "Joe owes =80100.", val);
