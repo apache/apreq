@@ -1,6 +1,3 @@
-o httpd 2.0.46 is a requirement, need to add the check in ./configure
-  and abort if not satisfied.
-
 o Apache::Test is required early in Makefile.PL, so we can't rely on
   CPAN.pm's prereq_pm to fetch it if not available. Therefore we need
   to use Module::Install, which handles this kind of situations gracefully.
