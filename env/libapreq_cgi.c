@@ -89,7 +89,8 @@ struct env_ctx {
     apr_status_t        status;
 };
 
-const char apreq_env[] = "CGI";
+const char apreq_env_name[] = "CGI";
+const unsigned int apreq_env_magic_number = 20031014;
 
 #define CRLF "\015\012"
 

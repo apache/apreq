@@ -113,12 +113,15 @@
  */
 
 #ifndef WIN32
-extern const char apreq_env[];
+extern const char apreq_env_name[];
+extern const unsigned int apreq_env_magic_number; /**<+ YYYYMMDD */
 #else
 #if defined(MOD_APREQ_EXPORTS) || defined(LIBAPREQ_CGI_EXPORTS)
-__declspec(dllexport) const char apreq_env[];
+__declspec(dllexport) const char apreq_env_name[];
+__declspec(dllexport) const unsigned int apreq_env_magic_number;
 #else
-__declspec(dllimport) const char apreq_env[];
+__declspec(dllimport) const char apreq_env_name[];
+__declspec(dllimport) const unsigned int apreq_env_magic_number;
 #endif
 #endif
 

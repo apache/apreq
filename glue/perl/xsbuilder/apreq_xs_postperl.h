@@ -188,7 +188,7 @@ static XS(apreq_xs_##type##_env)                        \
     dXSARGS;                                            \
     /* map environment to package */                    \
                                                         \
-    if (strcmp(apreq_env, "APACHE2") == 0)              \
+    if (strcmp(apreq_env_name, "APACHE2") == 0)         \
         class = "Apache::RequestRec";                   \
                                                         \
     /* else if ... add more conditionals here as        \

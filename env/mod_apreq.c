@@ -82,6 +82,9 @@
  * @{
  */
 
+const char apreq_env_name[] = "APACHE2"; /**< internal name of module */
+const unsigned int apreq_env_magic_number = 20031014; /**< ABI version */
+
 /** The warehouse. */
 struct env_config {
     apreq_jar_t        *jar;
@@ -96,8 +99,6 @@ struct filter_ctx {
     apr_status_t        status;
 };
 
-
-const char apreq_env[] = "APACHE2"; /**< internal name of module */
 static const char filter_name[] = "APREQ";
 module AP_MODULE_DECLARE_DATA apreq_module;
 

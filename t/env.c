@@ -65,7 +65,9 @@
 
 /* rigged environent for unit tests */
 
-static const char env_name[] = "CGI";
+const char apreq_env_name[] = "CGI";
+const unsigned int apreq_env_magic_number = 20031014;
+
 #define CRLF "\015\012"
 
 apr_bucket_brigade *bb;
