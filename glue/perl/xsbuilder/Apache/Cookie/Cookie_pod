@@ -14,7 +14,7 @@ The Apache::Cookie module is a Perl interface to the cookie routines
 in I<libapreq>.  The interface is based on Lincoln Stein's CGI::Cookie
 module.
 
-=head1 METHODS
+=head1 Apache::Cookie METHODS
 
 I<Apache::Cookie> does not export any symbols to the caller's namespace.
 Except for the request object passed to C<Apache::Cookie::new>, the OO
@@ -23,7 +23,7 @@ documentation for more details.
 
 =over 4
 
-=head2 new [OK]
+=head2 new
 
 Just like CGI::Cookie::new, but requires an I<Apache> request object:
 
@@ -36,79 +36,90 @@ Just like CGI::Cookie::new, but requires an I<Apache> request object:
                              -secure  =>  1 
                             ); 
 
+The C<-value> attribute may be either an arrayref, a hashref, or
+an object with a C<freeze> method.  The <freeze> method must serialize
+the object in a manner compatible with the "value" portion of the 
+Cookie specs. Specifically, it must take care to avoid header tokens [;,=] 
+and whitespace characters in its output.
+
 =head2 bake
 
-Put cookie in the oven to bake. 
-(Add a I<Set-Cookie> header to the outgoing headers table.) 
+Add a I<Set-Cookie> header to the outgoing headers table.
 
     $cookie->bake;
 
-=head2 parse [BIZARRE: should be a class function: sub parse { fetch shift } ]
+=head2 bake2
 
-This method parses the given string if present, otherwise, the incoming 
-I<Cookie> header:
+Add a I<Set-Cookie2> header to the outgoing headers table.
 
-    my $cookies = $cookie->parse; #hash ref
+    $cookie->bake2;
 
-    my %cookies = $cookie->parse;
-
-    my %cookies = $cookie->parse($cookie_string);
-
-=head2 fetch [WRONG: requires explicit $r argument now]
+=head2 fetch
 
 Fetch and parse the incoming I<Cookie> header:
 
-    my $cookies = Apache::Cookie->fetch; #hash ref
+    my $cookies = Apache::Cookie->fetch($r); #hash ref
 
-    my %cookies = Apache::Cookie->fetch;
+    my %cookies = Apache::Cookie->fetch($r);
 
-=head2 as_string [OK]
+=head2 as_string
 
 Format the cookie object as a string:
 
  #same as $cookie->bake
- $r->err_headers_out->add("Set-Cookie" => $cookie->as_string);
+ $r->headers_out->add("Set-Cookie" => $cookie->as_string);
 
-=head2 name [OK]
+=head2 name
 
-Get or set the name of the cookie:
+Get the name of the cookie:
 
  my $name = $cookie->name;
 
- $cookie->name("Foo");
+=head2 value
 
-=head2 value [TODO: serialize/marshal raw cookies: "set" is a PITA]
-
-Get or set the values of the cookie:
+Get the value of the cookie:
 
  my $value = $cookie->value;
  my @values = $cookie->value;
 
- $cookie->value("string");
- $cookie->value(\@array);
+Note: if the cookie's value was serialized from an object possessing a 
+C<freeze> method, one way to reconstitute the object is by subclassing 
+Apache::Cookie with a package that provides the associated C<thaw> sub:
 
-=head2 domain [OK]
+  package My::Cookie;
+  use base 'Apache::Cookie';
+  sub thaw { ... }
+  bless $cookie, __PACKAGE__;
+
+  my $obj = $cookie->value;  # same as $cookie->thaw($cookie->raw_value);
+
+=head2 raw_value
+
+Gets the raw (opaque) value string as it appears in the incoming
+"Cookie" header.
+
+=head2 domain
 
 Get or set the domain for the cookie:
 
  my $domain = $cookie->domain;
  $cookie->domain(".cp.net");
 
-=head2 path [OK]
+=head2 path
 
 Get or set the path for the cookie:
 
  my $path = $cookie->path;
  $cookie->path("/");
 
-=head2 expires [OK]
+=head2 expires
 
 Get or set the expire time for the cookie:
 
  my $expires = $cookie->expires;
  $cookie->expires("+3h");
 
-=head2 secure [OK]
+=head2 secure
 
 Get or set the secure flag for the cookie:
 
@@ -117,22 +128,20 @@ Get or set the secure flag for the cookie:
 
 =back
 
-=head1 CAVEATS
+=head1 CHANGES to the v1 API:
 
-=over 4 [WRONG- this section is unnecessary now]
+=over 4
 
-The underlying C code for the Apache::Cookie module
-presents some unexpected results for Perl programmers
-when dealing with null bytes ('\0's) inside cookies.
-Native C commonly uses "null-terminated strings" when
-storing scalar string values. This means that C uses
-a '\0' byte to mark the end of the string(EOS). What
-this means for Perl programmers is that if you wish to
-create a cookie with a '\0' byte, the underlying C library
-will simply truncate the value at the '\0' byte.  A cookie
-with the value '\0' will similarly simply be ignored, as
-the C library will not detect any content whatsoever.
-This problem is solved in the libapreq-2.0 library.
+=item * C<Apache::Cookie::fetch> requires an C<$r> object as (second) argument.
+
+=item * C<Apache::Cookie::parse> is gone.
+
+=item * C<Apache::Cookie::new> can take an object as its -value arg, assuming
+        the object has a valid C<freeze> method.
+
+=item * C<name> and <value> no longer accept a "set" argument. In other words,
+        neither a cookie's name, nor its value, may be modified.  A new cookie
+        should be made instead.
 
 =back
 
@@ -140,20 +149,15 @@ This problem is solved in the libapreq-2.0 library.
 
 =over 4 
 
-=item RFC 2964-5 are not fully implemented. [WRONG- implemented now]
-
-=item C<value> should also accept a hash ref as argument. [TODO]
-
 =back
 
 =head1 SEE ALSO
 
 Apache(3), Apache::Request(3), CGI::Cookie(3)
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-Doug MacEachern, updated for v1.0 by Joe Schaefer
-updated for v1.1 by Issac Goldstand
+Doug MacEachern, Joe Schaefer, Issac Goldstand
 
 =head1 MISSING DOCS
 
