@@ -30,4 +30,14 @@ clean-local: perl_clean
 
 test: perl_test
 
+else
+
+all-local:
+
+install-exec-local:
+
+clean-local:
+
+test:
+
 endif

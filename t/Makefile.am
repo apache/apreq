@@ -1,11 +1,11 @@
 INCLUDES = -I../src @APR_INCLUDES@ @APU_INCLUDES@
-LIBS = ../src/lib@APREQ_LIBNAME@.la @APR_LTLIBS@ @APU_LTLIBS@
+LIBS = ../src/libapreq2.la @APR_LTLIBS@ @APU_LTLIBS@
 
-noinst_LIBRARIES = lib@APREQ_LIBNAME@_tests.a
-lib@APREQ_LIBNAME@_tests_a_SOURCES = CuTest.h test_apreq.h CuTest.c cookie.c params.c parsers.c
+noinst_LIBRARIES = libapreq2_tests.a
+libapreq2_tests_a_SOURCES = CuTest.h test_apreq.h CuTest.c cookie.c params.c parsers.c
 
 check_PROGRAMS = testall
-testall_LDADD  = lib@APREQ_LIBNAME@_tests.a
+testall_LDADD  = libapreq2_tests.a
 
 test:	check
 	./testall -v

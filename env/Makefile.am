@@ -2,6 +2,7 @@ INCLUDES = -I../src @APACHE2_INCLUDES@ @APR_INCLUDES@ @APU_INCLUDES@
 LIBS = ../src/lib@APREQ_LIBNAME@.la @APR_LTLIBS@ @APU_LTLIBS@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
 EXTRA_DIST = t c-modules
+mod_apreq_la_LDFLAGS = -export-dynamic -module -avoid-version -rpath `@APACHE2_APXS@ -q LIBEXECDIR`
 
 check_PROGRAMS = test_cgi
 
@@ -24,11 +25,8 @@ t/TEST : Makefile.am t/TEST.PL
 
 else
 
-APACHE2_MODULES=`@APACHE2_APXS@ -q LIBEXECDIR`
-
 noinst_LTLIBRARIES = mod_apreq.la
 mod_apreq_la_SOURCES = mod_apreq.c
-mod_apreq_la_LDFLAGS = -export-dynamic -module -avoid-version -rpath $(APACHE2_MODULES)
 
 install-exec-local: mod_apreq.la
 	@APACHE2_APXS@ -i -a -n apreq mod_apreq.la

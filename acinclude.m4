@@ -1,4 +1,4 @@
-AC_DEFUN(AC_APREQ, [
+AC_DEFUN([AC_APREQ], [
 
         AC_ARG_ENABLE(perl_glue,
                 AC_HELP_STRING([--enable-perl-glue],[build perl modules Apache::Request and Apache::Cookie]),
@@ -103,9 +103,9 @@ AC_DEFUN(AC_APREQ, [
           USE_VPATH=1
         fi
 
-        AC_SUBST(top_builddir)
-        AC_SUBST(abs_srcdir)
-        AC_SUBST(abs_builddir)
+        dnl AC_SUBST(top_builddir)
+        dnl AC_SUBST(abs_srcdir)
+        dnl AC_SUBST(abs_builddir)
 
         get_version="$abs_srcdir/build/get-version.sh"
         version_hdr="$abs_srcdir/src/apreq_version.h"
@@ -147,7 +147,7 @@ AC_DEFUN(AC_APREQ, [
         AC_SUBST(PERL)
 ])
 
-AC_DEFUN(APR_ADDTO,[
+AC_DEFUN([APR_ADDTO],[
   if test "x$$1" = "x"; then
     echo "  setting $1 to \"$2\""
     $1="$2"
