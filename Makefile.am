@@ -3,8 +3,8 @@ SUBDIRS = src env glue t
 EXTRA_DIST = LICENSE NOTICE README INSTALL CHANGES FAQ MANIFEST.SKIP Makefile.PL buildconf build win32 docs
 APU_SRCDIR=`@APU_CONFIG@ --srcdir`
 APR_SRCDIR=`@APR_CONFIG@ --srcdir`
-APU_DOX = (cd $(APU_SRCDIR); cat - docs/doxygen.conf | doxygen -)
-APR_DOX = (cd $(APR_SRCDIR); cat - docs/doxygen.conf | doxygen -)
+APU_DOX = (cd $(APU_SRCDIR); cat docs/doxygen.conf - | doxygen -)
+APR_DOX = (cd $(APR_SRCDIR); cat docs/doxygen.conf - | doxygen -)
 POD_PREFIX=glue/perl/xsbuilder/Apache
 COOKIE_POD=$(POD_PREFIX)/Cookie/Cookie_pod
 REQUEST_POD=$(POD_PREFIX)/Request/Request_pod
@@ -45,14 +45,9 @@ reconfig:
 docs_clean:
 	-rm -rf docs
 
-docs:	src env glue build/doxygen.conf apr_tags pod2html feather.gif
+docs:	src env glue build/doxygen.conf apr_tags pod2html docs/html/feather.gif
 	@PERL@ build/version_check.pl doxygen
 	doxygen build/doxygen.conf
-	cp feather.gif docs/html
-
-feather.gif:
-	wget http://httpd.apache.org/docs-2.0/images/feather.gif
-
 
 docs_install: docs
 	@$(NORMAL_INSTALL)
@@ -70,9 +65,15 @@ Upload.html: Makefile.am $(UPLOAD_POD)
 
 apr_tags: docs/apr.tag docs/apu.tag
 
+docs/html/feather.gif:
+	-mkdir docs
+	-mkdir docs/html
+	(cd docs/html; wget http://httpd.apache.org/docs-2.0/images/feather.gif)
+
 docs/apu.tag:
 	-mkdir docs
 	echo GENERATE_TAGFILE=`pwd`/docs/apu.tag | $(APU_DOX)
+
 docs/apr.tag:
 	-mkdir docs
 	echo GENERATE_TAGFILE=`pwd`/docs/apr.tag | $(APR_DOX)
