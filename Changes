@@ -6,7 +6,9 @@ Revision history for libapreq
 
 Include patch and supporting documentation for OS X [David Wheeler].
 Temporarily revert test suite to Apache::test. [Joe Schaefer]
-Update Request.xs to avoid some segfaults in perl 5.8 [Sven Geisler].
+Update Request.xs to avoid segfaults caused by empty file uploads
+via an upload_hook. The upload_hook isn't called in this case,
+which triggered a segfault in $upload->fh [Sven Geisler].
 
 =item 1.04 - November 5, 2002
 

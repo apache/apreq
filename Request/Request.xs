@@ -495,9 +495,14 @@ ApacheUpload_fh(upload)
 
     PREINIT:
     int fd;
+    FILE *fp;
 
     CODE:
-    fd = PerlLIO_dup(fileno(ApacheUpload_fh(upload)));
+    fp = ApacheUpload_fh(upload);
+    if (fp == NULL)
+        XSRETURN_UNDEF;
+
+    fd = PerlLIO_dup(fileno(fp));
 
     /* XXX: user should check errno on undef returns */
 
