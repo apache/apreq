@@ -7,8 +7,6 @@ use Apache::RequestRec;
 use Apache::RequestIO;
 use Apache::Request ();
 use Apache::Connection;
-use APR::Brigade;
-use APR::Bucket;
 
 sub handler {
     my $r = shift;

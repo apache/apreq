@@ -6,11 +6,10 @@ use warnings FATAL => 'all';
 use APR;
 use Apache::RequestRec;
 use Apache::RequestIO;
-use Devel::Peek;
+
 sub handler {
     my $r = shift;
     $r = __PACKAGE__->new($r); # tickles refcnt bug in apreq-1
-    Dump($r);
     die "Wrong package: ", ref $r unless $r->isa('TestApReq::inherit');
     $r->content_type('text/plain');
     my $j = Apache::Cookie->jar($r->env);

@@ -84,12 +84,12 @@ static SV *apreq_xs_find_obj(SV *in, const char *key)
             MAGIC *mg;
             SV **svp;
         case SVt_PVHV:
-          if (SvMAGICAL(sv) && (mg = mg_find(sv,PERL_MAGIC_tied))) {
+            if (SvMAGICAL(sv) && (mg = mg_find(sv,PERL_MAGIC_tied))) {
                in = mg->mg_obj;
                break;
-           }
-           else if ((svp = hv_fetch((HV *)sv, key, 1, FALSE)) ||
-                    (svp = hv_fetch((HV *)sv, altkey, 2, FALSE)))
+            }
+            else if ((svp = hv_fetch((HV *)sv, key, 1, FALSE)) ||
+                     (svp = hv_fetch((HV *)sv, altkey, 2, FALSE)))
             {
                 in = *svp;
                 break;
@@ -215,7 +215,7 @@ static XS(apreq_xs_##type##_env)                        \
 }
 
 
-/** requires type##2sv macro */
+/** requires apreq_##type (type is either request or jar) */
 
 #define APREQ_XS_DEFINE_OBJECT(type)                                    \
 static XS(apreq_xs_##type)                                              \

@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
-plan tests => 2;
+plan tests => 3;
 
 my $location = "/TestApReq__request";
 #print GET_BODY $location;
@@ -22,8 +22,13 @@ my $location = "/TestApReq__request";
 {
     # upload a string as a file
     my $test  = 'upload';
-    my $value = 'dataUpload' x 100_000;
-    ok t_cmp($value,
-             UPLOAD_BODY("$location?test=$test", content => $value),
-             "basic upload");
+    my $value = 'DataUpload' x 100_000;
+    my $result = UPLOAD_BODY("$location?test=$test", content => $value); 
+    ok t_cmp($value, $result, "basic upload");
+    my $i;
+    for ($i = 0; $i < length $value; ++$i) {
+        last if substr($value,$i,1) ne substr($result,$i,1);
+    }
+
+    ok t_cmp(length($value), $i, "basic upload length");    
 }
