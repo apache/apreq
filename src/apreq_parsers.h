@@ -37,11 +37,20 @@ struct apreq_parser_t {
 #define apreq_ctx_to_parser(ptr) apreq_value_to_parser(apreq_strtoval(ptr))
 
 #define apreq_parser_enctype(p)  ((p)->v.name)
-#define apreq_parser_data(p)     ((p)->v.data)
+#define apreq_parser_ctx(p)     ((p)->v.data)
 
 APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *p,
                                                 apr_bucket_brigade *bb,
                                                 apreq_parser_t *parser);
+
+APREQ_DECLARE(apr_status_t) apreq_parse_urlencoded(apr_pool_t *pool,
+                                                   apr_bucket_brigade *bb,
+                                                   apreq_parser_t *parser);
+
+APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
+                                                  apr_bucket_brigade *bb,
+                                                  apreq_parser_t *parser);
+
 
 APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
                                                   const char *enctype,
