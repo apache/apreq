@@ -27,7 +27,8 @@ my $cwd = WIN32 ?
     Win32::GetLongPathName(cwd) : cwd;
 $cwd =~ m{^(.+)/glue/perl$} or die "Can't find base directory";
 my $base_dir = $1;
-my $src_dir = "$base_dir/src";
+my $inc_dir = "$base_dir/include";
+my $lib_dir = "$base_dir/library";
 my $xs_dir = "$base_dir/glue/perl/xsbuilder";
 
 sub slurp($$)
@@ -97,14 +98,14 @@ else {
 
 my $apreq_libs = WIN32 ?
     qq{-L$base_dir/win32/libs -llib$apreq_libname } :
-    qq{-L$src_dir/.libs -l$apreq_libname};
+    qq{-L$lib_dir/.libs -l$apreq_libname};
 
 my $mp2_typemaps = Apache::Build->new->typemaps;
 
 package My::ParseSource;
 use base qw/ExtUtils::XSBuilder::ParseSource/;
 use constant WIN32 => ($^O =~ /Win32/i);
-my @dirs = ("$base_dir/src");
+my @dirs = ("$base_dir/include");
 sub package {'Apache::libapreq2'}
 sub unwanted_includes {[qw/apreq_tables.h apreq_config.h/]}
 
@@ -349,7 +350,7 @@ ModPerl::MM::WriteMakefile(
     'NAME'      => '$class',
     'VERSION'   => '$version',
     'TYPEMAPS'  => [qw(@$mp2_typemaps $typemap)],
-    'INC'       => "-I$base_dir/glue/perl/xs -I$src_dir -I$xs_dir $apache_includes",
+    'INC'       => "-I$base_dir/glue/perl/xs -I$inc_dir -I$xs_dir $apache_includes",
     'LIBS'      => "$apreq_libs $apr_libs",
 } ;
 $txt .= "'depend'  => $deps,\n" if ($deps) ;
