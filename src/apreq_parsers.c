@@ -710,7 +710,7 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
     return APR_INCOMPLETE;
 }
 
-#define MAX_FILE_BUCKET_LENGTH ( 1 << ( 6 * sizeof(apr_size_t) ) )
+#define MAX_FILE_BUCKET_LENGTH ((apr_off_t) 1 << (6 * sizeof(apr_size_t)))
 
 APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool, 
                                                  const apreq_cfg_t *cfg,
@@ -750,8 +750,6 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
         if (s != APR_SUCCESS)
             return s;
 
-        /* assert (wlen == len); */
-
         last = apr_bucket_file_create(file, wlen, 0, pool, out->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(out, last);
     }
@@ -762,7 +760,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
         apr_bucket_copy(last, &e);
         APR_BRIGADE_INSERT_TAIL(out, e);
         e->length = 0;
-        e->start = last->length;
+        e->start = last->length + 1;
         last = e;
     }
     s = apreq_brigade_fwrite(f->fd, &wlen, in);
