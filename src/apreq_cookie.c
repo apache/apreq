@@ -30,7 +30,7 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie(const apreq_jar_t *jar,
     const char *val = apr_table_get(jar->cookies, name);
     if (val == NULL)
         return NULL;
-    return apreq_value_to_cookie(apreq_char_to_value(val));
+    return apreq_value_to_cookie(apreq_char_to_value(apreq_deconst(val)));
 }
 
 APREQ_DECLARE(void) apreq_jar_add(apreq_jar_t *jar, 
@@ -61,8 +61,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
 
 static int has_rfc_cookie(void *ctx, const char *key, const char *val)
 {
-    const apreq_cookie_t *c = apreq_value_to_cookie(
-                      apreq_char_to_value(val));
+    const apreq_cookie_t *c = apreq_value_to_cookie(apreq_char_to_value(apreq_deconst(val)));
 
     return c->version == NETSCAPE; /* 0 -> non-netscape cookie found, stop.
                                       1 -> not found, keep going. */

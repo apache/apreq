@@ -31,15 +31,17 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
 {
     apreq_param_t *param = apr_palloc(p, nlen + vlen + 1 + sizeof *param);
     apreq_value_t *v = &param->v;
+    char *writable_name;
     param->info = NULL;
     param->bb = NULL;
 
     v->size = vlen;
     memcpy(v->data, val, vlen);
     v->data[vlen] = 0;
-    v->name = v->data + vlen + 1;
-    memcpy((char *)v->name, name, nlen);
-    ((char *)v->name)[nlen] = 0;
+    writable_name = v->data + vlen + 1;
+    memcpy(writable_name, name, nlen);
+    writable_name[nlen] = 0;
+    v->name = writable_name;
 
     return param;
 }

@@ -15,10 +15,10 @@
 */
 
 #include "apreq_env.h"
-#include "test_apreq.h"
 #include "apreq.h"
 #include "apreq_params.h"
 #include "apr_strings.h"
+#include "test_apreq.h"
 
 static apreq_request_t *r = NULL;
 
@@ -177,10 +177,10 @@ static void quote_strings(CuTest *tc)
     apr_size_t exp_len, res_len, res_quote_len;
     char *res = apr_palloc(p,24);
     char *res_quote = apr_palloc(p,24);
-    char *exp = apr_palloc(p,24);
+    const char *exp = apr_palloc(p,24);
     int i;
-    char * arr[] = {"cest", "\"cest", "ce\"st", "\"cest\""};
-    char * arr_quote[] = 
+    const char * arr[] = {"cest", "\"cest", "ce\"st", "\"cest\""};
+    const char * arr_quote[] = 
         {"\"cest\"", "\"\\\"cest\"", "\"ce\\\"st\"", "\"\\\"cest\\\"\""};
     apr_size_t arr_len[] = {4, 5, 5, 6};
     apr_size_t arr_quote_len[] = {6, 8, 8, 10};

@@ -17,10 +17,10 @@
 #include "apr_time.h"
 #include "apr_strings.h"
 #include "apreq_env.h"
-#include "test_apreq.h"
 #include "apreq.h"
 #include "apreq_tables.h"
 #include "apr_hash.h"
+#include "test_apreq.h"
 #if APR_HAVE_STDIO_H
 #include <stdio.h>
 #endif

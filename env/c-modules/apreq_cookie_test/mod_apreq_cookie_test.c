@@ -14,12 +14,14 @@
 **  limitations under the License.
 */
 
+#ifdef CONFIG_FOR_HTTPD_TEST
 #if CONFIG_FOR_HTTPD_TEST
 
 <Location /apreq_cookie_test>
    SetHandler apreq_cookie_test
 </Location>
 
+#endif
 #endif
 
 #define APACHE_HTTPD_TEST_HANDLER apreq_cookie_test_handler

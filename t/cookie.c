@@ -15,10 +15,10 @@
 */
 
 #include "apreq_env.h"
-#include "test_apreq.h"
 #include "apreq.h"
 #include "apreq_cookie.h"
 #include "apr_strings.h"
+#include "test_apreq.h"
 
 static apreq_jar_t *j = NULL;
 
@@ -112,10 +112,11 @@ static void rfc_cookie(CuTest *tc)
 static void ua_version(CuTest *tc)
 {
     apreq_cookie_version_t v;
+    char version[] = "$Version=\"1\"";
 
     v = apreq_ua_cookie_version(NULL);
     CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_NETSCAPE, v);
-    v = apreq_ua_cookie_version("$Version=\"1\"");
+    v = apreq_ua_cookie_version(version);
     CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_RFC, v);
 
 }

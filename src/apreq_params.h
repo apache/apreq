@@ -229,6 +229,9 @@ APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
                            apreq_param_t *param,       \
                            apr_bucket_brigade *bb
 
+typedef apr_status_t (*apreq_parser_function_t)(APREQ_PARSER_ARGS);
+typedef apr_status_t (*apreq_hook_function_t)(APREQ_HOOK_ARGS);
+
 /**
  * Declares a API parser.
  */
@@ -246,7 +249,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
  *
  */
 struct apreq_hook_t {
-    apr_status_t  (*hook) (APREQ_HOOK_ARGS);
+    apreq_hook_function_t hook;
     apreq_hook_t   *next;
     void           *ctx;
 };
@@ -256,7 +259,7 @@ struct apreq_hook_t {
  *
  */
 struct apreq_parser_t {
-    apr_status_t (*parser) (APREQ_PARSER_ARGS);
+    apreq_parser_function_t parser;
     const char    *enctype;
     apreq_hook_t  *hook;
     void          *ctx;
@@ -352,7 +355,7 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser);
 APREQ_DECLARE(apreq_parser_t *)
         apreq_make_parser(apr_pool_t *pool,
                           const char *enctype,
-                          apr_status_t (*parser) (APREQ_PARSER_ARGS),
+                          apreq_parser_function_t parser,
                           apreq_hook_t *hook,
                           void *ctx);
 
@@ -367,7 +370,7 @@ APREQ_DECLARE(apreq_parser_t *)
  */
 APREQ_DECLARE(apreq_hook_t *)
         apreq_make_hook(apr_pool_t *pool,
-                        apr_status_t (*hook) (APREQ_HOOK_ARGS),
+                        apreq_hook_function_t hook,
                         apreq_hook_t *next,
                         void *ctx);
 
@@ -413,7 +416,7 @@ APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env,
  */
 
 APREQ_DECLARE(void) apreq_register_parser(const char *enctype, 
-                            apr_status_t (*parser) (APREQ_PARSER_ARGS));
+                                          apreq_parser_function_t parser);
 
 
 /**

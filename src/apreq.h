@@ -86,7 +86,20 @@ typedef apreq_value_t *(apreq_value_copy_t)(apr_pool_t *p,
  */
 
 #define apreq_char_to_value(ptr)  apreq_attr_to_type(apreq_value_t, data, ptr)
-#define apreq_strtoval(ptr)  apreq_char_to_value(ptr)
+
+/** convert a const pointer into a non-const. WARNING: this is
+    dangerous. Use only if you really know what you're doing. Only for
+    Dirty Hacks (TM) */
+static APR_INLINE void *apreq_deconst(const void *p) {
+    /* go around the gcc warning */
+    /* FIXME: does this work on all platforms? */
+    long v = (long)p;
+    return (void*)v;
+}
+
+static APR_INLINE apreq_value_t *apreq_strtoval(const char *name) {
+    return (apreq_value_t*)apreq_char_to_value(apreq_deconst(name));
+}
 
 /**
  * Computes the length of the string, but unlike strlen(),
@@ -365,14 +378,14 @@ APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
  * @param p  Setaside buckets into this pool.
  */
 
-#define APREQ_BRIGADE_SETASIDE(bb,p) do {                               \
-    apr_bucket *e;                                                      \
-    for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);      \
-         e = APR_BUCKET_NEXT(e))                                        \
-    {                                                                   \
-        apr_bucket_setaside(e, p);                                      \
-    }                                                                   \
-} while (0)
+static APR_INLINE void APREQ_BRIGADE_SETASIDE(apr_bucket_brigade *bb, apr_pool_t *p) {
+    apr_bucket *e;
+    for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
+         e = APR_BUCKET_NEXT(e))
+    {
+        apr_bucket_setaside(e, p);
+    }
+}
 
 
 /**

@@ -58,7 +58,11 @@ CuString* CuStringNew(void);
 void CuStringRead(CuString* str, char* path);
 void CuStringAppend(CuString* str, const char* text);
 void CuStringAppendChar(CuString* str, char ch);
-void CuStringAppendFormat(CuString* str, const char* format, ...);
+void CuStringAppendFormat(CuString* str, const char* format, ...)
+#ifdef __GNUC__
+     __attribute__((format(printf,2,3)))
+#endif
+     ;
 void CuStringResize(CuString* str, int newSize);
 
 /* CuTest */
@@ -79,8 +83,8 @@ struct CuTest
 };
 
 void CuInit(int argc, char *argv[]);
-void CuTestInit(CuTest* t, char* name, TestFunction function);
-CuTest* CuTestNew(char* name, TestFunction function);
+void CuTestInit(CuTest* t, const char* name, TestFunction function);
+CuTest* CuTestNew(const char* name, TestFunction function);
 void CuFail(CuTest* tc, const char* message);
 void CuNotImpl(CuTest* tc, const char* message);
 void CuAssert(CuTest* tc, const char* message, int condition);
@@ -111,8 +115,8 @@ typedef struct
 } CuSuite;
 
 
-void CuSuiteInit(CuSuite* testSuite, char* name);
-CuSuite* CuSuiteNew(char* name);
+void CuSuiteInit(CuSuite* testSuite, const char* name);
+CuSuite* CuSuiteNew(const char* name);
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase);
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2);
 void CuSuiteRun(CuSuite* testSuite);
@@ -128,7 +132,7 @@ typedef struct
 } CuSuiteList;
 
 
-CuSuiteList* CuSuiteListNew(char* name);
+CuSuiteList* CuSuiteListNew(const char* name);
 void CuSuiteListAdd(CuSuiteList* testSuite, CuSuite *testCase);
 void CuSuiteListRun(CuSuiteList* testSuite);
 void CuSuiteListRunWithSummary(CuSuiteList* testSuite);

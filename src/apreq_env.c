@@ -22,7 +22,7 @@
 #include "apr_file_io.h"
 
 
-static const apreq_env_t *apreq_env;
+extern const apreq_env_t *apreq_env;
 extern void apreq_parser_initialize(void);
 
 
@@ -221,7 +221,6 @@ static apr_status_t cgi_header_out(void *env, const char *name,
 
 static apreq_jar_t *cgi_jar(void *env, apreq_jar_t *jar)
 {
-
     if (jar != NULL) {
         apreq_jar_t *old_jar = ctx.jar;
         ctx.jar = jar;
@@ -245,7 +244,7 @@ static apreq_request_t *cgi_request(void *env,
 
 
 typedef struct {
-    char    *t_name;
+    const char *t_name;
     int      t_val;
 } TRANS;
 
@@ -268,7 +267,8 @@ static void cgi_log(const char *file, int line, int level,
 {
     dP;
     char buf[256];
-    char *log_level_string, *remote_addr;
+    char *log_level_string, *ra;
+    const char *remote_addr;
     unsigned log_level = APREQ_LOG_WARNING;
     char date[APR_CTIME_LEN];
 #ifndef WIN32
@@ -281,10 +281,12 @@ static void cgi_log(const char *file, int line, int level,
 
     level &= APREQ_LOG_LEVELMASK;
 
-    if (level > log_level)
+    if (level > (int)log_level)
         return;
 
-    if (apr_env_get(&remote_addr, "REMOTE_ADDR", p) != APR_SUCCESS)
+    if (apr_env_get(&ra, "REMOTE_ADDR", p) == APR_SUCCESS)
+        remote_addr = ra;
+    else
         remote_addr = "address unavailable";
 
     apr_ctime(date, apr_time_now());
@@ -448,6 +450,6 @@ static apr_ssize_t cgi_max_brigade(void *env, apr_ssize_t bytes)
 static APREQ_ENV_MODULE(cgi, APREQ_MODULE_NAME, 
                         APREQ_MODULE_MAGIC_NUMBER);
 
-static const apreq_env_t *apreq_env = &cgi_module;
+const apreq_env_t *apreq_env = &cgi_module;
 
 /** @} */

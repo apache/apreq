@@ -142,7 +142,12 @@ AC_DEFUN([AC_APREQ], [
         fi
 
         if test "x$USE_MAINTAINER_MODE" != "xno"; then
-            CPPFLAGS="$CPPFLAGS -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -Werror"
+            CPPFLAGS="$CPPFLAGS -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations"
+            # -Werror temporarily removed until the next patch is applied
+            if test "$GCC" = "yes"; then
+                CPPFLAGS="$CPPFLAGS -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-noreturn -Wmissing-format-attribute -Wpacked -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wendif-labels -Wcast-align -Wpacked"
+                # -Wdeclaration-after-statement is only supported on gcc 3.4+
+            fi
         fi
 
         if test "x$CPPFLAGS" = "x"; then

@@ -30,6 +30,8 @@ APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t  *p,
                                                const apr_size_t vlen)
 {
     apreq_value_t *v = apr_palloc(p, vlen + nlen + 1 + sizeof *v);
+    char *writable_name;
+
     if (v == NULL)
         return NULL;
 
@@ -37,9 +39,9 @@ APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t  *p,
     memcpy(v->data, val, vlen);
     v->data[vlen] = 0;
 
-    v->name = v->data + vlen + 1;
-    memcpy((char *)v->name, name, nlen);
-    ((char *)v->name)[nlen] = 0;
+    v->name = writable_name = v->data + vlen + 1;
+    memcpy(writable_name, name, nlen);
+    writable_name[nlen] = 0;
 
     v->flags = 0;
     return v;
@@ -67,8 +69,7 @@ apreq_value_t * apreq_merge_values(apr_pool_t *p,
                                    const apr_array_header_t *arr)
 {
     apreq_value_t *a = *(apreq_value_t **)(arr->elts);
-    apreq_value_t *v = apreq_char_to_value( 
-        apreq_join(p, ", ", arr, APREQ_JOIN_AS_IS) );
+    apreq_value_t *v = apreq_char_to_value(apreq_deconst(apreq_join(p, ", ", arr, APREQ_JOIN_AS_IS)));
     if (arr->nelts > 0)
         v->name = a->name;
     return v;
@@ -380,13 +381,13 @@ APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s,
         return -1;
 
     if (s == (const char *)d) {     /* optimize for src = dest case */
-        for ( ; s < end; ++s) {
-            if (*s == '%' || *s == '+')
+        for ( ; d < end; ++d) {
+            if (*d == '%' || *d == '+')
                 break;
-            else if (*s == 0)
-                return s - (const char *)d;
+            else if (*d == 0)
+                return (const char*)d - s;
         }
-        d = (char *)s;
+        s = (const char *)d;
     }
 
     switch (url_decode(d, &dlen, s, &slen)) {

@@ -14,6 +14,7 @@
 **  limitations under the License.
 */
 
+#ifdef CONFIG_FOR_HTTPD_TEST
 #if CONFIG_FOR_HTTPD_TEST
 
 <Location /apreq_redirect_test>
@@ -21,6 +22,7 @@
    SetHandler apreq_redirect_test
 </Location>
 
+#endif
 #endif
 
 #define APACHE_HTTPD_TEST_HANDLER apreq_redirect_test_handler

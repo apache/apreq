@@ -14,12 +14,14 @@
 **  limitations under the License.
 */
 
+#ifdef CONFIG_FOR_HTTPD_TEST
 #if CONFIG_FOR_HTTPD_TEST
 
 <Location />
    AddOutputFilter APREQ_OUTPUT_FILTER html
 </Location>
 
+#endif
 #endif
 
 #include "apache_httpd_test.h"

@@ -17,9 +17,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "test_apreq.h"
 #include "apreq_env.h"
 #include "apr_strings.h"
+#include "test_apreq.h"
 
 /* Top-level pool which can be used by tests. */
 apr_pool_t *p;
@@ -46,7 +46,7 @@ static const struct testlist {
     {"cookies", testcookie},
     {"params", testparam},
     {"parsers", testparser},
-//    {"performance", testperformance},
+    /*{"performance", testperformance},*/
     {"LastTest", NULL}
 };
 
@@ -58,7 +58,6 @@ static const struct testlist {
 
 #define CRLF "\015\012"
 
-apr_bucket_brigade *bb;
 apr_table_t *table;
 
 static apr_pool_t *test_pool(void *env)

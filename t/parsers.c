@@ -15,11 +15,11 @@
 */
 
 #include "apreq_env.h"
-#include "test_apreq.h"
 #include "apreq.h"
 #include "apreq_params.h"
 #include "apr_strings.h"
 #include "apr_xml.h"
+#include "test_apreq.h"
 
 #define CRLF "\015\012"
 
@@ -99,7 +99,6 @@ static char mix_data[] =
 "--AaB03x--" CRLF;
 
 
-extern apr_bucket_brigade *bb;
 extern apr_table_t *table;
 
 static void locate_default_parsers(CuTest *tc)
@@ -138,6 +137,7 @@ static void parse_urlencoded(CuTest *tc)
     apreq_request_t *req = apreq_request(APREQ_URL_ENCTYPE,"");
     apr_status_t rv;
     const char *enctype;
+    apr_bucket_brigade *bb;
     CuAssertPtrNotNull(tc, req);
 
     enctype = apreq_enctype(req->env);
@@ -195,6 +195,7 @@ static void parse_multipart(CuTest *tc)
 
         for (i = 0; i <= strlen(form_data); ++i) {
             const char *val;
+            char *val2;
             apr_size_t len;
             apr_table_t *t;
 
@@ -236,9 +237,9 @@ static void parse_multipart(CuTest *tc)
             CuAssertStrEquals(tc, "file1.txt", val);
             t = apreq_value_to_param(apreq_strtoval(val))->info;
             bb = apreq_value_to_param(apreq_strtoval(val))->bb;
-            apr_brigade_pflatten(bb, (char **)&val, &len, p);
+            apr_brigade_pflatten(bb, &val2, &len, p);
             CuAssertIntEquals(tc,strlen("... contents of file1.txt ..." CRLF), len);
-            CuAssertStrNEquals(tc,"... contents of file1.txt ..." CRLF, val, len);
+            CuAssertStrNEquals(tc,"... contents of file1.txt ..." CRLF, val2, len);
             val = apr_table_get(t, "content-type");
             CuAssertStrEquals(tc, "text/plain", val);
             apr_brigade_cleanup(bb);
@@ -288,7 +289,7 @@ static void parse_disable_uploads(CuTest *tc)
 
 static void parse_generic(CuTest *tc)
 {
-    const char *val;
+    char *val;
     apr_size_t vlen;
     apr_status_t rv;
     apreq_param_t *dummy;
@@ -310,7 +311,7 @@ static void parse_generic(CuTest *tc)
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
     dummy = *(apreq_param_t **)req->parser->ctx;
     CuAssertPtrNotNull(tc, dummy);
-    apr_brigade_pflatten(dummy->bb, (char **)&val, &vlen, p);
+    apr_brigade_pflatten(dummy->bb, &val, &vlen, p);
 
     CuAssertIntEquals(tc, strlen(xml_data), vlen);
     CuAssertStrNEquals(tc, xml_data, val, vlen);
@@ -353,6 +354,7 @@ static void parse_related(CuTest *tc)
     char data[] = "...Binary data here...";
     int dlen = strlen(data);
     const char *val;
+    char *val2;
     apr_size_t vlen;
     apr_status_t rv;
     int ns_map = 0;
@@ -384,9 +386,9 @@ static void parse_related(CuTest *tc)
     val = apr_table_get(param->info, "Content-Length");
     CuAssertStrEquals(tc, "400", val);
     CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
     CuAssertIntEquals(tc, 400, vlen);
-    CuAssertStrNEquals(tc,rel_data + 122, val, 400);
+    CuAssertStrNEquals(tc,rel_data + 122, val2, 400);
 
     doc = *(apr_xml_doc **)xml_hook->ctx;
     apr_xml_to_text(p, doc->root, APR_XML_X2T_FULL,
@@ -397,16 +399,16 @@ static void parse_related(CuTest *tc)
     param = apreq_param(req, "<980119.X25MNC@example.com>");
     CuAssertPtrNotNull(tc, param);
     CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
     CuAssertIntEquals(tc, dlen, vlen);
-    CuAssertStrNEquals(tc, data, val, vlen);
+    CuAssertStrNEquals(tc, data, val2, vlen);
 
     param = apreq_param(req, "<980119.X17AXM@example.com>");
     CuAssertPtrNotNull(tc, param);
     CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
     CuAssertIntEquals(tc, dlen, vlen);
-    CuAssertStrNEquals(tc, data, val, vlen);
+    CuAssertStrNEquals(tc, data, val2, vlen);
 }
 
 typedef struct {
@@ -418,6 +420,7 @@ typedef struct {
 static void parse_mixed(CuTest *tc)
 {
     const char *val;
+    char *val2;
     apr_size_t vlen;
     apr_status_t rv;
     apreq_param_t *param;
@@ -450,9 +453,9 @@ static void parse_mixed(CuTest *tc)
     CuAssertStrEquals(tc, "file1.txt", param->v.data);
 
     CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
     CuAssertIntEquals(tc, strlen("... contents of file1.txt ..."), vlen);
-    CuAssertStrNEquals(tc, "... contents of file1.txt ...", val, vlen);
+    CuAssertStrNEquals(tc, "... contents of file1.txt ...", val2, vlen);
 
     arr = apr_table_elts(req->body);
     CuAssertIntEquals(tc, 4, arr->nelts);
@@ -463,9 +466,9 @@ static void parse_mixed(CuTest *tc)
 
     param = apreq_value_to_param(apreq_strtoval(elt->val));
     CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
     CuAssertIntEquals(tc, strlen("...contents of file2.gif..."), vlen);
-    CuAssertStrNEquals(tc, "...contents of file2.gif...", val, vlen);
+    CuAssertStrNEquals(tc, "...contents of file2.gif...", val2, vlen);
 
 }
 

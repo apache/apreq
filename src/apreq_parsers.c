@@ -48,7 +48,7 @@ void apreq_parser_initialize(void);
 APREQ_DECLARE(apreq_parser_t *)
     apreq_make_parser(apr_pool_t *pool,
                       const char *enctype,
-                      apr_status_t (*parser) (APREQ_PARSER_ARGS),
+                      apreq_parser_function_t parser,
                       apreq_hook_t *hook,
                       void *ctx)
 {
@@ -62,7 +62,7 @@ APREQ_DECLARE(apreq_parser_t *)
 
 APREQ_DECLARE(apreq_hook_t *)
     apreq_make_hook(apr_pool_t *pool,
-                    apr_status_t (*hook) (APREQ_HOOK_ARGS),
+                    apreq_hook_function_t hook,
                     apreq_hook_t *next,
                     void *ctx)
 {
@@ -103,9 +103,9 @@ void apreq_parser_initialize(void)
 }
 
 APREQ_DECLARE(void) apreq_register_parser(const char *enctype, 
-                                    apr_status_t (*parser) (APREQ_PARSER_ARGS))
+                                          apreq_parser_function_t parser)
 {
-    apr_status_t (**f) (APREQ_PARSER_ARGS) = NULL;
+    apreq_parser_function_t *f = NULL;
     apreq_parser_initialize();
     if (parser != NULL) {
         f = apr_palloc(default_parser_pool, sizeof *f);
@@ -118,7 +118,7 @@ APREQ_DECLARE(void) apreq_register_parser(const char *enctype,
 
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
 {
-    apr_status_t (**f) (APREQ_PARSER_ARGS);
+    apreq_parser_function_t *f;
     apr_pool_t *pool = apreq_env_pool(env);
     const char *type = apreq_env_content_type(env);
     apr_ssize_t tlen;
@@ -154,6 +154,7 @@ static apr_status_t split_urlword(apr_table_t *t,
     apr_status_t s;
     struct iovec vec[APREQ_NELTS];
     apr_array_header_t arr;
+    char *writable_name;
 
     arr.pool     = pool;
     arr.elt_size = sizeof(struct iovec);
@@ -164,7 +165,7 @@ static apr_status_t split_urlword(apr_table_t *t,
     param->bb = NULL;
     param->info = NULL;
 
-    v->name = v->data + vlen + 1;
+    v->name = writable_name = v->data + vlen + 1;
 
     apr_brigade_partition(bb, nlen+1, &end);
 
@@ -177,13 +178,13 @@ static apr_status_t split_urlword(apr_table_t *t,
             return s;
 
         iov = apr_array_push(&arr);
-        iov->iov_base = (char *)data;
+        iov->iov_base = apreq_deconst(data);
         iov->iov_len  = dlen;
     }
 
     ((struct iovec *)arr.elts)[arr.nelts - 1].iov_len--; /* drop '=' sign */
 
-    s = apreq_decodev((char *)v->name, &v->size,
+    s = apreq_decodev(writable_name, &v->size,
                       (struct iovec *)arr.elts, arr.nelts);
     if (s != APR_SUCCESS)
         return s;
@@ -197,14 +198,14 @@ static apr_status_t split_urlword(apr_table_t *t,
     for (e = APR_BRIGADE_FIRST(bb); e != end; e = APR_BUCKET_NEXT(e)) {
         apr_size_t dlen;
         const char *data;
-        struct iovec *vec;
+        struct iovec *iov;
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
             return s;
 
-        vec = apr_array_push(&arr);
-        vec->iov_base = (char *)data;
-        vec->iov_len  = dlen;
+        iov = apr_array_push(&arr);
+        iov->iov_base = apreq_deconst(data);
+        iov->iov_len  = dlen;
     }
 
     if (end != APR_BRIGADE_SENTINEL(bb))
@@ -331,9 +332,10 @@ static apr_status_t split_header(apr_table_t *t,
 {
     apr_pool_t *pool = apr_table_elts(t)->pool;
     apreq_value_t *v = apr_palloc(pool, nlen + vlen + sizeof *v);
+    char *writable_name;
     apr_size_t off;
 
-    v->name = v->data + vlen;
+    v->name = writable_name = v->data + vlen;
 
     /* copy name */
 
@@ -352,7 +354,7 @@ static apr_status_t split_header(apr_table_t *t,
             dlen = nlen - off;
         }
 
-        memcpy((char *)v->name + off, data, dlen);
+        memcpy(writable_name + off, data, dlen);
         off += dlen;
         apr_bucket_delete(f);
     }
@@ -400,7 +402,7 @@ static apr_status_t split_header(apr_table_t *t,
         apr_bucket_delete(f);
     }
 
-    ((char *)v->name)[nlen] = 0;
+    writable_name[nlen] = 0;
 
     /* remove trailing (CR)LF from value */
     v->size = vlen - 1;

@@ -14,6 +14,7 @@
 **  limitations under the License.
 */
 
+#ifdef CONFIG_FOR_HTTPD_TEST
 #if CONFIG_FOR_HTTPD_TEST
 
 <Location /apreq_access_test>
@@ -21,6 +22,7 @@
    SetHandler apreq_request_test
 </Location>
 
+#endif
 #endif
 
 #define APACHE_HTTPD_TEST_ACCESS_CHECKER apreq_access_checker
@@ -33,7 +35,7 @@
 #include "httpd.h"
 #include "apr_strings.h"
 
-module AP_MODULE_DECLARE_DATA apreq_access_test_module;
+extern module AP_MODULE_DECLARE_DATA apreq_access_test_module;
 
 struct access_test_cfg {
     apr_pool_t *pool;
@@ -50,7 +52,7 @@ static const char *access_config(cmd_parms *cmd, void *dv, const char *arg)
 static const command_rec access_cmds[] =
 {
     AP_INIT_TAKE1("TestAccess", access_config, NULL, OR_LIMIT, "'param'"),
-    {NULL}
+    { .name = NULL }
 };
 
 static void *create_access_config(apr_pool_t *p, char *dummy)
