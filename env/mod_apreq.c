@@ -69,23 +69,6 @@
 
 #define dR  request_rec *r = (request_rec *)env
 
-/**
- * @file mod_apreq.c
- * @brief Source for mod_apreq.so.
- */
-
-/**
- * Uses apxs to compile and install.
- * @defgroup mod_apreq mod_apreq.so
- * @ingroup MODULES
- * @brief Apache-2 filter module.
- * @{
- */
-
-
-#define APREQ_MODULE_NAME "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER 20031025
-
 /** The warehouse. */
 struct env_config {
     apreq_jar_t        *jar;
@@ -103,6 +86,41 @@ struct filter_ctx {
 
 static const char filter_name[] = "APREQ";
 module AP_MODULE_DECLARE_DATA apreq_module;
+
+/**
+ * @file mod_apreq.c
+ * @brief Source code for Apache-2 filter module
+ */
+
+/**
+ * mod_apreq.c provides an input filter for using libapreq2
+ * (and allow its parsed data structures to be shared) within
+ * the Apache-2 webserver.  Using it, libapreq2 works properly
+ * in every phase of the HTTP request, from translation handlers 
+ * to output filters, and even for subrequests / internal redirects.
+ *
+ * After installing mod_apreq, be sure your webserver's
+ * httpd.conf activates it on startup with a LoadModule directive:
+ * <pre><code>
+ *
+ *     LoadModule modules/mod_apreq.so
+ *
+ * </code></pre>
+ * Normally the installation process triggered by '% make install'
+ * will make the necessary changes to httpd.conf for you.
+ * 
+ * XXX describe normal operation, effects of apreq_config_t settings, etc. 
+ *
+ * @defgroup mod_apreq Apache-2 Filter Module
+ * @ingroup MODULES
+ * @brief mod_apreq.c: Apache-2 filter module
+ * @{
+ */
+
+
+#define APREQ_MODULE_NAME "APACHE2"
+#define APREQ_MODULE_MAGIC_NUMBER 20031025
+
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -132,10 +150,10 @@ static const char *apache2_header_in(void *env, const char *name)
     return apr_table_get(r->headers_in, name);
 }
 
-/**
- * r->headers_out.
+/*
+ * r->headers_out ~> r->err_headers_out ?
  * @bug Sending a Set-Cookie header on a 304
- * requires a different header table.
+ * requires err_headers_out table.
  */
 static apr_status_t apache2_header_out(void *env, const char *name, 
                                        char *value)
@@ -443,6 +461,8 @@ static void register_hooks (apr_pool_t *p)
                              AP_FTYPE_CONTENT_SET);
 }
 
+/** @} */
+
 module AP_MODULE_DECLARE_DATA apreq_module =
 {
 	STANDARD20_MODULE_STUFF,
@@ -454,4 +474,3 @@ module AP_MODULE_DECLARE_DATA apreq_module =
 	register_hooks,			/* callback for registering hooks */
 };
 
-/** @} */

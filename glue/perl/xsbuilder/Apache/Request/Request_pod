@@ -35,8 +35,6 @@ and are therefore parsed using case-insensitive keys.
 
 =back
 
-=over 4
-
 =head2 new [NEEDS REWRITE: No longer require Apache* objects]
 
 Create a new I<Apache::Request> object with an I<Apache::RequestRec> object $r:
@@ -209,8 +207,6 @@ object associated with the given name:
 
     my $upload = $apr->upload($name);
 
-=back
-
 =head1 SUBCLASSING Apache::Request [WRONG- This is unnecessary now]
 
 The Apache::Request class cannot be subclassed directly because its constructor
@@ -272,8 +268,6 @@ Thus, the second example above can be simplified as:
 	}
 
 =head1 Apache::Upload METHODS
-
-=over 4
 
 =head2 name
 
@@ -357,8 +351,6 @@ I<link> will create a hard link to it:
 
 Typically the new name must lie on the same file system as the
 spool file. Check your system's link(2) manpage for details.
-
-=back
 
 =head1 SEE ALSO
 

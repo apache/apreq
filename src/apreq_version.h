@@ -64,9 +64,7 @@ extern "C" {
 
 /**
  * @file apreq_version.h
- * @brief 
- * 
- * libapreq's Version
+ * @brief Versioning API for libapreq
  *
  * There are several different mechanisms for accessing the version. There
  * is a string form, and a set of numbers; in addition, there are constants
@@ -117,14 +115,14 @@ extern "C" {
      APREQ_IS_DEV_STRING
 
 /**
- * Return APR-util's version information information in a numeric form.
+ * Return libapreq's version information information in a numeric form.
  *
  *  @param pvsn Pointer to a version structure for returning the version
  *              information.
  */
 APREQ_DECLARE(void) apreq_version(apr_version_t *pvsn);
 
-/** Return APU's version information as a string. */
+/** Return libapreq's version information as a string. */
 APREQ_DECLARE(const char *) apreq_version_string(void);
 
 

@@ -1,8 +1,8 @@
 /** @page CHANGES
 
-@section 2.0.1-dev Changes with libapreq2-2.0.1-dev
+@section 2.01-dev Changes with libapreq2-2.01-dev
 
--October 26, 2003 - C API [joes]
+- October 26, 2003 - C API [joes]
 
 Incorporate libapreq_cgi into libapreq2 as the default environment,
 and add apreq_env_t and initializer apreq_env_module() to manage the
@@ -10,7 +10,7 @@ environment at runtime (determining the environment at load-time
 was problematic on non-ELF systems).
 
 
-@section 2.0.0-dev Changes with libapreq2-2.0.0-dev
+@section 2.00-dev Changes with libapreq2-2.00-dev
 
 - October 24, 2003 - C API: libapreq_cgi.c [randyk, joes]
 

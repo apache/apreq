@@ -21,8 +21,6 @@ Except for the request object passed to C<Apache::Cookie::new>, the OO
 interface is identical to I<CGI::Cookie>.  Please consult the L<CGI::Cookie>
 documentation for more details.
 
-=over 4
-
 =head2 new
 
 Just like CGI::Cookie::new, but requires an I<Apache> request object:
@@ -126,8 +124,6 @@ Get or set the secure flag for the cookie:
  my $secure = $cookie->secure;
  $cookie->secure(1);
 
-=back
-
 =head1 CHANGES to the v1 API:
 
 =over 4
@@ -146,10 +142,6 @@ Get or set the secure flag for the cookie:
 =back
 
 =head1 BUGS
-
-=over 4 
-
-=back
 
 =head1 SEE ALSO
 

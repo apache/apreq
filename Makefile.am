@@ -1,12 +1,13 @@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src env glue t
-EXTRA_DIST = README INSTALL CHANGES MANIFEST.SKIP Makefile.PL build win32
+EXTRA_DIST = README INSTALL CHANGES MANIFEST.SKIP Makefile.PL buildconf build win32 docs
 APU_SRCDIR=`@APU_CONFIG@ --srcdir`
 APR_SRCDIR=`@APR_CONFIG@ --srcdir`
 APU_DOX = (cd $(APU_SRCDIR); cat - docs/doxygen.conf | doxygen -)
 APR_DOX = (cd $(APR_SRCDIR); cat - docs/doxygen.conf | doxygen -)
-COOKIE_POD=glue/perl/blib/lib/Apache/Cookie.pod
-REQUEST_POD=glue/perl/blib/lib/Apache/Request.pod
+POD_PREFIX=glue/perl/xsbuilder/Apache
+COOKIE_POD=$(POD_PREFIX)/Cookie/Cookie_pod
+REQUEST_POD=$(POD_PREFIX)/Request/Request_pod
 SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi
 EUM=ExtUtils::Manifest
 
@@ -18,10 +19,9 @@ else
 PERL_TEST = 
 endif
 
-release: distdir
+release: reconfig docs_clean docs distdir
 	@PERL@ build/version_check.pl > $(distdir)/PREREQUISITES
 	echo MANIFEST > $(distdir)/MANIFEST
-	cd $(distdir); ./buildconf
 	@cd $(distdir); @PERL@ -M$(EUM) -e "$(EUM)::mkmanifest"
 	@PERL@ -ple '$$_="$(distdir)/$$_"' $(distdir)/MANIFEST | tar -czf $(distdir).tar.gz -T -
 	rm -rf $(distdir)
@@ -37,8 +37,20 @@ release_test:
 
 apreq2_config:
 
-docs:	src env glue build/doxygen.conf
+reconfig:
+	./buildconf
+	./config.status
+
+docs_clean:
+	-rm -rf docs
+
+docs:	src env glue build/doxygen.conf apr_tags pod2html
 	doxygen build/doxygen.conf
+
+docs_install: docs
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
+	cp -a docs $(DESTDIR)$(pkgdatadir)
 
 pod2html: Request.html Cookie.html
 
@@ -47,9 +59,13 @@ Cookie.html: Makefile.am $(COOKIE_POD)
 Request.html: Makefile.am $(REQUEST_POD)
 	pod2html <$(REQUEST_POD)| perl -0777 -pe '$(SED_BODY_TAG)' > Request.html
 
-apr_tags: 
+apr_tags: docs/apr.tag docs/apu.tag
+
+docs/apu.tag:
 	-mkdir docs
 	echo GENERATE_TAGFILE=`pwd`/docs/apu.tag | $(APU_DOX)
+docs/apr.tag:
+	-mkdir docs
 	echo GENERATE_TAGFILE=`pwd`/docs/apr.tag | $(APR_DOX)
 
 test: lib_test env_test $(PERL_TEST)

@@ -67,17 +67,7 @@
 
 /**
  * @file apreq_env.c
- * @brief Source for libapreq_cgi.a.
- */
-
-/**
- * libapreq_cgi is a static library that CGI "scripts" (written
- * in C) can link against to to have libapreq work in a CGI environment.
- *
- * @defgroup libapreq_cgi libapreq_cgi.a
- * @ingroup MODULES
- * @brief Static library for linking libapreq to a CGI C-script.
- * @{
+ * @brief Implements logging and environment hooks, also the default CGI module.
  */
 
 static const apreq_env_t *apreq_env;
@@ -143,12 +133,6 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
     return apreq_env->read(env,block,bytes);
 }
 
-
-/** Default CGI module extracted from libapreq_cgi */
-
-#define APREQ_MODULE_NAME         "CGI"
-#define APREQ_MODULE_MAGIC_NUMBER 20031025
-
 #define dP apr_pool_t *p = (apr_pool_t *)env
 
 static struct {
@@ -166,6 +150,21 @@ static struct {
                        "Lookup of %s failed: status=%d", k, rc);        \
          }                                                              \
      } while (0)
+
+
+/**
+ * CGI is the default environment module included in libapreq2...
+ * XXX add more info here XXX
+ *
+ * @defgroup CGI Common Gateway Interface
+ * @ingroup MODULES
+ * @brief apreq_env.c: libapreq2's default CGI module
+ * @{
+ */
+
+
+#define APREQ_MODULE_NAME         "CGI"
+#define APREQ_MODULE_MAGIC_NUMBER 20031025
 
 static apr_pool_t *cgi_pool(void *env)
 {
