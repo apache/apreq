@@ -109,7 +109,7 @@ typedef struct {
 #define ApacheUpload_tempname(upload) upload->tempname
 
 #ifdef PerlIO
-typedef PerlIO * InputStream;
+typedef PerlIO * ApreqInputStream;
 
 /* XXX: or should this be #ifdef PERL_IMPLICIT_SYS ? */
 #ifdef WIN32
@@ -125,7 +125,7 @@ typedef PerlIO * InputStream;
 
 #else /*PerlIO not defined*/
 
-typedef FILE * InputStream;
+typedef FILE * ApreqInputStream;
 #define PerlIO_importFILE(fp,flags) 	fp
 #define PerlIO_write(a,b,c)  		fwrite((b),1,(c),(a))
 
@@ -255,14 +255,6 @@ static void apreq_add_magic(SV *sv, SV *obj, ApacheRequest *req)
     sv_magic(SvRV(sv), obj, '~', "dummy", -1);
     SvMAGIC(SvRV(sv))->mg_ptr = (char *)req->r;
 }
-
-static void apreq_close_handle(void *data)
-{
-    GV *handle = (GV*)data;
-    (void)hv_delete(GvSTASH(handle),
-		    GvNAME(handle), GvNAMELEN(handle), G_DISCARD);
-}
-
 
 #ifdef CGI_COMPAT
 static void register_uploads (ApacheRequest *req) {
@@ -505,7 +497,7 @@ MODULE = Apache::Request    PACKAGE = Apache::Upload   PREFIX = ApacheUpload_
 
 PROTOTYPES: DISABLE 
 
-InputStream
+ApreqInputStream
 ApacheUpload_fh(upload)
     Apache::Upload upload
 
@@ -530,9 +522,7 @@ ApacheUpload_fh(upload)
 	if (upload->req->parsed)
 	    PerlIO_seek(fp, 0, 0);
 
-	IoIFP(GvIOn((GV*)SvRV(ST(0)))) = fp;  	
-	ap_register_cleanup(upload->req->r->pool, (void*)SvRV(ST(0)), 
-			    apreq_close_handle, ap_null_cleanup);      
+	IoIFP(io) = fp;  	
     }
 
 long

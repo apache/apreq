@@ -3,8 +3,20 @@ Apache::Cookie		T_COOKIEOBJ
 Apache::Upload		T_PTROBJ
 Apache			T_APACHEOBJ
 const char *		T_PV
+ApreqInputStream        T_APREQIN
 
 OUTPUT
+
+T_APREQIN
+        {
+            GV *gv = newGVgen("$Package");
+            if ( do_open(gv, "<&", 2, FALSE, 0, 0, $var) )
+                sv_setsv($arg, sv_bless(newRV_noinc((SV*)gv), 
+                                        gv_stashpv("$Package",1)));
+            else
+                $arg = &PL_sv_undef;
+            (void)hv_delete(GvSTASH(gv), GvNAME(gv), GvNAMELEN(gv), G_DISCARD);
+        }
 
 T_APACHEOBJ
 	sv_setref_pv($arg, \"${ntype}\", (void*)$var);
