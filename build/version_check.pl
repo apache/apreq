@@ -2,7 +2,7 @@
 use strict;
 use warnings 'FATAL';
 use Getopt::Long qw/GetOptions/;
-GetOptions(\my %opts, "version=s"),
+GetOptions(\my %opts, "version=s");
 my ($tool, $path) = @ARGV;
 $path = $tool unless defined $path;
 

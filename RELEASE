@@ -93,11 +93,8 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
    Be sure to update the libapreq2 documentation. For instructions on updating 
    the httpd website, see build/WEBSITE.
 
-10. Post a final announcement to the announce@httpd, announce@perl, modperl@ and 
-    apreq-dev@ lists:
+10. Mail the announcement from your cvs.apache.org account by piping the 
+    "CPAN Upload" email acknowledgement (from PAUSE) through build/announcement.pl:
 
-        Subject: [ANNOUNCE] libapreq2-2.XX-dev release
+        % build/announcement.pl < CPAN_ack | ssh user@cvs.apache.org "sendmail -oi -t -odq"
 
-    Include the md5 signature in the announcement, as well as
-    a list of the latest version info and changes since the 
-    previous release.

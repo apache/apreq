@@ -1,11 +1,12 @@
 
-                    libapreq - Apache Request Library
+                    Apache HTTP Request Library
 
   What is it?
   -----------
-  libapreq (aka `apreq') is subproject of the Apache HTTP Server Project 
-  whose membership (the apreq `committers') develops and maintains the 
-  libapreq software library.
+  httpd-apreq is subproject of the Apache HTTP Server Project 
+  whose committers develop and maintain the libapreq C library
+  and its language bindings for Perl (contributions for additional 
+  language bindings are most welcome).
 
   libapreq is a safe, standards-compliant, high-performance library 
   used for parsing HTTP cookies, query-strings and POST data.  The 

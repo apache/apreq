@@ -20,7 +20,7 @@
 # APR-util script designed to allow easy command line access to APR-util
 # configuration parameters.
 
-APREQ2_DOTTED_VERSION="@APREQ2_DOTTED_VERSION@"
+APREQ_DOTTED_VERSION="@APREQ_DOTTED_VERSION@"
 
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
@@ -32,10 +32,10 @@ LIBS="@APREQ_EXPORT_LIBS@"
 INCLUDES="@APREQ_INCLUDES@"
 LDFLAGS="@APREQ_LDFLAGS@"
 
-APREQ2_LIBNAME="@APREQ_LIBNAME@"
+APREQ_LIBNAME="@APREQ_LIBNAME@"
 
-APREQ2_SOURCE_DIR="@abs_srcdir@"
-APREQ2_BUILD_DIR="@abs_builddir@"
+APREQ_SOURCE_DIR="@abs_srcdir@"
+APREQ_BUILD_DIR="@abs_builddir@"
 
 show_usage()
 {
@@ -52,14 +52,17 @@ Known values for OPTION are:
   --srcdir          print apreq2 source directory
   --link-ld         print link switch(es) for linking to libapreq2
   --link-libtool    print the libtool inputs for linking to libapreq2
-  --apreq2-la-file  print the path to the .la file, if available
-  --version         print libapreq2's version as a dotted triple
+  --la-file         print the path to the library's .la file, if available
+  --library-version print the libapreq2 library version as a dotted triple
+  --package-version print the version of the distribution
+  --package-name    print the distribution file's name
+  --package-title   print the full name of the release
   --help            print this help
 
 When linking with libtool, an application should do something like:
-  APREQ2_LIBS="\`apreq2-config --link-libtool --libs\`"
+  APREQ_LIBS="\`apreq2-config --link-libtool --libs\`"
 or when linking directly:
-  APREQ2_LIBS="\`apreq2-config --link-ld --libs\`"
+  APREQ_LIBS="\`apreq2-config --link-ld --ldflags --libs\`"
 
 An application should use the results of --includes, and --ldflags in
 their build process.
@@ -82,8 +85,8 @@ fi
 # Otherwise, being in a symlinked dir may result in incorrect output.
 if test -x "`which realpath 2>/dev/null`"; then
     thisdir="`realpath $thisdir`"
-    if test -d "$APREQ2_SOURCE_DIR"; then
-        APREQ2_SOURCE_DIR="`realpath $APREQ2_SOURCE_DIR`"
+    if test -d "$APREQ_SOURCE_DIR"; then
+        APREQ_SOURCE_DIR="`realpath $APREQ_SOURCE_DIR`"
     fi
     if test -n "$tmpbindir"; then
         tmpbindir="`realpath $tmpbindir`"
@@ -91,16 +94,16 @@ if test -x "`which realpath 2>/dev/null`"; then
 fi
 if test "$tmpbindir" = "$thisdir"; then
     location=installed
-elif test "$APREQ2_SOURCE_DIR" = "$thisdir"; then
+elif test "$APREQ_SOURCE_DIR" = "$thisdir"; then
     location=source
 else
     location=build
 fi
 
 if test "$location" = "installed"; then
-    LA_FILE="$libdir/lib${APREQ2_LIBNAME}.la"
+    LA_FILE="$libdir/lib${APREQ_LIBNAME}.la"
 else
-    LA_FILE="$thisdir/src/lib${APREQ2_LIBNAME}.la"
+    LA_FILE="$thisdir/src/lib${APREQ_LIBNAME}.la"
 fi
 
 flags=""
@@ -121,6 +124,18 @@ while test $# -gt 0; do
     echo $prefix
     exit 0
     ;;
+    --package-name)
+    echo "@PACKAGE@-@VERSION@.tar.gz"
+    exit 0
+    ;;
+    --package-title)
+    echo "@PACKAGE_STRING@"
+    exit 0
+    ;;
+    --package-version)
+    echo "@VERSION@"
+    exit 0
+    ;;
     --bindir)
     echo $bindir
     exit 0
@@ -132,10 +147,10 @@ while test $# -gt 0; do
     if test "$location" = "installed"; then
         flags="$includedir"
     elif test "$location" = "source"; then
-        flags="$APREQ2_SOURCE_DIR/src"
+        flags="$APREQ_SOURCE_DIR/src"
     else
         # this is for VPATH builds
-        flags="$thisdir/include $APREQ2_SOURCE_DIR/src"
+        flags="$thisdir/include $APREQ_SOURCE_DIR/src"
     fi
     echo $flags
     exit 0
@@ -144,29 +159,29 @@ while test $# -gt 0; do
     if test "$location" = "installed"; then
         flags="$flags -I$includedir $INCLUDES"
     elif test "$location" = "source"; then
-        flags="$flags -I$APREQ2_SOURCE_DIR/src $INCLUDES"
+        flags="$flags -I$APREQ_SOURCE_DIR/src $INCLUDES"
     else
         # this is for VPATH builds
-        flags="$flags -I$thisdir/include -I$APREQ2_SOURCE_DIR/src $INCLUDES"
+        flags="$flags -I$thisdir/include -I$APREQ_SOURCE_DIR/src $INCLUDES"
     fi
     ;;
     --ldflags)
     flags="$flags $LDFLAGS"
     ;;
     --srcdir)
-    echo $APREQ2_SOURCE_DIR
+    echo $APREQ_SOURCE_DIR
     exit 0
     ;;
-    --version)
-    echo $APREQ2_DOTTED_VERSION
+    --library-version)
+    echo $APREQ_DOTTED_VERSION
     exit 0
     ;;
     --link-ld)
     if test "$location" = "installed"; then
         ### avoid using -L if libdir is a "standard" location like /usr/lib
-        flags="$flags -L$libdir -l$APREQ2_LIBNAME"
+        flags="$flags -L$libdir -l$APREQ_LIBNAME"
     else
-        flags="$flags -L$thisdir/src -l$APREQ2_LIBNAME"
+        flags="$flags -L$thisdir/src -l$APREQ_LIBNAME"
     fi
     ;;
     --link-libtool)
@@ -178,12 +193,12 @@ while test $# -gt 0; do
         flags="$flags $LA_FILE"
     elif test "$location" = "installed"; then
         ### avoid using -L if libdir is a "standard" location like /usr/lib
-        flags="$flags -L$libdir -l$APREQ2_LIBNAME"
+        flags="$flags -L$libdir -l$APREQ_LIBNAME"
     else
         flags="$flags $LA_FILE"
     fi
     ;;
-    --apreq2-la-file)
+    --la-file)
     if test -f "$LA_FILE"; then
         flags="$flags $LA_FILE"
     fi

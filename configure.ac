@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.53)
-AC_INIT(libapreq - Apache Request Library, 2.04-dev, apreq-dev@httpd.apache.org, libapreq2)
+AC_INIT(Apache HTTP Request Library, 2.04-dev, apreq-dev@httpd.apache.org, libapreq2)
 dnl Generate config.nice script- macro must be here at the top
 dnl to avoid corruption of $0 and $@.
 APR_CONFIG_NICE(config.nice)
