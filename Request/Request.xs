@@ -310,31 +310,31 @@ ApacheRequest_new(class, r, ...)
 
         switch (toLOWER(*key)) {
           case 'd':
-            if (strcasecmp(key, "disable_uploads") == 0) {
+            if (strcaseEQ(key, "disable_uploads")) {
                 RETVAL->disable_uploads = (int)SvIV(ST(i+1));
                 break;
             }
 
           case 'h':
-            if (strcasecmp(key, "hook_data") == 0) {
+            if (strcaseEQ(key, "hook_data")) {
                 XsUploadHookSet(data, ST(i+1));
                 break;
             }
 
           case 'p':
-            if (strcasecmp(key, "post_max") == 0) {
+            if (strcaseEQ(key, "post_max")) {
                 RETVAL->post_max = (int)SvIV(ST(i+1));
                 break;
             }
 
           case 't':
-            if (strcasecmp(key, "temp_dir") == 0) {
+            if (strcaseEQ(key, "temp_dir")) {
                 RETVAL->temp_dir = (char *)SvPV(ST(i+1), PL_na);
                 break;
             }
 
           case 'u':
-            if (strcasecmp(key, "upload_hook") == 0) {
+            if (strcaseEQ(key, "upload_hook")) {
                 XsUploadHookSet(sub, ST(i+1));
                 RETVAL->upload_hook = upload_hook;
                 break;
@@ -417,7 +417,7 @@ ApacheRequest_param(req, key=NULL, sv=Nullsv)
 	        array_header *arr  = ap_table_elts(req->parms);
 	        table_entry *elts = (table_entry *)arr->elts;
 	        for (i = 0; i < arr->nelts; ++i) {
-	            if (elts[i].key && !strcasecmp(elts[i].key, key))
+	            if (elts[i].key && strcaseEQ(elts[i].key, key))
 	            	XPUSHs(sv_2mortal(newSVpv(elts[i].val,0)));
 	        }
 	    }
@@ -446,7 +446,7 @@ ApacheRequest_param(req, key=NULL, sv=Nullsv)
 	           if (!elts[i].key) continue;
 		    /* simple but inefficient uniqueness check */
 		    for (j = 0; j < i; ++j) { 
-		        if (!strcasecmp(elts[i].key, elts[j].key))
+		        if (strcaseEQ(elts[i].key, elts[j].key))
 			    break;
 		    }
 	            if ( i == j )

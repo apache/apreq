@@ -48,7 +48,7 @@ static int util_isa_default(char *wanted, char **list)
 {
     int i;
     for(i=0; list[i]; i++) {
-	if(!strcmp(wanted, list[i]))
+	if(strEQ(wanted, list[i]))
 	    return 1;
     }
     return 0;

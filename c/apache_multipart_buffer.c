@@ -192,7 +192,7 @@ int find_boundary(multipart_buffer *self, char *boundary)
 #endif
 
       /* finished if we found the boundary */
-      if(strcmp(line, boundary) == 0)
+      if(strEQ(line, boundary))
 	  return 1;
     }
 

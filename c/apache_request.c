@@ -276,10 +276,10 @@ int ApacheRequest___parse(ApacheRequest *req)
 
     if (r->method_number == M_POST) { 
 	const char *ct = ap_table_get(r->headers_in, "Content-type"); 
-	if (ct && strcaseEQN(ct, DEFAULT_ENCTYPE, DEFAULT_ENCTYPE_LENGTH)) {
+	if (ct && strncaseEQ(ct, DEFAULT_ENCTYPE, DEFAULT_ENCTYPE_LENGTH)) {
 	    result = ApacheRequest_parse_urlencoded(req); 
 	}
-	else if (ct && strcaseEQN(ct, MULTIPART_ENCTYPE, MULTIPART_ENCTYPE_LENGTH)) {
+	else if (ct && strncaseEQ(ct, MULTIPART_ENCTYPE, MULTIPART_ENCTYPE_LENGTH)) {
 	   result = ApacheRequest_parse_multipart(req); 
 	}
 	else {
@@ -307,7 +307,7 @@ int ApacheRequest_parse_urlencoded(ApacheRequest *req)
 
 	type = ap_table_get(r->headers_in, "Content-Type");
 
-	if (!strcaseEQN(type, DEFAULT_ENCTYPE, DEFAULT_ENCTYPE_LENGTH)) {
+	if (!strncaseEQ(type, DEFAULT_ENCTYPE, DEFAULT_ENCTYPE_LENGTH)) {
 	    return DECLINED;
 	}
 	if ((rc = util_read(req, &data)) != OK) {

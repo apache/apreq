@@ -70,8 +70,8 @@ struct ApacheUpload {
 #define strcaseEQ(s1,s2) (!strcasecmp(s1,s2))
 #endif
 
-#ifndef strcaseEQN
-#define strcaseEQN(s1,s2,n) (!strncasecmp(s1,s2,n))
+#ifndef strncaseEQ
+#define strncaseEQ(s1,s2,n) (!strncasecmp(s1,s2,n))
 #endif
 
 #define DEFAULT_TABLE_NELTS 10
