@@ -1,31 +1,32 @@
-=head Changes with libapreq-2.0.0-dev
+/** @page CHANGES
 
-=over 4
+@section 2.0.0-dev Changes with libapreq-2.0.0-dev
 
-=item June 27, 2003 - C API [joes]
+- June 27, 2003 - C API [joes]
 
-   The new filter-based design required a complete 
-   departure from libapreq-1.X codebase. libapreq-2
-   is based solely on APR, and to be fully functional, 
-   requires a supporting environment similar to Apache-2.
-   A person wishing to port libapreq-2 to a new environment
-   needs to provide definitions for the declarations in apreq_env.h.
+The new filter-based design required a complete 
+departure from libapreq-1.X codebase. libapreq-2
+is based solely on APR, and to be fully functional, 
+requires a supporting environment similar to Apache-2.
+A person wishing to port libapreq-2 to a new environment
+needs to provide definitions for the declarations in apreq_env.h.
 
-=item June 27, 2003 - Perl API [joes]
+- June 27, 2003 - Perl API [joes]
 
-   Aggregates are always collected into an APR::Table-based package.
-   New table packages: Apache::Cookie::Table, Apache::Request::Table,
-   and Apache::Upload::Table.
+Aggregates are always collected into an APR::Table-based package.
+New table packages: Apache::Cookie::Table, Apache::Request::Table,
+and Apache::Upload::Table.
 
-=item June 27, 2003 - Perl API [joes]
+- June 27, 2003 - Perl API [joes]
 
-   Apache::Cookie->fetch now requires an "environment" argument ($r).
-   Its return value is blessed into the Apache::Cookie::Jar class.
+Apache::Cookie->fetch now requires an "environment" argument ($r).
+Its return value is blessed into the Apache::Cookie::Jar class.
 
-=item June 27, 2003 - Perl API [joes]
+- June 27, 2003 - Perl API [joes]
 
-   Two new request lookup functions:
-        1) $req->args - param lookup using only the query string
-        2) $req->body - param lookup using only the POST data
+Two new request lookup functions:
+  -# $req->args - param lookup using only the query string
+  -# $req->body - param lookup using only the POST data
 
-=back
+
+**/
