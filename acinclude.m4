@@ -10,7 +10,7 @@ AC_DEFUN([AC_APREQ], [
                 AC_HELP_STRING([--with-perl],[path to perl executable]),
                 [PERL=$withval],[PERL="perl"])
         AC_ARG_WITH(apache2-apxs,
-                AC_HELP_STRING([--with-apache2-apxs],[path to apxs]),
+                AC_HELP_STRING([--with-apache2-apxs],[path to apache2's apxs]),
                 [APACHE2_APXS=$withval],[APACHE2_APXS="apxs"])
         AC_ARG_WITH(apache2-src,
                 AC_HELP_STRING([--with-apache2-src],[path to httpd source]),
@@ -25,8 +25,11 @@ AC_DEFUN([AC_APREQ], [
                 AC_HELP_STRING([  --with-apu-config],[path to apu-*-config script]),
                 [APU_CONFIG=$withval],[APU_CONFIG=""])
         AC_ARG_WITH(apache1-apxs,
-                AC_HELP_STRING([--with-apache1-apxs],[path to apxs]),
+                AC_HELP_STRING([--with-apache1-apxs],[path to apache1's apxs]),
                 [APACHE1_APXS=$withval],[APACHE1_APXS=""])
+        AC_ARG_WITH(perl-opts,
+                AC_HELP_STRING([--with-perl-opts],[extra MakeMaker options]),
+                [PERL_OPTS=$withval],[PERL_OPTS=""])
 
         prereq_check="$PERL build/version_check.pl"
 
@@ -59,9 +62,11 @@ AC_DEFUN([AC_APREQ], [
                 if test ${APR_MAJOR_VERSION:="0"} -eq 0; then
                     apr_config=apr-config
                     apu_config=apu-config 
+                    apreq_libs="-lapr -laprutil"
                 else
                     apr_config=apr-$APR_MAJOR_VERSION-config
                     apu_config=apu-$APR_MAJOR_VERSION-config
+                    apreq_libs="-lapr-$APR_MAJOR_VERSION -laprutil-$APR_MAJOR_VERSION"
                 fi
 
                 if test -z "$APR_CONFIG"; then
@@ -137,19 +142,19 @@ AC_DEFUN([AC_APREQ], [
         AM_CONDITIONAL(HAVE_APACHE1, test -n "$APACHE1_APXS")
 
         dnl Reset the default installation prefix to be the same as apu's
-        ac_default_prefix=`$APU_CONFIG --prefix`
+        ac_default_prefix="`$APU_CONFIG --prefix`"
 
-        APR_INCLUDES=`$APR_CONFIG --includes`
-        APU_INCLUDES=`$APU_CONFIG --includes`
-        APR_LA=`$APR_CONFIG --link-libtool`
-        APU_LA=`$APU_CONFIG --link-libtool`
-        APR_LTLIBS=`$APR_CONFIG --link-libtool --libs`
-        APU_LTLIBS=`$APU_CONFIG --link-libtool --libs`
+        APR_INCLUDES="`$APR_CONFIG --includes`"
+        APU_INCLUDES="`$APU_CONFIG --includes`"
+        APR_LA="`$APR_CONFIG --apr-la-file`"
+        APU_LA="`$APU_CONFIG --apu-la-file`"
+        APR_LTFLAGS="`$APR_CONFIG --link-libtool`"
+        APU_LTFLAGS="`$APU_CONFIG --link-libtool`"
         dnl perl glue/tests do not use libtool: need ld linker flags
-        APR_LDLIBS=`$APR_CONFIG --link-ld --libs`
-        APU_LDLIBS=`$APU_CONFIG --link-ld --libs`
-        APR_LDFLAGS=`$APR_CONFIG --ldflags`
-        APU_LDFLAGS=`$APU_CONFIG --ldflags`
+        APR_LIBS="`$APR_CONFIG --libs`"
+        APU_LIBS="`$APU_CONFIG --libs`"
+        APR_LDFLAGS="`$APR_CONFIG --link-ld --ldflags`"
+        APU_LDFLAGS="`$APU_CONFIG --link-ld --ldflags`"
 
         dnl Absolute source/build directory
         abs_srcdir=`(cd $srcdir && pwd)`
@@ -194,7 +199,7 @@ AC_DEFUN([AC_APREQ], [
 
         APREQ_LIBNAME="apreq$APREQ_MAJOR_VERSION"
         APREQ_INCLUDES=""
-        APREQ_LDFLAGS=""
+        APREQ_LDFLAGS="$apreq_libs"
         APREQ_EXPORT_LIBS=""
 
         echo "lib$APREQ_LIBNAME Version: $APREQ_DOTTED_VERSION"
@@ -218,15 +223,16 @@ AC_DEFUN([AC_APREQ], [
         AC_SUBST(APR_CONFIG)
         AC_SUBST(APR_INCLUDES)
         AC_SUBST(APU_INCLUDES)
-        AC_SUBST(APR_LTLIBS)
-        AC_SUBST(APU_LTLIBS)
-        AC_SUBST(APR_LDLIBS)
-        AC_SUBST(APU_LDLIBS)
+        AC_SUBST(APR_LTFLAGS)
+        AC_SUBST(APU_LTFLAGS)
+        AC_SUBST(APR_LIBS)
+        AC_SUBST(APU_LIBS)
         AC_SUBST(APR_LDFLAGS)
         AC_SUBST(APU_LDFLAGS)
         AC_SUBST(APR_LA)
         AC_SUBST(APU_LA)
         AC_SUBST(PERL)
+        AC_SUBST(PERL_OPTS)
 ])
 
 dnl APR_CONFIG_NICE(filename)

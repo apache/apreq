@@ -79,10 +79,10 @@ else {
     $apr_libs .= " $1";
 
     # need -laprutil befpre -lapr
-    $config =~ m/^s,\@APU_LDLIBS\@,([^,]+)/m or
+    $config =~ m/^s,\@APU_LIBS\@,([^,]+)/m or
         die "Can't find apu libraries";
     $apr_libs = $1;
-    $config =~ m/^s,\@APR_LDLIBS\@,([^,]+)/m or
+    $config =~ m/^s,\@APR_LIBS\@,([^,]+)/m or
         die "Can't find apr libraries";
     $apr_libs .= " $1";
 

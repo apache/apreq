@@ -28,9 +28,10 @@ bindir="@bindir@"
 libdir="@libdir@"
 includedir="@includedir@/@APREQ_LIBNAME@"
 
-LIBS="@APREQ_EXPORT_LIBS@"
-INCLUDES="@APREQ_INCLUDES@"
-LDFLAGS="@APREQ_LDFLAGS@"
+LIBS="@APR_LIBS@ @APU_LIBS@ @APREQ_LIBS@"
+LDFLAGS="@APR_LDFLAGS@ @APU_LDFLAGS@"
+INCLUDES="@APR_INCLUDES@ @APU_INCLUDES@"
+LDFLAGS="@APR_LDFLAGS@ @APU_LDFLAGS@"
 
 APREQ_LIBNAME="@APREQ_LIBNAME@"
 
@@ -60,9 +61,9 @@ Known values for OPTION are:
   --help            print this help
 
 When linking with libtool, an application should do something like:
-  APREQ_LIBS="\`apreq2-config --link-libtool --libs\`"
+  APREQ_LIBS="\`apreq2-config --link-libtool --ltlibs\`"
 or when linking directly:
-  APREQ_LIBS="\`apreq2-config --link-ld --ldflags --libs\`"
+  APREQ_LIBS="\`apreq2-config --link-ld --ldflags --ldlibs\`"
 
 An application should use the results of --includes, and --ldflags in
 their build process.
@@ -100,10 +101,12 @@ else
     location=build
 fi
 
+location=installed
+
 if test "$location" = "installed"; then
     LA_FILE="$libdir/lib${APREQ_LIBNAME}.la"
 else
-    LA_FILE="$thisdir/src/lib${APREQ_LIBNAME}.la"
+    LA_FILE="$thisdir/library/lib${APREQ_LIBNAME}.la"
 fi
 
 flags=""
@@ -147,10 +150,10 @@ while test $# -gt 0; do
     if test "$location" = "installed"; then
         flags="$includedir"
     elif test "$location" = "source"; then
-        flags="$APREQ_SOURCE_DIR/src"
+        flags="$APREQ_SOURCE_DIR/include"
     else
         # this is for VPATH builds
-        flags="$thisdir/include $APREQ_SOURCE_DIR/src"
+        flags="$thisdir/include $APREQ_SOURCE_DIR/include"
     fi
     echo $flags
     exit 0
@@ -159,10 +162,10 @@ while test $# -gt 0; do
     if test "$location" = "installed"; then
         flags="$flags -I$includedir $INCLUDES"
     elif test "$location" = "source"; then
-        flags="$flags -I$APREQ_SOURCE_DIR/src $INCLUDES"
+        flags="$flags -I$APREQ_SOURCE_DIR/include $INCLUDES"
     else
         # this is for VPATH builds
-        flags="$flags -I$thisdir/include -I$APREQ_SOURCE_DIR/src $INCLUDES"
+        flags="$flags -I$thisdir/include -I$APREQ_SOURCE_DIR/include $INCLUDES"
     fi
     ;;
     --ldflags)
@@ -181,7 +184,7 @@ while test $# -gt 0; do
         ### avoid using -L if libdir is a "standard" location like /usr/lib
         flags="$flags -L$libdir -l$APREQ_LIBNAME"
     else
-        flags="$flags -L$thisdir/src -l$APREQ_LIBNAME"
+        flags="$flags -L$thisdir/library/.libs -l$APREQ_LIBNAME"
     fi
     ;;
     --link-libtool)
@@ -193,7 +196,7 @@ while test $# -gt 0; do
         flags="$flags $LA_FILE"
     elif test "$location" = "installed"; then
         ### avoid using -L if libdir is a "standard" location like /usr/lib
-        flags="$flags -L$libdir -l$APREQ_LIBNAME"
+        flags="$flags -L$libdir -l$APREQ_LIBNAME $apreq_libs"
     else
         flags="$flags $LA_FILE"
     fi

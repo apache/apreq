@@ -1,6 +1,6 @@
 INCLUDES = -I../../include @APACHE2_INCLUDES@ @APR_INCLUDES@ @APU_INCLUDES@
-LIBS = ../../library/lib@APREQ_LIBNAME@.la @APR_LTLIBS@ @APU_LTLIBS@
-LDFLAGS = @APR_LDFLAGS@ @APU_LDFLAGS@
+LIBS = ../../library/lib@APREQ_LIBNAME@.la @APU_LIBS@ @APR_LIBS@
+LDFLAGS = @APU_LTFLAGS@ @APR_LTFLAGS@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
 pkgincludedir = $(includedir)/@APREQ_LIBNAME@
 pkginclude_HEADERS = apreq_module_apache2.h

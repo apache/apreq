@@ -1,7 +1,6 @@
 INCLUDES = -I../../include @APR_INCLUDES@ @APU_INCLUDES@
-LIBS = ../libapreq2.la @APR_LTLIBS@ @APU_LTLIBS@
-LDFLAGS = @APR_LDFLAGS@ @APU_LDFLAGS@
-
+LDFLAGS = @APU_LTFLAGS@ @APR_LTFLAGS@
+LIBS  = ../lib@APREQ_LIBNAME@.la @APU_LIBS@ @APR_LIBS@
 noinst_LIBRARIES = libapache_test.a
 libapache_test_a_SOURCES = at.h at.c
 

@@ -1,5 +1,4 @@
 require 5.006;
-
 use strict;
 use warnings;
 
@@ -23,19 +22,21 @@ if (WIN32) {
     system(@args) == 0 or die "system @args failed: $?";
 }
 else {
-    my @opts = qw(with-apache2-apxs with-apache2-src with-apache2-httpd
-                  with-apr-config with-apu-config apxs);
+    my %opts;
+    undef @opts{qw(with-apache2-apxs with-apache1-apxs with-apache2-src
+                   with-perl with-apache2-httpd
+                   with-apr-config with-apu-config apxs)};
 
     my @flags = qw/enable-maintainer-mode enable-perl-glue disable-perl-glue/;
-    my %opts;
+    my %args;
     # grab from @ARGV only the options that we expect
-    GetOptions(\%opts, (map "$_=s", @opts), @flags);
+    GetOptions(\%args, (map "$_=s", keys %opts), @flags);
 
-    $opts{"with-perl"} = PERL_PATH;
+    $args{"with-perl"} = PERL_PATH;
     my $opts = "";
-    $opts .= "--enable-maintainer-mode " if $opts{"enable-maintainer-mode"};
+    $opts .= "--enable-maintainer-mode " if $args{"enable-maintainer-mode"};
 
-    unless (exists $opts{"disable-perl-glue"}) {
+    unless (exists $args{"disable-perl-glue"}) {
         $opts .= "--enable-perl-glue ";
         test_prereq "mod_perl";
         test_prereq "Apache::Test";
@@ -44,11 +45,14 @@ else {
         test_prereq "Test::More";
     }
 
-    delete @opts{@flags};
-    $opts{"with-apache2-apxs"} = delete $opts{apxs}
-        if exists $opts{apxs} and not exists $opts{"with-apache2-apxs"};
+    delete @args{@flags};
+    $args{"with-apache2-apxs"} = delete $args{apxs}
+        if exists $args{apxs} and not exists $args{"with-apache2-apxs"};
 
-    $opts .= join " ", map {"--$_=$opts{$_}"} keys %opts;
+    $args{"with-perl-opts"} = "@ARGV" if @ARGV;
+
+    $opts .= join " ", map {qq/--$_="$args{$_}"/} keys %args;
+
     my $cmd = "./configure $opts";
     print "$cmd\n";
     exec  $cmd;
