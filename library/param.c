@@ -246,7 +246,7 @@ static int upload_set(void *data, const char *key, const char *val)
 APREQ_DECLARE(const apreq_param_t *) apreq_upload(const apr_table_t *body,
                                                   const char *name)
 {
-    const apreq_param_t *param = NULL;
+    apreq_param_t *param = NULL;
     apr_table_do(upload_set, &param, body, name, NULL);
     return param;
 }
