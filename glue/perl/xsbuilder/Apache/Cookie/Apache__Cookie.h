@@ -14,8 +14,9 @@
 **  limitations under the License.
 */
 
+#include "apreq_xs_tables.h"
+
 #define apreq_xs_jar2cookie(j) j->cookies
-#define apreq_xs_jar2env(j) j->env
 
 #define apreq_xs_cookie2sv(c,class,parent) apreq_xs_2sv(c,class,parent)
 #define apreq_xs_sv2cookie(sv) ((apreq_cookie_t *)SvIVX(SvRV(sv)))
@@ -69,10 +70,14 @@ APREQ_XS_DEFINE_OBJECT(jar);
 #define TABLE_PKG   "Apache::Cookie::Table"
 #define COOKIE_PKG  "Apache::Cookie"
 
-APREQ_XS_DEFINE_GET(jar,   TABLE_PKG, cookie, COOKIE_PKG, 1);
-APREQ_XS_DEFINE_GET(table, TABLE_PKG, cookie, COOKIE_PKG, 1);
+APREQ_XS_DEFINE_TABLE_GET(jar,   TABLE_PKG, cookie, COOKIE_PKG, 1);
+APREQ_XS_DEFINE_TABLE_GET(table, TABLE_PKG, cookie, COOKIE_PKG, 1);
 APREQ_XS_DEFINE_POOL(jar);
 APREQ_XS_DEFINE_POOL(table);
+
+APREQ_XS_DEFINE_TABLE_MAKE(jar);
+APREQ_XS_DEFINE_TABLE_METHOD_N(cookie,set);
+APREQ_XS_DEFINE_TABLE_METHOD_N(cookie,add);
 
 /**
  *Returns serialized version of cookie.
@@ -107,8 +112,8 @@ static XS(apreq_xs_cookie_expires)
     dXSARGS;
     apreq_cookie_t *c;
 
-    if (items == 0)
-        XSRETURN_UNDEF;
+    if (items == 0 || items > 1 || !SvROK(ST(0)))
+        Perl_croak(aTHX_ "Usage: $cookie->expires([$amount])");
 
     c = apreq_xs_sv2(cookie,ST(0));
 
@@ -127,7 +132,7 @@ static XS(apreq_xs_cookie_expires)
         expires[11] = '-';
         XSRETURN_PV(expires);
     }
-    XSRETURN_IV(c->max_age);
+    XSRETURN_IV(apr_time_sec(c->max_age));
 }
 
 static XS(apreq_xs_cookie_set_attr)
@@ -139,7 +144,7 @@ static XS(apreq_xs_cookie_set_attr)
     int j = 1;
 
     if (items % 2 != 1 || ! SvROK(ST(0)))
-        Perl_croak(aTHX_ "usage: $cookie->set_attr(%attrs)");
+        Perl_croak(aTHX_ "Usage: $cookie->set_attr(%attrs)");
 
     c = apreq_xs_sv2(cookie,ST(0));
     p = apreq_env_pool(apreq_xs_sv2env(SvRV(ST(0))));

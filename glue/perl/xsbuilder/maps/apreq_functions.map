@@ -17,6 +17,10 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Ta
  DEFINE_get     | apreq_xs_table_get |
  DEFINE_FETCH   | apreq_xs_table_get |
  DEFINE_pool    | apreq_xs_table_pool |
+ DEFINE_set     | apreq_xs_table_param_set |
+ DEFINE_STORE   | apreq_xs_table_param_set |
+ DEFINE_add     | apreq_xs_table_param_add |
+ DEFINE_new     | apreq_xs_table_request_make |
 
 
 ##########  Apache::Upload:: Functions  ##########
@@ -36,6 +40,10 @@ MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table
  DEFINE_get     | apreq_xs_upload_table_get |
  DEFINE_FETCH   | apreq_xs_upload_table_get |
  DEFINE_pool    | apreq_xs_upload_table_pool |
+ DEFINE_set     | apreq_xs_table_param_set |
+ DEFINE_STORE   | apreq_xs_table_param_set |
+ DEFINE_add     | apreq_xs_table_param_add |
+ DEFINE_new     | apreq_xs_table_request_make |
 
 MODULE=Apache::Upload PACKAGE=Apache::Request PREFIX=Apache__Request_
  DEFINE_upload  | apreq_xs_upload_get |
@@ -73,6 +81,10 @@ MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table PREFIX=Apache__Cookie__Table
  DEFINE_get        | apreq_xs_table_get |
  DEFINE_FETCH      | apreq_xs_table_get |
  DEFINE_pool       | apreq_xs_table_pool |
+ DEFINE_set     | apreq_xs_table_cookie_set |
+ DEFINE_STORE   | apreq_xs_table_cookie_set |
+ DEFINE_add     | apreq_xs_table_cookie_add |
+ DEFINE_new     | apreq_xs_table_jar_make |
 
 
 ##########  Utility Functions  ##########

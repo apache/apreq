@@ -14,6 +14,8 @@
 **  limitations under the License.
 */
 
+#include "apreq_xs_tables.h"
+
 /* avoid namespace collisions from perl's XSUB.h */
 #include "modperl_perl_unembed.h"
 
@@ -105,11 +107,15 @@ static int apreq_xs_upload_table_keys(void *data, const char *key,
 
 #define UPLOAD_TABLE  "Apache::Upload::Table"
 #define UPLOAD_PKG    "Apache::Upload"
-APREQ_XS_DEFINE_GET(upload, UPLOAD_TABLE, param, UPLOAD_PKG, RETVAL->bb);
-APREQ_XS_DEFINE_GET(upload_table, UPLOAD_TABLE, param, UPLOAD_PKG, 1);
+APREQ_XS_DEFINE_TABLE_GET(upload, UPLOAD_TABLE, param, UPLOAD_PKG, RETVAL->bb);
+APREQ_XS_DEFINE_TABLE_GET(upload_table, UPLOAD_TABLE, param, UPLOAD_PKG, 1);
 APREQ_XS_DEFINE_ENV(upload);
 
 APREQ_XS_DEFINE_POOL(upload_table);
+
+APREQ_XS_DEFINE_TABLE_MAKE(request);
+APREQ_XS_DEFINE_TABLE_METHOD_N(param,add);
+APREQ_XS_DEFINE_TABLE_METHOD_N(param,set);
 
 APR_INLINE
 static XS(apreq_xs_upload_link)

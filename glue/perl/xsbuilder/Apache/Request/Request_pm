@@ -4,7 +4,7 @@ use APR::Error;
 package Apache::Request::Table;
 push our(@ISA), "APR::Table";
 BEGIN {
-    my @BAD_METHODS = qw/add compress make merge overlap set STORE/;
+    my @BAD_METHODS = qw/compress merge overlap/;
     for (@BAD_METHODS) {
         no strict;
         next unless my $meth = APR::Table->can($_);

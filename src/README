@@ -14,27 +14,26 @@ Data structures and relations:
     apreq_cookie_t: extends apreq_value_t to represent server-side
                 cookie data.
 
-    apreq_jar_t: A pool and a table with cookie-based copy/merge functions.
-                 This struct is analogous to apreq_request_t for params.
+    apreq_jar_t: This struct is analogous to apreq_request_t for params.
 
   PARAMS:
 
     apreq_param_t: extends apreq_value_t to represent POST param data.
 
-
     apreq_request_t: maintains arg/body tables which represent parsed data.
 
         REQUEST STATES:
-           req->body == NULL: No POST data has been read/parsed yet. At this
-                              point, req->v.data holds a pointer to the parser
-                              table.
+           req->body == NULL: No POST data has been read/parsed yet.  The 
+                              req->parser slot may be safely modified.
 
-           req->body != NULL: req->v.data now points to the active parser.
+           req->body != NULL: Some parsing has taken place, so req->parser
+                              cannot be modified now without risking
+                              loss of data.
 
-                status: (as returned by apreq_env_read)
+                status: (as returned by apreq_env_read and APREQ_RUN_PARSER)
                          APR_INCOMPLETE: Parsing in progress.
                          APR_SUCCESS: Parsing complete.
-                         <other>: parser error, parsing aborted.             
+                         <other>: parser error, parsing aborted.
 
 
   PARSER EXTENSIONS:

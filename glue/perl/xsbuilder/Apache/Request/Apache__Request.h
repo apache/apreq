@@ -14,6 +14,8 @@
 **  limitations under the License.
 */
 
+#include "apreq_xs_tables.h"
+
 #define READ_BLOCK_SIZE (1024 * 256)
 #define PARAM_TABLE   "Apache::Request::Table"
 
@@ -129,13 +131,17 @@ APREQ_XS_DEFINE_OBJECT(request);
 #define apreq_xs_table_param(sv,k) \
                      S2P(apr_table_get(apreq_xs_sv2table(sv),k))
 
-APREQ_XS_DEFINE_GET(request, PARAM_TABLE, param, NULL, 1);
-APREQ_XS_DEFINE_GET(args,    PARAM_TABLE, param, NULL, 1);
-APREQ_XS_DEFINE_GET(body,    PARAM_TABLE, param, NULL, 1);
-APREQ_XS_DEFINE_GET(table,   PARAM_TABLE, param, NULL, 1);
+APREQ_XS_DEFINE_TABLE_GET(request, PARAM_TABLE, param, NULL, 1);
+APREQ_XS_DEFINE_TABLE_GET(args,    PARAM_TABLE, param, NULL, 1);
+APREQ_XS_DEFINE_TABLE_GET(body,    PARAM_TABLE, param, NULL, 1);
+APREQ_XS_DEFINE_TABLE_GET(table,   PARAM_TABLE, param, NULL, 1);
 
 APREQ_XS_DEFINE_POOL(request);
 APREQ_XS_DEFINE_POOL(table);
+
+APREQ_XS_DEFINE_TABLE_MAKE(request);
+APREQ_XS_DEFINE_TABLE_METHOD_N(param,set);
+APREQ_XS_DEFINE_TABLE_METHOD_N(param,add);
 
 static XS(apreq_xs_request_config)
 {
