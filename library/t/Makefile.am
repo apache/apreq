@@ -1,6 +1,5 @@
-INCLUDES = -I../../include @APR_INCLUDES@ @APU_INCLUDES@
-LDFLAGS = @APU_LTFLAGS@ @APR_LTFLAGS@
-LIBS  = ../lib@APREQ_LIBNAME@.la @APU_LIBS@ @APR_LIBS@
+AM_CPPFLAGS = @APR_INCLUDES@
+LDFLAGS = @APR_LTFLAGS@ `@APREQ_CONFIG@ --link-libtool --libs`
 noinst_LIBRARIES = libapache_test.a
 libapache_test_a_SOURCES = at.h at.c
 
