@@ -170,6 +170,29 @@ sub h_filename_prefix {'apreq_xs_'}
 sub my_xs_prefix {'apreq_xs_'}
 sub xs_include_dir { $xs_dir }
 
+sub mod_pod {
+    my($self, $module, $complete) = @_;
+    my $dirname = $self->class_dirname($module);
+    my @parts = split '::', $module;
+    my $mod_pod = "$dirname/$parts[-1]_pod";
+    for ($self -> xs_incsrc_dir, @{ $self->{glue_dirs} }) {
+        my $file = "$_/$mod_pod";
+        $mod_pod = $file if $complete;
+        print "mod_pod $mod_pod $file $complete\n" ;
+        return $mod_pod if -e $file;
+    }
+    undef;
+}
+
+sub write_docs {
+    my ($self, $module, $functions) = @_;
+    my $fh = $self->open_class_file($module, '.pod');
+    my $podfile = $self->mod_pod($module, 1) or return;
+    open my $pod, "<", $podfile or die $!;
+    while (<$pod>) {
+        print $fh $_;
+    }
+}
 sub makefilepl_text {
     my($self, $class, $deps,$typemap) = @_;
 
