@@ -2,7 +2,8 @@
 Makefile
 Makefile.in
 aclocal.m4
-autom4te-2.5x.cache
+autom4te-2.5*.cache
+depcomp
 config.guess
 config.log
 config.status
