@@ -63,17 +63,23 @@ EOT
     return join "", @lines;
 }
 
+sub test_docs {
+    my ($pods, $tests) = @_;
+return join "", map <<EOT, 0..$#$pods;
+$$tests[$_]: $$pods[$_]
+	pod2test $$pods[$_] $$tests[$_]
+
+EOT
+}
+
 sub MY::postamble {
     my @docs = <docs/*.pod>;
     my @tests = @docs;
     s/pod$/t/ for @tests;
 
-    return copy_docs(@docs) . sprintf <<'EOT', "@tests";
-%%.t : %%.pod
-	pod2test $< $@
-
-doc_test : %s
-        $(FULLPERL) -Mblib -MTest::Harness -e 'runtests(@ARGV)' "@tests"
+    return copy_docs(@docs) . test_docs(\@docs,\@tests) . <<EOT;
+doc_test : @tests
+	\$(FULLPERL) -Mblib -MTest::Harness -e 'runtests(\@ARGV)' @tests
 
 test :: doc_test
 
