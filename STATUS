@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/04/19 17:49:44 $]
+Last modified at [$Date: 2003/04/25 18:11:15 $]
 
      2.0.0  in development
 
@@ -34,9 +34,6 @@ RELEASE SHOWSTOPPERS:
 
         2. `Prefetching' filter reads are unimplemented.
 
-        3. Filter should activate `as necessary', and inject itself only
-           once into the input filter chain.
-
 
 CURRENT VOTES:
 
@@ -44,8 +41,7 @@ CURRENT VOTES:
 
 TODO:
 
-    * more core unit tests in t/.
-        tables.c needs tests for "balanced" tables
+    * more Apache::Test tests in glue/perl/t.
 
     * Populate the glue/ directory (perl, tcl, etc.).
 

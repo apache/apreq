@@ -775,46 +775,47 @@ APREQ_DECLARE(const char *) apreq_table_cache(apreq_table_t *t,
 }
 
 
-APREQ_DECLARE(apr_array_header_t *) apreq_table_keys(apr_pool_t *p,
-                                                     const apreq_table_t *t)
+APREQ_DECLARE(apr_status_t) apreq_table_keys(const apreq_table_t *t,
+                                             apr_array_header_t *keys)
 {
     int idx;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
-    apr_array_header_t *a = apr_array_make(p,t->a.nelts - t->ghosts,
-                                           sizeof(char *));
+    if (t->a.nelts == 0)
+        return APR_NOTFOUND;
 
     for (idx = 0; idx < t->a.nelts; ++idx)
         if (IN_FOREST(t,idx))
-            *(const char **)apr_array_push(a) = idx[o].key;
+            *(const char **)apr_array_push(keys) = idx[o].key;
 
-    return a;
+    return APR_SUCCESS;
 
 }
 
 
-APREQ_DECLARE(apr_array_header_t *) apreq_table_values(apr_pool_t *p,
-                                                       const apreq_table_t *t,
-                                                       const char *key)
+APREQ_DECLARE(apr_status_t) apreq_table_values(const apreq_table_t *t,
+                                               const char *key,
+                                               apr_array_header_t *values)
 {
     int idx;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
-    apr_array_header_t *a = apr_array_make(p, key ? APREQ_NELTS : 
-                                                    t->a.nelts - t->ghosts,
-                                                    sizeof(apreq_value_t *));
+    if (t->a.nelts == 0)
+        return APR_NOTFOUND;
 
     if (key == NULL) {  /* fetch all values */
         for (idx = 0; idx < t->a.nelts; ++idx)
             if (IN_FOREST(t,idx))
-                *(const apreq_value_t **)apr_array_push(a) = idx[o].val;
+                *(const apreq_value_t **)apr_array_push(values) = idx[o].val;
     }
     else {
         idx = t->root[TABLE_HASH(key)];
         if ( idx>=0 && search(o,&idx,key) == 0 )
            for ( ; idx>=0; idx = idx[o].tree[NEXT] )
-                *(const apreq_value_t **)apr_array_push(a) = idx[o].val;
+                *(const apreq_value_t **)apr_array_push(values) = idx[o].val;
+        else
+            return APR_NOTFOUND;
     }
 
-    return a;
+    return APR_SUCCESS;
 }
 
 

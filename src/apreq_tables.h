@@ -245,8 +245,9 @@ APREQ_DECLARE(const char *) apreq_table_cache(apreq_table_t *t,
  * @param p Pool used to allocate the resulting array struct.
  */
 
-APREQ_DECLARE(apr_array_header_t *) apreq_table_keys(apr_pool_t *p,
-                                                     const apreq_table_t *t);
+APREQ_DECLARE(apr_status_t) apreq_table_keys(const apreq_table_t *t,
+                                             apr_array_header_t *keys);
+
 /**
  * Return the (unique) values in an (apreq_value_t *) array,
  * preserving their original order.
@@ -256,9 +257,9 @@ APREQ_DECLARE(apr_array_header_t *) apreq_table_keys(apr_pool_t *p,
  * only the first value of a multivalued entry is used.
  */
 
-APREQ_DECLARE(apr_array_header_t *) apreq_table_values(apr_pool_t *p,
-                                                       const apreq_table_t *t,
-                                                       const char *key);
+APREQ_DECLARE(apr_status_t) apreq_table_values(const apreq_table_t *t,
+                                               const char *key,
+                                               apr_array_header_t *values);
 /**
  * Add an apreq_value_t to the table. If another value already exists
  * with the same name, this will replace the old value.

@@ -267,7 +267,6 @@ static void table_elts(CuTest *tc)
 
 }
 
-
 static void table_overlay(CuTest *tc)
 {
     const char *val;
@@ -307,6 +306,65 @@ static void table_overlay(CuTest *tc)
     CuAssertStrEquals(tc, "7",val);
 }
 
+static void table_keys(CuTest *tc)
+{
+    const char *k;
+    apr_array_header_t *a = apr_array_make(p,1, sizeof k);
+    apr_status_t s = apreq_table_keys(t1,a);
+    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    CuAssertIntEquals(tc, 7, a->nelts);
+    k = ((const char **)a->elts)[0];
+    CuAssertStrEquals(tc, "a", k);
+    k = ((const char **)a->elts)[1];
+    CuAssertStrEquals(tc, "g", k);
+    k = ((const char **)a->elts)[2];
+    CuAssertStrEquals(tc, "b", k);
+    k = ((const char **)a->elts)[3];
+    CuAssertStrEquals(tc, "c", k);
+    k = ((const char **)a->elts)[4];
+    CuAssertStrEquals(tc, "d", k);
+    k = ((const char **)a->elts)[5];
+    CuAssertStrEquals(tc, "e", k);
+    k = ((const char **)a->elts)[6];
+    CuAssertStrEquals(tc, "f", k);
+}
+
+static void table_values(CuTest *tc)
+{
+    const apreq_value_t *v;
+    apr_array_header_t *a = apr_array_make(p,1,sizeof v);
+    apr_status_t s = apreq_table_values(t1,"a",a);
+    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    CuAssertIntEquals(tc, 2, a->nelts);
+    v = ((const apreq_value_t **)a->elts)[0];
+    CuAssertStrEquals(tc, "a", v->name);
+    CuAssertStrEquals(tc, "0", v->data);
+    v = ((const apreq_value_t **)a->elts)[1];
+    CuAssertStrEquals(tc, "a", v->name);
+    CuAssertStrEquals(tc, "1", v->data);
+
+    a->nelts = 0;
+    s = apreq_table_values(t1,"b",a);
+    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    CuAssertIntEquals(tc, 3, a->nelts);
+    v = ((const apreq_value_t **)a->elts)[0];
+    CuAssertStrEquals(tc, "b", v->name);
+    CuAssertStrEquals(tc, "2", v->data);
+    v = ((const apreq_value_t **)a->elts)[1];
+    CuAssertStrEquals(tc, "b", v->name);
+    CuAssertStrEquals(tc, "2.0", v->data);
+    v = ((const apreq_value_t **)a->elts)[2];
+    CuAssertStrEquals(tc, "b", v->name);
+    CuAssertStrEquals(tc, "2.", v->data);
+
+    a->nelts = 0;
+    s = apreq_table_values(t1,NULL,a);
+    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    CuAssertIntEquals(tc, 7, a->nelts);
+    
+}
+
+
 CuSuite *testtable(void)
 {
     CuSuite *suite = CuSuiteNew("Table");
@@ -322,6 +380,8 @@ CuSuite *testtable(void)
     SUITE_ADD_TEST(suite, table_overlap);
     SUITE_ADD_TEST(suite, table_elts);
     SUITE_ADD_TEST(suite, table_overlay);
+    SUITE_ADD_TEST(suite, table_keys);
+    SUITE_ADD_TEST(suite, table_values);
 
     return suite;
 }
