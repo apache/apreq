@@ -7,7 +7,7 @@ sub handler {
     $r->send_http_header('text/plain');
 
     my $apr = Apache::Request->new($r);
-    printf "method => %s\n", $apr->method;
+    $r->printf("method => %s\n", $apr->method);
     return OK;
 }
 
