@@ -8,21 +8,35 @@
 #define apreq_xs_table_class ( call_method("table_class", G_SCALAR), \
                                 SvPV_nolen(ST(0)) )
 
+
 APR_INLINE
 static XS(apreq_xs_env)
 {
     dXSARGS;
+    char *class = NULL;
+
+    /* map environment to package */
+
+    if (strcmp(apreq_env, "APACHE2") == 0)
+        class = "Apache::RequestRec";
+
+    /* else if ... add more conditionals here as 
+       additional environments become supported */
+
+    if (class == NULL)
+        XSRETURN(0);
 
     if (!SvROK(ST(0))) {
-        ST(0) = newSVpv(apreq_env, 0);
+        ST(0) = newSVpv(class, 0);
     }
     else {
         MAGIC *mg;
         SV *sv = SvRV(ST(0));
 
         if (SvOBJECT(sv) && (mg = mg_find(sv, PERL_MAGIC_ext))) {
+
             ST(0) = sv_2mortal(sv_setref_pv(newSV(0), 
-                                            apreq_env, mg->mg_ptr));
+                                            class, mg->mg_ptr));
         }
         else
             ST(0) = &PL_sv_undef;
@@ -137,7 +151,23 @@ struct do_arg {
 /* requires definition of type##2sv macro */
 
 #define APREQ_XS_DEFINE_GET(type, subtype)                              \
-static int apreq_xs_##type##_table_do(void *data, const char *key,      \
+static int apreq_xs_##type##_table_keys(void *data, const char *key,    \
+                               const char *val)                         \
+{                                                                       \
+    struct do_arg *d = (struct do_arg *)data;                           \
+    void *env = d->env;                                                 \
+    const char *class = d->class;                                       \
+    dTHXa(d->perl);                                                     \
+    dSP;                                                                \
+    if (key)                                                            \
+        XPUSHs(sv_2mortal(newSVpv(key,0)));                             \
+    else                                                                \
+        XPUSHs(&PL_sv_undef);                                           \
+                                                                        \
+    PUTBACK;                                                            \
+    return 1;                                                           \
+}                                                                       \
+static int apreq_xs_##type##_table_values(void *data, const char *key,  \
                                const char *val)                         \
 {                                                                       \
     struct do_arg *d = (struct do_arg *)data;                           \
@@ -149,7 +179,6 @@ static int apreq_xs_##type##_table_do(void *data, const char *key,      \
         XPUSHs(sv_2mortal(apreq_xs_##subtype##2sv(                      \
                    apreq_value_to_##subtype(apreq_strtoval(val)),       \
                    class)));                                            \
-                                                                        \
     else                                                                \
         XPUSHs(&PL_sv_undef);                                           \
                                                                         \
@@ -181,7 +210,8 @@ static XS(apreq_xs_##type##_table_get)                                  \
         case G_ARRAY:                                                   \
             XSprePUSH;                                                  \
             PUTBACK;                                                    \
-            apr_table_do(apreq_xs_##type##_table_do, &d, t, key, NULL); \
+            apr_table_do(items == 1 ? apreq_xs_##type##_table_keys :    \
+                     apreq_xs_##type##_table_values, &d, t, key, NULL); \
             break;                                                      \
                                                                         \
         case G_SCALAR:                                                  \

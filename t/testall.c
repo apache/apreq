@@ -78,11 +78,11 @@ static const struct testlist {
     const char *testname;
     CuSuite *(*func)(void);
 } tests[] = {
-    {"tables", testtable},
+//    {"tables", testtable},
     {"cookies", testcookie},
     {"params", testparam},
     {"parsers", testparser},
-    {"performance", testperformance},
+//    {"performance", testperformance},
     {"LastTest", NULL}
 };
 

@@ -171,6 +171,8 @@ static ap_filter_t *get_apreq_filter(request_rec *r)
         if (strcmp(f->frec->name, filter_name) == 0)
             return cfg->f = f;
     }
+    apreq_log(APREQ_DEBUG 0, r, 
+              "apreq filter is now added" );
     return cfg->f = ap_add_input_filter(filter_name, NULL, r, r->connection);
 }
 

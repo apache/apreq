@@ -1,12 +1,18 @@
 ##########  APREQ Functions  ##########
 
-MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=apreq_
- DEFINE_get          | apreq_xs_table_table_get |
- DEFINE_FETCH        | apreq_xs_table_table_get |
+MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
+ apreq_request | apreq_xs_request | const char *:class, void *:env, const char *:qs=NULL
+ apreq_parse_request
+ apreq_params
+ apreq_param | apreq_xs_param | ...
 
-! apreq_make_param
-! apreq_decode_param
-! apreq_encode_param
+MODULE=Apache::Request PACKAGE=Apache::Request
+ DEFINE_env  | apreq_xs_env   | ...
+
+MODULE=Apache::Request PACKAGE=Apache::Request::Table
+ DEFINE_get            | apreq_xs_table_table_get | ...
+ DEFINE_FETCH          | apreq_xs_table_table_get | ...
+ DEFINE_env            | apreq_xs_env             | ...
 
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie
  SV *:DEFINE_jar        | apreq_xs_jar | const char *:class, void *:env, const char *:hdr=NULL
@@ -21,17 +27,13 @@ MODULE=Apache::Cookie PACKAGE=Apache::Cookie
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar
  DEFINE_get        | apreq_xs_jar_table_get |
  DEFINE_cookies    | apreq_xs_jar_cookies   |
+ DEFINE_env        | apreq_xs_env             |
 
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table
  DEFINE_get        | apreq_xs_table_table_get |
  DEFINE_FETCH      | apreq_xs_table_table_get |
+ DEFINE_env        | apreq_xs_env             |
 
-
-MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
- apreq_request | apreq_xs_request | const char *:class, void *:env, const char *:qs=NULL
- apreq_parse_request
- apreq_params
- DEFINE_param | apreq_xs_param |
 
 MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
  apreq_log

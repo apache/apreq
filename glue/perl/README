@@ -23,6 +23,7 @@ current class diagram:
 
 
 missing components:  Apache::Request::Upload
+                     Apache::Request::Parser
 
 
 Can/should we collapse Apache::Cookie::Jar & Apache::Cookie::Table

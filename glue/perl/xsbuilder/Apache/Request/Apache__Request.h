@@ -38,24 +38,6 @@ APREQ_XS_DEFINE_TABLE(request,body);
 APREQ_XS_DEFINE_TABLE(request,params);
 APREQ_XS_DEFINE_GET(table,param);
 
-static XS(apreq_xs_params)
-{
-    dXSARGS;
-    apreq_request_t *req;
-    void *env;
-
-    if (items != 1)
-        Perl_croak(aTHX_ "Usage: $req->params()");
-
-    req = apreq_xs_sv2request(ST(0));
-    env = req->env;
-
-    ST(0) = apreq_xs_table2sv(apreq_params(apreq_env_pool(env),req),
-                              apreq_xs_table_class);
-    XSRETURN(1);
-}
-
-
 
 /* might be used for making upload objects */
 
@@ -69,12 +51,27 @@ static SV *apreq_xs_param2rv(const apreq_param_t *param,
 }
 
 #define apreq_xs_rv2param(sv) ((apreq_param_t *)SvIVX(SvRV(sv)))
+#define apreq_xs_param_table_do (items==1 ? apreq_xs_param_table_keys : \
+                                        apreq_xs_param_table_values)
 
+static int apreq_xs_param_table_keys(void *data, const char *key,
+                                     const char *val)
+{
+    struct do_arg *d = (struct do_arg *)data;
+    void *env = d->env;
+    const char *class = d->class;
+    dTHXa(d->perl);
+    dSP;
+    if (val)
+        XPUSHs(sv_2mortal(newSVpv(key, 0)));
+    else
+        XPUSHs(&PL_sv_undef);
 
-
-
-static int apreq_xs_param_table_do(void *data, const char *key,
-                                   const char *val)
+    PUTBACK;
+    return 1;
+}
+static int apreq_xs_param_table_values(void *data, const char *key,
+                                       const char *val)
 {
     struct do_arg *d = (struct do_arg *)data;
     void *env = d->env;
@@ -101,7 +98,7 @@ static XS(apreq_xs_param)
         SV *sv = ST(0);
         apreq_request_t *req = apreq_xs_sv2request(sv);
         void *env = req->env;
-        const char *class = apreq_xs_value_class;
+        const char *class = NULL; /* params aren't objects */
         struct do_arg d = { class, env, aTHX };
 
         if (items == 2)
@@ -135,5 +132,5 @@ static XS(apreq_xs_param)
         }
     }
     else
-	Perl_croak(aTHX_ "Usage: $table->get($key)");
+	Perl_croak(aTHX_ "Usage: $req->param($key)");
 }

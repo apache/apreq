@@ -1,5 +1,8 @@
 use strict;
 use warnings FATAL => 'all';
+use Apache2;
+use APR;
+use APR::Table;
 
 package Apache::Request::Table;
 use base 'APR::Table';
@@ -7,9 +10,9 @@ sub value_class { undef }
 
 package Apache::Request;
 push our(@ISA), __PACKAGE__ -> env;
-
+sub value_class { undef }
 sub table_class { 'Apache::Request::Table' }
-
+sub config {}
 sub new {
     my $class = shift;
     my $env = shift;

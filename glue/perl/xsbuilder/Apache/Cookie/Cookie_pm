@@ -1,5 +1,8 @@
 use strict;
 use warnings FATAL => 'all';
+use Apache2;
+use APR;
+use APR::Table;
 
 package Apache::Cookie::Jar;
 push our(@ISA), __PACKAGE__ -> env;
@@ -26,7 +29,7 @@ sub new {
     return unless defined $name and defined $value;
 
     my $cookie = $class->make($env, $class->freeze($name, $value));
-    $cookie->set_attr(%args);
+    $cookie->set_attr(%attrs);
     return $cookie;
 }
 
