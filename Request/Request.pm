@@ -399,4 +399,5 @@ This interface is based on the original pure Perl version by Lincoln Stein.
 
 =head1 AUTHOR
 
-Doug MacEachern, updated for v1.0 by Joe Schaefer
+Doug MacEachern, updated for v1.0 by Joe Schaefer, updated for v1.2 by
+Steve Hay.

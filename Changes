@@ -2,6 +2,11 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.23 - July 10, 2003
+
+Applied Graham Clark's patch to cleanup apache_request.h macros.
+Added missing doc credits for Steve Hay in Request.pm. [joes]
+
 =item 1.22 - July 5, 2003
 
 Open uploaded files with binary mode (relevant for Perl > 5.7),
