@@ -938,11 +938,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             s = apreq_run_parser(ctx->hdr_parser, cfg, ctx->info, bb);
 
             if (s != APR_SUCCESS)
-                if (s == APR_EOF)
-                    return APR_SUCCESS;
-                else {
-                    return s;
-                }
+                return (s == APR_EOF) ? APR_SUCCESS : s;
+
             cd = apr_table_get(ctx->info, "Content-Disposition");
 
             if (cd == NULL) {
@@ -1050,7 +1047,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     if (s != APR_INCOMPLETE && s != APR_SUCCESS)
                         return s;
                 }
-                return bb_concat(pool, cfg, param->bb, ctx->bb);
+                s = bb_concat(pool, cfg, param->bb, ctx->bb);
+                return (s == APR_SUCCESS) ? APR_INCOMPLETE : s;
 
             case APR_SUCCESS:
                 if (parser->hook) {

@@ -341,12 +341,14 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     default:
         return APR_ENOTIMPL;
     }
-
+    apreq_log(APREQ_DEBUG ctx->status, r, "entering filter (%d)",
+              r->input_filters == f);
     if (bb != NULL) {
         apr_bucket_brigade *tmp;
 
         rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
         if (rv != APR_SUCCESS) {
+            apreq_log(APREQ_ERROR rv, r, "get_brigade failed");
             return rv;
         }
         tmp = apreq_copy_brigade(bb);
@@ -394,6 +396,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         }
     }
     ctx->status = apreq_parse_request(apreq_request(r, NULL), ctx->bb);
+    apreq_log(APREQ_DEBUG ctx->status, r, "leaving filter (%d)",
+              r->input_filters == f);
     return (ctx->status == APR_INCOMPLETE) ? APR_SUCCESS : ctx->status;
 }
 
