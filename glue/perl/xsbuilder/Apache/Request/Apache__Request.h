@@ -96,7 +96,28 @@
                 newSVpvn((ptr)->v.data,(ptr)->v.size)
 
 APREQ_XS_DEFINE_ENV(request);
-APREQ_XS_DEFINE_OBJECT(request);
+
+static XS(apreq_xs_request)
+{
+    dXSARGS;
+    void *env;
+    const char *data;
+    apreq_request_t *req;
+
+    if (items < 2 || SvROK(ST(0)) || !SvROK(ST(1)))
+        Perl_croak(aTHX_ "Usage: $class->request($env, $data)");
+
+    env = (void *)SvIVX(SvRV(ST(1)));
+    data = (items == 3)  ?  SvPV_nolen(ST(2)) :  NULL;
+    req = apreq_request(env, data);
+
+    /*FIXME: mg_mg->ptr */
+    ST(0) = sv_2mortal(apreq_xs_2sv(req, SvPV_nolen(ST(0)),ST(1)));
+    XSRETURN(1);
+}
+
+
+
 
 /* Too many GET macros :-( */
 
@@ -143,7 +164,7 @@ APREQ_XS_DEFINE_TABLE_NEXTKEY(table);
 APREQ_XS_DEFINE_POOL(request);
 APREQ_XS_DEFINE_POOL(table);
 
-APREQ_XS_DEFINE_TABLE_MAKE(request);
+APREQ_XS_DEFINE_TABLE_MAKE(request, NULL);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,set);
 APREQ_XS_DEFINE_TABLE_METHOD_N(param,add);
 

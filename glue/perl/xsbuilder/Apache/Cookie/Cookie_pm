@@ -1,9 +1,6 @@
 use APR::Table;
 use APR::Error;
 
-package Apache::Cookie::Jar;
-push our(@ISA), __PACKAGE__ -> env;
-
 package Apache::Cookie::Table;
 push our(@ISA), "APR::Table";
 BEGIN {
@@ -18,15 +15,24 @@ BEGIN {
 package Apache::Cookie::Error;
 push our(@ISA), qw/APR::Error Apache::Cookie/;
 
-package Apache::Cookie::Jar::Error;
-push our(@ISA), qw/APR::Error Apache::Cookie::Jar/;
+package Apache::Cookie::Jar;
+
+sub new {
+    my $class = shift;
+    my $env = shift;
+    my $jar = $class->jar($env);
+    $jar->config(@_) if @_;
+    return $jar;
+}
+
 
 package Apache::Cookie;
 
 sub jar {
-    my $self = shift;
-    return Apache::Cookie::Jar->new(@_);
+    my ($self, $env) = @_;
+    Apache::Cookie::Jar->jar($env);
 }
+
 
 sub new {
     my ($class, $env, %attrs) = @_;
@@ -64,11 +70,15 @@ EOD
 sub freeze {
     my ($class, $value) = @_;
     return encode($value) if not ref $value;
-    return $value->freeze if UNIVERSAL::can($value,"freeze");
-    if (UNIVERSAL::isa($value,"ARRAY")) {
+    if (my $freeze = UNIVERSAL::can($value, "freeze")) {
+        my $val = $freeze->($value);
+        return $val if $val =~ /^".+"$/ or $val !~ tr/\r\n\t ;,//;
+        die "Unsafe encoding of cookie value $value: $val";
+    }
+    if (UNIVERSAL::isa($value, "ARRAY")) {
         return join '&', map encode($_), @$value;
     }
-    elsif (UNIVERSAL::isa($value,"HASH")) {
+    elsif (UNIVERSAL::isa($value, "HASH")) {
         return join '&', map encode($_), %$value;
     }
     else {

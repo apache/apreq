@@ -89,18 +89,21 @@ static void *apreq_xs_perl2c(pTHX_ SV* in, const char *name)
         return (void *)SvIVX(sv);
 }
 
+APR_INLINE
+static SV *apreq_xs_perl_sv2env(pTHX_ SV *sv)
+{
+    MAGIC *mg;
+    if ((mg = mg_find(sv, PERL_MAGIC_ext)) && SvROK(mg->mg_obj))
+        return mg->mg_obj;
+
+    Perl_croak(aTHX_ "Can't find magic environment");
+    return NULL; /* not reached */
+}
+
 /** 
  * Searches a perl object ref with apreq_xs_find_obj
  * and produces a pointer to the underlying C environment.
  */ 
-APR_INLINE
-static void *apreq_xs_perl2env(pTHX_ SV *sv)
-{
-    MAGIC *mg;
-    if (sv != NULL && (mg = mg_find(sv, PERL_MAGIC_ext)))
-        return mg->mg_ptr;
-    return NULL;
-}
 
 /**
  * Converts a C object, with environment, to a Perl object.
@@ -135,7 +138,7 @@ static SV *apreq_xs_c2perl(pTHX_ void *obj, void *env, const char *class, SV *pa
 #define apreq_xs_sv2(type,sv)((apreq_##type##_t *)      \
                                apreq_xs_perl2c(aTHX_ sv, #type))
 
-#define apreq_xs_sv2env(sv) apreq_xs_perl2env(aTHX_ sv)
+#define apreq_xs_sv2env(sv) ((void *)SvIVX(SvRV(apreq_xs_perl_sv2env(aTHX_ sv))))
 
 /** Converts apreq_env to a Perl package, which forms the
  * base class for Apache::Request and Apache::Cookie::Jar objects.
@@ -151,6 +154,8 @@ static XS(apreq_xs_##type##_env)                        \
                                                         \
     if (strcmp(apreq_env_name, "APACHE2") == 0)         \
         class = "Apache::RequestRec";                   \
+    else if (strcmp(apreq_env_name, "CGI") == 0)        \
+        class = "APR::Pool";                            \
                                                         \
     /* else if ... add more conditionals here as        \
        additional environments become supported */      \
@@ -175,26 +180,44 @@ static XS(apreq_xs_##type##_env)                        \
 }
 
 
-/** requires apreq_##type (type is either request or jar) */
 
-#define APREQ_XS_DEFINE_OBJECT(type)                                    \
-static XS(apreq_xs_##type)                                              \
+#define APREQ_XS_DEFINE_CONFIG(attr)                                    \
+static XS(apreq_xs_##attr##_config)                                     \
 {                                                                       \
     dXSARGS;                                                            \
-    void *env;                                                          \
-    const char *data;                                                   \
-    apreq_##type##_t *obj;                                              \
+    SV *sv, *obj;                                                       \
+    int j;                                                              \
                                                                         \
-    if (items < 2 || SvROK(ST(0)) || !SvROK(ST(1)))                     \
-        Perl_croak(aTHX_ "Usage: $class->" #type "($env, $data)");      \
+    if (items % 2 != 1 || !SvROK(ST(0)))                                \
+        Perl_croak(aTHX_ "usage: $obj->config(%settings)");             \
                                                                         \
-    env = (void *)SvIVX(SvRV(ST(1)));                                   \
-    data = (items == 3)  ?  SvPV_nolen(ST(2)) :  NULL;                  \
-    obj = apreq_##type(env, data);                                      \
+    sv = ST(0);                                                         \
+    obj = apreq_xs_find_obj(aTHX_ sv, #attr);                           \
                                                                         \
-    ST(0) = obj ? sv_2mortal(apreq_xs_2sv(obj, SvPV_nolen(ST(0)),ST(1)))\
-                : &PL_sv_undef;                                         \
-    XSRETURN(1);                                                        \
+    for (j = 1; j + 1 < items; j += 2) {                                \
+        STRLEN alen;                                                    \
+        const char *attr = SvPVbyte(ST(j),alen);                        \
+                                                                        \
+        if (strcasecmp(attr,"VALUE_CLASS") == 0)                        \
+        {                                                               \
+            STRLEN vlen;                                                \
+            const char *val = SvPV(ST(j+1), vlen);                      \
+            MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);                   \
+                                                                        \
+            if (mg->mg_len > 0) {                                       \
+                Safefree(mg->mg_ptr);                                   \
+            }                                                           \
+            mg->mg_ptr = savepvn(val, vlen);                            \
+            mg->mg_len = vlen;                                          \
+                                                                        \
+        }                                                               \
+        else {                                                          \
+            Perl_warn(aTHX_ "$obj->config(%settings): "                 \
+                      "Unrecognized attribute %s, skipped", attr);      \
+        }                                                               \
+    }                                                                   \
+                                                                        \
+    XSRETURN(0);                                                        \
 }
 
 
@@ -253,10 +276,12 @@ static XS(apreq_xs_##attr##_pool)                               \
 {                                                               \
     dXSARGS;                                                    \
     void *env;                                                  \
+    SV *obj;                                                    \
                                                                 \
     if (items != 1 || !SvROK(ST(0)))                            \
         Perl_croak(aTHX_ "Usage: $obj->pool()");                \
-    env = apreq_xs_##attr##_sv2env(SvRV(ST(0)));                \
+    obj = apreq_xs_find_obj(aTHX_ ST(0), #attr);                \
+    env = apreq_xs_sv2env(obj);                                 \
     ST(0) = sv_2mortal(sv_setref_pv(newSV(0), "APR::Pool",      \
                                     apreq_env_pool(env)));      \
     XSRETURN(1);                                                \

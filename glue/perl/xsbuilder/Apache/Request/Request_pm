@@ -17,7 +17,7 @@ package Apache::Request::Error;
 push our(@ISA), qw/APR::Error Apache::Request/;
 
 package Apache::Request;
-push our(@ISA), __PACKAGE__ -> env;
+push our(@ISA), "Apache::RequestRec" if  __PACKAGE__ -> env eq "Apache::RequestRec";
 
 sub new {
     my $class = shift;
@@ -35,7 +35,7 @@ sub param;
 *params = *param;
 
 sub param_status {
-   my $req = shift;
-   return wantarray ? ($req->args_status, $req->body_status)
-                    : $req->args_status || $req->body_status;
+    my $req = shift;
+    return wantarray ? ($req->args_status, $req->body_status)
+                     : $req->args_status || $req->body_status;
 }

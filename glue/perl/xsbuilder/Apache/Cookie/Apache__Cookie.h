@@ -28,7 +28,27 @@
 APREQ_XS_DEFINE_ENV(cookie);
 APREQ_XS_DEFINE_ENV(jar);
 APREQ_XS_DEFINE_MAKE(cookie);
-APREQ_XS_DEFINE_OBJECT(jar);
+APREQ_XS_DEFINE_CONFIG(jar);
+
+static XS(apreq_xs_jar)
+{
+    dXSARGS;
+    void *env;
+    const char *data;
+    apreq_jar_t *jar;
+
+    if (items < 2 || SvROK(ST(0)) || !SvROK(ST(1)))
+        Perl_croak(aTHX_ "Usage: $class->jar($env, $data)");
+
+    env = (void *)SvIVX(SvRV(ST(1)));
+    data = (items == 3)  ?  SvPV_nolen(ST(2)) :  NULL;
+    jar = apreq_jar(env, data);
+
+    ST(0) = sv_2mortal(apreq_xs_2sv(jar, SvPV_nolen(ST(0)),ST(1)));
+    XSRETURN(1);
+}
+
+
 
 #define apreq_xs_jar_error_check   do {                                 \
     int n = PL_stack_sp - (PL_stack_base + ax - 1);                     \
@@ -75,7 +95,7 @@ APREQ_XS_DEFINE_TABLE_DO(table, cookie, COOKIE_PKG);
 APREQ_XS_DEFINE_POOL(jar);
 APREQ_XS_DEFINE_POOL(table);
 
-APREQ_XS_DEFINE_TABLE_MAKE(jar);
+APREQ_XS_DEFINE_TABLE_MAKE(jar, COOKIE_PKG);
 APREQ_XS_DEFINE_TABLE_METHOD_N(cookie,set);
 APREQ_XS_DEFINE_TABLE_METHOD_N(cookie,add);
 APREQ_XS_DEFINE_TABLE_NEXTKEY(table);
