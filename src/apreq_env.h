@@ -19,6 +19,7 @@
 
 #include "apreq_params.h"
 #include "apreq_cookie.h"
+#include <stdarg.h>
 
 #ifdef HAVE_SYSLOG
 #include <syslog.h>

@@ -23,8 +23,6 @@
 #include "apr_env.h"
 #include "apr_file_io.h"
 
-#include <stdlib.h>
-#include <stdio.h>
 
 static const apreq_env_t *apreq_env;
 
@@ -146,7 +144,7 @@ static struct {
 
 
 #define APREQ_MODULE_NAME         "CGI"
-#define APREQ_MODULE_MAGIC_NUMBER 20040705
+#define APREQ_MODULE_MAGIC_NUMBER 20040707
 
 static apr_pool_t *cgi_pool(void *env)
 {
@@ -228,7 +226,9 @@ static void cgi_log(const char *file, int line, int level,
 {
     dP;
     char buf[256];
-    fprintf(stderr, "[%s(%d): %s] %s\n", file, line, 
+    apr_file_t *err;
+    apr_file_open_stderr(&err, p);
+    apr_file_printf(err, "[%s(%d): %s] %s\n", file, line, 
             apr_strerror(status,buf,255),apr_pvsprintf(p,fmt,vp));
 }
 

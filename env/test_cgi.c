@@ -37,6 +37,7 @@ int main(int argc, char const * const * argv)
     apr_pool_t *pool;
     apreq_request_t *req;
     const apreq_param_t *foo, *bar, *test, *key;
+    apr_file_t *out;
 
     atexit(apr_terminate);
     if (apr_app_initialize(&argc, &argv, NULL) != APR_SUCCESS) {
@@ -49,10 +50,12 @@ int main(int argc, char const * const * argv)
         exit(-1);
     }
 
+    apr_file_open_stdout(&out, pool);
+
     apreq_log(APREQ_DEBUG 0, pool, "%s", "Creating apreq_request");
     req = apreq_request(pool, NULL);
 
-    printf("%s", "Content-Type: text/plain\n\n");
+    apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
     apreq_log(APREQ_DEBUG 0, pool, "%s", "Fetching the parameters");
 
     foo = apreq_param(req, "foo");
@@ -63,11 +66,11 @@ int main(int argc, char const * const * argv)
 
     if (foo || bar) {
         if (foo) {
-            printf("\t%s => %s\n", "foo", foo->v.data);
+            apr_file_printf(out, "\t%s => %s\n", "foo", foo->v.data);
             apreq_log(APREQ_DEBUG 0, pool, "%s => %s", "foo", foo->v.data);
         }
         if (bar) {
-            printf("\t%s => %s\n", "bar", bar->v.data);
+            apr_file_printf(out, "\t%s => %s\n", "bar", bar->v.data);
             apreq_log(APREQ_DEBUG 0, pool, "%s => %s", "bar", bar->v.data);
         }
     }
@@ -94,10 +97,13 @@ int main(int argc, char const * const * argv)
         else {
             char *dest = apr_pcalloc(pool, cookie->v.size + 1);
             if (apreq_decode(dest, cookie->v.data, cookie->v.size) >= 0)
-                printf("%s", dest);
-            else
-                apreq_log(APREQ_DEBUG 0, pool, "Bad cookie encoding: %s", 
+                apr_file_printf(out, "%s", dest);
+            else {
+                apreq_log(APREQ_ERROR APR_EGENERAL, pool, 
+                          "Bad cookie encoding: %s", 
                           cookie->v.data);
+                exit(-1);
+            }
         }
     }
 
@@ -108,11 +114,11 @@ int main(int argc, char const * const * argv)
         apreq_log(APREQ_DEBUG 0, pool, "Fetching all parameters");
 
         if (params == NULL) {
-            apreq_log(APREQ_DEBUG 0, pool, "No parameters found!");
+            apreq_log(APREQ_ERROR APR_EGENERAL, pool, "No parameters found!");
             exit(-1);
         }
         apr_table_do(dump_table, &count, params, NULL);
-        printf("%d", count);
+        apr_file_printf(out, "%d", count);
     }
     
     return 0;
