@@ -74,7 +74,6 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
     apreq_param_t *param = apr_palloc(p, nlen + vlen + 1 + sizeof *param);
     apreq_value_t *v = &param->v;
     param->charset = APREQ_CHARSET;
-    param->language = NULL;
     param->info = NULL;
     param->bb = NULL;
 
@@ -163,7 +162,6 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
 }
 
 
-
 APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *pool,
                                           const apreq_request_t *req)
 {
@@ -185,7 +183,6 @@ APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool,
 
     param = apr_palloc(pool, nlen + vlen + 1 + sizeof *param);
     param->charset = ASCII;     /* XXX: UTF_8 */
-    param->language = NULL;
     param->info = NULL;
     param->bb = NULL;
 
@@ -293,4 +290,50 @@ APREQ_DECLARE(apr_status_t) apreq_parse_request(apreq_request_t *req,
         req->body = apr_table_make(apreq_env_pool(req->env),APREQ_NELTS);
 
     return apreq_run_parser(req->parser, req->cfg, req->body, bb);
+}
+
+
+static int upload_push(void *data, const char *key, const char *val)
+{
+    apr_table_t *t = data;
+    apreq_param_t *p = apreq_value_to_param(apreq_strtoval(val));
+    if (p->bb)
+        apr_table_addn(t, key, val);
+    return 0;
+}
+
+
+APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
+                                           const apreq_request_t *req)
+{
+    apr_table_t *t;
+    if (req->body == NULL)
+        return NULL;
+
+    t = apr_table_make(pool, APREQ_NELTS);
+    /* XXX needs appropriate copy/merge callbacks */
+    apr_table_do(upload_push, t, req->body, NULL);
+    return t;
+}
+
+static int upload_get(void *data, const char *key, const char *val)
+{
+    const apreq_param_t *p = apreq_value_to_param(apreq_strtoval(val));
+    const apreq_param_t **q = data;
+    if (p->bb) {
+        *q = p;
+        return 1; /* upload found, stop */
+    }
+    else
+        return 0; /* keep searching */
+}
+
+APREQ_DECLARE(const apreq_param_t *) apreq_upload(const apreq_request_t *req,
+                                                  const char *key)
+{
+    const apreq_param_t *param = NULL;
+    if (req->body == NULL)
+        return NULL;
+    apr_table_do(upload_get, &param, req->body, key, NULL);
+    return param;
 }

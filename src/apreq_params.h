@@ -81,11 +81,8 @@ extern "C" {
 
 typedef struct apreq_param_t {
     enum { ASCII, UTF_8, UTF_16, ISO_LATIN_1 } charset;
-    char                *language;
     apr_table_t         *info;
-
     apr_bucket_brigade  *bb;
-
     apreq_value_t        v;
 } apreq_param_t;
 
@@ -180,6 +177,14 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
 
 APREQ_DECLARE(apr_status_t)apreq_parse_request(apreq_request_t *req, 
                                                apr_bucket_brigade *bb);
+
+APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
+                                           const apreq_request_t *req);
+
+APREQ_DECLARE(const apreq_param_t *) apreq_upload(const apreq_request_t *req,
+                                                  const char *key);
+
+
 
 /** @} */
 #ifdef __cplusplus

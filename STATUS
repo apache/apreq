@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/06/15 05:29:03 $]
+Last modified at [$Date: 2003/06/22 15:34:43 $]
 
      2.0.0  in development
 
@@ -18,18 +18,7 @@ RELEASE SHOWSTOPPERS:
     * Missing API components: 
 
         1. Key safety features ("disable uploads", "max body", "temp dir",
-           etc.) are unimplemented.
-
-        2. File uploads are `buffered' into a bucket brigade.
-           The buckets are currently heap-allocated, which 
-           causes the entire file to be spooled into RAM.
-           This behavior is unsafe, since large uploads can
-           DOS the server by exhausting RAM.
-
-           [joes] How about writing an upload hook?
-
-
-        3. The req->upload API is unimplemented.
+           etc.) are not fully unimplemented.
 
 
 CURRENT VOTES:

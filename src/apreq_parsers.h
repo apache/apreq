@@ -25,6 +25,7 @@ extern "C" {
 /** Request config */
 typedef struct apreq_cfg_t {
     char          *temp_dir;
+    apr_size_t     max_brigade_len;
     apr_off_t      max_len;
     int            read_bytes;
     int            disable_uploads;
@@ -39,12 +40,11 @@ typedef struct apreq_cfg_t {
 #define APREQ_DECLARE_HOOK(f) apr_status_t (f)(apreq_hook_t *hook,   \
                                        apr_pool_t *pool,             \
                                        const apreq_cfg_t *cfg,       \
-                                       apr_bucket_brigade *out,      \
-                                       apr_bucket_brigade *in)
+                                       apr_bucket_brigade *bb)
 
 #define APREQ_CTX_MAXSIZE  128
 #define apreq_run_parser(psr,cfg,t,bb) psr->parser(psr,cfg,t,bb)
-#define apreq_run_hook(h,pool,cfg,out,in) h->hook(h,pool,cfg,out,in)
+#define apreq_run_hook(h,pool,cfg,bb) h->hook(h,pool,cfg,bb)
 
 typedef struct apreq_hook_t apreq_hook_t;
 typedef struct apreq_parser_t apreq_parser_t;
@@ -82,6 +82,10 @@ APREQ_DECLARE(apr_status_t)apreq_add_hook(apreq_parser_t *p,
                                           apreq_hook_t *h);
 
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook);
+
+APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
+                                              apr_pool_t *pool,
+                                              const apreq_cfg_t *cfg);
 
 /** @} */
 #ifdef __cplusplus

@@ -158,7 +158,6 @@ static apr_status_t split_urlword(apr_table_t *t,
     param->bb = NULL;
     param->info = NULL;
     param->charset = UTF_8;
-    param->language = NULL;
 
     v->name = v->data + vlen + 1;
 
@@ -682,6 +681,172 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
     return APR_INCOMPLETE;
 }
 
+APR_INLINE
+static apr_status_t mfd_fwritev(apr_file_t *f, struct iovec *v, 
+                                int *nelts, apr_size_t *bytes_written)
+{
+    apr_size_t len, bytes_avail = 0;
+    int n = *nelts;
+    apr_status_t s = apr_file_writev(f, v, n, &len);
+
+    *bytes_written = len;
+
+    if (s != APR_SUCCESS)
+        return s;
+
+    while (--n >= 0)
+        bytes_avail += v[n].iov_len;
+
+
+    if (bytes_avail > len) {
+        /* incomplete write: must shift v */
+        n = 0;
+        while (v[n].iov_len <= len) {
+            len -= v[n].iov_len;
+            ++n;
+        }
+        v[n].iov_len -= len;
+        v[n].iov_base = (char *)(v[n].iov_base) + len;
+
+        if (n > 0) {
+            struct iovec *dest = v;
+            do {
+                *dest++ = v[n++];
+            }  while (n < *nelts);
+            *nelts = dest - v;
+        }
+        else {
+            s = mfd_fwritev(f, v, nelts, &len);
+            *bytes_written += len;
+        }
+    }
+
+    return s;
+}
+
+
+APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
+                                              apr_pool_t *pool,
+                                              const apreq_cfg_t *cfg)
+{
+    apr_status_t rc = APR_SUCCESS;
+    char *path = NULL;
+    
+    if (cfg && cfg->temp_dir) {
+        rc = apr_filepath_merge(&path, cfg->temp_dir, "apreqXXXXXX",
+                                APR_FILEPATH_NOTRELATIVE, pool);
+        if (rc != APR_SUCCESS)
+            return rc;
+    }
+    else {
+        int tries = 100;
+        char *tmp;
+           
+        /* XXX: this should hopefully be replace with currently
+         * non-existing apr_tmp_dir_get() */
+        while (--tries > 0) {
+            if ( (tmp = tempnam(NULL, "apreq")) == NULL ) {
+                continue;
+            }
+            path = apr_pstrcat(pool, tmp, "XXXXXX", NULL);
+            free(tmp);
+            break;               
+        }
+        if (path == NULL)
+            return APR_EGENERAL;
+    }
+    
+    return apr_file_mktemp(fp, path, 
+                           APR_CREATE | APR_READ | APR_WRITE
+                           | APR_EXCL | APR_DELONCLOSE | APR_BINARY, pool);
+}
+
+#define MAX_FILE_BUCKET_LENGTH ( 1 << ( 6 * sizeof(apr_size_t) ) )
+
+APR_INLINE
+static apr_status_t mfd_bb_concat(apr_pool_t *pool, const apreq_cfg_t *cfg,
+                                  apr_bucket_brigade *out, 
+                                  apr_bucket_brigade *in)
+{
+    apr_bucket *last = APR_BRIGADE_LAST(out);
+    apr_status_t s;
+    struct iovec v[APREQ_NELTS];
+    apr_bucket_file *f;
+    apr_bucket *e;
+    int n = 0;
+
+    if (! APR_BUCKET_IS_FILE(last)) {
+        apr_bucket_brigade *bb;
+        apr_file_t *file;
+        apr_off_t len;
+
+        s = apr_brigade_length(out, 1, &len);
+        if (s != APR_SUCCESS)
+            return s;
+        if (cfg && len < cfg->max_brigade_len) {
+            APR_BRIGADE_CONCAT(out, in);
+            return APR_SUCCESS;
+        }
+
+        s = apreq_file_mktemp(&file, pool, cfg);
+        if (s != APR_SUCCESS)
+            return s;
+
+        bb = apr_brigade_create(pool, out->bucket_alloc);
+        e = apr_bucket_file_create(file, len, 0, pool, out->bucket_alloc);
+        APR_BRIGADE_INSERT_HEAD(bb, e);
+        s = mfd_bb_concat(pool, cfg, bb, out);
+        if (s != APR_SUCCESS)
+            return s;
+        APR_BRIGADE_CONCAT(out, bb);
+        last = APR_BRIGADE_LAST(out);
+    }
+
+    f = last->data;
+        
+    if (last->length > MAX_FILE_BUCKET_LENGTH) {
+        apr_bucket_copy(last, &e);
+        APR_BRIGADE_INSERT_TAIL(out, e);
+        e->length = 0;
+        e->start = last->length;
+        last = e;
+    }
+
+    e = APR_BRIGADE_FIRST(in);
+
+    while (!APR_BRIGADE_EMPTY(in)) {
+        apr_size_t len;
+
+        if (e == APR_BRIGADE_SENTINEL(in) || n == APREQ_NELTS) {
+            int nvec = n;
+            s = mfd_fwritev(f->fd, v, &nvec, &len);
+            if (s != APR_SUCCESS)
+                return s;
+
+            /* nvec now holds the actual number written */
+            n -= nvec;
+
+            while (nvec-- > 0) {
+                apr_bucket *first = APR_BRIGADE_FIRST(in);
+                apr_bucket_delete(first);
+            }
+
+            last->length += len;
+        }
+        else {
+            s = apr_bucket_read(e, (const char **)&(v[n].iov_base), 
+                                &len, APR_NONBLOCK_READ);
+            if (s != APR_SUCCESS)
+                return s;
+
+            v[n++].iov_len = len;
+            e = APR_BUCKET_NEXT(e);
+        }
+    }
+
+    return APR_SUCCESS;
+}
+
 
 static apr_status_t nextval(const char **line, const char *name,
                             const char **val, apr_size_t *vlen)
@@ -886,7 +1051,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 param->info = ctx->info;
                 param->bb = apr_brigade_create(pool, 
                                                apr_bucket_alloc_create(pool));
-
+                param->v.status = APR_INCOMPLETE;
                 apr_table_addn(t, param->v.name, param->v.data);
                 ctx->status = MFD_UPLOAD;
             }
@@ -922,7 +1087,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 len = off;
                 param = apr_palloc(pool, len + sizeof *param);
                 param->charset = APREQ_CHARSET;
-                param->language = NULL;
                 param->bb = NULL;
                 param->info = ctx->info;
 
@@ -957,31 +1121,34 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             arr = apr_table_elts(t);
             e = (apr_table_entry_t *)arr->elts;
             param = apreq_value_to_param(apreq_strtoval(e[arr->nelts-1].val));
-/*            param = apreq_value_to_param(*(apreq_value_t **)
-                       (arr->elts + (arr->elt_size * (arr->nelts-1))));
-*/
+
             switch (s) {
 
             case APR_INCOMPLETE:
-                if (parser->hook)
-                    return apreq_run_hook(parser->hook, pool, cfg, 
-                                          param->bb, ctx->bb);
-                else {
-                    APR_BRIGADE_CONCAT(param->bb, ctx->bb);
-                    return s;
+                if (parser->hook) {
+                    s = apreq_run_hook(parser->hook, pool, cfg, ctx->bb);
+                    if (s != APR_INCOMPLETE && s != APR_SUCCESS)
+                        return s;
                 }
+                return mfd_bb_concat(pool, cfg, param->bb, ctx->bb);
 
             case APR_SUCCESS:
                 eos = apr_bucket_eos_create(ctx->bb->bucket_alloc);
                 APR_BRIGADE_INSERT_TAIL(ctx->bb, eos);
 
                 if (parser->hook) {
-                    do s = apreq_run_hook(parser->hook, pool, cfg,
-                                          param->bb, ctx->bb);
-                    while (s == APR_INCOMPLETE);
+                    s = apreq_run_hook(parser->hook, pool, cfg, ctx->bb);
+                    if (s != APR_SUCCESS)
+                        return s;
                 }
-                else
-                    APR_BRIGADE_CONCAT(param->bb, ctx->bb);
+
+                apr_bucket_delete(eos);
+                param->v.status = mfd_bb_concat(pool, cfg,
+                                                param->bb, ctx->bb);
+
+                if (param->v.status != APR_SUCCESS)
+                    return s;
+
                 ctx->status = MFD_NEXTLINE;
                 goto mfd_parse_brigade;
 
