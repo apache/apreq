@@ -54,6 +54,7 @@ struct cgi_handle {
 
     apreq_parser_t              *parser;
     apreq_hook_t                *hook_queue;
+    apreq_hook_t                *find_param;
 
     const char                  *temp_dir;
     apr_size_t                   brigade_limit;
@@ -456,8 +457,17 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *env,
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
     const char *val;
+    apreq_hook_t *h;
 
     switch (handle->body_status) {
+
+    case APR_SUCCESS:
+
+        val = apr_table_get(handle->body, name);
+        if (val != NULL)
+            return apreq_value_to_param(val);
+        return NULL;
+
 
     case APR_EINIT:
 
@@ -466,35 +476,49 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *env,
             return NULL;
         cgi_read(env, APREQ_DEFAULT_READ_BLOCK_SIZE);
 
+
     case APR_INCOMPLETE:
 
         val = apr_table_get(handle->body, name);
         if (val != NULL)
             return apreq_value_to_param(val);
 
+        /* Not seen yet, so we need to scan for 
+           param while prefetching the body */
+
+        if (handle->find_param == NULL)
+            handle->find_param = apreq_hook_make(handle->pool, 
+                                                 apreq_hook_find_param, 
+                                                 NULL, NULL);
+        h = handle->find_param;
+        h->next = handle->parser->hook;
+        handle->parser->hook = h;
+        *(const char **)&h->ctx = name;
+
         do {
-            /* riff on Duff's device */
             cgi_read(env, APREQ_DEFAULT_READ_BLOCK_SIZE);
-
-    case APR_SUCCESS:
-
-            val = apr_table_get(handle->body, name);
-            if (val != NULL)
-                return apreq_value_to_param(val);
-
+            if (h->ctx != name) {
+                handle->parser->hook = h->next;
+                return h->ctx;
+            }
         } while (handle->body_status == APR_INCOMPLETE);
 
-        break;
+        handle->parser->hook = h->next;
+        return NULL;
+
 
     default:
 
-        if (handle->body != NULL) {
-            val = apr_table_get(handle->body, name);
-            if (val != NULL)
-                return apreq_value_to_param(val);
-        }
+        if (handle->body == NULL)
+            return NULL;
+
+        val = apr_table_get(handle->body, name);
+        if (val != NULL)
+            return apreq_value_to_param(val);
+        return NULL;
     }
 
+    /* not reached */
     return NULL;
 }
 
