@@ -322,7 +322,7 @@ static int apreq_xs_##attr##_table_values(void *data, const char *key,  \
         apreq_##type##_t *RETVAL =                                      \
                           apreq_value_to_##type(apreq_strtoval(val));   \
         if (COND)                                                       \
-            XPUSHs(sv_2mortal(apreq_xs_##type##2sv(RETVAL,class)));     \
+            XPUSHs(sv_2mortal(apreq_xs_##type##2sv(RETVAL,subclass)));  \
     } else                                                              \
         XPUSHs(&PL_sv_undef);                                           \
                                                                         \
