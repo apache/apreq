@@ -39,8 +39,8 @@ for my $key_len (@key_len) {
 
         t_debug "# of keys : $key_num, key_len $key_len";
         my $body = GET_BODY "$script?$query";
-        ok t_cmp($len,
-                 $body,
+        ok t_cmp($body,
+                 $len,
                  "GET long query");
     }
 
@@ -61,32 +61,32 @@ for my $big_key_len (@big_key_len) {
 
         t_debug "# of keys : $big_key_num, big_key_len $big_key_len";
         my $body = POST_BODY($script, content => $query);
-        ok t_cmp($len,
-                 $body,
+        ok t_cmp($body,
+                 $len,
                  "POST big data");
     }
 
 }
 
-ok t_cmp("\tfoo => 1$line_end", 
-         POST_BODY("$script?foo=1", Content => $filler), "simple post");
+ok t_cmp(POST_BODY("$script?foo=1", Content => $filler),
+         "\tfoo => 1$line_end", "simple post");
 
-ok t_cmp("\tfoo => ?$line_end\tbar => hello world$line_end", 
-         GET_BODY("$script?foo=%3F&bar=hello+world"), "simple get");
+ok t_cmp(GET_BODY("$script?foo=%3F&bar=hello+world"),
+          "\tfoo => ?$line_end\tbar => hello world$line_end", "simple get");
 
 my $body = POST_BODY($script, content => 
                      "aaa=$filler;foo=1;bar=2;filler=$filler");
-ok t_cmp("\tfoo => 1$line_end\tbar => 2$line_end", 
-         $body, "simple post");
+ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end",
+         "simple post");
 
 $body = POST_BODY("$script?foo=1", content => 
                   "intro=$filler&bar=2&conclusion=$filler");
-ok t_cmp("\tfoo => 1$line_end\tbar => 2$line_end", 
-         $body, "simple post");
+ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end",
+         "simple post");
 
 $body = UPLOAD_BODY("$script?foo=0", content => $filler);
-ok t_cmp("\tfoo => 0$line_end", 
-         $body, "simple upload");
+ok t_cmp($body, "\tfoo => 0$line_end",
+         "simple upload");
 
 
 {

@@ -15,20 +15,20 @@ Apache::TestRequest::scheme($scheme);
 
 foreach my $location ('/apreq_request_test', '/apreq_access_test') {
 
-    ok t_cmp("ARGS:\n\ttest => 1\n", 
-            GET_BODY("$location?test=1"), "simple get");
+    ok t_cmp(GET_BODY("$location?test=1"), "ARGS:\n\ttest => 1\n", 
+             "simple get");
 
-    ok t_cmp("ARGS:\n\ttest => 2\nBODY:\n\tHTTPUPLOAD => b\n",
-            UPLOAD_BODY("$location?test=2", content => "unused"), 
-            "simple upload");
+    ok t_cmp(UPLOAD_BODY("$location?test=2", content => "unused"), 
+             "ARGS:\n\ttest => 2\nBODY:\n\tHTTPUPLOAD => b\n",
+             "simple upload");
 }
 
-ok t_cmp(403, GET_RC("/apreq_access_test"), "access denied");
+ok t_cmp(GET_RC("/apreq_access_test"), 403, "access denied");
 
 my $filler = "0123456789" x 6400; # < 64K
 my $body = POST_BODY("/apreq_access_test?foo=1;", 
                      content => "bar=2&quux=$filler;test=6&more=$filler");
-ok t_cmp(<<EOT, $body, "prefetch credentials");
+ok t_cmp($body, <<EOT, "prefetch credentials");
 ARGS:
 \tfoo => 1
 BODY:
@@ -38,17 +38,17 @@ BODY:
 \tmore => $filler
 EOT
 
-ok t_cmp(403, GET_RC("/apreq_redirect_test"), "missing 'test' authorization");
+ok t_cmp(GET_RC("/apreq_redirect_test"), 403, "missing 'test' authorization");
 
 foreach my $location ('/apreq_request_test', '/apreq_access_test') {
-    ok t_cmp("ARGS:\n\ttest => redirect\n", 
-            GET_BODY("/apreq_redirect_test?test=ok&location=$location%3Ftest=redirect"), 
-            "redirect GET");
+    ok t_cmp(GET_BODY("/apreq_redirect_test?test=ok&location=$location%3Ftest=redirect"), 
+             "ARGS:\n\ttest => redirect\n", 
+             "redirect GET");
 
     $body = POST_BODY("/apreq_redirect_test?location=$location%3Ffoo=bar", content => 
             "quux=$filler;test=redirect+with+prefetch;more=$filler");
 
-    ok t_cmp(<<EOT, $body, "redirect with prefetch");
+    ok t_cmp($body, <<EOT, "redirect with prefetch");
 ARGS:
 \tfoo => bar
 BODY:
@@ -66,11 +66,13 @@ sub filter_content ($) {
    return $body;
 }
 
-ok t_cmp(200, GET_RC("/index.html"), "/index.html");
-ok t_cmp("ARGS:\n\ttest => 13\n", filter_content
-         GET_BODY("/index.html?test=13"), "output filter GET");
+ok t_cmp(GET_RC("/index.html"), 200, "/index.html");
+ok t_cmp(filter_content GET_BODY("/index.html?test=13"),
+         "ARGS:\n\ttest => 13\n", "output filter GET");
 
-ok t_cmp(<<EOT,
+ok t_cmp(filter_content POST_BODY("/index.html?test=14", content => 
+         "post+data=foo;more=$filler;test=output+filter+POST"), 
+         <<EOT,
 ARGS:
 \ttest => 14
 BODY:
@@ -78,9 +80,7 @@ BODY:
 \tmore => $filler
 \ttest => output filter POST
 EOT
-     filter_content POST_BODY("/index.html?test=14", content => 
-     "post+data=foo;more=$filler;test=output+filter+POST"), 
-     "output filter POST");
+          "output filter POST");
 
 if (Apache::Test::have_ssl() and $scheme ne 'https') {    
     $scheme = 'https';

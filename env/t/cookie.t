@@ -17,8 +17,8 @@ my $location = "/apreq_cookie_test";
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = qq{$key=$value};
-    ok t_cmp($value,
-             GET_BODY("$location?test=$test&key=$key", Cookie => $cookie),
+    ok t_cmp(GET_BODY("$location?test=$test&key=$key", Cookie => $cookie),
+             $value,
              $test);
 }
 {
@@ -26,8 +26,8 @@ my $location = "/apreq_cookie_test";
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$location"};
-    ok t_cmp(qq{"$value"},
-             GET_BODY("$location?test=$test&key=$key", Cookie => $cookie),
+    ok t_cmp(GET_BODY("$location?test=$test&key=$key", Cookie => $cookie),
+             qq{"$value"},
              $test);
 }
 {
@@ -36,8 +36,8 @@ my $location = "/apreq_cookie_test";
     my $value = 'okie dokie';
     my $cookie = "$key=" . join '',
         map {/ / ? '+' : sprintf '%%%.2X', ord} split //, $value;
-    ok t_cmp($value,
-             GET_BODY("$location?test=$test&key=$key", Cookie => $cookie),
+    ok t_cmp(GET_BODY("$location?test=$test&key=$key", Cookie => $cookie),
+             $value,
              $test);
 }
 {
@@ -48,7 +48,7 @@ my $location = "/apreq_cookie_test";
     my ($header) = GET_HEAD("$location?test=$test&key=$key", 
                             Cookie => $cookie) =~ /^#Set-Cookie:\s+(.+)/m;
 
-    ok t_cmp($cookie, $header, $test);
+    ok t_cmp($header, $cookie, $test);
 }
 {
     my $test  = 'bake2';
@@ -57,5 +57,5 @@ my $location = "/apreq_cookie_test";
     my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$location"};
     my ($header) = GET_HEAD("$location?test=$test&key=$key", 
                             Cookie => $cookie) =~ /^#Set-Cookie2:\s+(.+)/m;
-    ok t_cmp(qq{$key="$value"; Version=1; path="$location"}, $header, $test);
+    ok t_cmp($header, qq{$key="$value"; Version=1; path="$location"}, $test);
 }
