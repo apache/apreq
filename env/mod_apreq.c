@@ -157,7 +157,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME               "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER       20040731
+#define APREQ_MODULE_MAGIC_NUMBER       20040802
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -495,6 +495,15 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                upstream apreq filter. */
             ctx = f->next->ctx;
 
+            switch (ctx->status) {
+            case APR_SUCCESS:
+            case APR_INCOMPLETE:
+                break;
+            default:
+                /* bad filter state, don't steal anything */
+                goto make_new_context;
+            }
+
             if (ctx->r != r) {
                 /* r is a new request (subrequest or internal redirect) */
                 apreq_request_t *old_req;
@@ -526,7 +535,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     make_new_context:
         apreq_filter_make_context(f);
         if (req != NULL && f == r->input_filters) {
-            if (req->body != NULL) {
+            if (req->body_status != APR_EINIT) {
                 req->body = NULL;
                 req->parser = NULL;
                 req->body_status = APR_EINIT;
@@ -588,9 +597,17 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
         if (ctx->status != APR_INCOMPLETE) {
             if (APR_BRIGADE_EMPTY(ctx->spool)) {
-                apreq_log(APREQ_DEBUG ctx->status,r,"removing filter (%d)",
-                          r->input_filters == f);
-                ap_remove_input_filter(f);
+                ap_filter_t *next = f->next;
+
+                if (cfg->f != f) {
+                    apreq_log(APREQ_DEBUG ctx->status, r,
+                              "removing inactive filter (%d)",
+                              r->input_filters == f);
+
+                    ap_remove_input_filter(f);
+                }
+                if (APR_BRIGADE_EMPTY(bb))
+                    return ap_get_brigade(next, bb, mode, block, readbytes);
             }
             return APR_SUCCESS;
         }

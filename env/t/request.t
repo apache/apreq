@@ -5,7 +5,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC);
 
-my $num_tests = 14;
+my $num_tests = 16;
 $num_tests *= 2 if Apache::Test::have_ssl();
 plan tests => $num_tests, have_lwp;
 my $scheme = "http";
@@ -57,6 +57,19 @@ BODY:
 \tmore => $filler
 EOT
 }
+
+
+# internal redirect to plain text files (which are non-apreq requests)
+
+my $index_html = do {local (@ARGV,$/) = "t/htdocs/index.html"; <> };
+link "t/htdocs/index.html", "t/htdocs/index.txt";
+ok t_cmp(GET_BODY("/apreq_redirect_test?test=redirect_index_txt_GET&location=/index.txt"), $index_html, 
+        "redirect /index.txt (GET)");
+
+ok t_cmp(POST_BODY("/apreq_redirect_test?test=redirect_index_txt_POST",
+        content => "quux=$filler;location=/index.txt;foo=$filler"), $index_html, 
+        "redirect /index.txt (POST)");
+
 
 # output filter tests
 
