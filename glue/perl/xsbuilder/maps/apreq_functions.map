@@ -43,8 +43,10 @@ MODULE=Apache::Cookie PACKAGE=Apache::Cookie
  DEFINE_expires    | apreq_xs_cookie_expires   |
  DEFINE_set_attr   | apreq_xs_cookie_set_attr  |
  DEFINE_env        | apreq_xs_cookie_env  |
+ DEFINE_encode     | apreq_xs_encode |
+ DEFINE_decode     | apreq_xs_decode |
  const char *:DEFINE_name | apreq_cookie_name(c)  | apreq_cookie_t *:c
- const char *:DEFINE_value| apreq_cookie_value(c) | apreq_cookie_t *:c
+ const char *:DEFINE_raw_value| apreq_cookie_value(c) | apreq_cookie_t *:c
  apr_status_t:DEFINE_bake | apreq_cookie_bake (apreq_xs_sv2cookie(c), apreq_xs_sv2env(c)) | SV *:c
  apr_status_t:DEFINE_bake2| apreq_cookie_bake2(apreq_xs_sv2cookie(c), apreq_xs_sv2env(c)) | SV *:c
 

@@ -202,12 +202,13 @@ static XS(apreq_xs_##type##_env)                        \
         void *env = apreq_xs_sv2env(sv);                \
                                                         \
         if (env)                                        \
-            ST(0) = sv_setref_pv(newSV(0), class, env); \
+            ST(0) = sv_2mortal(sv_setref_pv(newSV(0),   \
+                                          class, env)); \
         else                                            \
             ST(0) = &PL_sv_undef;                       \
     }                                                   \
     else                                                \
-        ST(0) = newSVpv(class, 0);                      \
+        ST(0) = sv_2mortal(newSVpv(class, 0));          \
                                                         \
     XSRETURN(1);                                        \
 }
@@ -378,6 +379,46 @@ static XS(apreq_xs_##attr##_get)                                        \
     default:                                                            \
         XSRETURN(0);                                                    \
     }                                                                   \
+}
+
+static XS(apreq_xs_encode)
+{
+    dXSARGS;
+    STRLEN slen;
+    const char *src;
+
+    if (items != 1)
+        Perl_croak(aTHX_ "Usage: encode($string)");
+
+    src = SvPV(ST(0), slen);
+    ST(0) = sv_newmortal();
+    SvUPGRADE(ST(0), SVt_PV);
+    SvGROW(ST(0), 3 * slen + 1);
+    SvCUR(ST(0)) = apreq_encode(SvPVX(ST(0)), src, slen);
+    SvPOK_on(ST(0));
+    XSRETURN(1);
+}
+
+static XS(apreq_xs_decode)
+{
+    dXSARGS;
+    STRLEN slen;
+    apr_ssize_t len;
+    const char *src;
+
+    if (items != 1)
+        Perl_croak(aTHX_ "Usage: decode($string)");
+
+    src = SvPV(ST(0), slen);
+    ST(0) = sv_newmortal();
+    SvUPGRADE(ST(0), SVt_PV);
+    SvGROW(ST(0), slen + 1);
+    len = apreq_decode(SvPVX(ST(0)), src, slen);
+    if (len < 0)
+        XSRETURN_UNDEF;
+    SvCUR_set(ST(0),len);
+    SvPOK_on(ST(0));
+    XSRETURN(1);
 }
 
 

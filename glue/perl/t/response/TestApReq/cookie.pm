@@ -21,12 +21,8 @@ sub handler {
     my $test = $apr->param('test');
     my $key  = $apr->param('key');
 
-#    return DECLINED unless defined $test;
-
-    if ($test eq 'basic') {
-        if ($cookies{$key}) {
-            $r->print($cookies{$key}->value);
-        }
+    if ($cookies{$key}) {
+        $r->print($cookies{$key}->value);
     }
 
 

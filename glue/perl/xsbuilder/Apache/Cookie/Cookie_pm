@@ -1,5 +1,5 @@
 use strict;
-use warnings;# FATAL => 'all';
+use warnings FATAL => 'all';
 use Apache2;
 use APR;
 use APR::Table;
@@ -12,7 +12,6 @@ use base 'APR::Table';
 
 
 package Apache::Cookie;
-#push our(@ISA), __PACKAGE__ -> env;
 use Devel::Peek;
 
 sub jar {
@@ -26,7 +25,7 @@ sub new {
     my $value = delete $attrs{value} || delete $attrs{-value};
     return unless defined $name and defined $value;
 
-    my $cookie = $class->make($env, $class->freeze($name, $value));
+    my $cookie = $class->make($env, $name, $class->freeze($value));
     $cookie->set_attr(%attrs);
     return $cookie;
 }
@@ -34,28 +33,27 @@ sub new {
 sub fetch {
     my $self = shift;
     my $jar = $self->jar(@_);
-    Dump(scalar $jar->cookie);
-    Dump($jar->get("apache"));
     return wantarray ? %{scalar $jar->cookie} : $jar->cookie;
 }
 
 sub freeze {
-    my ($class, $name, $value) = @_;
-    return ($name, url_encode($value)) if not ref $value;
-    return ($name, $value->freeze) if $value->can("freeze");
-    if ($value->isa("ARRAY")) {
-        return $name, join '&', map url_encode($_), @$value;
+    my ($class, $value) = @_;
+    return encode($value) if not ref $value;
+    return $value->freeze if UNIVERSAL::can($value,"freeze");
+    if (UNIVERSAL::isa($value,"ARRAY")) {
+        return join '&', map encode($_), @$value;
     }
-    elsif ($value->isa("HASH")) {
-        return $name, join '&', map url_encode($_), %$value;
+    elsif (UNIVERSAL::isa($value,"HASH")) {
+        return join '&', map encode($_), %$value;
     }
     else {
         die "Can't freeze '$value'";
     }
 }
 
-sub thaw {
+sub value {
     my $self = shift;
-    return map url_decode($_), split /&/, $self;
+    return $self->thaw if $self->can("thaw");
+    my @rv = map decode($_), split /&/, $self->raw_value;
+    return wantarray ? @rv : $rv[0];
 }
-
