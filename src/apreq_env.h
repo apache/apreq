@@ -89,7 +89,7 @@ extern const struct apreq_env {
 
 #define apreq_env_config(c) APREQ_ENV.config(c)
 
-#define apreq_env_content_type(c) APREQ_ENV.in(c, "Content-Type");
+#define apreq_env_content_type(c) APREQ_ENV.in(c, "Content-Type")
 #define apreq_env_cookie(c) APREQ_ENV.in(c, "Cookie")
 #define apreq_env_cookie2(c) APREQ_ENV.in(c, "Cookie2")
 #define apreq_env_set_cookie(c,s) APREQ_ENV.out(c,"Set-Cookie",s)

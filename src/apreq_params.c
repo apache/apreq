@@ -88,64 +88,76 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
     return param;
 }
 
+APR_INLINE
+static const char * enctype(apr_pool_t *p, const char *ct)
+{
+    char *enctype, *semicolon;
+    if (ct == NULL)
+        enctype = NULL;
+    else {
+        enctype = apr_pstrdup(p, ct);
+        semicolon = strchr(enctype, ';');
+        if (semicolon)
+            *semicolon = 0;
+    }
+    return enctype;
+}
 
 APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx, const char *args)
 {
-
-    apreq_request_t *req, *old_req = apreq_env_request(ctx, NULL);
-    const char *ct;
-    apr_pool_t *p;
+    apreq_request_t *req;
     apr_status_t s;
-    dAPREQ_LOG;
 
-    if (args == NULL && old_req != NULL)
-        return old_req;
+    if (args == NULL) {
+        apreq_request_t *old_req = apreq_env_request(ctx,NULL);
+        apr_pool_t *p;
 
-    p = apreq_env_pool(ctx);
-    req = apr_palloc(p, sizeof(apreq_table_t *) + sizeof *req);
-    req->pool = p;
-    *(apreq_table_t **)req->v.data = apreq_make_table(p, APREQ_NELTS);
-    req->v.size   = sizeof(apreq_table_t *);
-    req->v.status = APR_EINIT;
-    req->env      = ctx;
-    req->args     = apreq_make_table(p, APREQ_NELTS);
-    req->body     = NULL;
+        if (old_req != NULL)
+            return old_req;
 
-    ct = apreq_env_content_type(ctx);
-
-    if (ct == NULL)
-        req->v.name = NULL;
-    else {
-        char *enctype = apr_pstrdup(p, ct);
-        char *semicolon = strchr(enctype, ';');
-        if (semicolon)
-            *semicolon = 0;
-        apreq_log(APREQ_DEBUG 0, ctx, "enctype: %s", enctype);
-        req->v.name = enctype;
-    }
-
-    /* XXX get/set race condition here wrt apreq_env_request.
-     * apreq_env_request probably needs a write lock ???
-     */
-
-    old_req = apreq_env_request(ctx, req);
-
-    if (old_req != NULL) {
-        apreq_env_request(ctx, old_req); /* reset old_req */
-        return old_req;
-    }
-
-    /* XXX need to install copy/merge callbacks for apreq_param_t */
-    req->pool = p;
-
-    if (args == NULL)
+        p = apreq_env_pool(ctx);
         args = apreq_env_args(ctx);
 
+        req = apr_palloc(p, sizeof(apreq_table_t *) + sizeof *req);
+        req->pool = apreq_env_pool(ctx);
+        *(apreq_table_t **)req->v.data = apreq_make_table(p, APREQ_NELTS);
+        req->v.size   = sizeof(apreq_table_t *);
+        req->v.status = APR_EINIT;
+        req->env      = ctx;
+        req->args     = apreq_make_table(p, APREQ_NELTS);
+        req->body     = NULL;
+        req->v.name = enctype(p, apreq_env_content_type(ctx));
+        /* XXX need to install copy/merge callbacks for apreq_param_t */
+
+
+        /* XXX get/set race condition here wrt apreq_env_request? */
+        old_req = apreq_env_request(ctx, req);
+        if (old_req != NULL) {
+            apreq_env_request(ctx, old_req); /* reset old_req */
+            return old_req;
+        }
+
+    }
+    else {
+        apr_pool_t *p = apreq_env_pool(ctx);
+
+        req = apr_palloc(p, sizeof(apreq_table_t *) + sizeof *req);
+        req->pool = apreq_env_pool(ctx);
+        *(apreq_table_t **)req->v.data = apreq_make_table(p, APREQ_NELTS);
+        req->v.size   = sizeof(apreq_table_t *);
+        req->v.status = APR_EINIT;
+        req->env      = ctx;
+        req->args     = apreq_make_table(p, APREQ_NELTS);
+        req->body     = NULL;
+        req->v.name = enctype(p, apreq_env_content_type(ctx));
+        /* XXX need to install copy/merge callbacks for apreq_param_t */
+    }
+
     s = (args == NULL) ? APR_SUCCESS : 
-        apreq_split_params(p, req->args, args);
+        apreq_split_params(req->pool, req->args, args);
 
     if (s == APR_SUCCESS)
-        req->v.status = ct ? APR_INCOMPLETE : APR_SUCCESS;
+        req->v.status = (req->v.name ? APR_INCOMPLETE : APR_SUCCESS);
 
     return req;
 }
