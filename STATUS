@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/06/13 01:01:36 $]
+Last modified at [$Date: 2003/06/15 05:29:03 $]
 
      2.0.0  in development
 
@@ -40,9 +40,7 @@ TODO:
 
     * Settle on the Perl API and start tracking CHANGES.
 
-    * Add documentation system.
-
-      [joes] suggests:
+    * Improve documentation system:
 
       - doxygen for C API (header comments).
       - perldoc for Perl glue (pod).
