@@ -327,6 +327,19 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded);
  */
 APREQ_DECLARE_PARSER(apreq_parse_multipart);
 
+
+
+/**
+ * application/xml expat-based parser. It will reject
+ * metabuckets, and it will parse until EOS appears.
+ * The parsed document isn't available until parsing has
+ * completed successfully.  The parser's ctx pointer may 
+ * be cast as (const apr_xml_doc **) to retrieve the 
+ * parsed document.  No table entries will be added to 
+ * req->body by this parser.
+ */
+APREQ_DECLARE_PARSER(apreq_parse_xml);
+
 /**
  * Construct a parser.
  *

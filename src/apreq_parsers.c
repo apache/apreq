@@ -19,6 +19,7 @@
 #include "apr_lib.h"
 #include "apr_strings.h"
 #include "apr_strmatch.h"
+#include "apr_xml.h"
 
 #ifndef MAX
 #define MAX(A,B)  ( (A) > (B) ? (A) : (B) )
@@ -1106,4 +1107,88 @@ APREQ_DECLARE_HOOK(apreq_hook_disable_uploads)
     apreq_log(APREQ_ERROR APR_EGENERAL, env, 
               "Uploads are disabled for this request.");
     return APR_EGENERAL;
+}
+
+
+/* XML parser */
+
+struct xml_ctx {
+    apr_xml_doc                 *doc;
+    apr_xml_parser              *xml_parser;
+    enum {
+        XML_INCOMPLETE,
+        XML_COMPLETE,
+        XML_ERROR
+    }                            status;
+};
+
+
+APREQ_DECLARE_PARSER(apreq_parse_xml)
+{
+    apr_pool_t *pool = apreq_env_pool(env);
+    struct xml_ctx *ctx = parser->ctx;
+    apr_status_t s = APR_SUCCESS;
+    apr_bucket *e = APR_BRIGADE_FIRST(bb);
+
+    if (ctx == NULL) {
+        parser->ctx = ctx = apr_palloc(pool, sizeof *ctx);
+        ctx->doc = NULL;
+        ctx->xml_parser = apr_xml_parser_create(pool);
+        ctx->status = XML_INCOMPLETE;
+    }
+    
+
+    PARSER_STATUS_CHECK(XML);
+
+    while (e != APR_BRIGADE_SENTINEL(bb))
+    {
+        const char *data;
+        apr_size_t dlen;
+
+        if (APR_BUCKET_IS_EOS(e)) {
+            s = apr_xml_parser_done(ctx->xml_parser, &ctx->doc);
+            if (s == APR_SUCCESS) {
+                ctx->status = XML_COMPLETE;
+                apr_bucket_delete(e);
+            }
+            else {
+                ctx->status = XML_ERROR;
+                apreq_log(APREQ_ERROR s, env, "apreq_parse_xml: "
+                          "apr_xml_parser_done failed");
+            }
+           return s;
+        }
+        else if (APR_BUCKET_IS_METADATA(e)) {
+            e = APR_BUCKET_NEXT(e);
+            continue;
+        }
+
+        s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
+
+        if (s != APR_SUCCESS) {
+            ctx->status = XML_ERROR;
+            apreq_log(APREQ_ERROR s, env, "apreq_parse_xml: "
+                      "apr_bucket_read failed");
+            return s;
+        }
+
+        s = apr_xml_parser_feed(ctx->xml_parser, data, dlen);
+
+        if (s == APR_SUCCESS) {
+            apr_bucket *f = e;
+            e = APR_BUCKET_NEXT(e);
+            apr_bucket_delete(f);
+            continue;
+        }
+        else {
+            ctx->status = XML_ERROR;
+            apreq_log(APREQ_ERROR s, env, "apreq_parse_xml: "
+                      "apr_xml_parser_feed failed");
+            return s;
+        }
+
+    }
+
+    return APR_INCOMPLETE;
+
 }

@@ -19,6 +19,7 @@
 #include "apreq.h"
 #include "apreq_params.h"
 #include "apr_strings.h"
+#include "apr_xml.h"
 
 #define CRLF "\015\012"
 
@@ -35,6 +36,16 @@ static char form_data[] =
 "Content-Type: text/plain" CRLF CRLF
 "... contents of file1.txt ..." CRLF CRLF
 "--AaB03x--" CRLF;
+
+static char xml_data[] =
+"<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" /* length == 42 */
+"<methodCall>"
+"  <methodName>foo.bar</methodName>"
+"  <params>"
+"    <param><value><int>1</int></value></param>"
+"  </params>"
+"</methodCall>";
+
 
 extern apr_bucket_brigade *bb;
 extern apr_table_t *table;
@@ -190,6 +201,37 @@ static void parse_disable_uploads(CuTest *tc)
     CuAssertPtrEquals(tc, NULL, val);
 }
 
+static void parse_xml(CuTest *tc)
+{
+    const char *val;
+    apr_size_t vlen;
+    apr_status_t rv;
+    int ns_map = 0;
+    apr_xml_doc *doc;
+    apreq_request_t *req = apreq_request(APREQ_XML_ENCTYPE, "");
+    apr_bucket_brigade *bb = apr_brigade_create(p, 
+                                   apr_bucket_alloc_create(p));
+    apr_bucket *e = apr_bucket_immortal_create(xml_data,
+                                                   strlen(xml_data),
+                                                   bb->bucket_alloc);
+
+    CuAssertPtrNotNull(tc, req);
+    APR_BRIGADE_INSERT_HEAD(bb, e);
+    APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
+
+    req->body = NULL;
+    req->parser = apreq_make_parser(p, APREQ_XML_ENCTYPE, 
+                                    apreq_parse_xml, NULL, NULL);
+    rv = apreq_parse_request(req,bb);
+    CuAssertIntEquals(tc, APR_SUCCESS, rv);
+    doc = *(apr_xml_doc **)req->parser->ctx;
+    CuAssertPtrNotNull(tc, doc);
+    apr_xml_to_text(p, doc->root, APR_XML_X2T_FULL, 
+                    doc->namespaces, &ns_map, &val, &vlen);
+    CuAssertIntEquals(tc, strlen(xml_data), vlen + 42);
+    CuAssertStrEquals(tc, xml_data + 43, val);
+
+}
 
 CuSuite *testparser(void)
 {
@@ -197,6 +239,7 @@ CuSuite *testparser(void)
     SUITE_ADD_TEST(suite, parse_urlencoded);
     SUITE_ADD_TEST(suite, parse_multipart);
     SUITE_ADD_TEST(suite, parse_disable_uploads);
+    SUITE_ADD_TEST(suite, parse_xml);
     return suite;
 }
 
