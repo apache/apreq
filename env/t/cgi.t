@@ -6,7 +6,6 @@ use Apache::TestUtil;
 use Apache::TestConfig;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC GET_HEAD);
 use constant WIN32 => Apache::TestConfig::WIN32;
-use HTTP::Cookies;
 
 my @key_len = (5, 100, 305);
 my @key_num = (5, 15, 26);
@@ -16,7 +15,9 @@ my @big_key_len = (100, 500, 5000, 10000);
 my @big_key_num = (5, 15, 25);
 my @big_keys    = ('a'..'z');
 
-plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num;
+plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num, have_lwp;
+
+require HTTP::Cookies;
 
 my $location = '/cgi-bin';
 my $script = $location . (WIN32 ? '/test_cgi.exe' : '/test_cgi');

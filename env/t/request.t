@@ -5,7 +5,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC);
 
-plan tests => 14;
+plan tests => 14, have_lwp;
 
 foreach my $location ('/apreq_request_test', '/apreq_access_test') {
 
