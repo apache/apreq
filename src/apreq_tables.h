@@ -433,8 +433,8 @@ APREQ_DECLARE_NONSTD(int) apreq_table_do(apreq_table_do_callback_fn_t *comp,
  * @see apreq_table_do_callback_fn_t
  */
 APREQ_DECLARE(int) apreq_table_vdo(apreq_table_do_callback_fn_t *comp,
-                                   void *ctx,
-                                   const apreq_table_t *t, va_list);
+                                   void *ctx, const apreq_table_t *t, 
+                                   va_list vp);
 
 
 
