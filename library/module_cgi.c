@@ -637,15 +637,16 @@ static apr_status_t cgi_temp_dir_get(apreq_handle_t *env,
 
 
 
-
-static apr_status_t cgi_cleanup(void *data)
+#ifdef APR_POOL_DEBUG
+static apr_status_t ba_cleanup(void *data)
 {
-    struct cgi_handle *handle = data;
-    apr_bucket_alloc_destroy(handle->bucket_alloc);
+    apr_bucket_alloc_t *ba = data;
+    apr_bucket_alloc_destroy(ba);
     return APR_SUCCESS;
 }
+#endif
 
-static APREQ_MODULE(cgi, 20050130);
+static APREQ_MODULE(cgi, 20050312);
 
 APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
 {
@@ -673,7 +674,11 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
         handle->jar_status = 
             handle->body_status = APR_EINIT;
 
-    apr_pool_userdata_setn(&handle->env, USER_DATA_KEY, cgi_cleanup, pool);
+    apr_pool_userdata_setn(&handle->env, USER_DATA_KEY, NULL, pool);
+
+#ifdef APR_POOL_DEBUG
+    apr_pool_cleanup_register(pool, ba, ba_cleanup, ba_cleanup);
+#endif
 
     return &handle->env;
 }

@@ -62,14 +62,14 @@ static apr_status_t apache_header_out(apreq_handle_t *env,
     return APR_SUCCESS;
 }
 
-
+#ifdef APR_POOL_DEBUG
 static apr_status_t ba_cleanup(void *data)
 {
     apr_bucket_alloc_t *ba = data;
     apr_bucket_alloc_destroy(ba);
     return APR_SUCCESS;
 }
-
+#endif
 
 static void init_body(apreq_handle_t *env)
 {
@@ -79,8 +79,9 @@ static void init_body(apreq_handle_t *env)
     request_rec *r = req->r;
 
     req->body  = apr_table_make(req->pool, APREQ_DEFAULT_NELTS);
+#ifdef APR_POOL_DEBUG
     apr_pool_cleanup_register(req->pool, ba, ba_cleanup, ba_cleanup);
-
+#endif
     if (cl_header != NULL) {
         char *dummy;
         apr_int64_t content_length = apr_strtoi64(cl_header, &dummy, 0);

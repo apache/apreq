@@ -109,7 +109,7 @@ static char mix_data[] =
 static void locate_default_parsers(dAT)
 {
 
-#ifndef WIN32
+#ifdef __ELF__
     apreq_parser_function_t f;
 
     AT_trace_on();
@@ -242,7 +242,9 @@ static void parse_multipart(dAT)
             apr_brigade_cleanup(bb);
         }
 
+#ifdef APR_POOL_DEBUG
         apr_bucket_alloc_destroy(ba);
+#endif
         apr_pool_clear(p);
     }
 }
