@@ -87,9 +87,6 @@ typedef ApacheUpload  * Apache__Upload;
 
 #ifdef PerlIO
 typedef PerlIO * InputStream;
-#ifndef PerlIO_importFILE
-#define PerlIO_importFILE(fp,flags) ((FILE *)fp)
-#endif
 #else
 typedef FILE * InputStream;
 #define PerlIO_importFILE(fp,flags) fp
