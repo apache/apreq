@@ -19,6 +19,16 @@
 
 #define PERL_NO_GET_CONTEXT /* we want efficiency under ithreads */
 
+/* some redefines needed for Win32 */
+#ifdef WIN32
+#   define uid_t perl_uid_t
+#   define gid_t perl_gid_t
+#   ifdef exit
+#      define perl_exit exit
+#      undef exit
+#   endif
+#endif
+
 /**
  * @file apreq_xs_preperl.h
  * @brief XS include file for making Cookie.so and Request.so, for things
