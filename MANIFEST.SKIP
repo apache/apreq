@@ -37,3 +37,4 @@ t/conf/.*\.p[lm]$
 t/htdocs
 t/logs
 t/cgi-bin/*
+t/core*
