@@ -13,7 +13,7 @@
 **  See the License for the specific language governing permissions and
 **  limitations under the License.
 */
-
+#include "assert.h"
 #include "httpd.h"
 #include "http_config.h"
 #include "http_log.h"
@@ -347,12 +347,32 @@ static apr_ssize_t apache2_max_brigade(void *env, apr_ssize_t bytes)
     return c->max_brigade;
 }
 
-/* if we need to fiddle with the filter stack, now's the time :-) */
+
+/*
+ * Situations to contend with:
+ *
+ * 1) Often the filter will be added by the content handler itself,
+ *    so the apreq_filter_init hook will not be run.
+ * 2) If an auth handler uses apreq, the apreq_filter will ensure
+ *    it's part of the protocol filters.  apreq_filter_init does NOT need
+ *    to notify the protocol filter that it must not continue parsing,
+ *    the apreq filter can perform this check itself.  apreq_filter_init
+ *    just needs to ensure cfg->f does not point at it.
+ * 3) If req->proto_input_filters and req->input_filters are apreq
+ *    filters, and req->input_filters->next == req->proto_input_filters,
+ *    it is safe for apreq_filter to "steal" the proto filter's context 
+ *    and subsequently drop it from the chain.
+ */
+
+
+/* Examines the input_filter chain and moves the apreq filter(s) around
+ * before the filter chain is stacked by ap_get_brigade.
+ */
+
 static apr_status_t apreq_filter_init(ap_filter_t *f)
 {
     request_rec *r = f->r;
     struct env_config *cfg = get_cfg(r);
-    apreq_request_t *req = cfg->req;
     ap_filter_t *in;
 
     if (f == r->input_filters)
@@ -364,12 +384,12 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
         {
             if (f == in) {
                 if (strcmp(r->input_filters->frec->name, filter_name) == 0) {
-                    /* this intermediate filter is superfluous- remove it */
+                    /* this intermediate apreq filter is superfluous- remove it */
                     if (cfg->f == f)
                         cfg->f = r->input_filters;
                     ap_remove_input_filter(f);
                 }
-                else
+                else /* move to top */
                     apreq_filter_relocate(f);
 
                 return APR_SUCCESS;
@@ -378,15 +398,11 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     }
 
     /* else this is a protocol filter which may still be active.
-     * if it is, we must reset it here.
+     * if it is, we must deregister it now.
      */
-    if (cfg->f == f) {
+    if (cfg->f == f)
         cfg->f = NULL;
-        if (req) {
-            req->body = NULL;
-            req->parser = NULL;
-        }
-    }
+
     return APR_SUCCESS;
 }
 
@@ -402,9 +418,6 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     apreq_request_t *req;
     apr_status_t rv;
 
-    if (f->ctx == NULL)
-        apreq_filter_make_context(f);
-
     switch (mode) {
     case AP_MODE_READBYTES:
     case AP_MODE_EXHAUSTIVE:
@@ -414,26 +427,34 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         return APR_ENOTIMPL;
     }
 
-    ctx = f->ctx;
     cfg = get_cfg(r);
     req = cfg->req;
 
-    if (f != r->input_filters) {
-        ctx->status = APR_SUCCESS;
-
-        if (cfg->f == f) {
-            /* This is the wrong apreq filter to use since
-             * there are other input filters behind it.  Must
-             * append a new apreq filter to the top of the
-             * chain and flush out the parser data
-             */
-            cfg->f = NULL;
-            if (req) {
-                req->parser = NULL;
-                req->body = NULL;
+    if (f->ctx == NULL) {
+        if (f == r->input_filters 
+            && r->proto_input_filters == f->next
+            && strcmp(f->next->frec->name, filter_name) == 0) 
+        {
+            /* Steal the context of the next apreq filter. */
+            f->ctx = f->next->ctx;
+            r->proto_input_filters = f;
+            ap_remove_input_filter(f->next);
+        }
+        else {
+            apreq_filter_make_context(f);
+            if (req != NULL && f == r->input_filters) {
+                if (req->body != NULL) {
+                    req->body = NULL;
+                    req->parser = NULL;
+                }
             }
         }
     }
+
+    ctx = f->ctx;
+
+    if (f != r->input_filters)
+        ctx->status = APR_SUCCESS;
 
     if (bb != NULL) {
 
