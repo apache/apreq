@@ -121,7 +121,7 @@ void at_ok(at_t *t, int is_ok, const char *label, const char *file, int line)
     else if (is_ok && !AT_FLAG_TRACE(t->flags))
         format[14] = '\0';
     else if (is_fatal && ! is_ok)
-        comment = "bail";
+        comment = "fatal";
     else
         comment = is_todo ? "todo" : is_skip ? "skip" : "at";
 
@@ -144,16 +144,12 @@ void at_ok(at_t *t, int is_ok, const char *label, const char *file, int line)
         exit(-1);
 
     if (!is_ok && is_fatal) {
-        if (t->abort != NULL) {
-            at_trace(t, "Abandon %s, omitting tests %d - %d from this run.",
-                     t->name, t->prior + t->current + 1, t->prior + t->plan);
-            longjmp(*t->abort, 0);
+        while (t->current++ < t->plan) {
+            snprintf(buf, 256, "not ok %d # skipped: aborting test %s",
+                     t->prior + t->current, t->name);
+            at_report(t, buf);
         }
-        else {
-            apr_pool_cleanup_kill(t->pool, t, test_cleanup);
-            at_report(t, "Bail out!");
-            exit(-1);
-        }
+        longjmp(*t->abort, 0);
     }
 }
 

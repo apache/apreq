@@ -23,7 +23,10 @@ static const char nscookies[] = "a=1; foo=bar; fl=left; fr=right;bad; "
                                 "flr=left-right; fll=left-left; "
                                 "good_one=1;bad";
 
-static apr_table_t *jar;
+static const char rfccookies[] = "$Version=1; first=a;$domain=quux;second=be,"
+                                 "$Version=1;third=cie";
+
+static apr_table_t *jar, *jar2;
 static apr_pool_t *p;
 
 static void jar_make(dAT)
@@ -31,10 +34,23 @@ static void jar_make(dAT)
     jar = apr_table_make(p, APREQ_DEFAULT_NELTS);
     AT_not_null(jar);
     AT_int_eq(apreq_parse_cookie_header(p, jar, nscookies), APREQ_ERROR_NOTOKEN);
+    jar2 = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    AT_not_null(jar2);
+    AT_int_eq(apreq_parse_cookie_header(p, jar2, rfccookies), APR_SUCCESS);
 }
 
+static void jar_get_rfc(dAT)
+{
+    const char *val;
+    AT_not_null(val = apr_table_get(jar2, "first"));
+    AT_str_eq(val, "a");
+    AT_not_null(val = apr_table_get(jar2, "second"));
+    AT_str_eq(val, "be");
+    AT_not_null(val = apr_table_get(jar2, "third"));
+    AT_str_eq(val, "cie");
+}
 
-static void jar_get(dAT)
+static void jar_get_ns(dAT)
 {
 
     AT_str_eq(apr_table_get(jar, "a"), "1");
@@ -120,7 +136,7 @@ static void ua_version(dAT)
     AT_int_eq(apreq_ua_cookie_version(rfc), APREQ_COOKIE_VERSION_RFC);
 }
 
-#define dT(func, plan) {#func, func, plan}
+#define dT(func, plan) #func, func, plan
 
 
 int main(int argc, char *argv[])
@@ -128,11 +144,12 @@ int main(int argc, char *argv[])
     unsigned i, plan = 0;
     dAT;
     at_test_t test_list [] = {
-        dT(jar_make, 2),
-        dT(jar_get, 9),
-        dT(netscape_cookie, 7),
-        dT(rfc_cookie, 5),
-        dT(ua_version, 2)
+        { dT(jar_make, 4) },
+        { dT(jar_get_rfc, 6), "1 3 5" },
+        { dT(jar_get_ns, 9) },
+        { dT(netscape_cookie, 7) },
+        { dT(rfc_cookie, 5) },
+        { dT(ua_version, 2) }
     };
 
     apr_initialize();

@@ -270,12 +270,21 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
     while (apr_isspace(*hdr))
         ++hdr;
 
-    /* XXX cheat: assume "$..." => "$Version" => RFC Cookie header */
 
-    if (*hdr == '$') { 
+    if (*hdr == '$') {
+        /* XXX cheat: assume "$..." => "$Version" => RFC Cookie header */
         version = RFC;
-        while (*hdr && !apr_isspace(*hdr))
-            ++hdr;
+    skip_version_string:
+        switch (*hdr++) {
+        case 0:
+            return APR_SUCCESS;
+        case ',':
+            goto parse_cookie_header;
+        case ';':
+            break;
+        default:
+            goto skip_version_string;
+        }
     }
 
     for (;;) {

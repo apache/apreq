@@ -6,6 +6,10 @@
 
 
 - C API [joes]
+  apreq_parse_cookie_header() failed to parse RFC Cookie headers which
+  contained no space chars after the '$Version=1' preamble.
+
+- C API [joes]
   Reorganize around include/, library/, and module/ dirs.
 
 - C Tests [joes]
