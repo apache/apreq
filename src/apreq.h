@@ -8,12 +8,24 @@
  extern "C" {
 #endif 
 
-
+/* XXX temporary workaround for Win32 */
+#ifndef WIN32
 #define APREQ_DECLARE(d)                APR_DECLARE(d)
 #define APREQ_DECLARE_NONSTD(d)         APR_DECLARE_NONSTD(d)
+#else
+#define APREQ_DECLARE(d)                d
+#define APREQ_DECLARE_NONSTD(d)         d
+#endif
+
 #define APREQ_URL_ENCTYPE               "application/x-www-form-urlencoded"
 #define APREQ_MFD_ENCTYPE               "multipart/form-data"
 #define APREQ_XML_ENCTYPE               "application/xml"
+
+/* XXX WIN32 doesn't seem to put APR_INLINE fns into the lib */
+#ifdef WIN32
+#undef APR_INLINE
+#define APR_INLINE
+#endif
 
 #define APREQ_NELTS                     8
 
