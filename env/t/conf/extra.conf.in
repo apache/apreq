@@ -1,5 +1,7 @@
 ScriptAlias /cgi-bin/ "@ServerRoot@/cgi-bin/"
-LockFile @ServerRoot@/logs/accept.lock
+<IfModule !mpm_winnt.c>
+   LockFile @ServerRoot@/logs/accept.lock
+</IfModule>
 
 <Directory "@ServerRoot@/cgi-bin">
    AllowOverride None
