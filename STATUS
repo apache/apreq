@@ -1,7 +1,7 @@
-Last modified at [$Date: 2004/08/29 23:59:04 $]   -*-text-*-
+Last modified at [$Date: 2004/08/30 16:25:56 $]   -*-text-*-
 /** @page apreq_status STATUS
 
-     2.04-dev released on August 30, 2004.
+     2.05 in development.
 
 Contributors looking for a mission:
 
@@ -10,16 +10,6 @@ Contributors looking for a mission:
 
 CURRENT RELEASE NOTES:
 
-    - This is a developer release, indicated by the "-dev" suffix
-      on the version string.  We believe the core interfaces to be stable,
-      but some portions of the API may still need significant modification.
-      Thus, binary/source compatibility may be broken from one developer 
-      release to the next. In particular the version numbering rules specified
-      at
-
-                 http://apr.apache.org/versioning.html
-
-      do not apply to developer releases.
 
 
 RELEASE SHOWSTOPPERS:
