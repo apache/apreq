@@ -39,14 +39,15 @@
  */
 
 /**
- * Join an array of values.
+ * Join an array of values. The result is an empty string if there are
+ * no values.
  *
  * @param p    Pool to allocate return value.
  * @param sep  String that is inserted between the joined values.
  * @param arr  Array of apreq_value_t entries.
  * @param mode Join type- see apreq_join_t.
  *
- * @return Resulting string; can be upgraded to an apreq_value_t.
+ * @return Resulting string or NULL on error
  */
 APREQ_DECLARE(char *) apreq_join(apr_pool_t *p, 
                                  const char *sep, 
