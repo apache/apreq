@@ -1,4 +1,7 @@
 AC_DEFUN(AC_APREQ, [
+        AC_ARG_ENABLE(perl_glue,
+                AC_HELP_STRING([--enable-perl-glue],[build perl modules Apache::Request and Apache::Cookie]),
+                [PERL_GLUE=$enableval],[PERL_GLUE="no"])
         AC_ARG_WITH(perl,
                 AC_HELP_STRING([--with-perl],[path to perl executable]),
                 [PERL=$withval],[PERL="perl"])
@@ -37,6 +40,12 @@ AC_DEFUN(AC_APREQ, [
         AC_CHECK_FILE([$APU_CONFIG],,
             AC_MSG_ERROR([invalid apu-config location- did you forget to configure apr-util?]))
 
+        AC_CONFIG_COMMANDS_POST([test "x$PERL_GLUE" != "xno" && 
+           (cd glue/perl && $PERL ../../build/xsbuilder.pl run)],
+                [PERL=$PERL;PERL_GLUE=$PERL_GLUE;APACHE2_APXS=$APACHE2_APXS])
+
+
+        AM_CONDITIONAL(BUILD_PERL_GLUE, test "x$PERL_GLUE" != "xno")
         AM_CONDITIONAL(BUILD_HTTPD, test -n "$APACHE2_SRC")
         AM_CONDITIONAL(BUILD_APR, test "x$APR_CONFIG" = x`$APR_CONFIG --srcdir`/apr-config)
         AM_CONDITIONAL(BUILD_APU, test "x$APU_CONFIG" = x`$APU_CONFIG --srcdir`/apu-config)

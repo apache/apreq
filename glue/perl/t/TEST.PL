@@ -12,7 +12,7 @@ require Win32 if Apache::Build::WIN32;
 use Cwd;
 my $cwd = Apache::Build::WIN32 ?
     Win32::GetLongPathName(cwd) : cwd;
-$cwd =~ m{^(.+httpd-apreq-2)} or die "Can't find base cvs directory";
+$cwd =~ m{^(.+)/glue/perl$} or die "Can't find base cvs directory";
 my $base_dir = $1;
 my $env_dir = "$base_dir/env";
 my $env_dir_libs = Apache::Build::WIN32 ?

@@ -1,10 +1,11 @@
 INCLUDES = -I../src @APACHE2_INCLUDES@ @APR_INCLUDES@ @APU_INCLUDES@
 LIBS = ../src/lib@APREQ_LIBNAME@.la @APR_LTLIBS@ @APU_LTLIBS@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
+EXTRA_DIST = t c-modules
 
 # XXX: should name libapreq2_cgi.a w/ source file libapreq2_cgi.c
-# lib_LIBRARIES = lib@APREQ_LIBNAME@_cgi.a
-# lib@APREQ_LIBNAME@_cgi_a_SOURCES = lib@APREQ_LIBNAME@_cgi.c
+lib_LIBRARIES = lib@APREQ_LIBNAME@_cgi.a
+lib@APREQ_LIBNAME@_cgi_a_SOURCES = libapreq_cgi.c
 #
 #check_PROGRAMS = test_cgi
 #test_cgi_LDADD = lib@APREQ_LIBNAME@_cgi.a

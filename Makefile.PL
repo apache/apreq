@@ -16,21 +16,19 @@ if (WIN32) {
     system(@args) == 0 or die "system @args failed: $?";
 }
 else {
-    my @opts = qw(with-apache2-apxs with-perl);
+    my @opts = qw(with-apache2-apxs with-perl with-apache2-src
+                  with-apr-config with-apu-config);
 
     my %opts;
     
 # grab from @ARGV only the options that we expect
-    GetOptions(\%opts, (map "$_=s", @opts));
+    GetOptions(\%opts, (map "$_=s", @opts),
+               qw/enable-maintainer-mode enable-perl-glue disable-perl-glue/);
 
     $opts{"with-perl"} = PERL_PATH;
+    $opts{"enable-perl-glue"} = "on" unless
+        exists $opts{"disable-perl-glue"} or exists $opts{"enable-perl-glue"};
 
-    my $opts = join " ", map {"--$_=$opts{$_}"} @opts;
-
-    qx{./configure $opts};
-
-    push @ARGV, ('-apxs', $opts{"with-apache2-apxs"}) 
-        if exists $opts{"with-apache2-apxs"};
-
-    qx{cd "glue/perl" && $opts{"with-perl"} Makefile.PL @ARGV};
+    my $opts = join " ", map {"--$_=$opts{$_}"} keys %opts;
+    exec "./configure --enable-perl-glue $opts";
 }
