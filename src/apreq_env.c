@@ -14,7 +14,6 @@
 **  limitations under the License.
 */
 
-#include "apreq.h"
 #include "apreq_env.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
@@ -22,84 +21,92 @@
 #include "apr_file_io.h"
 
 
-APREQ_DECLARE_NONSTD(void) apreq_log(const char *file, int line,
-                                     int level, apr_status_t status,
-                                     apreq_env_handle_t *env,
-                                     const char *fmt, ...)
+
+static int has_rfc_cookie(void *ctx, const char *key, const char *val)
 {
-    va_list vp;
-    va_start(vp, fmt);
-    env->module->log(file,line,level,status,env,fmt,vp);
-    va_end(vp);
+    const apreq_cookie_t *c = apreq_value_to_cookie(val);
+
+    /* 0 -> non-netscape cookie found, stop.
+       1 -> not found, keep going. */
+
+    return c->version == APREQ_COOKIE_VERSION_NETSCAPE;
 }
 
-APREQ_DECLARE(apr_pool_t *) apreq_env_pool(apreq_env_handle_t *env)
+APREQ_DECLARE(apreq_cookie_version_t)
+    apreq_ua_cookie_version(apreq_env_handle_t *env)
 {
-    return env->module->pool(env);
+
+    if (apreq_header_in(env, "Cookie2") == NULL) {
+        const apr_table_t *j;
+
+        if (apreq_jar(env, &j) != APR_SUCCESS
+            || apr_table_do(has_rfc_cookie, NULL, j, NULL) == 1)
+            return APREQ_COOKIE_VERSION_NETSCAPE;
+
+        else
+            return APREQ_COOKIE_VERSION_RFC;
+    }
+    else
+        return APREQ_COOKIE_VERSION_RFC;
 }
 
-APREQ_DECLARE(apr_bucket_alloc_t *) apreq_env_bucket_alloc(apreq_env_handle_t *env)
+
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
+                                              apreq_env_handle_t *env)
 {
-    return env->module->bucket_alloc(env);
+    char s[APREQ_COOKIE_MAX_LENGTH];
+    int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
+
+    if (len >= APREQ_COOKIE_MAX_LENGTH)
+        return APREQ_ERROR_OVERLIMIT;
+
+    return apreq_header_out(env, "Set-Cookie", s);
 }
 
-APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(apreq_env_handle_t *env,
-                                           apreq_jar_t *jar)
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
+                                               apreq_env_handle_t *env)
 {
-    return env->module->jar(env,jar);
+    char s[APREQ_COOKIE_MAX_LENGTH];
+    int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
+
+    if (c->version == APREQ_COOKIE_VERSION_NETSCAPE)
+        return APREQ_ERROR_CONFLICT;
+
+    if (len >= APREQ_COOKIE_MAX_LENGTH)
+        return APREQ_ERROR_OVERLIMIT;
+
+    return apreq_header_out(env, "Set-Cookie2", s);
 }
 
-APREQ_DECLARE(apreq_request_t *) apreq_env_request(apreq_env_handle_t *env,
-                                                   apreq_request_t *req)
+
+APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_env_handle_t *env, 
+                                          const char *name)
 {
-    return env->module->request(env,req);
+    apreq_param_t *param = apreq_args_get(env, name);
+    if (param == NULL)
+        return apreq_body_get(env, name);
+    else
+        return param;
 }
 
-APREQ_DECLARE(const char *) apreq_env_query_string(apreq_env_handle_t *env)
+
+APREQ_DECLARE(apr_table_t *)apreq_params(apr_pool_t *pool,
+                                         apreq_env_handle_t *env)
 {
-    return env->module->query_string(env);
+    const apr_table_t *args, *body;
+
+    if (apreq_args(env, &args) == APR_SUCCESS)
+        if (apreq_body(env, &body) == APR_SUCCESS)
+            return apr_table_overlay(pool, args, body);
+        else
+            return apr_table_copy(pool, args);
+    else
+        if (apreq_body(env, &body) == APR_SUCCESS)
+            return apr_table_copy(pool, body);
+        else
+            return NULL;
+
 }
 
-APREQ_DECLARE(const char *) apreq_env_header_in(apreq_env_handle_t *env,
-                                                const char *name)
-{
-    return env->module->header_in(env, name);
-}
-
-APREQ_DECLARE(apr_status_t)apreq_env_header_out(apreq_env_handle_t *env,
-                                                const char *name,
-                                                char *val)
-{
-    return env->module->header_out(env,name,val);
-}
-
-APREQ_DECLARE(apr_status_t) apreq_env_read(apreq_env_handle_t *env,
-                                           apr_read_type_e block,
-                                           apr_off_t bytes)
-{
-    return env->module->read(env,block,bytes);
-}
-
-APREQ_DECLARE(const char *) apreq_env_temp_dir(apreq_env_handle_t *env,
-                                               const char *path)
-{
-    if (path != NULL)
-        /* ensure path is a valid pointer during the entire request */
-        path = apr_pstrdup(apreq_env_pool(env),path);
-
-    return env->module->temp_dir(env,path);
-}
-
-APREQ_DECLARE(apr_off_t) apreq_env_max_body(apreq_env_handle_t *env,
-                                            apr_off_t bytes)
-{
-    return env->module->max_body(env,bytes);
-}
-
-APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(apreq_env_handle_t *env,
-                                                 apr_ssize_t bytes)
-{
-    return env->module->max_brigade(env,bytes);
-}
 
 /** @} */

@@ -15,7 +15,6 @@
 */
 
 #include "apreq_cookie.h"
-#include "apreq_env.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_date.h"
@@ -24,22 +23,9 @@
 #define NETSCAPE APREQ_COOKIE_VERSION_NETSCAPE
 #define DEFAULT  APREQ_COOKIE_VERSION_DEFAULT
 
-APREQ_DECLARE(apreq_cookie_t *) apreq_cookie(const apreq_jar_t *jar, 
-                                             const char *name)
-{
-    const char *val = apr_table_get(jar->cookies, name);
-    if (val == NULL)
-        return NULL;
-    return apreq_value_to_cookie(apreq_char_to_value(apreq_deconst(val)));
-}
+#define ADD_COOKIE(j,c) apr_table_addn(j, c->v.name, c->v.data)
 
-APREQ_DECLARE(void) apreq_jar_add(apreq_jar_t *jar, 
-                                  const apreq_cookie_t *c)
-{
-    apr_table_addn(jar->cookies,
-                   c->v.name,c->v.data);
-}
-
+ 
 APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
                                          const char *time_str)
 {
@@ -59,40 +45,13 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
     }
 }
 
-static int has_rfc_cookie(void *ctx, const char *key, const char *val)
-{
-    const apreq_cookie_t *c = apreq_value_to_cookie(apreq_char_to_value(apreq_deconst(val)));
-
-    return c->version == NETSCAPE; /* 0 -> non-netscape cookie found, stop.
-                                      1 -> not found, keep going. */
-}
-
-APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(apreq_env_handle_t *env)
-{
-    if (apreq_env_cookie2(env) == NULL) {
-        apreq_jar_t *j = apreq_jar(env, NULL);
-
-        if (j == NULL || apreq_jar_nelts(j) == 0) 
-            return NETSCAPE;
-
-        else if (apr_table_do(has_rfc_cookie, NULL, j->cookies, NULL) == 1)
-            return NETSCAPE;
-
-        else
-            return RFC;
-    }
-    else
-        return RFC;
-}
-
-
 APREQ_DECLARE(apr_status_t) 
     apreq_cookie_attr(apr_pool_t *p, apreq_cookie_t *c, 
                       const char *attr, apr_size_t alen,
                       const char *val, apr_size_t vlen)
 {
     if (alen < 2)
-        return APR_EGENERAL;
+        return APR_EBADARG;
 
     if ( attr[0] ==  '-' || attr[0] == '$' ) {
         ++attr;
@@ -101,14 +60,16 @@ APREQ_DECLARE(apr_status_t)
 
     switch (apr_tolower(*attr)) {
 
-    case 'n': /* name */
-        c->v.name = apr_pstrmemdup(p,val,vlen);
-        return APR_SUCCESS;
+    case 'n': /* name is not an attr */
+        return APR_ENOTIMPL;
 
-    case 'v': /* version */
+    case 'v': /* version; value is not an attr */
+        if (alen == 5 && strncasecmp(attr,"value", 5) == 0)
+            return APR_ENOTIMPL;
+
         while (!apr_isdigit(*val)) {
             if (vlen == 0)
-                return APR_EGENERAL;
+                return APREQ_ERROR_BADSEQ;
             ++val;
             --vlen;
         }
@@ -161,14 +122,25 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
                                   const char *name, const apr_size_t nlen,
                                   const char *value, const apr_size_t vlen)
 {
-    apreq_cookie_t *c = apr_palloc(p, vlen + sizeof *c);
-    apreq_value_t *v = &c->v;
+    apreq_cookie_t *c;
+    apreq_value_t *v;
+
+    c = apr_palloc(p, nlen + vlen + 1 + sizeof *c);
+
+    if (c == NULL || nlen == 0)
+        return NULL;
+
+    *(const apreq_value_t **)&v = &c->v;
 
     v->size = vlen;
-    v->name = apr_pstrmemdup(p, name, nlen);
+
     memcpy(v->data, value, vlen);
     v->data[vlen] = 0;
-    
+
+    v->name = v->data + vlen + 1;
+    memcpy (v->name, name, nlen);
+    v->name[nlen] = 0;
+
     c->version = DEFAULT;
 
     /* session cookie is the default */
@@ -200,7 +172,7 @@ static apr_status_t get_pair(apr_pool_t *p, const char **data,
     key = strchr(hdr, '=');
 
     if (key == NULL)
-        return APR_NOTFOUND;
+        return APREQ_ERROR_NOTOKEN;
 
     val = key + 1;
 
@@ -254,7 +226,7 @@ static apr_status_t get_pair(apr_pool_t *p, const char **data,
             }
         }
         /* bad attr: no terminating quote found */
-        return APR_EGENERAL;
+        return APREQ_ERROR_BADCHAR;
     }
     else {
         /* value is not wrapped in quotes */
@@ -282,55 +254,13 @@ static apr_status_t get_pair(apr_pool_t *p, const char **data,
 }
 
 
-APREQ_DECLARE(apreq_jar_t *) apreq_jar(apreq_env_handle_t *env,
-                                       const char *hdr)
+
+APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
+                                                     apr_table_t *j,
+                                                     const char *hdr)
 {
-    apr_pool_t *p = apreq_env_pool(env);
-
-    apreq_cookie_version_t version;
-    apreq_jar_t *j = NULL;
     apreq_cookie_t *c;
-
-    const char *origin;
-    const char *name, *value; 
-    apr_size_t nlen, vlen;
-
-    /* initialize jar */
-    
-    if (hdr == NULL) {
-        /* use the environment's cookie data */
-
-        j = apreq_env_jar(env, NULL);
-        if ( j != NULL )
-            return j;
-
-        j = apr_palloc(p, sizeof *j);
-        j->env = env;
-        j->cookies = apr_table_make(p, APREQ_NELTS);
-        j->status = APR_SUCCESS;
-
-        hdr = apreq_env_cookie(env);
-
-        /* XXX: potential race condition here 
-           between env_jar fetch and env_jar set.  */
-
-        apreq_env_jar(env,j);
-
-        if (hdr == NULL)
-            return j;
-    }
-    else {
-        j = apr_palloc(p, sizeof *j);
-        j->env = env;
-        j->cookies = apr_table_make(p, APREQ_NELTS);
-        j->status = APR_SUCCESS;
-    }
-
-    origin = hdr;
-
-    apreq_log(APREQ_DEBUG 0, env, "parsing cookie data: %s", hdr);
-
-    /* parse data */
+    apreq_cookie_version_t version;
 
  parse_cookie_header:
 
@@ -350,6 +280,8 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(apreq_env_handle_t *env,
 
     for (;;) {
         apr_status_t status;
+        const char *name, *value;
+        apr_size_t nlen, vlen;
 
         while (*hdr == ';' || apr_isspace(*hdr))
             ++hdr;
@@ -357,91 +289,64 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(apreq_env_handle_t *env,
         switch (*hdr) {
 
         case 0:
-            /* this is the normal exit point for apreq_jar */
+            /* this is the normal exit point */
             if (c != NULL) {
-                apreq_log(APREQ_DEBUG j->status, env, 
-                          "adding cookie: %s => %s", c->v.name, c->v.data);
-                apreq_add_cookie(j, c);
+                ADD_COOKIE(j, c);
             }
-            return j;
+            return APR_SUCCESS;
 
         case ',':
             ++hdr;
             if (c != NULL) {
-                apreq_log(APREQ_DEBUG j->status, env, 
-                          "adding cookie: %s => %s", c->v.name, c->v.data);
-                apreq_add_cookie(j, c);
+                ADD_COOKIE(j, c);
             }
             goto parse_cookie_header;
 
         case '$':
             if (c == NULL) {
-                j->status = APR_EGENERAL;
-                apreq_log(APREQ_ERROR j->status, env,
-                      "Saw RFC attribute, was expecting NAME=VALUE cookie pair: %s",
-                          hdr);
-                return j;
+                return APREQ_ERROR_BADSEQ;
             }
             else if (version == NETSCAPE) {
-                j->status = APR_EGENERAL;
-                apreq_log(APREQ_ERROR j->status, env, 
-                          "Saw RFC attribute in a Netscape Cookie header: %s", 
-                          hdr);
-                return j;
+                return APREQ_ERROR_CONFLICT;
             }
 
             ++hdr;
             status = get_pair(p, &hdr, &name, &nlen, &value, &vlen, 1);
-            if (status != APR_SUCCESS) {
-                j->status = status;
-                apreq_log(APREQ_ERROR status, env,
-                              "Bad RFC attribute: %s",
-                           apr_pstrmemdup(p, name, hdr-name));
-                return j;
-            }
+            if (status != APR_SUCCESS)
+                return status;
 
             status = apreq_cookie_attr(p, c, name, nlen, value, vlen);
+
             switch (status) {
             case APR_ENOTIMPL:
-                apreq_log(APREQ_WARN status, env, 
-                          "Skipping unrecognized RFC attribute pair: %s",
-                           apr_pstrmemdup(p, name, hdr-name));
-                /* fall through */
+                /* XXX: skip unrecognized attr?  Not really correct,
+                   but for now, just fall through */
+
             case APR_SUCCESS:
                 break;
             default:
-                j->status = status;
-                apreq_log(APREQ_ERROR status, env,
-                          "Bad RFC attribute pair: %s",
-                           apr_pstrmemdup(p, name, hdr-name));
-                return j;
+                return status;
             }
 
             break;
 
         default:
             if (c != NULL) {
-                apreq_log(APREQ_DEBUG j->status, env, 
-                          "adding cookie: %s => %s", c->v.name, c->v.data);
-                apreq_add_cookie(j, c);
+                ADD_COOKIE(j, c);
             }
 
             status = get_pair(p, &hdr, &name, &nlen, &value, &vlen, 0);
 
-            if (status == APR_SUCCESS) {
-                c = apreq_make_cookie(p, name, nlen, value, vlen);
-                c->version = version;
-            }
-            else {
-                if (status == APR_EGENERAL)
-                    j->status = APR_EGENERAL;
-                return j;
-            }
+            if (status != APR_SUCCESS)
+                return status;
+
+            c = apreq_make_cookie(p, name, nlen, value, vlen);
+            c->version = version;
         }
     }
 
     /* NOT REACHED */
-    return j;
+    return APR_EGENERAL;
 }
 
 
@@ -543,38 +448,3 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(const apreq_cookie_t *c,
     return s;
 }
 
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
-                                              apreq_env_handle_t *env)
-{
-    char s[APREQ_COOKIE_MAX_LENGTH];
-    int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
-    if (len < APREQ_COOKIE_MAX_LENGTH)
-        return apreq_env_set_cookie(env, s);
-
-    apreq_log(APREQ_ERROR APR_INCOMPLETE, env, 
-              "serialized cookie length exceeds limit %d", 
-              APREQ_COOKIE_MAX_LENGTH - 1);
-    return APR_INCOMPLETE;
-}
-
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
-                                               apreq_env_handle_t *env)
-{
-    char s[APREQ_COOKIE_MAX_LENGTH];
-    if ( c->version != NETSCAPE ) {
-        int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
-        if (len < APREQ_COOKIE_MAX_LENGTH)
-            return apreq_env_set_cookie2(env, s);
-
-        apreq_log(APREQ_ERROR APR_INCOMPLETE, env, 
-                  "serialized cookie length exceeds limit %d", 
-                  APREQ_COOKIE_MAX_LENGTH - 1);
-
-        return APR_INCOMPLETE;
-    }
-    apreq_log(APREQ_ERROR APR_EGENERAL, env,
-              "Cannot bake2 a Netscape cookie: %s", s);
-
-
-    return APR_EGENERAL;
-}

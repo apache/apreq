@@ -15,7 +15,6 @@
 */
 
 #include "apreq_params.h"
-#include "apreq_env.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 
@@ -30,204 +29,58 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
                                                 const apr_size_t vlen)
 {
     apreq_param_t *param = apr_palloc(p, nlen + vlen + 1 + sizeof *param);
-    apreq_value_t *v = &param->v;
-    char *writable_name;
+    apreq_value_t *v;
     param->info = NULL;
-    param->bb = NULL;
+    param->upload = NULL;
 
+    *(const apreq_value_t **)&v = &param->v;
     v->size = vlen;
-    memcpy(v->data, val, vlen);
+    if (vlen)
+        memcpy(v->data, val, vlen);
     v->data[vlen] = 0;
-    writable_name = v->data + vlen + 1;
-    memcpy(writable_name, name, nlen);
-    writable_name[nlen] = 0;
-    v->name = writable_name;
+    v->name = v->data + vlen + 1;
+    if (nlen)
+        memcpy(v->name, name, nlen);
+    v->name[nlen] = 0;
 
     return param;
 }
 
 
-APREQ_DECLARE(apreq_request_t *) apreq_request(apreq_env_handle_t *env,
-                                               const char *qs)
+APREQ_DECLARE(apr_status_t) apreq_decode_param(apreq_param_t **param,
+                                               apr_pool_t *pool, 
+                                               const char *word,
+                                               const apr_size_t nlen, 
+                                               const apr_size_t vlen)
 {
-    apreq_request_t *req;
-    apr_pool_t *p;
-
-    if (qs == NULL) {
-        apreq_request_t *old_req = apreq_env_request(env,NULL);
-        if (old_req != NULL)
-            return old_req;
-
-        p = apreq_env_pool(env);
-        qs = apreq_env_query_string(env);
-
-        req = apr_palloc(p, sizeof *req);
-        req->env      = env;
-        req->args     = apr_table_make(p, APREQ_NELTS);
-        req->body     = NULL;
-        req->parser   = NULL;
-
-        /* XXX get/set race condition here wrt apreq_env_request? */
-        old_req = apreq_env_request(env, req);
-
-        if (old_req != NULL) {
-            apreq_log(APREQ_ERROR APR_EGENERAL, env, "race condition"
-                      "between consecutive calls of apreq_env_request");
-            apreq_env_request(env, old_req); /* reset old_req */
-            return old_req;
-        }
-
-    }
-    else {
-        p = apreq_env_pool(env);
-
-        req = apr_palloc(p, sizeof *req);
-        req->env      = env;
-        req->args     = apr_table_make(p, APREQ_NELTS);
-        req->body     = NULL;
-        req->parser   = NULL;
-
-    }
-
-    if (qs != NULL) {
-        req->args_status = apreq_parse_query_string(p, req->args, qs);
-        if (req->args_status != APR_SUCCESS)
-            apreq_log(APREQ_ERROR req->args_status, env, 
-                      "invalid query string: %s", qs);
-    }
-    else
-        req->args_status = APR_SUCCESS;
-
-    req->body_status = APR_EINIT;
-    return req;
-}
-
-
-APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req, 
-                                          const char *name)
-{
-    const char *val = apr_table_get(req->args, name);
-
-    while (val == NULL) {
-        apr_status_t s = req->body_status;
-        switch (s) {
-        case APR_INCOMPLETE:
-        case APR_EINIT:
-            s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-
-        default:
-            if (req->body == NULL)
-                return NULL;
-            val = apr_table_get(req->body, name);
-            if (s != APR_INCOMPLETE && val == NULL)
-                return NULL;
-        }
-    }
-
-    return apreq_value_to_param(apreq_strtoval(val));
-}
-
-
-APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *pool,
-                                          const apreq_request_t *req)
-{
-    apr_status_t s;
-
-    switch (req->body_status) {
-    case APR_INCOMPLETE:
-    case APR_EINIT:
-        do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-        while (s == APR_INCOMPLETE);
-    }
-    return req->body ? apr_table_overlay(pool, req->args, req->body) :
-        apr_table_copy(pool, req->args);
-}
-
-
-static int param_push(void *data, const char *key, const char *val)
-{
-    apr_array_header_t *arr = data;
-    *(apreq_param_t **)apr_array_push(arr) = 
-        apreq_value_to_param(apreq_strtoval(val));
-    return 1;   /* keep going */
-}
-
-
-APREQ_DECLARE(apr_array_header_t *) apreq_params_as_array(apr_pool_t *p,
-                                                          apreq_request_t *req,
-                                                          const char *key)
-{
-    apr_status_t s;
-    apr_array_header_t *arr = apr_array_make(p, apr_table_elts(req->args)->nelts,
-                                             sizeof(apreq_param_t *));
-
-    apr_table_do(param_push, arr, req->args, key, NULL);
-
-    switch (req->body_status) {
-    case APR_INCOMPLETE:
-    case APR_EINIT:
-        do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-        while (s == APR_INCOMPLETE);
-    }
-
-    if (req->body)
-        apr_table_do(param_push, arr, req->body, key, NULL);
-
-    return arr;
-}
-
-APREQ_DECLARE(const char *) apreq_params_as_string(apr_pool_t *p,
-                                                   apreq_request_t *req,
-                                                   const char *key,
-                                                   apreq_join_t mode)
-{
-    /* Must adjust apreq_param_t pointers to apreq_value_t. */
-#ifdef DEBUG
-    assert(sizeof(apreq_param_t **) == sizeof(apreq_value_t **));
-#endif
-    apr_array_header_t *arr = apreq_params_as_array(p, req, key);
-    apreq_param_t **elt = (apreq_param_t **)arr->elts;
-    apreq_param_t **const end = elt + arr->nelts;
-    if (arr->nelts == 0)
-        return NULL;
-
-    while (elt < end) {
-        *(apreq_value_t **)elt = &(**elt).v;
-        ++elt;
-    }
-    return apreq_join(p, ", ", arr, mode);
-}
-
-
-APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool, 
-                                                  const char *word,
-                                                  const apr_size_t nlen, 
-                                                  const apr_size_t vlen)
-{
-    apreq_param_t *param;
-    apr_ssize_t size;
+    apr_status_t status;
+    apreq_value_t *v;
+    apreq_param_t *p;
+    apr_size_t size;
 
     if (nlen == 0)
-        return NULL;
+        return APR_EBADARG;
 
-    param = apr_palloc(pool, nlen + vlen + 1 + sizeof *param);
-    param->info = NULL;
-    param->bb = NULL;
+    p = apr_palloc(pool, nlen + vlen + 1 + sizeof *p);
+    p->info = NULL;
+    p->upload = NULL;
+    *(const apreq_value_t **)&v = &p->v;
 
-    param->v.name = NULL;
+    if (vlen > 0) {
+        status = apreq_decode(v->data, &v->size, word + nlen + 1, vlen);
+        if (status != APR_SUCCESS) {
+            *param = NULL;
+            return status;
+        }
+    }
+    else {
+        v->data[0] = 0;
+        v->size    = 0;
+    }
+    v->name = v->data + v->size + 1;
+    *param = p;
 
-    size = apreq_decode(param->v.data, word + nlen + 1, vlen);
-
-    if (size < 0)
-        return NULL;
-
-    param->v.size = size;
-    param->v.name = param->v.data + size + 1;
-
-    if (apreq_decode(param->v.data + size + 1, word, nlen) < 0)
-        return NULL;
-
-    return param;
+    return apreq_decode(v->name, &size, word, nlen);
 }
 
 
@@ -273,14 +126,15 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
             if (qs > start) {
                 apr_size_t vlen = 0;
                 apreq_param_t *param;
+                apr_status_t s;
                 if (nlen == 0)
                     nlen = qs - start;
                 else
                     vlen = qs - start - nlen - 1;
 
-                param = apreq_decode_param(pool, start, nlen, vlen);
-                if (param == NULL)
-                    return APR_EGENERAL;
+                s = apreq_decode_param(&param, pool, start, nlen, vlen);
+                if (s != APR_SUCCESS)
+                    return s;
 
                 apr_table_addn(t, param->v.name, param->v.data);
             }
@@ -296,65 +150,76 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
     return APR_INCOMPLETE;
 }
 
-APREQ_DECLARE(apr_status_t) apreq_parse_request(apreq_request_t *req, 
-                                                apr_bucket_brigade *bb)
+
+
+
+static int param_push(void *data, const char *key, const char *val)
 {
-    switch (req->body_status) {
-    case APR_EINIT:
-        if (req->parser == NULL) {
-            req->parser = apreq_parser(req->env,NULL);
-            if (req->parser == NULL)
-                return APR_ENOTIMPL;
-        }
-        if (req->body == NULL)
-            req->body = apr_table_make(apreq_env_pool(req->env),APREQ_NELTS);
-
-
-    case APR_INCOMPLETE:
-        req->body_status = APREQ_RUN_PARSER(req->parser, req->env, 
-                                            req->body, bb);
-    default:
-        return req->body_status;
-    }
+    apr_array_header_t *arr = data;
+    *(apreq_param_t **)apr_array_push(arr) = 
+        apreq_value_to_param(val);
+    return 1;   /* keep going */
 }
+
+
+APREQ_DECLARE(apr_array_header_t *) apreq_params_as_array(apr_pool_t *p,
+                                                          const apr_table_t *t,
+                                                          const char *key)
+{
+    apr_array_header_t *arr;
+
+    arr = apr_array_make(p, apr_table_elts(t)->nelts,
+                         sizeof(apreq_param_t *));
+
+    apr_table_do(param_push, arr, t, key, NULL);
+    return arr;
+}
+
+APREQ_DECLARE(const char *) apreq_params_as_string(apr_pool_t *p,
+                                                   const apr_table_t *t,
+                                                   const char *key,
+                                                   apreq_join_t mode)
+{
+    apr_array_header_t *arr = apreq_params_as_array(p, t, key);
+    apreq_param_t **elt = (apreq_param_t **)arr->elts;
+    apreq_param_t **const end = elt + arr->nelts;
+    if (arr->nelts == 0)
+        return NULL;
+
+    while (elt < end) {
+        *(const apreq_value_t **)elt = &(**elt).v;
+        ++elt;
+    }
+    return apreq_join(p, ", ", arr, mode);
+}
+
 
 
 static int upload_push(void *data, const char *key, const char *val)
 {
     apr_table_t *t = data;
-    apreq_param_t *p = apreq_value_to_param(apreq_strtoval(val));
-    if (p->bb)
+    apreq_param_t *p = apreq_value_to_param(val);
+
+    if (p->upload != NULL)
         apr_table_addn(t, key, val);
     return 1;   /* keep going */
 }
 
 
-APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
-                                           const apreq_request_t *req)
+APREQ_DECLARE(const apr_table_t *) apreq_uploads(const apr_table_t *body,
+                                                 apr_pool_t *pool)
 {
-    apr_table_t *t;
-    apr_status_t s;
-
-    switch (req->body_status) {
-    case APR_INCOMPLETE:
-    case APR_EINIT:
-        do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-        while (s == APR_INCOMPLETE);
-    }
-    if (req->body == NULL)
-        return NULL;
-
-    t = apr_table_make(pool, APREQ_NELTS);
-    /* XXX needs appropriate copy/merge callbacks */
-    apr_table_do(upload_push, t, req->body, NULL);
+    apr_table_t *t = apr_table_make(pool, APREQ_DEFAULT_NELTS);
+    apr_table_do(upload_push, t, body, NULL);
     return t;
 }
 
-static int upload_get(void *data, const char *key, const char *val)
+static int upload_set(void *data, const char *key, const char *val)
 {
-    apreq_param_t *p = apreq_value_to_param(apreq_strtoval(val));
-    apreq_param_t **q = data;
-    if (p->bb) {
+    const apreq_param_t **q = data;
+    apreq_param_t *p = apreq_value_to_param(val);
+
+    if (p->upload != NULL) {
         *q = p;
         return 0; /* upload found, stop */
     }
@@ -363,25 +228,12 @@ static int upload_get(void *data, const char *key, const char *val)
 }
 
 
-APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
-                                            const char *key)
+APREQ_DECLARE(const apreq_param_t *) apreq_upload(const apr_table_t *body,
+                                                  const char *name)
 {
-    apreq_param_t *param = NULL;
-    do {
-        apr_status_t s = req->body_status;
-        switch (s) {
-        case APR_INCOMPLETE:
-        case APR_EINIT:
-            s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-
-        default:
-            if (req->body == NULL)
-                return NULL;
-            apr_table_do(upload_get, &param, req->body, key, NULL);
-            if (s != APR_INCOMPLETE)
-                return param;
-        }
-    } while (param == NULL);
-
+    const apreq_param_t *param = NULL;
+    apr_table_do(upload_set, &param, body, name, NULL);
     return param;
 }
+
+

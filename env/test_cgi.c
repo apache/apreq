@@ -16,8 +16,6 @@
 
 #include "apreq.h"
 #include "apreq_env.h"
-#include "apreq_params.h"
-#include "apreq_cookie.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_tables.h"
@@ -26,7 +24,7 @@
 static int dump_table(void *count, const char *key, const char *value)
 {
     int *c = (int *) count;
-    int value_len = apreq_strlen(value);
+    int value_len = apreq_value_to_param(value)->v.size;
     if (value_len) 
         *c += strlen(key) + value_len;
     return 1;
@@ -35,8 +33,7 @@ static int dump_table(void *count, const char *key, const char *value)
 int main(int argc, char const * const * argv)
 {
     apr_pool_t *pool;
-    apreq_env_handle_t *env;
-    apreq_request_t *req;
+    apreq_env_handle_t *req;
     const apreq_param_t *foo, *bar, *test, *key;
     apr_file_t *out;
 
@@ -50,15 +47,15 @@ int main(int argc, char const * const * argv)
         fprintf(stderr, "apr_pool_create failed\n");
         exit(-1);
     }
+    (void)apreq_register_parser(NULL,NULL);
 
-    env = apreq_env_make_cgi(pool);
+    req = apreq_handle_cgi(pool);
 
     apr_file_open_stdout(&out, pool);
 
-    apreq_log(APREQ_DEBUG 0, env, "%s", "Creating apreq_request");
-    req = apreq_request(env, NULL);
+//    apreq_log(APREQ_DEBUG 0, env, "%s", "Creating apreq_request");
 
-    apreq_log(APREQ_DEBUG 0, env, "%s", "Fetching the parameters");
+//    apreq_log(APREQ_DEBUG 0, env, "%s", "Fetching the parameters");
 
     foo = apreq_param(req, "foo");
     bar = apreq_param(req, "bar");
@@ -71,56 +68,56 @@ int main(int argc, char const * const * argv)
 
         if (foo) {
             apr_file_printf(out, "\t%s => %s\n", "foo", foo->v.data);
-            apreq_log(APREQ_DEBUG 0, env, "%s => %s", "foo", foo->v.data);
+//            apreq_log(APREQ_DEBUG 0, env, "%s => %s", "foo", foo->v.data);
         }
         if (bar) {
             apr_file_printf(out, "\t%s => %s\n", "bar", bar->v.data);
-            apreq_log(APREQ_DEBUG 0, env, "%s => %s", "bar", bar->v.data);
+//            apreq_log(APREQ_DEBUG 0, env, "%s => %s", "bar", bar->v.data);
         }
     }
     
     else if (test && key) {
-        const apreq_jar_t *jar = apreq_jar(env, NULL);
         apreq_cookie_t *cookie;
         char *dest;
+        apr_size_t dlen;
 
-        apreq_log(APREQ_DEBUG 0, env, "Fetching Cookie %s", key->v.data);
-        cookie = apreq_cookie(jar, key->v.data);
+//        apreq_log(APREQ_DEBUG 0, env, "Fetching Cookie %s", key->v.data);
+        cookie = apreq_cookie(req, key->v.data);
 
         if (cookie == NULL) {
-            apreq_log(APREQ_DEBUG APR_EGENERAL, env,
-                      "No cookie for %s found!", key->v.data);
+//            apreq_log(APREQ_DEBUG APR_EGENERAL, env,
+//                      "No cookie for %s found!", key->v.data);
             exit(-1);
         }
 
         if (strcmp(test->v.data, "bake") == 0) {
-            apreq_cookie_bake(cookie, env);
+            apreq_cookie_bake(cookie, req);
         }
         else if (strcmp(test->v.data, "bake2") == 0) {
-            apreq_cookie_bake2(cookie, env);
+            apreq_cookie_bake2(cookie, req);
         }
 
         apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
         dest = apr_pcalloc(pool, cookie->v.size + 1);
-        if (apreq_decode(dest, cookie->v.data, cookie->v.size) >= 0)
+        if (apreq_decode(dest, &dlen, cookie->v.data, cookie->v.size) == APR_SUCCESS)
             apr_file_printf(out, "%s", dest);
         else {
-            apreq_log(APREQ_ERROR APR_EGENERAL, env,
-                      "Bad cookie encoding: %s", 
-                      cookie->v.data);
+//            apreq_log(APREQ_ERROR APR_EGENERAL, env,
+//                      "Bad cookie encoding: %s", 
+//                      cookie->v.data);
             exit(-1);
         }
     }
 
     else { 
-        apr_table_t *params = apreq_params(pool, req);
+        const apr_table_t *params = apreq_params(pool, req);
         int count = 0;
         apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
 
-        apreq_log(APREQ_DEBUG 0, env, "Fetching all parameters");
+//        apreq_log(APREQ_DEBUG 0, env, "Fetching all parameters");
 
         if (params == NULL) {
-            apreq_log(APREQ_ERROR APR_EGENERAL, env, "No parameters found!");
+//            apreq_log(APREQ_ERROR APR_EGENERAL, env, "No parameters found!");
             exit(-1);
         }
         apr_table_do(dump_table, &count, params, NULL);

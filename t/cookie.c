@@ -15,56 +15,66 @@
 */
 
 #include "apreq_env.h"
-#include "apreq.h"
-#include "apreq_cookie.h"
 #include "apr_strings.h"
 #include "test_apreq.h"
+#include "apreq_cookie.h"
 
-static apreq_jar_t *j = NULL;
+static const char nscookies[] = "a=1; foo=bar; fl=left; fr=right;bad; "
+                                "ns=foo=1&bar=2,frl=right-left; "
+                                "flr=left-right; fll=left-left; "
+                                "good_one=1;bad";
+
+static apr_table_t *jar;
 
 static void jar_make(CuTest *tc)
 {
-    j = apreq_jar(apreq_env_make_custom(p, NULL, NULL, NULL, NULL, NULL),
-                  "a=1; foo=bar; fl=left; fr=right;bad; ns=foo=1&bar=2,"
-                  "frl=right-left; flr=left-right; fll=left-left; good_one=1;bad");
-    CuAssertPtrNotNull(tc, j);
+    apr_status_t s;
+
+    jar = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    CuAssertPtrNotNull(tc, jar);
+    s = apreq_parse_cookie_header(p, jar, nscookies);
+    CuAssertIntEquals(tc, APREQ_ERROR_NOTOKEN, s);
 }
 
-static void jar_table_get(CuTest *tc)
+
+static void jar_get(CuTest *tc)
 {
     const char *val;
 
-    val = apr_table_get(j->cookies,"a");
+    val = apr_table_get(jar,"a");
     CuAssertStrEquals(tc,"1",val);
 
     /* ignore wacky cookies that don't have an '=' sign */
-    val = apr_table_get(j->cookies,"bad");
+    val = apr_table_get(jar,"bad");
     CuAssertPtrEquals(tc,NULL,val);
     /* accept wacky cookies that contain multiple '=' */
-    val = apr_table_get(j->cookies,"ns");
+    val = apr_table_get(jar,"ns");
     CuAssertStrEquals(tc,"foo=1&bar=2",val);
 
-    val = apr_table_get(j->cookies,"foo");
+    val = apr_table_get(jar,"foo");
     CuAssertStrEquals(tc,"bar",val);
-    val = apr_table_get(j->cookies,"fl");
+    val = apr_table_get(jar,"fl");
     CuAssertStrEquals(tc,"left",val);
-    val = apr_table_get(j->cookies,"fr");
+    val = apr_table_get(jar,"fr");
     CuAssertStrEquals(tc,"right",val);
-    val = apr_table_get(j->cookies,"frl");
+    val = apr_table_get(jar,"frl");
     CuAssertStrEquals(tc,"right-left",val);
-    val = apr_table_get(j->cookies,"flr");
+    val = apr_table_get(jar,"flr");
     CuAssertStrEquals(tc,"left-right",val);
-    val = apr_table_get(j->cookies,"fll");
+    val = apr_table_get(jar,"fll");
     CuAssertStrEquals(tc,"left-left",val);
 }
 
 
 static void netscape_cookie(CuTest *tc)
 {
+    char *val;
     apreq_cookie_t *c;
     apreq_cookie_version_t version = APREQ_COOKIE_VERSION_NETSCAPE;
 
-    c = apreq_cookie(j,"foo");
+    *(const char **)&val = apr_table_get(jar, "foo");
+    CuAssertPtrNotNull(tc, val);
+    c = apreq_value_to_cookie(val);
     CuAssertStrEquals(tc,"bar",apreq_cookie_value(c));
     CuAssertIntEquals(tc, version,c->version);
 
@@ -109,15 +119,14 @@ static void rfc_cookie(CuTest *tc)
                expires), apreq_cookie_as_string(c,p));
 
 }
-
 static void ua_version(CuTest *tc)
 {
     apreq_cookie_version_t v;
     char version[] = "$Version=\"1\"";
 
-    v = apreq_ua_cookie_version(apreq_env_make_custom(p, NULL, NULL, NULL, NULL, NULL));
+    v = apreq_ua_cookie_version(apreq_handle_custom(p, NULL, NULL, NULL, NULL, 0, NULL));
     CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_NETSCAPE, v);
-    v = apreq_ua_cookie_version(apreq_env_make_custom(p, NULL, NULL, version, NULL, NULL));
+    v = apreq_ua_cookie_version(apreq_handle_custom(p, NULL, NULL, version, NULL, 0, NULL));
     CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_RFC, v);
 
 }
@@ -127,7 +136,7 @@ CuSuite *testcookie(void)
     CuSuite *suite = CuSuiteNew("Cookie");
 
     SUITE_ADD_TEST(suite, jar_make);
-    SUITE_ADD_TEST(suite, jar_table_get);
+    SUITE_ADD_TEST(suite, jar_get);
     SUITE_ADD_TEST(suite, netscape_cookie);
     SUITE_ADD_TEST(suite, rfc_cookie);
     SUITE_ADD_TEST(suite, ua_version);

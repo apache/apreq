@@ -17,16 +17,20 @@ CURRENT RELEASE NOTES:
        place.
 
 
-     - joes: We will also remove apreq_jar_t and apreq_request_t.
-       Quick status update: I've implemented this, and have src/ 
-       and env/ compiling again here locally.  I'm working on the
-       tests now, and the (many, many) apidoc fixes, so it may be a 
-       few more days before I'm ready to commit these changes.
+     - joes: I removed apreq_jar_t and apreq_request_t.  The new
+       data structures should be ok, and all the C tests should pass.
+       The docs are in really bad shape now, but it didn't make
+       sense to fix those, at least until "apreq_env.h" is renamed 
+      "apreq_handle.h"  and both the custom & cgi modules have had 
+       time to improve.
 
 
 RELEASE SHOWSTOPPERS:
 
      - The api docs and perl glue are currently broken.
+     - Remove all "_env" tags, perhaps moving apreq_env.h to apreq_handle.h.
+     - Improve the APREQ_ERROR related code.
+     - Improve the custom & cgi module code.
 
 
 CURRENT VOTES:
@@ -47,12 +51,17 @@ CURRENT VOTES:
 
 TODO:
 
-    - Perl glue, doc sync.
+    - Fix all the "//apreq_log" comments in the cgi tests.
 
-    - Hooks are called on each param now, not just on uploads.
-      This allows them to do more stuff (logging, diagnostics, taint checks).
+    - Let hooks interrupt parsers via APREQ_ERROR_INTERRUPT.  
+      Need a delete_hook method to make interrupts a useful
+      way of tuning parser behavior.
 
-    - Better error handling.
+    - Add a "memory_limit" setting to apreq_parser_t and apreq_module_t, 
+      which will control how much pool allocation the parser may use.
+
+    - Add a "header_limit" setting to control outgoing header size
+      (mainly for baking cookies) instead of using a compiled-in limit.
 
     - We need to add some basic charset support.  Long discussion 
       starts here:
@@ -65,10 +74,6 @@ TODO:
     - Why must fprintf(stderr, ...), rather than
       apr_file_printf(err, ...), be used on Win32 in
       cgi_log() of src/apreq_env.c?
-
-    - The current tests don't cover these functions, 
-      so add CuTest tests for them:
-      -  apreq_merge_values()
 
     - CuTest needs va_arg to print comments for a failed unit test.
 

@@ -28,7 +28,7 @@
  * Create an apreq handle which communicates with an Apache 2
  * request_rec.
  */
-APREQ_DECLARE(apreq_env_handle_t*) apreq_env_make_apache2(request_rec *r);
+APREQ_DECLARE(apreq_env_handle_t*) apreq_handle_apache2(request_rec *r);
 
 #ifdef __cplusplus
  }

@@ -14,59 +14,244 @@
 **  limitations under the License.
 */
 
-#include <apr_strings.h>
-
-#include "apreq.h"
+#include "apr_strings.h"
 #include "apreq_env.h"
 
-struct custom_handle {
-    struct apreq_env_handle_t env;
-    apr_pool_t *pool;
-    const char *query_string;
-    apreq_request_t *request;
-    const char *content_type;
-    const char *cookie_string, *cookie2_string;
-    apreq_jar_t *jar;
-    const char *temp_dir;
-    apr_off_t max_body;
-    apr_ssize_t max_brigade;
+#define READ_BYTES (64 * 1024)
 
-    /* body state */
-    apr_status_t status;
-    apr_off_t bytes_read;
-    apr_bucket_brigade *in;
+struct custom_handle {
+    struct apreq_env_handle_t    env;
+    const char                  *cookie_header, *cookie2_header;
+
+    apr_table_t                 *jar, *args, *body;
+    apr_status_t                 jar_status,
+                                 args_status,
+                                 body_status;
+
+    apreq_parser_t              *parser;
+
+    apr_uint64_t                 read_limit;
+    apr_uint64_t                 bytes_read;
+    apr_bucket_brigade          *in;
 };
 
-static apr_pool_t *custom_pool(apreq_env_handle_t *env) {
-    struct custom_handle *handle = (struct custom_handle*)env;
 
-    return handle->pool;
+static apr_status_t custom_parse_brigade(apreq_env_handle_t *env, apr_uint64_t bytes)
+{       
+    struct custom_handle *handle = (struct custom_handle*)env;
+    apr_status_t s;
+    apr_bucket *e;
+
+    if (handle->body_status != APR_INCOMPLETE)
+        return handle->body_status;
+
+    switch (s = apr_brigade_partition(handle->in, bytes, &e)) {
+        apr_bucket_brigade *bb;
+        apr_uint64_t len;
+
+    case APR_SUCCESS:
+        bb = apr_brigade_split(handle->in, e);
+        handle->bytes_read += bytes;
+
+        if (handle->bytes_read > handle->read_limit) {
+            handle->body_status = APREQ_ERROR_OVERLIMIT;
+            break;
+        }
+
+        handle->body_status = 
+            APREQ_RUN_PARSER(handle->parser, handle->body, handle->in);
+
+        apr_brigade_cleanup(handle->in);
+        APR_BRIGADE_CONCAT(handle->in, bb);
+        break;
+
+    case APR_INCOMPLETE:
+        bb = apr_brigade_split(handle->in, e);
+        s = apr_brigade_length(handle->in, 1, &len);
+        if (s != APR_SUCCESS) {
+            handle->body_status = s;
+            break;
+        }
+        handle->bytes_read += len;
+
+        if (handle->bytes_read > handle->read_limit) {
+            handle->body_status = APREQ_ERROR_OVERLIMIT;
+            break;
+        }
+        handle->body_status = 
+            APREQ_RUN_PARSER(handle->parser, handle->body, handle->in);
+
+        apr_brigade_cleanup(handle->in);
+        APR_BRIGADE_CONCAT(handle->in, bb);
+        break;
+
+    default:
+        handle->body_status = s;
+    }
+
+    return handle->body_status;
 }
 
-static apr_status_t bucket_alloc_cleanup(void *data)
+
+
+static apr_status_t custom_jar(apreq_env_handle_t *env, const apr_table_t **t)
 {
-    apr_bucket_alloc_t *ba = data;
-    apr_bucket_alloc_destroy(ba);
+    struct custom_handle *handle = (struct custom_handle*)env;
+    *t = handle->jar;
+    return handle->jar_status;
+}
+
+static apr_status_t custom_args(apreq_env_handle_t *env, const apr_table_t **t)
+{
+    struct custom_handle *handle = (struct custom_handle*)env;
+    *t = handle->args;
+    return handle->args_status;
+}
+
+static apr_status_t custom_body(apreq_env_handle_t *env, const apr_table_t **t)
+{
+    struct custom_handle *handle = (struct custom_handle*)env;
+    while (handle->body_status == APR_INCOMPLETE)
+        custom_parse_brigade(env, READ_BYTES);
+    *t = handle->body;
+    return handle->body_status;
+}
+
+
+
+static apreq_cookie_t *custom_jar_get(apreq_env_handle_t *env, const char *name)
+{
+    struct custom_handle *handle = (struct custom_handle*)env;
+    const char *val;
+
+    if (handle->jar == NULL || name == NULL)
+        return NULL;
+
+    val = apr_table_get(handle->jar, name);
+
+    if (val == NULL)
+        return NULL;
+
+    return apreq_value_to_cookie(val);
+}
+
+static apreq_param_t *custom_args_get(apreq_env_handle_t *env, const char *name)
+{
+    struct custom_handle *handle = (struct custom_handle*)env;
+    const char *val;
+
+    if (handle->args == NULL || name == NULL)
+        return NULL;
+
+    val = apr_table_get(handle->args, name);
+
+    if (val == NULL)
+        return NULL;
+
+    return apreq_value_to_param(val);
+}
+
+static apreq_param_t *custom_body_get(apreq_env_handle_t *env, const char *name)
+{
+    struct custom_handle *handle = (struct custom_handle*)env;
+    const char *val;
+
+    if (handle->body == NULL || name == NULL)
+        return NULL;
+
+ get_body_value:
+
+    *(const char **)&val = apr_table_get(handle->body, name);
+    if (val == NULL) {
+        if (handle->body_status == APR_INCOMPLETE) {
+            custom_parse_brigade(env, READ_BYTES);
+            goto get_body_value;
+        }
+        else
+            return NULL;
+    }
+
+    return apreq_value_to_param(val);
+}
+
+
+
+static apr_status_t custom_parser_get(apreq_env_handle_t *env,
+                                      const apreq_parser_t **parser)
+{
+    struct custom_handle *handle = (struct custom_handle*)env;
+    *parser = handle->parser;
+
     return APR_SUCCESS;
 }
 
-static apr_bucket_alloc_t *custom_bucket_alloc(apreq_env_handle_t *env)
+static apr_status_t custom_parser_set(apreq_env_handle_t *env,
+                                      apreq_parser_t *parser)
 {
-    struct custom_handle *handle = (struct custom_handle*)env;
-    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(handle->pool);
-
-    apr_pool_cleanup_register(handle->pool, ba,
-                              bucket_alloc_cleanup,
-                              bucket_alloc_cleanup);
-    return ba;
+    (void)env;
+    (void)parser;
+    return APR_ENOTIMPL;
 }
 
-static const char *custom_query_string(apreq_env_handle_t *env)
+static apr_status_t custom_hook_add(apreq_env_handle_t *env,
+                                    apreq_hook_t *hook)
+{
+    struct custom_handle *handle = (struct custom_handle*)env;
+    apreq_parser_add_hook(handle->parser, hook);
+    return APR_SUCCESS;
+}
+
+static apr_status_t custom_brigade_limit_get(apreq_env_handle_t *env,
+                                             apr_size_t *bytes)
+{
+    struct custom_handle *handle = (struct custom_handle*)env;
+    *bytes = handle->parser->brigade_limit;
+    return APR_SUCCESS;
+}
+
+static apr_status_t custom_brigade_limit_set(apreq_env_handle_t *env,
+                                             apr_size_t bytes)
+{
+    (void)env;
+    (void)bytes;
+    return APR_ENOTIMPL;
+}
+
+static apr_status_t custom_read_limit_get(apreq_env_handle_t *env,
+                                          apr_uint64_t *bytes)
+{
+    struct custom_handle *handle = (struct custom_handle*)env;
+    *bytes = handle->read_limit;
+    return APR_SUCCESS;
+}
+
+static apr_status_t custom_read_limit_set(apreq_env_handle_t *env,
+                                          apr_uint64_t bytes)
+{
+    (void)env;
+    (void)bytes;
+    return APR_ENOTIMPL;
+}
+
+static apr_status_t custom_temp_dir_get(apreq_env_handle_t *env,
+                                        const char **path)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
 
-    return handle->query_string;
+    *path = handle->parser->temp_dir;
+    return APR_SUCCESS;
 }
+
+static apr_status_t custom_temp_dir_set(apreq_env_handle_t *env,
+                                        const char *path)
+{
+    (void)env;
+    (void)path;
+    return APR_ENOTIMPL;
+}
+
+
+
 
 static const char *custom_header_in(apreq_env_handle_t *env,
                                     const char *name)
@@ -74,11 +259,11 @@ static const char *custom_header_in(apreq_env_handle_t *env,
     struct custom_handle *handle = (struct custom_handle*)env;
 
     if (strcasecmp(name, "Content-Type") == 0)
-        return handle->content_type;
+        return handle->parser->content_type;
     else if (strcasecmp(name, "Cookie") == 0)
-        return handle->cookie_string;
+        return handle->cookie_header;
     else if (strcasecmp(name, "Cookie2") == 0)
-        return handle->cookie2_string;
+        return handle->cookie2_header;
     else
         return NULL;
 }
@@ -90,176 +275,59 @@ static apr_status_t custom_header_out(apreq_env_handle_t *env, const char *name,
     (void)name;
     (void)value;
 
-    return APR_SUCCESS;
+    return APR_ENOTIMPL;
 }
 
-static apreq_jar_t *custom_jar(apreq_env_handle_t *env, apreq_jar_t *jar)
+
+static APREQ_MODULE(custom, 20050130);
+
+APREQ_DECLARE(apreq_env_handle_t*) apreq_handle_custom(apr_pool_t *pool,
+                                                       const char *query_string,
+                                                       const char *cookie,
+                                                       const char *cookie2,
+                                                       apreq_parser_t *parser,
+                                                       apr_uint64_t read_limit,
+                                                       apr_bucket_brigade *in)
 {
-    struct custom_handle *handle = (struct custom_handle*)env;
-    apreq_jar_t *value = handle->jar;
-
-    if (jar != NULL)
-        handle->jar = jar;
-
-    return value;
-}
-
-static apreq_request_t *custom_request(apreq_env_handle_t *env,
-                                       apreq_request_t *req)
-{
-    struct custom_handle *handle = (struct custom_handle*)env;
-    apreq_request_t *value = handle->request;
-
-    if (req != NULL)
-        handle->request = req;
-
-    return value;
-}
-
-static void custom_log(const char *file, int line, int level,
-                       apr_status_t status, apreq_env_handle_t *env,
-                       const char *fmt, va_list vp)
-{
-    (void)file;
-    (void)line;
-    (void)level;
-    (void)status;
-    (void)env;
-    (void)fmt;
-    (void)vp;
-}
-
-static apr_status_t custom_read(apreq_env_handle_t *env,
-                                apr_read_type_e block,
-                                apr_off_t bytes)
-{
-    struct custom_handle *handle = (struct custom_handle*)env;
-    apr_bucket *e;
-
-    (void)block;
-
-    if (handle->status != APR_INCOMPLETE)
-        return handle->status;
-
-    handle->status = apr_brigade_partition(handle->in, bytes, &e);
-    switch (handle->status) {
-        apr_bucket_brigade *bb;
-        apr_off_t len;
-        apreq_request_t *req;
-
-    case APR_SUCCESS:
-        bb = apr_brigade_split(handle->in, e);
-        req = apreq_request(env, NULL);
-        if (handle->max_body >= 0 &&
-            handle->bytes_read + bytes > handle->max_body) {
-            apreq_log(APREQ_ERROR APR_EGENERAL, env,
-                      "Bytes read (%" APR_OFF_T_FMT
-                      ") exceeds configured limit (%" APR_OFF_T_FMT ")",
-                      handle->bytes_read, handle->max_body);
-            req->body_status = APR_EGENERAL;
-            return handle->status = APR_EGENERAL;
-        }
-        handle->bytes_read += bytes;
-        handle->status = apreq_parse_request(req, handle->in);
-        apr_brigade_cleanup(handle->in);
-        APR_BRIGADE_CONCAT(handle->in, bb);
-        break;
-
-    case APR_INCOMPLETE:
-        bb = apr_brigade_split(handle->in, e);
-        handle->status = apr_brigade_length(handle->in,1,&len);
-        if (handle->status != APR_SUCCESS)
-            return handle->status;
-        req = apreq_request(env, NULL);
-        if (handle->max_body >= 0 &&
-            handle->bytes_read + len > handle->max_body) {
-            apreq_log(APREQ_ERROR APR_EGENERAL, env,
-                      "Bytes read (%" APR_OFF_T_FMT
-                      ") exceeds configured limit (%" APR_OFF_T_FMT ")",
-                      handle->bytes_read, handle->max_body);
-            req->body_status = APR_EGENERAL;
-            return handle->status = APR_EGENERAL;
-        }
-        handle->bytes_read += len;
-        handle->status = apreq_parse_request(req, handle->in);
-        apr_brigade_cleanup(handle->in);
-        APR_BRIGADE_CONCAT(handle->in, bb);
-        break;
-    }
-
-    return handle->status;
-}
-
-static const char *custom_temp_dir(apreq_env_handle_t *env, const char *path)
-{
-    struct custom_handle *handle = (struct custom_handle*)env;
-    const char *value = handle->temp_dir;
-
-    if (path != NULL)
-        handle->temp_dir = apr_pstrdup(handle->pool, path);
-
-    if (handle->temp_dir == NULL) {
-        apr_status_t status;
-
-        status = apr_temp_dir_get(&value, handle->pool);
-        if (status != APR_SUCCESS)
-            value = NULL;
-
-        handle->temp_dir = value;
-    }
-
-    return value;
-}
-
-static apr_off_t custom_max_body(apreq_env_handle_t *env, apr_off_t bytes)
-{
-    struct custom_handle *handle = (struct custom_handle*)env;
-    apr_off_t value = handle->max_body;
-
-    if (bytes >= 0)
-        handle->max_body = bytes;
-
-    return value;
-}
-
-static apr_ssize_t custom_max_brigade(apreq_env_handle_t *env, apr_ssize_t bytes)
-{
-    struct custom_handle *handle = (struct custom_handle*)env;
-    apr_off_t value = handle->max_brigade;
-
-    if (bytes >= 0)
-        handle->max_brigade = bytes;
-
-    return value;
-}
-
-static APREQ_ENV_MODULE(custom, "Custom", 20050110);
-
-APREQ_DECLARE(apreq_env_handle_t*) apreq_env_make_custom(apr_pool_t *pool,
-                                                         const char *query_string,
-                                                         const char *cookie,
-                                                         const char *cookie2,
-                                                         const char *content_type,
-                                                         apr_bucket_brigade *in) {
     struct custom_handle *handle;
-
-    handle = apr_pcalloc(pool, sizeof(*handle));
+    handle = apr_palloc(pool, sizeof(*handle));
     handle->env.module = &custom_module;
-    handle->pool = pool;
-    handle->max_body = -1;
-    handle->max_brigade = -1;
-
-    if (query_string != NULL)
-        handle->query_string = apr_pstrdup(pool, query_string);
-    if (content_type != NULL)
-        handle->content_type = apr_pstrdup(pool, content_type);
-    if (cookie != NULL)
-        handle->cookie_string = apr_pstrdup(pool, cookie);
-    if (cookie2 != NULL)
-        handle->cookie2_string = apr_pstrdup(pool, cookie2);
-
+    handle->cookie_header = cookie;
+    handle->cookie2_header = cookie2;
+    handle->read_limit = read_limit;
+    handle->parser = parser;
     handle->in = in;
-    handle->status = handle->in == NULL ? APR_ENOTIMPL : APR_INCOMPLETE;
+
+    if (cookie != NULL) {
+        handle->jar = apr_table_make(pool, APREQ_DEFAULT_NELTS);
+        handle->jar_status = 
+            apreq_parse_cookie_header(pool, handle->args, query_string);
+    }
+    else {
+        handle->jar = NULL;
+        handle->jar_status = APREQ_ERROR_NODATA;
+    }
+
+
+    if (query_string != NULL) {
+        handle->args = apr_table_make(pool, APREQ_DEFAULT_NELTS);
+        handle->args_status = 
+            apreq_parse_query_string(pool, handle->args, query_string);
+    }
+    else {
+        handle->args = NULL;
+        handle->args_status = APREQ_ERROR_NODATA;
+    }
+
+    if (in != NULL) {
+        handle->body = apr_table_make(pool, APREQ_DEFAULT_NELTS);
+        handle->body_status = APR_INCOMPLETE;
+    }
+    else {
+        handle->body = NULL;
+        handle->body_status = APREQ_ERROR_NODATA;
+    }
 
     return &handle->env;
 }
+

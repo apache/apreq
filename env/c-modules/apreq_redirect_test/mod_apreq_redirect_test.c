@@ -28,28 +28,27 @@
 #define APACHE_HTTPD_TEST_HANDLER apreq_redirect_test_handler
 
 #include "apache_httpd_test.h"
-#include "apreq_params.h"
 #include "apreq_env.h"
 #include "apreq_env_apache2.h"
 #include "httpd.h"
 
 static int apreq_redirect_test_handler(request_rec *r)
 {
-    apreq_env_handle_t *env;
-    apreq_request_t *req;
+    apreq_env_handle_t *req;
     const apreq_param_t *loc;
 
     if (strcmp(r->handler, "apreq_redirect_test") != 0)
         return DECLINED;
 
-    env = apreq_env_make_apache2(r);
+    req = apreq_handle_apache2(r);
 
-    req = apreq_request(env, NULL);
-    apreq_log(APREQ_DEBUG 0, env, "looking for new location");
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS,
+                  r, "looking for new location");
     loc = apreq_param(req, "location");
     if (!loc)
         return DECLINED;
-    apreq_log(APREQ_DEBUG 0, env, "redirecting to %s", loc->v.data);
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS,
+                  r, "redirecting to %s", loc->v.data);
     ap_internal_redirect(loc->v.data, r);
     return OK;
 }

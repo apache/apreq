@@ -37,9 +37,7 @@ extern module AP_MODULE_DECLARE_DATA apreq_output_filter_test_module;
 static apr_status_t apreq_output_filter_test_init(ap_filter_t *f)
 {
     apreq_env_handle_t *handle;
-    apreq_request_t *req;
-    handle = apreq_env_make_apache2(f->r);
-    req = apreq_request(handle, NULL);
+    handle = apreq_handle_apache2(f->r);
     return APR_SUCCESS;
 }
 
@@ -50,10 +48,9 @@ struct ctx_t {
 
 static int dump_table(void *data, const char *key, const char *value)
 {
-    apreq_env_handle_t *env;
     struct ctx_t *ctx = (struct ctx_t *)data;
-    env = apreq_env_make_apache2(ctx->r);
-    apreq_log(APREQ_DEBUG 0, env, "%s => %s", key, value);
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, ctx->r, 
+                  "%s => %s", key, value);
     apr_brigade_printf(ctx->bb,NULL,NULL,"\t%s => %s\n", key, value);
     return 1;
 }
@@ -61,25 +58,30 @@ static int dump_table(void *data, const char *key, const char *value)
 static apr_status_t apreq_output_filter_test(ap_filter_t *f, apr_bucket_brigade *bb)
 {
     request_rec *r = f->r;
-    apreq_env_handle_t *env;
-    apreq_request_t *req;
+    apreq_env_handle_t *handle;
     apr_bucket_brigade *eos;
     struct ctx_t ctx = {r, bb};
+    const apr_table_t *t;
 
     if (!APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(bb)))
         return ap_pass_brigade(f->next,bb);
 
     eos = apr_brigade_split(bb, APR_BRIGADE_LAST(bb));
 
-    env = apreq_env_make_apache2(r);
-    req = apreq_request(env, NULL);
-    apreq_log(APREQ_DEBUG 0, env, "appending parsed data");
-    apr_brigade_puts(bb, NULL, NULL, "\n--APREQ OUTPUT FILTER--\nARGS:\n");
-    apr_table_do(dump_table, &ctx, req->args, NULL);
+    handle = apreq_handle_apache2(r);
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r, 
+                  "appending parsed data");
 
-    if (req->body) {
+    apr_brigade_puts(bb, NULL, NULL, "\n--APREQ OUTPUT FILTER--\nARGS:\n");
+
+    apreq_args(handle, &t);
+    if (t != NULL)
+        apr_table_do(dump_table, &ctx, t, NULL);
+
+    apreq_body(handle, &t);
+    if (t != NULL) {
         apr_brigade_puts(bb,NULL,NULL,"BODY:\n");
-        apr_table_do(dump_table,&ctx,req->body,NULL);
+        apr_table_do(dump_table, &ctx, t, NULL);
     }
     APR_BRIGADE_CONCAT(bb,eos);
     return ap_pass_brigade(f->next,bb);

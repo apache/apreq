@@ -27,51 +27,67 @@
 #define APACHE_HTTPD_TEST_HANDLER apreq_cookie_test_handler
 
 #include "apache_httpd_test.h"
-#include "apreq_params.h"
 #include "apreq_env.h"
-#include "apreq_cookie.h"
 #include "apreq_env_apache2.h"
 #include "httpd.h"
+#include <assert.h>
+
+
+static int dump_table(void *ctx, const char *key, const char *value)
+{
+    request_rec *r = ctx;
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS,
+                  r, "[%s] => [%s]", key, value);
+    return 1;
+}
+
 
 static int apreq_cookie_test_handler(request_rec *r)
 {
-    apreq_env_handle_t *env;
-    apreq_request_t *req;
+    apreq_env_handle_t *req;
     apr_status_t s;
-    const apreq_jar_t *jar;
-    const apreq_param_t *test, *key;
+    const char *test, *key;
     apreq_cookie_t *cookie;
-    apr_ssize_t ssize;
     apr_size_t size;
     char *dest;
+    const apr_table_t *args;
 
     if (strcmp(r->handler, "apreq_cookie_test") != 0)
         return DECLINED;
 
-    env = apreq_env_make_apache2(r);
+    req = apreq_handle_apache2(r);
 
-    apreq_log(APREQ_DEBUG 0, env, "initializing request");
-    req = apreq_request(env, NULL);
-    test = apreq_param(req, "test");
-    key = apreq_param(req, "key");
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r, 
+                  "starting cookie tests");
 
-    apreq_log(APREQ_DEBUG 0, env, "initializing cookie");
-    jar = apreq_jar(env, NULL);
-    cookie = apreq_cookie(jar, key->v.data);
+    apreq_args(req, &args);
+
+    apr_table_do(dump_table, r, args, NULL);
+
+    test = apr_table_get(args, "test");
+    key = apr_table_get(args, "key");
+
+    cookie = apreq_cookie(req, key);
+
     ap_set_content_type(r, "text/plain");
 
-    if (strcmp(test->v.data, "bake") == 0) {
-        s = apreq_cookie_bake(cookie, env);
+    if (strcmp(test, "bake") == 0) {
+        s = apreq_cookie_bake(cookie, req);
     }
-    else if (strcmp(test->v.data, "bake2") == 0) {
-        s = apreq_cookie_bake2(cookie, env);
+    else if (strcmp(test, "bake2") == 0) {
+        s = apreq_cookie_bake2(cookie, req);
     }
     else {
         size = strlen(cookie->v.data);
         dest = apr_palloc(r->pool, size + 1);
-        ssize = apreq_decode(dest, cookie->v.data, size);
-        ap_rprintf(r, "%s", dest);
+        s = apreq_decode(dest, &size, cookie->v.data, size);
+        if (s == APR_SUCCESS)
+            ap_rprintf(r, "%s", dest);
     }
+
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, s, r, 
+                  "finished cookie tests");
+
     return OK;
 }
 

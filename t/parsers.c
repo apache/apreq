@@ -15,8 +15,6 @@
 */
 
 #include "apreq_env.h"
-#include "apreq.h"
-#include "apreq_params.h"
 #include "apr_strings.h"
 #include "apr_xml.h"
 #include "test_apreq.h"
@@ -24,6 +22,7 @@
 #define CRLF "\015\012"
 
 static char url_data[] = "alpha=one&beta=two;omega=last%2";
+
 static char form_data[] = 
 "--AaB03x" CRLF                                           /* 10 chars
  012345678901234567890123456789012345678901234567890123456789 */
@@ -99,64 +98,51 @@ static char mix_data[] =
 "--AaB03x--" CRLF;
 
 
-extern apr_table_t *table;
+#define URL_ENCTYPE "application/x-www-form-urlencoded"
+#define MFD_ENCTYPE "multipart/form-data"
+#define MR_ENCTYPE "multipart/related"
+#define XML_ENCTYPE "application/xml"
 
 static void locate_default_parsers(CuTest *tc)
 {
-    apreq_request_t *req;
-    apreq_parser_t *parser;
+    apreq_parser_function_t f;
 
-    req = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, "application/x-www-form-urlencoded", NULL), NULL);
-    CuAssertPtrNotNull(tc, req);
-    CuAssertStrEquals(tc, APREQ_URL_ENCTYPE, apreq_enctype(req->env));
-    parser = apreq_parser(req->env, NULL);
-    CuAssertPtrNotNull(tc, parser);
-    CuAssertStrEquals(tc, APREQ_URL_ENCTYPE, parser->enctype);
+    /* initialize default-parser hash */
+    apreq_register_parser(NULL, NULL);
+    
+    f = apreq_parser(URL_ENCTYPE);
+    CuAssertPtrNotNull(tc, f);
+    CuAssertPtrEquals(tc, apreq_parse_urlencoded, f);
 
-    req = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, APREQ_MFD_ENCTYPE
-                                              "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"",
-                                              NULL), NULL);
-    CuAssertPtrNotNull(tc, req);
-    parser = apreq_parser(req->env, NULL);
-    CuAssertPtrNotNull(tc, parser);
-    CuAssertStrNEquals(tc, APREQ_MFD_ENCTYPE, parser->enctype, 
-                       strlen(APREQ_MFD_ENCTYPE));
+    f = apreq_parser(MFD_ENCTYPE);
+    CuAssertPtrNotNull(tc, f);
+    CuAssertPtrEquals(tc, apreq_parse_multipart, f);
 
-    req = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, "multipart/related; boundary=f93dcbA3; "
-                                              "type=application/xml; start=\"<980119.X53GGT@example.com>\"",
-                                              NULL), NULL);
-    CuAssertPtrNotNull(tc, req);
-    parser = apreq_parser(req->env, NULL);
-    CuAssertPtrNotNull(tc, parser);
-    CuAssertStrNEquals(tc, "multipart/related", parser->enctype, 
-                       strlen("multipart/related"));
+    f = apreq_parser(MR_ENCTYPE);
+    CuAssertPtrNotNull(tc, f);
+    CuAssertPtrEquals(tc, apreq_parse_multipart, f);
 }
-
 
 static void parse_urlencoded(CuTest *tc)
 {
     const char *val;
-    apreq_env_handle_t *env;
-    apreq_request_t *req;
     apr_status_t rv;
-    const char *enctype;
+    apr_bucket_alloc_t *ba;
     apr_bucket_brigade *bb;
+    apreq_parser_t *parser;
+    apr_table_t *body;
 
-    bb = apr_brigade_create(p, apr_bucket_alloc_create(p));
-
-    env = apreq_env_make_custom(p, NULL, NULL, NULL, APREQ_URL_ENCTYPE, bb);
-    req = apreq_request(env, NULL);
-
-    CuAssertPtrNotNull(tc, req);
-
-    enctype = apreq_enctype(req->env);
-    CuAssertStrEquals(tc, APREQ_URL_ENCTYPE, enctype);
+    body = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    ba = apr_bucket_alloc_create(p);
+    bb = apr_brigade_create(p, ba);
+    parser = apreq_make_parser(p, ba, URL_ENCTYPE, apreq_parse_urlencoded,
+                               100, NULL, NULL, NULL);
 
     APR_BRIGADE_INSERT_HEAD(bb,
         apr_bucket_immortal_create(url_data,strlen(url_data), 
                                    bb->bucket_alloc));
 
-    rv = apreq_env_read(env, APR_BLOCK_READ, 65536);
+    rv = APREQ_RUN_PARSER(parser, body, bb);
     CuAssertIntEquals(tc, APR_INCOMPLETE, rv);
 
     APR_BRIGADE_INSERT_HEAD(bb,
@@ -165,40 +151,44 @@ static void parse_urlencoded(CuTest *tc)
     APR_BRIGADE_INSERT_TAIL(bb,
            apr_bucket_eos_create(bb->bucket_alloc));
 
-    rv = apreq_env_read(env, APR_BLOCK_READ, 65536);
+    rv = APREQ_RUN_PARSER(parser, body, bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
 
-    CuAssertPtrNotNull(tc, req->body);
-    val = apr_table_get(req->body,"alpha");
-
+    val = apr_table_get(body,"alpha");
     CuAssertStrEquals(tc, "one", val);
-    val = apr_table_get(req->body,"beta");
+    val = apr_table_get(body,"beta");
     CuAssertStrEquals(tc, "two", val);
-    val = apr_table_get(req->body,"omega");
+    val = apr_table_get(body,"omega");
     CuAssertStrEquals(tc, "last+last", val);
 
 }
 
 static void parse_multipart(CuTest *tc)
 {
-    apr_status_t rv;
     apr_size_t i, j;
     apr_bucket_alloc_t *ba;
 
+
     for (j = 0; j <= strlen(form_data); ++j) {
-        apr_bucket_brigade *bb;
 
         ba = apr_bucket_alloc_create(p);
-        bb = apr_brigade_create(p, ba);
 
         for (i = 0; i <= strlen(form_data); ++i) {
-            apreq_env_handle_t *env;
-            apreq_request_t *req;
-            apr_bucket_brigade *vb;
             const char *val;
             char *val2;
             apr_size_t len;
-            apr_table_t *t;
+            apr_table_t *t, *body;
+            apreq_parser_t *parser;
+            apr_bucket_brigade *bb, *vb;
+            apr_status_t rv;
+
+            bb = apr_brigade_create(p, ba);
+            body = apr_table_make(p, APREQ_DEFAULT_NELTS);
+            parser = apreq_make_parser(p, ba, MFD_ENCTYPE
+                                       "; charset=\"iso-8859-1\""
+                                       "; boundary=\"AaB03x\"",
+                                       apreq_parse_multipart,
+                                       1000, NULL, NULL, NULL);
 
             apr_bucket *e = apr_bucket_immortal_create(form_data,
                                                        strlen(form_data),
@@ -207,13 +197,6 @@ static void parse_multipart(CuTest *tc)
             apr_bucket_brigade *tail;
             APR_BRIGADE_INSERT_HEAD(bb, e);
             APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
-
-            env = apreq_env_make_custom(p, NULL, NULL, NULL,
-                                        APREQ_MFD_ENCTYPE "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"",
-                                        bb);
-            req = apreq_request(env, NULL);
-            CuAssertPtrNotNull(tc, req);
-            CuAssertStrEquals(tc, APREQ_MFD_ENCTYPE, apreq_enctype(req->env));
 
             /* Split e into three buckets */
             apr_bucket_split(e, j);
@@ -224,28 +207,23 @@ static void parse_multipart(CuTest *tc)
                 apr_bucket_split(f, i - j);
 
             tail = apr_brigade_split(bb, f);
-            req->body = NULL;
-            req->parser = NULL;
-            req->body_status = APR_EINIT;
-            rv = apreq_env_read(env, APR_BLOCK_READ, 65536);
+            rv = APREQ_RUN_PARSER(parser, body, bb);
             CuAssertIntEquals(tc, (j < strlen(form_data)) ? APR_INCOMPLETE : APR_SUCCESS, rv);
-            APR_BRIGADE_CONCAT(bb, tail);
-            rv = apreq_env_read(env, APR_BLOCK_READ, 65536);
+            rv = APREQ_RUN_PARSER(parser, body, tail);
             CuAssertIntEquals(tc, APR_SUCCESS, rv);
-            CuAssertPtrNotNull(tc, req->body);
-            CuAssertIntEquals(tc, 2, apr_table_elts(req->body)->nelts);
+            CuAssertIntEquals(tc, 2, apr_table_elts(body)->nelts);
 
-            val = apr_table_get(req->body,"field1");
+            val = apr_table_get(body,"field1");
 
             CuAssertStrEquals(tc, "Joe owes =80100.", val);
-            t = apreq_value_to_param(apreq_strtoval(val))->info;
+            t = apreq_value_to_param(val)->info;
             val = apr_table_get(t, "content-transfer-encoding");
             CuAssertStrEquals(tc,"quoted-printable", val);
 
-            val = apr_table_get(req->body, "pics");
+            val = apr_table_get(body, "pics");
             CuAssertStrEquals(tc, "file1.txt", val);
-            t = apreq_value_to_param(apreq_strtoval(val))->info;
-            vb = apreq_value_to_param(apreq_strtoval(val))->bb;
+            t = apreq_value_to_param(val)->info;
+            vb = apreq_value_to_param(val)->upload;
             apr_brigade_pflatten(vb, &val2, &len, p);
             CuAssertIntEquals(tc,strlen("... contents of file1.txt ..." CRLF), len);
             CuAssertStrNEquals(tc,"... contents of file1.txt ..." CRLF, val2, len);
@@ -254,6 +232,7 @@ static void parse_multipart(CuTest *tc)
             apr_brigade_cleanup(vb);
             apr_brigade_cleanup(bb);
         }
+
         apr_bucket_alloc_destroy(ba);
         apr_pool_clear(p);
     }
@@ -262,42 +241,45 @@ static void parse_multipart(CuTest *tc)
 static void parse_disable_uploads(CuTest *tc)
 {
     const char *val;
-    apr_table_t *t;
+    apr_table_t *t, *body;
     apr_status_t rv;
-    apreq_request_t *req = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, APREQ_MFD_ENCTYPE
-                                                               "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"",
-                                                               NULL), NULL);
-    apr_bucket_brigade *bb = apr_brigade_create(p, 
-                                   apr_bucket_alloc_create(p));
-    apr_bucket *e = apr_bucket_immortal_create(form_data,
-                                                   strlen(form_data),
-                                                   bb->bucket_alloc);
+    apr_bucket_alloc_t *ba;
+    apr_bucket_brigade *bb;
+    apr_bucket *e;
+    apreq_parser_t *parser;
+    apreq_hook_t *hook;
 
-    CuAssertPtrNotNull(tc, req);
-    CuAssertStrEquals(tc, APREQ_MFD_ENCTYPE
-                      "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"", apreq_env_content_type(req->env));
+    ba = apr_bucket_alloc_create(p);
+    bb = apr_brigade_create(p, ba);
 
+    e = apr_bucket_immortal_create(form_data, strlen(form_data), ba);
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
-    req->body = NULL;
-    req->parser = apreq_parser(req->env, apreq_make_hook(p, 
-                                 apreq_hook_disable_uploads, NULL, NULL));
+    body = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    hook = apreq_make_hook(p, apreq_hook_disable_uploads, NULL, NULL);
 
-    rv = apreq_parse_request(req,bb);
+    parser = apreq_make_parser(p, ba, MFD_ENCTYPE
+                               "; charset=\"iso-8859-1\""
+                               "; boundary=\"AaB03x\"",
+                               apreq_parse_multipart,
+                               1000, NULL, hook, NULL);
+
+
+    rv = APREQ_RUN_PARSER(parser, body, bb);
     CuAssertIntEquals(tc, APR_EGENERAL, rv);
-    CuAssertPtrNotNull(tc, req->body);
-    CuAssertIntEquals(tc, 1, apr_table_elts(req->body)->nelts);
+    CuAssertIntEquals(tc, 1, apr_table_elts(body)->nelts);
 
-    val = apr_table_get(req->body,"field1");
+    val = apr_table_get(body,"field1");
     CuAssertStrEquals(tc, "Joe owes =80100.", val);
-    t = apreq_value_to_param(apreq_strtoval(val))->info;
+    t = apreq_value_to_param(val)->info;
     val = apr_table_get(t, "content-transfer-encoding");
     CuAssertStrEquals(tc,"quoted-printable", val);
 
-    val = apr_table_get(req->body, "pics");
+    val = apr_table_get(body, "pics");
     CuAssertPtrEquals(tc, NULL, val);
 }
+
 
 static void parse_generic(CuTest *tc)
 {
@@ -305,25 +287,27 @@ static void parse_generic(CuTest *tc)
     apr_size_t vlen;
     apr_status_t rv;
     apreq_param_t *dummy;
-    apreq_request_t *req = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, APREQ_XML_ENCTYPE, NULL), NULL);
-    apr_bucket_brigade *bb = apr_brigade_create(p,
-                                   apr_bucket_alloc_create(p));
+    apreq_parser_t *parser;
+    apr_table_t *body;
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
+    apr_bucket_brigade *bb = apr_brigade_create(p, ba);
     apr_bucket *e = apr_bucket_immortal_create(xml_data,
-                                                   strlen(xml_data),
-                                                   bb->bucket_alloc);
+                                               strlen(xml_data),
+                                               ba);
 
-    CuAssertPtrNotNull(tc, req);
     APR_BRIGADE_INSERT_HEAD(bb, e);
-    APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
+    APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(ba));
 
-    req->body = NULL;
-    req->parser = apreq_make_parser(p, APREQ_XML_ENCTYPE, 
-                                    apreq_parse_generic, NULL, NULL);
-    rv = apreq_parse_request(req,bb);
+    body = apr_table_make(p, APREQ_DEFAULT_NELTS);
+
+    parser = apreq_make_parser(p, ba, "application/xml", 
+                               apreq_parse_generic, 1000, NULL, NULL, NULL);
+
+    rv = APREQ_RUN_PARSER(parser, body, bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    dummy = *(apreq_param_t **)req->parser->ctx;
+    dummy = *(apreq_param_t **)parser->ctx;
     CuAssertPtrNotNull(tc, dummy);
-    apr_brigade_pflatten(dummy->bb, &val, &vlen, p);
+    apr_brigade_pflatten(dummy->upload, &val, &vlen, p);
 
     CuAssertIntEquals(tc, strlen(xml_data), vlen);
     CuAssertStrNEquals(tc, xml_data, val, vlen);
@@ -333,29 +317,31 @@ static void hook_discard(CuTest *tc)
 {
     apr_status_t rv;
     apreq_param_t *dummy;
-    apreq_request_t *req = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, APREQ_XML_ENCTYPE, NULL), NULL);
-    apr_bucket_brigade *bb = apr_brigade_create(p,
-                                   apr_bucket_alloc_create(p));
+    apreq_parser_t *parser;
+    apreq_hook_t *hook;
+    apr_table_t *body;
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
+    apr_bucket_brigade *bb = apr_brigade_create(p, ba);
     apr_bucket *e = apr_bucket_immortal_create(xml_data,
-                                                   strlen(xml_data),
-                                                   bb->bucket_alloc);
+                                               strlen(xml_data),
+                                               ba);
 
-    CuAssertPtrNotNull(tc, req);
     APR_BRIGADE_INSERT_HEAD(bb, e);
-    APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
+    APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(ba));
 
-    req->body = NULL;
-    req->parser = apreq_make_parser(p, APREQ_XML_ENCTYPE, 
-                                    apreq_parse_generic,
-                                    apreq_make_hook(p, apreq_hook_discard_brigade,
-                                                    NULL,NULL), NULL);
-    rv = apreq_parse_request(req,bb);
+    body = apr_table_make(p, APREQ_DEFAULT_NELTS);
+
+    hook = apreq_make_hook(p, apreq_hook_discard_brigade, NULL, NULL);
+    parser = apreq_make_parser(p, ba, "application/xml", 
+                               apreq_parse_generic, 1000, NULL, hook, NULL);
+
+
+    rv = APREQ_RUN_PARSER(parser, body, bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    dummy = *(apreq_param_t **)req->parser->ctx;
+    dummy = *(apreq_param_t **)parser->ctx;
     CuAssertPtrNotNull(tc, dummy);
-    CuAssertPtrNotNull(tc, dummy->bb);
-    CuAssertTrue(tc, APR_BRIGADE_EMPTY(dummy->bb));
-
+    CuAssertPtrNotNull(tc, dummy->upload);
+    CuAssertTrue(tc, APR_BRIGADE_EMPTY(dummy->upload));
 }
 
 
@@ -371,34 +357,37 @@ static void parse_related(CuTest *tc)
     apr_status_t rv;
     int ns_map = 0;
     apr_xml_doc *doc;
+    apr_table_t *body;
+    apreq_parser_t *parser;
     apreq_hook_t *xml_hook;
     apreq_param_t *param;
-    apreq_request_t *req = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, ct, NULL), NULL);
-    apr_bucket_brigade *bb = apr_brigade_create(p, 
-                                   apr_bucket_alloc_create(p));
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
+    apr_bucket_brigade *bb = apr_brigade_create(p, ba);
     apr_bucket *e = apr_bucket_immortal_create(rel_data,
                                                    strlen(rel_data),
                                                    bb->bucket_alloc);
 
-    CuAssertPtrNotNull(tc, req);
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
     xml_hook = apreq_make_hook(p, apreq_hook_apr_xml_parser, NULL, NULL);
 
-    req->body = NULL;
-    req->parser = apreq_make_parser(p, ct, 
-                                    apreq_parse_multipart, xml_hook, NULL);
-    rv = apreq_parse_request(req,bb);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    CuAssertPtrNotNull(tc, req->body);
+    body =   apr_table_make(p, APREQ_DEFAULT_NELTS);
+    parser = apreq_make_parser(p, ba, ct, apreq_parse_multipart, 
+                               1000, NULL, xml_hook, NULL);
 
-    param = apreq_param(req, "<980119.X53GGT@example.com>");
+    rv = APREQ_RUN_PARSER(parser, body, bb);
+    CuAssertIntEquals(tc, APR_SUCCESS, rv);
+
+    val = apr_table_get(body, "<980119.X53GGT@example.com>");
+    CuAssertPtrNotNull(tc, val);
+    param = apreq_value_to_param(val);
+
     CuAssertPtrNotNull(tc, param);
     CuAssertPtrNotNull(tc, param->info);
     val = apr_table_get(param->info, "Content-Length");
     CuAssertStrEquals(tc, "400", val);
-    CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
+    CuAssertPtrNotNull(tc, param->upload);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
     CuAssertIntEquals(tc, 400, vlen);
     CuAssertStrNEquals(tc,rel_data + 122, val2, 400);
 
@@ -408,17 +397,22 @@ static void parse_related(CuTest *tc)
     CuAssertIntEquals(tc, 400 - 22, vlen);
     CuAssertStrNEquals(tc, rel_data + 122 + 23, val, 400 - 23);
 
-    param = apreq_param(req, "<980119.X25MNC@example.com>");
+
+    val = apr_table_get(body, "<980119.X25MNC@example.com>");
+    CuAssertPtrNotNull(tc, val);
+    param = apreq_value_to_param(val);
     CuAssertPtrNotNull(tc, param);
-    CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
+    CuAssertPtrNotNull(tc, param->upload);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
     CuAssertIntEquals(tc, dlen, vlen);
     CuAssertStrNEquals(tc, data, val2, vlen);
 
-    param = apreq_param(req, "<980119.X17AXM@example.com>");
+    val = apr_table_get(body, "<980119.X17AXM@example.com>");
+    CuAssertPtrNotNull(tc, val);
+    param = apreq_value_to_param(val);
     CuAssertPtrNotNull(tc, param);
-    CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
+    CuAssertPtrNotNull(tc, param->upload);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
     CuAssertIntEquals(tc, dlen, vlen);
     CuAssertStrNEquals(tc, data, val2, vlen);
 }
@@ -438,53 +432,55 @@ static void parse_mixed(CuTest *tc)
     apreq_param_t *param;
     const apr_array_header_t *arr;
     array_elt *elt;
-    apreq_request_t *req = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, APREQ_MFD_ENCTYPE
-                                                               "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"", NULL),
-                                         NULL);
-    apr_bucket_brigade *bb = apr_brigade_create(p, 
-                                   apr_bucket_alloc_create(p));
+    char ct[] = MFD_ENCTYPE "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"";
+    apreq_parser_t *parser;
+    apr_table_t *body = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
+    apr_bucket_brigade *bb = apr_brigade_create(p, ba);
     apr_bucket *e = apr_bucket_immortal_create(mix_data,
                                                    strlen(mix_data),
                                                    bb->bucket_alloc);
 
-    CuAssertPtrNotNull(tc, req);
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
-    rv = apreq_parse_request(req,bb);
+    parser = apreq_make_parser(p, ba, ct, apreq_parse_multipart, 
+                               1000, NULL, NULL, NULL);
+
+    rv = APREQ_RUN_PARSER(parser, body, bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
 
-    param = apreq_param(req, "submit-name");
-    CuAssertPtrNotNull(tc, param);
-    CuAssertStrEquals(tc, "Larry", param->v.data);
+    val = apr_table_get(body, "submit-name");
+    CuAssertPtrNotNull(tc, val);
+    CuAssertStrEquals(tc, "Larry", val);
 
-    val = apr_table_get(req->body,"field1");
+    val = apr_table_get(body,"field1");
     CuAssertStrEquals(tc, "Joe owes =80100.", val);
 
-    param = apreq_param(req, "files");
-    CuAssertPtrNotNull(tc, param);
-    CuAssertStrEquals(tc, "file1.txt", param->v.data);
+    val = apr_table_get(body, "files");
+    CuAssertPtrNotNull(tc, val);
+    CuAssertStrEquals(tc, "file1.txt", val);
+    param = apreq_value_to_param(val);
 
-    CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
+    CuAssertPtrNotNull(tc, param->upload);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
     CuAssertIntEquals(tc, strlen("... contents of file1.txt ..."), vlen);
     CuAssertStrNEquals(tc, "... contents of file1.txt ...", val2, vlen);
 
-    arr = apr_table_elts(req->body);
+    arr = apr_table_elts(body);
     CuAssertIntEquals(tc, 4, arr->nelts);
 
     elt = (array_elt *)&arr->elts[2 * arr->elt_size];
     CuAssertStrEquals(tc, "files", elt->key);
     CuAssertStrEquals(tc, "file2.gif", elt->val);
 
-    param = apreq_value_to_param(apreq_strtoval(elt->val));
-    CuAssertPtrNotNull(tc, param->bb);
-    apr_brigade_pflatten(param->bb, &val2, &vlen, p);
+    param = apreq_value_to_param(elt->val);
+    CuAssertPtrNotNull(tc, param->upload);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
     CuAssertIntEquals(tc, strlen("...contents of file2.gif..."), vlen);
     CuAssertStrNEquals(tc, "...contents of file2.gif...", val2, vlen);
 
 }
-
 
 CuSuite *testparser(void)
 {
@@ -494,9 +490,9 @@ CuSuite *testparser(void)
     SUITE_ADD_TEST(suite, parse_multipart);
     SUITE_ADD_TEST(suite, parse_disable_uploads);
     SUITE_ADD_TEST(suite, parse_generic);
+    SUITE_ADD_TEST(suite, hook_discard);
     SUITE_ADD_TEST(suite, parse_related);
     SUITE_ADD_TEST(suite, parse_mixed);
-    SUITE_ADD_TEST(suite, hook_discard);
     return suite;
 }
 

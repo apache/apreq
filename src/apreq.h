@@ -49,67 +49,62 @@
 #define APREQ_DECLARE_DATA              __declspec(dllexport)
 #endif
 
-#define APREQ_URL_ENCTYPE               "application/x-www-form-urlencoded"
-#define APREQ_MFD_ENCTYPE               "multipart/form-data"
-#define APREQ_XML_ENCTYPE               "application/xml"
 
-#define APREQ_NELTS                     8
-#define APREQ_READ_AHEAD                (64 * 1024)
 /**
+ * Commong Defaults.
  * Maximum amount of heap space a brigade may use before switching to file
  * buckets
 */
-#define APREQ_MAX_BRIGADE_LEN           (256 * 1024) 
-                     
+
+#define APREQ_DEFAULT_READ_BLOCK_SIZE   (64  * 1024)
+#define APREQ_DEFAULT_READ_LIMIT        (64 * 1024 * 1024)
+#define APREQ_DEFAULT_BRIGADE_LIMIT     (256 * 1024)
+#define APREQ_DEFAULT_NELTS              8
+
+/**
+ * Beginning work on error-codes ...
+ *
+ *
+ */
+#ifndef APR_EBADARG
+#define APR_EBADARG                APR_BADARG   /* apr's unfixed booboo */
+#endif
+
+/* 0's: generic error status codes */
+#define APREQ_ERROR_GENERAL        APR_OS_START_USERERR
+#define APREQ_ERROR_INTERRUPT      APREQ_ERROR_GENERAL + 1
+
+/* 10's: malformed input */
+#define APREQ_ERROR_NODATA         APREQ_ERROR_GENERAL + 10
+#define APREQ_ERROR_BADSEQ         APREQ_ERROR_GENERAL + 11
+#define APREQ_ERROR_BADCHAR        APREQ_ERROR_GENERAL + 12
+#define APREQ_ERROR_BADTOKEN       APREQ_ERROR_GENERAL + 13
+#define APREQ_ERROR_NOTOKEN        APREQ_ERROR_GENERAL + 14
+#define APREQ_ERROR_BADATTR        APREQ_ERROR_GENERAL + 15
+#define APREQ_ERROR_BADHEADER      APREQ_ERROR_GENERAL + 16
+#define APREQ_ERROR_NOHEADER       APREQ_ERROR_GENERAL + 17
+
+/* 20's: misconfiguration */
+#define APREQ_ERROR_CONFLICT       APREQ_ERROR_GENERAL + 20
+#define APREQ_ERROR_NOPARSER       APREQ_ERROR_GENERAL + 21
+
+
+/* 30's: limit violations */
+#define APREQ_ERROR_OVERLIMIT      APREQ_ERROR_GENERAL + 30
+#define APREQ_ERROR_UNDERLIMIT     APREQ_ERROR_GENERAL + 31
+
+
+
 
 /** @brief libapreq's pre-extensible string type */
 typedef struct apreq_value_t {
-    const char    *name;    /**< value's name */
-    apr_size_t     size;    /**< Size of data.*/
-    unsigned char  flags;   /**< reserved (for future charset support) */
-    char           data[1]; /**< Actual data bytes.*/
+    char             *name;    /**< value name */
+    apr_size_t        size;    /**< value length (in bytes) */
+    char              data[1]; /**< value data  */
 } apreq_value_t;
-
-typedef apreq_value_t *(apreq_value_merge_t)(apr_pool_t *p,
-                                             const apr_array_header_t *a);
-typedef apreq_value_t *(apreq_value_copy_t)(apr_pool_t *p,
-                                            const apreq_value_t *v);
 
 
 #define apreq_attr_to_type(T,A,P) ( (T*) ((char*)(P)-offsetof(T,A)) )
-
-/**
- * Converts (char *) to (apreq_value_t *).  The char * is assumed
- * to point at the data attribute of an apreq_value_t struct.
- *
- * @param ptr   points at the data field of an apreq_value_t struct.
- */
-
-#define apreq_char_to_value(ptr)  apreq_attr_to_type(apreq_value_t, data, ptr)
-
-/** convert a const pointer into a non-const. WARNING: this is
-    dangerous. Use only if you really know what you're doing. Only for
-    Dirty Hacks (TM) */
-static APR_INLINE void *apreq_deconst(const void *p) {
-    /* go around the gcc warning */
-    /* FIXME: does this work on all platforms? */
-    long v = (long)p;
-    return (void*)v;
-}
-
-static APR_INLINE apreq_value_t *apreq_strtoval(const char *name) {
-    return (apreq_value_t*)apreq_char_to_value(apreq_deconst(name));
-}
-
-/**
- * Computes the length of the string, but unlike strlen(),
- * it permits embedded null characters.
- *
- * @param ptr  points at the data field of an apreq_value_t struct.
- * 
- */
-
-#define apreq_strlen(ptr) (apreq_strtoval(ptr)->size)
 
 /**
  * Construcs an apreq_value_t from the name/value info
@@ -130,37 +125,6 @@ APREQ_DECLARE(apreq_value_t *) apreq_make_value(apr_pool_t *p,
                                                 const char *val, 
                                                 const apr_size_t vlen);
 
-/**
- * Makes a pool-allocated copy of the value.
- * @param p  Pool.
- * @param val Original value to copy.
- */
-APREQ_DECLARE(apreq_value_t *) apreq_copy_value(apr_pool_t *p, 
-                                                const apreq_value_t *val);
-
-/**
- * Merges an array of values into one.
- * @param p   Pool from which the new value is generated.
- * @param arr Array of apr_value_t *.
- */
-apreq_value_t * apreq_merge_values(apr_pool_t *p, 
-                                   const apr_array_header_t *arr);
-
-/**
- * An apreq environment, associated with an env module. The structure
- * may have variable size, because the module may append its own data
- * structures after it.
- */
-typedef struct apreq_env_handle_t {
-    const struct apreq_env_module_t *module;
-} apreq_env_handle_t;
-
-/**
- * Fetches the enctype from the environment.
- * @param env Environment.
- */
-APREQ_DECLARE(const char *)apreq_enctype(apreq_env_handle_t *env);
-
 /** @enum apreq_join_t Join type */
 typedef enum { 
     APREQ_JOIN_AS_IS,      /**< Join the strings without modification */
@@ -175,8 +139,7 @@ typedef enum {
  * @param sep  String that is inserted between the joined values.
  * @param arr  Array of values.
  * @param mode Join type- see apreq_join_t.
- * @remark     Return string can be upgraded to an apreq_value_t 
- *             with apreq_stroval.
+ * @remark     Return string can be upgraded to an apreq_value_t.
  */
 APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 
                                        const char *sep, 
@@ -214,8 +177,8 @@ APREQ_DECLARE(char *) apreq_memmem(char* hay, apr_size_t hlen,
  *
  */
 APREQ_DECLARE(apr_ssize_t) apreq_index(const char* hay, apr_size_t hlen, 
-                        const char* ndl, apr_size_t nlen, 
-                        const apreq_match_t type);
+                                       const char* ndl, apr_size_t nlen, 
+                                       const apreq_match_t type);
 /**
  * Places a quoted copy of src into dest.  Embedded quotes are escaped with a
  * backslash ('\').
@@ -257,12 +220,14 @@ APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src,
  * Url-decodes a string.
  * @param dest Location of url-encoded result string. Caller must ensure dest is
  *             large enough to hold the encoded string and trailing null character.
+ * @param dlen points to resultant length of url-decoded string in dest
  * @param src  Original string.
  * @param slen Length of original string.
- * @return Length of url-decoded string in dest, or < 0 on decoding (bad data) error.
+ * @return APR_SUCCESS, error otherwise.
  */
 
-APREQ_DECLARE(apr_ssize_t) apreq_decode(char *dest, const char *src, apr_size_t slen);
+APREQ_DECLARE(apr_status_t) apreq_decode(char *dest, apr_size_t *dlen,
+                                         const char *src, apr_size_t slen);
 
 
 /**
@@ -372,22 +337,14 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
                                               const char *path);
 
 /**
- * Gets the spoolfile associated to a brigade, if any.
- * @param bb Brigade, usually associated to a file upload (apreq_param_t).
- * @return If the last bucket in the brigade is a file bucket,
- *         this function will return its associated file.  Otherwise,
- *         this function returns NULL.
- */
-
-APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
-
-/**
  * Set aside all buckets in the brigade.
  * @param bb Brigade.
  * @param p  Setaside buckets into this pool.
  */
 
-static APR_INLINE void APREQ_BRIGADE_SETASIDE(apr_bucket_brigade *bb, apr_pool_t *p) {
+static APR_INLINE void
+APREQ_BRIGADE_SETASIDE(apr_bucket_brigade *bb, apr_pool_t *p)
+{
     apr_bucket *e;
     for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
          e = APR_BUCKET_NEXT(e))
@@ -429,6 +386,25 @@ APREQ_DECLARE(apr_status_t)
          apreq_header_attribute(const char *hdr,
                                 const char *name, const apr_size_t nlen,
                                 const char **val, apr_size_t *vlen);
+
+
+/**
+ * Concatenates the brigades, spooling large brigades into
+ * a tempfile bucket according to the environment's max_brigade
+ * setting- see apreq_env_max_brigade().
+ * @param pool           Pool for creating a tempfile bucket.
+ * @param temp_dir       Directory for tempfile creation.
+ * @param brigade_limit  If out's length would exceed this value, 
+ *                       the appended buckets get written to a tempfile.  
+ * @param out            Resulting brigade.
+ * @param in             Brigade to append.
+ * @return APR_SUCCESS on success, error code otherwise.
+ */
+APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
+                                                 const char *temp_dir,
+                                                 apr_size_t brigade_limit,
+                                                 apr_bucket_brigade *out, 
+                                                 apr_bucket_brigade *in);
 
 
 #ifdef __cplusplus

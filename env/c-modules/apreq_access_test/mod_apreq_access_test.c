@@ -30,7 +30,6 @@
 #define APACHE_HTTPD_TEST_PER_DIR_CREATE create_access_config 
 
 #include "apache_httpd_test.h"
-#include "apreq_params.h"
 #include "apreq_env.h"
 #include "apreq_env_apache2.h"
 #include "httpd.h"
@@ -67,7 +66,6 @@ static void *create_access_config(apr_pool_t *p, char *dummy)
 static int apreq_access_checker(request_rec *r)
 {
     apreq_env_handle_t *handle;
-    apreq_request_t *req;
     apreq_param_t *param;
     struct access_test_cfg *cfg = (struct access_test_cfg *)
         ap_get_module_config(r->per_dir_config, &apreq_access_test_module);
@@ -75,17 +73,25 @@ static int apreq_access_checker(request_rec *r)
     if (!cfg || !cfg->param)
         return DECLINED;
 
-    handle = apreq_env_make_apache2(r);
-    req = apreq_request(handle, NULL);
-    param = apreq_param(req, cfg->param);
-    if (param) {
-        apreq_log(APREQ_DEBUG 0, handle, "%s => %s", cfg->param, param->v.data);
+    handle = apreq_handle_apache2(r);
+    param = apreq_param(handle, cfg->param);
+    if (param != NULL) {
+        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS,
+                      r, "ACCESS GRANTED: %s => %s", cfg->param, param->v.data);
         return OK;
     }
     else {
-        if (req->body)
-            apreq_log(APREQ_DEBUG HTTP_FORBIDDEN, handle, "%s not found in %d elts",
-                      cfg->param, apr_table_elts(req->body)->nelts);
+        const apr_table_t *t = apreq_params(r->pool, handle);
+        if (t != NULL) {
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_EGENERAL, r, 
+                          "%s not found: parsing error detected (%d params)",
+                          cfg->param, apr_table_elts(t)->nelts);
+        }
+        else {
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_EGENERAL, r, 
+                          "%s not found: paring error detected (no param table)",
+                          cfg->param);
+        }
         return HTTP_FORBIDDEN;
     }
 }

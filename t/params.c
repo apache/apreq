@@ -15,40 +15,48 @@
 */
 
 #include "apreq_env.h"
-#include "apreq.h"
-#include "apreq_params.h"
 #include "apr_strings.h"
 #include "test_apreq.h"
 
-static apreq_request_t *r = NULL;
+static const char query_string[] = "a=1;quux=foo+bar&a=2&plus=%2B;"
+                                   "uplus=%U002b;okie=dokie;"
+                                   "novalue1;novalue2=";
+static apr_table_t *args;
+
+#define strtoval(s) \
+  ((const apreq_value_t *)(s - offsetof(apreq_value_t, data)))
 
 static void request_make(CuTest *tc)
 {
-    r = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, NULL, NULL), "a=1;quux=foo+bar&a=2&plus=%2B;uplus=%U002b;okie=dokie;novalue1;novalue2=");
-    CuAssertPtrNotNull(tc, r);
-    CuAssertIntEquals(tc,8, apr_table_elts(r->args)->nelts);
+    apr_status_t s;
+    args = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    CuAssertPtrNotNull(tc, args);
+    s = apreq_parse_query_string(p, args, query_string);
+    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    CuAssertIntEquals(tc,8, apr_table_elts(args)->nelts);
 }
+
 
 static void request_args_get(CuTest *tc)
 {
     const char *val;
-    apreq_value_t *v;
+    const apreq_value_t *v;
 
-    val = apr_table_get(r->args,"a");
+    val = apr_table_get(args,"a");
     CuAssertStrEquals(tc,"1",val);
-    val = apr_table_get(r->args,"quux");
+    val = apr_table_get(args,"quux");
     CuAssertStrEquals(tc,"foo bar",val);
-    v = apreq_strtoval(val);
+    v = strtoval(val);
     CuAssertIntEquals(tc, 7, v->size);
-    val = apr_table_get(r->args,"plus");
+    val = apr_table_get(args,"plus");
     CuAssertStrEquals(tc,"+",val);
-    val = apr_table_get(r->args,"uplus");
+    val = apr_table_get(args,"uplus");
     CuAssertStrEquals(tc,"+",val);
-    val = apr_table_get(r->args,"okie");
+    val = apr_table_get(args,"okie");
     CuAssertStrEquals(tc,"dokie",val);
-    val = apr_table_get(r->args,"novalue1");
+    val = apr_table_get(args,"novalue1");
     CuAssertStrEquals(tc,"",val);
-    val = apr_table_get(r->args,"novalue2");
+    val = apr_table_get(args,"novalue2");
     CuAssertStrEquals(tc,"",val);
 
 }
@@ -57,11 +65,12 @@ static void params_as(CuTest *tc)
 {
     const char *val;
     apr_array_header_t *arr;
-    arr = apreq_params_as_array(p,r,"a");
+    arr = apreq_params_as_array(p,args,"a");
     CuAssertIntEquals(tc,2,arr->nelts);
-    val = apreq_params_as_string(p,r,"a",APREQ_JOIN_AS_IS);
+    val = apreq_params_as_string(p,args,"a",APREQ_JOIN_AS_IS);
     CuAssertStrEquals(tc,"1, 2", val);
 }
+
 
 static void string_decoding_in_place(CuTest *tc)
 {
@@ -120,37 +129,34 @@ static void header_attributes(CuTest *tc)
     CuAssertStrNEquals(tc, "20", val, 2);
 
     s = apreq_header_attribute(hdr, "age", 3, &val, &vlen);
-    CuAssertIntEquals(tc, APR_EGENERAL, s);
+    CuAssertIntEquals(tc, APREQ_ERROR_BADTOKEN, s);
 
     s = apreq_header_attribute(hdr, "no-quote", 8, &val, &vlen);
-    CuAssertIntEquals(tc, APR_EGENERAL, s);
+    CuAssertIntEquals(tc, APREQ_ERROR_BADTOKEN, s);
 
 
 }
 
 static void make_values(CuTest *tc)
 {
-    apreq_value_t *v1, *v2;
+    apreq_value_t *v;
     apr_size_t len = 4;
     char *name = apr_palloc(p,len);
     char *val = apr_palloc(p,len);
     strcpy(name, "foo");
     strcpy(val, "bar");
  
-    v1 = apreq_make_value(p, name, len, val, len);
-    CuAssertStrEquals(tc, name, v1->name);
-    CuAssertIntEquals(tc, len, v1->size);
-    CuAssertStrEquals(tc, val, v1->data);
+    v = apreq_make_value(p, name, len, val, len);
+    CuAssertStrEquals(tc, name, v->name);
+    CuAssertIntEquals(tc, len, v->size);
+    CuAssertStrEquals(tc, val, v->data);
 
-    v2 = apreq_copy_value(p, v1);
-    CuAssertStrEquals(tc, name, v2->name);
-    CuAssertIntEquals(tc, len, v2->size);
-    CuAssertStrEquals(tc, val, v2->data);
 }
 
 static void make_param(CuTest *tc)
 {
     apreq_param_t *param, *result;
+    apr_status_t s;
     apr_size_t nlen = 3, vlen = 11;
     char *name = apr_palloc(p,nlen+1);
     char *val = apr_palloc(p,vlen+1);
@@ -166,7 +172,7 @@ static void make_param(CuTest *tc)
     encode = apreq_encode_param(p, param);
     CuAssertStrEquals(tc, "foo=bar+%3e+alpha", encode);
 
-    result = apreq_decode_param(p, encode, nlen, vlen+2);
+    s = apreq_decode_param(&result, p, encode, nlen, vlen+2);
     CuAssertStrEquals(tc, name, result->v.name);
     CuAssertIntEquals(tc, vlen, result->v.size);
     CuAssertStrEquals(tc, val, result->v.data);
@@ -223,6 +229,7 @@ static void test_memmem(CuTest *tc)
     CuAssertStrEquals(tc, hay, full);
 }
 
+
 CuSuite *testparam(void)
 {
     CuSuite *suite = CuSuiteNew("Param");
@@ -236,7 +243,6 @@ CuSuite *testparam(void)
     SUITE_ADD_TEST(suite, quote_strings);
     SUITE_ADD_TEST(suite, make_param);
     SUITE_ADD_TEST(suite, test_memmem);
-
     return suite;
 }
 

@@ -53,7 +53,7 @@ AC_DEFUN([AC_APREQ], [
                 APACHE2_INCLUDES=-I`$APACHE2_APXS -q INCLUDEDIR`
 
                 APR_MAJOR_VERSION=`$APACHE2_APXS -q APR_VERSION 2>/dev/null | cut -d. -f 1`
-                if test ${APR_MAJOR_VERSION:=0} -eq 0; then
+                if test ${APR_MAJOR_VERSION:="0"} -eq 0; then
                     apr_config=apr-config
                     apu_config=apu-config 
                 else
@@ -172,9 +172,19 @@ AC_DEFUN([AC_APREQ], [
         get_version="$abs_srcdir/build/get-version.sh"
         version_hdr="$abs_srcdir/src/apreq_version.h"
 
-        APREQ_LIBTOOL_VERSION=`$get_version libtool $version_hdr APREQ`
+        # set version data
+
         APREQ_MAJOR_VERSION=`$get_version major $version_hdr APREQ`
-        APREQ_DOTTED_VERSION=`$get_version all $version_hdr APREQ`
+        APREQ_MINOR_VERSION=`$get_version minor $version_hdr APREQ`
+        APREQ_PATCH_VERSION=`$get_version patch $version_hdr APREQ`
+        APREQ_DOTTED_VERSION=`$get_version all  $version_hdr APREQ`
+
+        # XXX: APR_MAJOR_VERSION doesn't yet work for static builds
+        APREQ_LIBTOOL_CURRENT=`expr $APREQ_MAJOR_VERSION + $APREQ_MINOR_VERSION + $APR_MAJOR_VERSION`
+        APREQ_LIBTOOL_REVISION=$APREQ_PATCH_VERSION
+        APREQ_LIBTOOL_AGE=$APREQ_MINOR_VERSION
+
+        APREQ_LIBTOOL_VERSION="$APREQ_LIBTOOL_CURRENT:$APREQ_LIBTOOL_REVISION:$APREQ_LIBTOOL_AGE"
 
         APREQ_LIBNAME="apreq$APREQ_MAJOR_VERSION"
         APREQ_INCLUDES=""
@@ -215,7 +225,7 @@ dnl APR_CONFIG_NICE(filename)
 dnl
 dnl Saves a snapshot of the configure command-line for later reuse
 dnl
-AC_DEFUN(APR_CONFIG_NICE,[
+AC_DEFUN([APR_CONFIG_NICE],[
   rm -f $1
   cat >$1<<EOF
 #! /bin/sh

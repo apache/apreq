@@ -40,13 +40,6 @@ extern "C" {
  *
  */
 
-/** @brief This is the container class for libapreq cookies. */
-typedef struct apreq_jar_t {
-    apr_table_t   *cookies;   /**< cookie table */
-    apreq_env_handle_t *env;  /**< env handle */
-    apr_status_t  status;     /**< status of "Cookie" header parse */
-} apreq_jar_t;
-
 
 /**
  * Cookie Version.  libapreq does not distinguish between
@@ -81,58 +74,29 @@ typedef struct apreq_cookie_t {
     char           *comment;     /**< RFC cookies may send a comment */
     char           *commentURL;  /**< RFC cookies may place an URL here */
     apr_time_t      max_age;     /**< total duration of cookie: -1 == session */
-    apreq_value_t   v;           /**< "raw" cookie value */
+    unsigned char   flags;       /**< charsets, taint marks, app-specific bits */
+    const apreq_value_t   v;     /**< "raw" cookie value */
 
 } apreq_cookie_t;
 
+/** Upgrades cookie jar table values to apreq_cookie_t structs. */
+static APR_INLINE
+apreq_cookie_t *apreq_value_to_cookie(const char *val)
+{
+    union { const char *in; char *out; } deconst;
 
-#define apreq_value_to_cookie(ptr) apreq_attr_to_type(apreq_cookie_t, \
-                                                      v, ptr)
+    deconst.in = val;
+    return apreq_attr_to_type(apreq_cookie_t, v, 
+           apreq_attr_to_type(apreq_value_t, data, deconst.out));
+}
+
 #define apreq_cookie_name(c)  ((c)->v.name)
 #define apreq_cookie_value(c) ((c)->v.data)
 
-#define apreq_jar_items(j) apr_table_elts(j->cookies)->nelts
-#define apreq_jar_nelts(j) apr_table_elts(j->cookies)->nelts
 
-/**
- * Fetches a cookie from the jar
- *
- * @param jar   The cookie jar.
- * @param name  The name of the desired cookie.
- */
-
-APREQ_DECLARE(apreq_cookie_t *)apreq_cookie(const apreq_jar_t *jar,
-                                            const char *name);
-
-/**
- * Adds a cookie by pushing it to the bottom of the jar.
- *
- * @param jar The cookie jar.
- * @param c The cookie to add.
- */
-
-APREQ_DECLARE(void) apreq_jar_add(apreq_jar_t *jar, 
-                                     const apreq_cookie_t *c);
-
-#define apreq_add_cookie(j,c) apreq_jar_add(j,c)
-
-/**
- * Parse the incoming "Cookie:" headers into a cookie jar.
- * 
- * @param env The current environment.
- * @param hdr  String to parse as a HTTP-merged "Cookie" header.
- * @remark "data = NULL" has special behavior.  In this case,
- * apreq_jar(env,NULL) will attempt to fetch a cached object from the
- * environment via apreq_env_jar.  Failing that, it will replace
- * "hdr" with the result of apreq_env_cookie(env), parse that,
- * and store the resulting object back within the environment.
- * This maneuver is designed to mimimize parsing work,
- * since generating the cookie jar is relatively expensive.
- *
- */
-
-
-APREQ_DECLARE(apreq_jar_t *) apreq_jar(apreq_env_handle_t *env, const char *hdr);
+APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *pool,
+                                                     apr_table_t *jar,
+                                                     const char *header);
 
 /**
  * Returns a new cookie, made from the argument list.
@@ -206,33 +170,6 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
  */
 APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
                                          const char *time_str);
-
-/**
- * Add the cookie to the outgoing "Set-Cookie" headers.
- *
- * @param c The cookie.
- * @param env Environment.
- */
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
-                                              apreq_env_handle_t *env);
-
-/**
- * Add the cookie to the outgoing "Set-Cookie2" headers.
- *
- * @param c The cookie.
- * @param env Environment.
- */
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
-                                               apreq_env_handle_t *env);
-
-/**
- * Looks for the presence of a "Cookie2" header to determine whether
- * or not the current User-Agent supports rfc2965.
- * @param env The current environment.
- * @return APREQ_COOKIE_VERSION_RFC if rfc2965 is supported, 
- *         APREQ_COOKIE_VERSION_NETSCAPE otherwise.
- */
-APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(apreq_env_handle_t *env);
 
 #ifdef __cplusplus
  }

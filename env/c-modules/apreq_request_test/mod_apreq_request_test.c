@@ -18,7 +18,7 @@
 #if CONFIG_FOR_HTTPD_TEST
 
 <Location /apreq_request_test>
-   APREQ_MaxBody 500K
+   APREQ_ReadLimit 500K
    SetHandler apreq_request_test
 </Location>
 
@@ -28,7 +28,6 @@
 #define APACHE_HTTPD_TEST_HANDLER apreq_request_test_handler
 
 #include "apache_httpd_test.h"
-#include "apreq_params.h"
 #include "apreq_env.h"
 #include "apreq_env_apache2.h"
 #include "httpd.h"
@@ -36,48 +35,44 @@
 static int dump_table(void *ctx, const char *key, const char *value)
 {
     request_rec *r = ctx;
-    apreq_env_handle_t *env;
-    env = apreq_env_make_apache2(r);
-    apreq_log(APREQ_DEBUG 0, env, "%s => %s", key, value);
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS,
+                  r, "%s => %s", key, value);
     ap_rprintf(r, "\t%s => %s\n", key, value);
     return 1;
 }
 
 static int apreq_request_test_handler(request_rec *r)
 {
-    apreq_env_handle_t *env;
-    apr_bucket_brigade *bb;
-    apreq_request_t *req;
+    apreq_env_handle_t *req;
+    const apr_table_t *t;
     apr_status_t s;
 
     if (strcmp(r->handler, "apreq_request_test") != 0)
         return DECLINED;
 
-    env = apreq_env_make_apache2(r);
+    req = apreq_handle_apache2(r);
 
-    apreq_log(APREQ_DEBUG 0, env, "initializing request");
-    req = apreq_request(env, NULL);
-    bb = apr_brigade_create(r->pool, r->connection->bucket_alloc);
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS,
+                  r, "starting apreq_request_test");
 
-    apreq_log(APREQ_DEBUG 0, env, "start parsing body");
-    while ((s =ap_get_brigade(r->input_filters, bb, AP_MODE_READBYTES,
-                              APR_BLOCK_READ, HUGE_STRING_LEN)) == APR_SUCCESS)
-    {
-        if (APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(bb)))
-            break;
+    s = ap_discard_request_body(r);
 
-        apr_brigade_cleanup(bb);
-
-    }
-    apreq_log(APREQ_DEBUG s, env, "finished parsing body");
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, s,
+                  r, "discard request body");
 
     ap_set_content_type(r, "text/plain");
     ap_rputs("ARGS:\n",r);
-    apr_table_do(dump_table, r, req->args, NULL);
-    if (req->body) {
+    if (apreq_args(req, &t) == APR_SUCCESS)
+        apr_table_do(dump_table, r, t, NULL);
+
+    if (apreq_body(req, &t) == APR_SUCCESS) {
         ap_rputs("BODY:\n",r);
-        apr_table_do(dump_table, r, req->body, NULL);
+        apr_table_do(dump_table, r, t, NULL);
     }
+
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS,
+                  r, "finished apreq_request_test");
+
     return OK;
 }
 

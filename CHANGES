@@ -4,6 +4,89 @@
 
 @section v2_05 Changes with libapreq2-2.05
 
+- C API [joes]
+  Widespread API refactorization to remove apreq_jar_t and apreq_request_t:
+  
+  - Header includes reorganized; apreq_parsers.h added (back again).
+  - Replaced apreq_jar_t and apreq_request_t with single apreq_env_handle_t.
+  - Added const qualifier to "v" attribute of apreq_cookie_t and apreq_param_t.
+  - Use union type-puns to drop const qualifiers inside the new
+    apreq_value_to_cookie and apreq_value_to_param implementations
+    (gcc generates same object code as the macro versions did).
+  - Moved "flags" attribute from apreq_value_t to apreq_cookie_t and apreq_param_t.
+  - Remove env argument from hooks and parsers.
+  - Reduce apreq_env_module to minimal set of operations.
+  - Replace apreq_log calls with apreq-specific error codes.
+  - Hooks are called on each body param now, not just during file uploads.
+  - Tie the cgi handle to its creator pool.
+
+  Detailed changes by header file:
+
+  [apreq.h]
+  - Remove flags from apreq_value_t.
+  - Remove const qualifier from apreq_value_t's "name" attribute.
+  - Remove apreq_value_merge* and apreq_value_copy*.
+  - Remove apreq_char_to_value, apreq_strtoval, and apreq_strlen.
+  - Move apreq_enctype to apreq_env.h.
+  - Move apreq_env_handle_t struct definition to apreq_env.h
+  - Change signature of apreq_decode.
+  - Move apreq_brigade_concat here, changed its signature and improved it alot.
+  - Remove apreq_brigade_spoolfile.
+  - Dropped APREQ_*_ENCTYPE, renamed some APREQ_$foo defaults APREQ_DEFAULT_$foo.
+  - Added APREQ_ERROR_*.
+
+  [apreq_cookie.h]
+  - Remove apreq_env.h include.
+  - Remove apreq_jar_t.
+  - Add "flags" to apreq_cookie_t, add const qualifier to its "v" attr.
+  - Remove apreq_jar* functions.
+  - Add apreq_parse_cookie_header.
+  - Move apreq_cookie, apreq_cookie_bake(2), and 
+    apreq_ua_cookie_version to apreq_env.h.
+
+  [apreq_params.h]
+  - Remove apreq_env.h include.
+  - Remove apreq_request_t.
+  - Add "flags" to apreq_param_t, and const qualifier to its "v" attr.
+  - Rename "bb" attribute "upload" in apreq_param_t.
+  - Remove apreq_request* functions.
+  - Remove apreq_parse_request.
+  - Changed apreq_decode_param signature.
+  - Replace env argument with apr_table_t in apreq_params_as_array,
+    apreq_params_as_string,
+  - Move remaining apreq_param* to apreq_env.h.
+  - Move parser and hook sections to apreq_parsers.h.
+  - Change apreq_upload(s) old apreq_request_t arg to apr_table_t.
+
+  [apreq_parsers.h]
+  - Acquire the hook and parser sections of original apreq_params.h.
+  - Remove env argument from APREQ_PARSER_ARGS and APREQ_HOOK_ARGS
+  - Augment apreq_hook_t and apreq_parser_t to replace missing env features.
+  - Change apreq_make_parser and apreq_make_hook signatures.
+  - Rename apreq_add_hook to apreq_parser_add_hook, returning apr_status_t.
+  - Change apreq_parser signature.
+
+  [apreq_env.h]
+  - Remove read, log, pool, bucket_alloc, request, jar, and query_string methods.
+  - Include apreq_parsers.h.
+  - Reorganize apreq_env_module_t to provide hook, parser, jar, args,
+    & body table ops.
+  - Rename max_brigade to "brigade_limit", max_body to "read_limit".
+  - Change related module sigs, including temp_dir, to get/set methods.
+  - Add parser and read_limit args to apreq_env_make_custom_handle.
+  - Drop "name" arg and APREQ_ENV_MODULE =~ s/_ENV//.
+  - s/apreq_env_make/apreq_handle/ in the handle constructor names.
+
+  [mod_apreq.c, apreq_env_apache2.h]
+  - Changed APREQ_Max* configs to APREQ_BrigadeLimit and APREQ_ReadLimit.
+  - Handle constructor renamed apreq_handle_apache2.
+
+- C API [joes]
+  Make our "libtool current interface" number depend on apr's 
+  major number.  This allows libapreq2 to be installed into a 
+  system-wide location while avoiding ABI conflicts arising from
+  our apr-based interfaces.
+
 - C API [Max Kellermann]
   Introduce apreq_env_handle_t to replace the void *env usage.
   Also added apreq_env_custom for making private handles, and new 

@@ -14,11 +14,12 @@
 **  limitations under the License.
 */
 
-#ifndef APREQ_TEST_INCLUDES
-#define APREQ_TEST_INCLUDES
+#ifndef TEST_APREQ_H
+#define TEST_APREQ_H
 
 #include "CuTest.h"
 #include "apr_pools.h"
+#include "apreq_env.h"
 #ifndef apr_table_nelts
 #define apr_table_nelts(t) apr_table_elts(t)->nelts
 #endif
@@ -27,7 +28,8 @@
  * a bit more consistent...
  */
 
-extern apr_pool_t *p;
+
+extern apr_pool_t *p;//*global_test_pool;
 
 CuSuite *getsuite(void);
 CuSuite *testversion(void);
@@ -37,9 +39,10 @@ CuSuite *testenv(void);
 CuSuite *testparam(void);
 CuSuite *testparser(void);
 CuSuite *testperformance(void);
+
 /* Assert that RV is an APR_SUCCESS value; else fail giving strerror
  * for RV and CONTEXT message. */
 void apr_assert_success(CuTest* tc, const char *context, apr_status_t rv);
 
 
-#endif /* APR_TEST_INCLUDES */
+#endif /* TEST_APREQ_H */
