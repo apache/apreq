@@ -34,18 +34,31 @@ sub handler {
     elsif ($test eq 'bb_read') {
         my ($upload) = $req->upload("HTTPUPLOAD");
         my $bb = $upload->bb;
-        my $e;
-        while ($e = $bb->first) {
+        my $e = $bb->first;
+        while ($e) {
             $e->read(my $buf);
             $req->print($buf);
-            $e->remove;
+            $e = $bb->next($e);
         }
     }
     elsif ($test eq 'fh_read') {
         my $upload = $req->upload(($req->upload)[0]);
         my $fh = $upload->fh;
-        return unless $upload->info->{"Content-Type"} eq $upload->type;
+        die "content-type mismatch" unless $upload->info->{"Content-Type"} eq $upload->type;
+        read $upload->fh, my $contents, $upload->size;
+        $upload->slurp(my $data);
+        die "fh contents != slurp data" unless $contents eq $data;
+        my $bb = $upload->bb;
+        my $e = $bb->first;
+        my $brigade_contents = "";
+        while ($e) {
+            $e->read(my $buf);
+            $brigade_contents .= $buf;
+            $e = $bb->next($e);
+        }
+        die "brigade contents != slurp data" unless $brigade_contents eq $data;
         $r->print(<$fh>);
+
     }
     elsif ($test eq 'tempname') {
         my $upload = $req->upload("HTTPUPLOAD");
