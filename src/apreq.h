@@ -74,6 +74,7 @@
 
 /**
  * @mainpage
+ * Project Website: http://httpd.apache.org/apreq/
  * @verbinclude README
  */
 
@@ -288,13 +289,14 @@ typedef enum {
 /**
  * Returns an RFC-822 formatted time string. Similar to ap_gm_timestr_822.
  *
- * @param req The current apreq_request_t object.
- * @param ts  YMDhms time units (from now) until expiry.
- *            Understands "now".
- *
- * returns date string, (time_str is offset from "now") formatted
- * either as an ::NSCOOKIE or ::HTTP date
- *
+ * @param req       The current apreq_request_t object.
+ * @param time_str  YMDhms time units (from now) until expiry.
+ *                  Understands "now".
+ * @param  type     ::HTTP for RFC822 dates, ::NSCOOKIE for cookie dates.
+ * @return      Date string, (time_str is offset from "now") formatted
+ *              either as an ::NSCOOKIE or ::HTTP date
+ * @deprecated  Use apr_rfc822_date instead.  ::NSCOOKIE strings are formatted
+ *              with a '-' (instead of a ' ') character at offsets 7 and 11.
  */
 
 APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str, 
