@@ -248,10 +248,11 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
              * NOTE:
              *   req->parser != NULL && req->body != NULL, since 
              *   apreq_parse_request was called at least once already.
+             * 
              */
 
              req->parser = NULL;
-             apr_table_clear(req->body);
+             req->body = NULL;
 
              ctx->bytes_seen = 0;
              apr_brigade_cleanup(ctx->bb);
