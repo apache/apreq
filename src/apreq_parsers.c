@@ -154,7 +154,6 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
 {
     apreq_param_t *param = apr_palloc(pool, nlen + vlen + 1 + sizeof *param);
     apr_size_t total, off;
-    const apr_size_t glen = 1;
     apreq_value_t *v = &param->v;
 
     param->bb = NULL;
@@ -176,9 +175,13 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
         if ( s != APR_SUCCESS )
             return s;
 
-        if (dlen > nlen - total) {
-            apr_bucket_split(f, nlen - total);
-            dlen = nlen - total;
+        total += dlen;
+
+        if (total >= nlen) {
+            dlen -= total - nlen;
+            apr_bucket_split(f, dlen);
+            if (data[dlen-1] == '=')
+                --dlen;
         }
 
         decoded_len = apreq_decode((char *)v->name + off, data, dlen);
@@ -187,34 +190,11 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
             return APR_BADARG;
         }
 
-        total += dlen;
         off += decoded_len;
         apr_bucket_delete(f);
     }
 
     ((char *)v->name)[off] = 0;
-
-    /* skip gap */
-
-    off = 0;
-    while (off < glen) {
-        apr_size_t dlen;
-        const char *data;
-        apr_bucket *f = APR_BRIGADE_FIRST(bb);
-        apr_status_t s = apr_bucket_read(f, &data, &dlen, APR_BLOCK_READ);
-
-        if ( s != APR_SUCCESS )
-            return s;
-
-        if (dlen > glen - off) {
-            apr_bucket_split(f, glen - off);
-            dlen = glen - off;
-        }
-
-        off += dlen;
-        apr_bucket_delete(f);
-    }
-
 
     off = 0;
     total = 0;
@@ -228,9 +208,13 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
         if ( s != APR_SUCCESS )
             return s;
 
-        if (dlen > vlen - off) {
-            apr_bucket_split(f, vlen - total);
-            dlen = vlen - total;
+        total += dlen;
+
+        if (total >= vlen) {
+            dlen -= total - vlen;
+            apr_bucket_split(f, dlen);
+            if (data[dlen-1] == '&' || data[dlen-1] == ';')
+                --dlen;
         }
 
         decoded_len = apreq_decode(v->data + off, data, dlen);
@@ -239,7 +223,6 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
             return APR_BADCH;
         }
 
-        total += dlen;
         off += decoded_len;
         apr_bucket_delete(f);
     }
@@ -282,8 +265,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_urlencoded(apr_pool_t *pool,
         if (APR_BUCKET_IS_EOS(e)) {
             apreq_log(APREQ_DEBUG s, req->env,
                       "got eos bucket: %d, %d", nlen, vlen);
-            return vlen == 0 ? APR_SUCCESS : 
-                split_urlword(pool, t, bb, nlen, vlen);
+            return parser->v.status == URL_NAME ? APR_SUCCESS : 
+                split_urlword(pool, t, bb, nlen+1, vlen);
         }
         if ( s != APR_SUCCESS )
             return s;
@@ -314,7 +297,9 @@ APREQ_DECLARE(apr_status_t) apreq_parse_urlencoded(apr_pool_t *pool,
                 switch (data[off++]) {
                 case '&':
                 case ';':
-                    s = split_urlword(pool, t, bb, nlen, vlen + 1);
+                    apreq_log(APREQ_DEBUG 0, req->env,
+                              "got word: %d, %d", nlen, vlen);
+                    s = split_urlword(pool, t, bb, nlen+1, vlen+1);
                     if (s != APR_SUCCESS)
                         return s;
                     goto parse_url_brigade;

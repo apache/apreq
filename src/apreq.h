@@ -69,7 +69,7 @@ apr_ssize_t apreq_index(const char* hay, apr_size_t haylen,
 /* url-escapes non-alphanumeric characters */
 apr_size_t apreq_quote(char *dest, const char *src, const apr_size_t slen);
 apr_size_t apreq_encode(char *dest, const char *src, const apr_size_t slen);
-apr_ssize_t apreq_decode(char *dest, const char *src, apr_ssize_t slen);
+apr_ssize_t apreq_decode(char *dest, const char *src, const apr_size_t slen);
 
 APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p, 
                                    const char *src, const apr_size_t slen);

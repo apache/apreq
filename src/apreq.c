@@ -271,7 +271,7 @@ static APR_INLINE char x2c(const char *what)
 }
 
 APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s, 
-                                       const apr_ssize_t slen)
+                                       const apr_size_t slen)
 {
     register int badesc = 0;
     char *start = d;
