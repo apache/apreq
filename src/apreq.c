@@ -255,7 +255,7 @@ static APR_INLINE char x2c(const char *what)
     register char digit;
 
 #if !APR_CHARSET_EBCDIC
-    digit = ((what[0] >= 'A') ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
+    digit  = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
     digit *= 16;
     digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
 #else /*APR_CHARSET_EBCDIC*/
@@ -266,6 +266,32 @@ static APR_INLINE char x2c(const char *what)
     xstr[3]=what[1];
     xstr[4]='\0';
     digit = apr_xlate_conv_byte(ap_hdrs_from_ascii, 0xFF & strtol(xstr, NULL, 16));
+#endif /*APR_CHARSET_EBCDIC*/
+    return (digit);
+}
+
+static APR_INLINE unsigned int x2ui(const char *what) {
+    register unsigned int digit = 0;
+
+#if !APR_CHARSET_EBCDIC
+    digit  = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
+    digit *= 16;
+    digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
+    digit *= 16;
+    digit += (what[2] >= 'A' ? ((what[2] & 0xdf) - 'A') + 10 : (what[2] - '0'));
+    digit *= 16;
+    digit += (what[3] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[3] - '0'));
+
+#else /*APR_CHARSET_EBCDIC*/
+    char xstr[7];
+    xstr[0]='0';
+    xstr[1]='x';
+    xstr[2]=what[0];
+    xstr[3]=what[1];
+    xstr[4]=what[2];
+    xstr[5]=what[3];
+    xstr[6]='\0';
+    digit = apr_xlate_conv_byte(ap_hdrs_from_ascii, 0xFFFF & strtol(xstr, NULL, 16));
 #endif /*APR_CHARSET_EBCDIC*/
     return (digit);
 }
@@ -302,16 +328,45 @@ APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s,
 		*d = x2c(s + 1);
 		s += 2;
 	    }
-            else if (s[1] == 'u' && apr_isxdigit(s[2]) &&
-                     apr_isxdigit(s[3]) && apr_isxdigit(s[4]) &&
-                     apr_isxdigit(s[5]))
+            else if ((s[1] == 'u' || s[1] == 'U') &&
+                     apr_isxdigit(s[2]) && apr_isxdigit(s[3]) && 
+                     apr_isxdigit(s[4]) && apr_isxdigit(s[5]))
             {
-                /* XXX: Need to decode oddball
-                 * javascript unicode escapes: %uXXXX
-                 * For now we'll just give up.
-                 */
-                badesc = 1;
-                *d = '%';
+                unsigned int c = x2ui(s+2);
+                if (c < 0x80) {
+                    *d = c;
+                }
+                else if (c < 0x800) {
+                    *d++ = 0xc0 | (c >> 6);
+                    *d   = 0x80 | (c & 0x3f);
+                }
+                else if (c < 0x10000) {
+                    *d++ = 0xe0 | (c >> 12);
+                    *d++ = 0x80 | ((c >> 6) & 0x3f);
+                    *d   = 0x80 | (c & 0x3f);
+                }
+                else if (c < 0x200000) {
+                    *d++ = 0xf0 | (c >> 18);
+                    *d++ = 0x80 | ((c >> 12) & 0x3f);
+                    *d++ = 0x80 | ((c >> 6) & 0x3f);
+                    *d   = 0x80 | (c & 0x3f);
+                }
+                else if (c < 0x4000000) {
+                    *d++ = 0xf8 | (c >> 24);
+                    *d++ = 0x80 | ((c >> 18) & 0x3f);
+                    *d++ = 0x80 | ((c >> 12) & 0x3f);
+                    *d++ = 0x80 | ((c >> 6) & 0x3f);
+                    *d   = 0x80 | (c & 0x3f);
+                }
+                else if (c < 0x8000000) {
+                    *d++ = 0xfe | (c >> 30);
+                    *d++ = 0x80 | ((c >> 24) & 0x3f);
+                    *d++ = 0x80 | ((c >> 18) & 0x3f);
+                    *d++ = 0x80 | ((c >> 12) & 0x3f);
+                    *d++ = 0x80 | ((c >> 6) & 0x3f);
+                    *d   = 0x80 | (c & 0x3f);
+                }
+                s += 4;
             }
 	    else {
 		badesc = 1;

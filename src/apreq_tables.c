@@ -148,7 +148,17 @@ struct apreq_table_t {
 /* MUST ensure n's parent exists (>=0) before using LR(n) */
 #define LR(n) (  ( (n)[o].tree[PARENT][o].tree[LEFT] == (n) ) ? LEFT : RIGHT  )
 
-#define PROMOTE(o,r,p)  do rotate(o,r,o[p].tree[PARENT],!LR(p)); while (o[p].tree[PARENT] >= 0)
+#define PROMOTE(o,r,p)  do rotate(o,r,o[p].tree[PARENT],!LR(p)); \
+                           while (o[p].tree[PARENT] >= 0)
+
+/**
+ *       pivot                            child
+ *       /  \                             /  \
+ *   child  direction   == rotate ===>   1  pivot
+ *    / \                                   /  \
+ *   1   2                                 2  direction
+ *
+ */
 
 static APR_INLINE void rotate(apreq_table_entry_t *o, 
                               int *root,
