@@ -13,6 +13,8 @@ AC_DEFUN(AC_APREQ, [
                 AC_HELP_STRING([--with-apache2-src],[path to httpd-2 source]),
                 [APACHE2_SRC=$withval],[APACHE2_SRC=""])
 
+        prereq_check="$PERL build/version_check.pl"
+
         if test -n "$APACHE2_SRC"; then
                 APACHE2_SRC=`cd $APACHE2_SRC;pwd`
 
@@ -34,7 +36,7 @@ AC_DEFUN(AC_APREQ, [
                 APR_CONFIG=`$APACHE2_APXS -q APR_BINDIR`/apr-config
                 APU_CONFIG=`$APACHE2_APXS -q APU_BINDIR`/apu-config
 
-                if test -z "`$PERL build/version_check.pl apache2 $APACHE2_HTTPD`"; then
+                if test -z "`$prereq_check apache2 $APACHE2_HTTPD`"; then
                     AC_MSG_ERROR([Bad apache2 version])
                 fi
         fi
@@ -42,26 +44,29 @@ AC_DEFUN(AC_APREQ, [
         AC_CHECK_FILE([$APR_CONFIG],,
             AC_MSG_ERROR([invalid apr-config location- did you forget to configure apr?]))
 
-        if test -z "`$PERL build/version_check.pl apr $APR_CONFIG`"; then
+        if test -z "`$prereq_check apr $APR_CONFIG`"; then
             AC_MSG_ERROR([Bad libapr version])
         fi
 
         AC_CHECK_FILE([$APU_CONFIG],,
             AC_MSG_ERROR([invalid apu-config location- did you forget to configure apr-util?]))
 
-        if test -z "`$PERL build/version_check.pl apu $APU_CONFIG`"; then
+        if test -z "`$prereq_check apu $APU_CONFIG`"; then
             AC_MSG_ERROR([Bad libaprutil version])
         fi
 
         if test "x$PERL_GLUE" != "xno"; then
-            if test -z "`$PERL build/version_check.pl perl $PERL`"; then
+            if test -z "`$prereq_check perl $PERL`"; then
                 AC_MSG_ERROR([Bad perl version])
             fi
-            if test -z "`$PERL build/version_check.pl xsbuilder`"; then
-                AC_MSG_ERROR([Bad xsbuilder version])
+            if test -z "`$prereq_check ExtUtils::XSBuilder`"; then
+                AC_MSG_ERROR([Bad ExtUtils::XSBuilder version])
             fi
-            if test -z "`$PERL build/version_check.pl mp2`"; then
-                AC_MSG_ERROR([Bad modperl-2 version])
+            if test -z "`$prereq_check mod_perl`"; then
+                AC_MSG_ERROR([Bad mod_perl version])
+            fi
+            if test -z "`$prereq_check Apache::Test`"; then
+                AC_MSG_ERROR([Bad Apache::Test version])
             fi
         fi
 
@@ -71,6 +76,7 @@ AC_DEFUN(AC_APREQ, [
 
 
         AM_CONDITIONAL(BUILD_PERL_GLUE, test "x$PERL_GLUE" != "xno")
+        AM_CONDITIONAL(HAVE_APACHE_TEST, test -b "`$prereq_check Apache::Test`")
         AM_CONDITIONAL(BUILD_HTTPD, test -n "$APACHE2_SRC")
         AM_CONDITIONAL(BUILD_APR, test "x$APR_CONFIG" = x`$APR_CONFIG --srcdir`/apr-config)
         AM_CONDITIONAL(BUILD_APU, test "x$APU_CONFIG" = x`$APU_CONFIG --srcdir`/apu-config)

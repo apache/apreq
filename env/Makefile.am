@@ -38,9 +38,17 @@ t/TEST : Makefile.am t/TEST.PL
 
 endif
 
+if HAVE_APACHE_TEST
+
 run_tests : t/TEST
 	-cp -f test_cgi t/cgi-bin
 	@PERL@ t/TEST
+else
+
+run_tests:
+	@echo "Apache::Test not available, skipping env/ tests."
+
+endif
 
 test :: all check run_tests
 

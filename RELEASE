@@ -25,28 +25,40 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
    (three +1 and more +1s than -1s) among the committers, the RM 
    may proceed with the release.
 
-5.  Tag the tree, s/./_/g in the version number
+5. Edit STATUS, marking the release date
 
-    % cvs tag v2_XX_dev
+        /** @page STATUS
 
-6. Sign the release via gpg:
+        2.XX-dev tagged and rolled for release on <today's date>
 
-     % gpg --detach-sign --armor libapreq2-2.XX-dev.tar.gz
+   Commit the change and tag the tree (tr/0-9a-zA-Z/_/c in the 
+   version number)
+
+        % cvs commit -m "2.XX-dev to be released" STATUS
+        % cvs tag v2_XX_dev
+
+6. Regenerate the release 
+
+        % make release && make release_test
+
+   Then test and sign it via gpg:
+
+        % gpg --detach-sign --armor libapreq2-2.XX-dev.tar.gz
 
    or pgp:
 
-     % pgp -sba libapreq2-2.XX-dev.tar.gz
+        % pgp -sba libapreq2-2.XX-dev.tar.gz
 
 7. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
-    % scp libapreq2-2.XX-dev.tar.gz* \
-      <username>@www.apache.org:/www/www.apache.org/dist/httpd/libapreq/
+        % scp libapreq2-2.XX-dev.tar.gz* \
+          <username>@www.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
    Ask another developer to confirm the uploaded signature is ok.
 
-    % gpg --verify libapreq2-2.XX-dev.tar.gz.asc
-    % pgp libapreq2-2.XX-dev.tar.gz.asc
+        % gpg --verify libapreq2-2.XX-dev.tar.gz.asc
+        % pgp libapreq2-2.XX-dev.tar.gz.asc
 
    Check that your public key is among those listed in the
    /www/www.apache.org/dist/httpd/KEYS file.
@@ -54,9 +66,10 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
 8. Upload the package to CPAN. Doublecheck that the md5 checksum
    received from PAUSE is correct.
 
-9. Update the libapreq homepage to list the new release in
-   the News section. For instructions on updating the httpd website, 
-   see build/WEBSITE.
+9. Wait ~12-24 hours for the ASF mirrors to pick up the new package, then
+   update the apreq homepage to list the new release in the News section
+   Be sure to update the libapreq2 documentation. For instructions on updating 
+   the httpd website, see build/WEBSITE.
 
 10. Post a final announcement to the modperl@ and apreq-dev@ lists:
 

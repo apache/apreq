@@ -21,6 +21,7 @@ endif
 
 release: reconfig docs_clean docs distdir
 	@PERL@ build/version_check.pl > $(distdir)/PREREQUISITES
+	@PERL@ build/version_check.pl -version=@PACKAGE_VERSION@ > $(distdir)/META.yml
 	echo MANIFEST > $(distdir)/MANIFEST
 	@cd $(distdir); @PERL@ -M$(EUM) -e "$(EUM)::mkmanifest"
 	@PERL@ -ple '$$_="$(distdir)/$$_"' $(distdir)/MANIFEST | tar -czf $(distdir).tar.gz -T -

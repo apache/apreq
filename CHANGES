@@ -2,6 +2,12 @@
 
 @section v2_01_dev Changes with libapreq2-2.01-dev
 
+- November 7, 2003 - build system [joes]
+
+Skip Apache::Test tests in env/ when Apache::Test is unavailable.
+This allows the C API to be build and installed without requiring
+Apache::Test (it is still a requirement for compiling the perl glue).
+
 - November 7, 2003 - C API mod_apreq.c [joes]
 
 Parser errors were creeping into the return value of apreq_filter,

@@ -11,12 +11,10 @@ use constant WIN32 => ($^O =~ /Win32/);
 
 sub test_prereq {
     system (PERL_PATH, "build/version_check.pl", @_) == 0
-        or die "Please upgrade $_[0] first.";
+        or die "Please upgrade $_[0] first.\n";
 }
 
 test_prereq perl => PERL_PATH;
-test_prereq "apache_test";
-test_prereq "mp2";
 
 if (WIN32) {
     push @ARGV, '--with-perl=' . PERL_PATH;
@@ -30,13 +28,18 @@ else {
 
     my @flags = qw/enable-maintainer-mode enable-perl-glue disable-perl-glue/;
     my %opts;
-# grab from @ARGV only the options that we expect
+    # grab from @ARGV only the options that we expect
     GetOptions(\%opts, (map "$_=s", @opts), @flags);
 
     $opts{"with-perl"} = PERL_PATH;
     my $opts = "";
     $opts .= "--enable-maintainer-mode " if $opts{"enable-maintainer-mode"};
-    $opts .= "--enable-perl-glue " unless exists $opts{"disable-perl-glue"};
+
+    unless (exists $opts{"disable-perl-glue"}) {
+        $opts .= "--enable-perl-glue ";
+        test_prereq "mod_perl";
+        test_prereq "Apache::Test";
+    }
 
     delete @opts{@flags};
     $opts{"with-apache2-apxs"} = delete $opts{apxs}
