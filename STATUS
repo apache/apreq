@@ -89,10 +89,6 @@ TODO:
     - Add a "header_limit" setting to control outgoing header size
       (mainly for baking cookies) instead of using a compiled-in limit.
 
-    - We need to add some basic charset support.  Long discussion 
-      starts here:
-              http://article.gmane.org/gmane.comp.apache.apreq/2371
-
     - in glue/perl/t/apreq/cgi.t on Win32, printing to the error log
       hangs if the strings involved are about 10000 in size.
       This doesn't occur in the env/cgi tests - why?
