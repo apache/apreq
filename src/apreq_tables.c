@@ -176,7 +176,10 @@ static APR_INLINE void rotate(apreq_table_entry_t *o,
     if (pivot[o].tree[!direction] >= 0)
         pivot[o].tree[!direction][o].tree[PARENT] = pivot;
 
-    (parent >= 0) ? parent[o].tree[LR(pivot)] : *root = child;
+    if (parent >= 0)
+        parent[o].tree[LR(pivot)] = child;
+    else
+        *root = child;
 
     child[o].tree[PARENT]      = parent;
     child[o].tree[direction]   = pivot;
@@ -256,7 +259,10 @@ static int insert(apreq_table_cmp_t *cmp,
             if (x[o].tree[RIGHT] >= 0)
                 x[o].tree[RIGHT][o].tree[PARENT] = idx;
 
-            (parent >= 0) ? parent[o].tree[LR(x)] : *root = idx;
+            if (parent >= 0)
+                parent[o].tree[LR(x)] = idx;
+            else
+                *root = idx;
 
             elt->tree[PARENT] = parent;
             elt->tree[RIGHT]  = x[o].tree[RIGHT];
@@ -333,7 +339,10 @@ static void delete(apreq_table_entry_t *o,
         y[o].tree[RIGHT]  = idx[o].tree[RIGHT];
         y[o].color        = idx[o].color;
 
-        (x >= 0) ? x[o].tree[LR(idx)] : *root = y;
+        if (x >= 0)
+            x[o].tree[LR(idx)] = y;
+        else
+            *root = y;
 
         idx[o].tree[PARENT] = -1;
         idx[o].tree[LEFT]   = -1;
@@ -356,16 +365,20 @@ static void delete(apreq_table_entry_t *o,
     /* remove y from the parent chain */
     x[o].tree[PARENT] = y[o].tree[PARENT];
 
-    (y[o].tree[PARENT] >= 0) ?
-        y[o].tree[PARENT][o].tree[LR(y)] : *root = x;
+    if (y[o].tree[PARENT] >= 0)
+        y[o].tree[PARENT][o].tree[LR(y)] = x;
+    else
+        *root = x;
 
     if (y != idx) {     /* swap y[o] with idx[o] */
         y[o].tree[LEFT] = idx[o].tree[LEFT];
         y[o].tree[RIGHT] = idx[o].tree[RIGHT];
         y[o].tree[PARENT] = idx[o].tree[PARENT];
         
-        (y[o].tree[PARENT] >= 0) ?
-            y[o].tree[PARENT][o].tree[LR(y)] : *root = y;
+        if (y[o].tree[PARENT] >= 0)
+            y[o].tree[PARENT][o].tree[LR(y)] = y;
+        else
+            *root = y;
 
         idx[o].tree[LEFT] = -1;
         idx[o].tree[RIGHT] = -1;
