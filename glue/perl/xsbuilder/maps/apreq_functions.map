@@ -39,8 +39,6 @@ MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table
 MODULE=Apache::Upload PACKAGE=Apache::Request PREFIX=Apache__Request_
  DEFINE_upload  | apreq_xs_upload_get |
 
-
-
 ##########  Apache::Cookie:: Functions  ##########
 
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie

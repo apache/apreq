@@ -25,6 +25,10 @@ sub handler {
     elsif ($test eq 'slurp') {
         my ($upload) = values %{$req->upload};
         $upload->slurp(my $data);
+        if ($upload->size != length $data) {
+            $req->print("Size mismatch: size() reports ", $upload->size,
+                        " but slurp() length is ", length $data, "\n");
+        }
         $req->print($data);
     }
     elsif ($test eq 'bb_read') {
@@ -38,7 +42,7 @@ sub handler {
         }
     }
     elsif ($test eq 'fh_read') {
-        my (undef, $upload) = each %{$req->upload};
+        my $upload = $req->upload(($req->upload)[0]);
         my $fh = $upload->fh;
         $r->print(<$fh>);
     }

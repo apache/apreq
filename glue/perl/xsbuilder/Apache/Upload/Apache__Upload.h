@@ -267,7 +267,6 @@ static XS(apreq_xs_upload_fh)
     apr_status_t s;
     apr_off_t len;
     apr_file_t *file;
-    SV *sv;
 
     if (items != 1 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $upload->fh()");
@@ -278,11 +277,6 @@ static XS(apreq_xs_upload_fh)
     env = mg->mg_ptr;
     bb = apreq_xs_sv2param(ST(0))->bb;
     file = apreq_brigade_spoolfile(bb);
-
-    if (f2g == NULL)
-        f2g = APR_RETRIEVE_OPTIONAL_FN(apr_perlio_apr_file_to_glob);
-    if (f2g == NULL)
-        Perl_croak(aTHX_ "can't locate apr_perlio_apr_file_to_glob");
 
     if (file == NULL) {
         apr_bucket *last;
@@ -313,8 +307,6 @@ static XS(apreq_xs_upload_fh)
     apr_file_seek(file, 0, &len);
 
     /* Should we pass a dup(2) of the file instead? */
-    sv = f2g(aTHX_ file, bb->p, APR_PERLIO_HOOK_READ);
-//    ST(0) = sv_2mortal(sv);
-    ST(0) = sv;
+    ST(0) = f2g(aTHX_ file, bb->p, APR_PERLIO_HOOK_READ);
     XSRETURN(1);
 }
