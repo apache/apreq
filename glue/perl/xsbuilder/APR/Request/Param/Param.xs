@@ -1,8 +1,9 @@
 #include "apreq_xs_tables.h"
 #define TABLE_CLASS "APR::Request::Param::Table"
 
-#ifndef index
-#define index strchr
+#ifdef AP_DEBUG
+/* Undo httpd.h's strchr override. */
+#undef strchr
 #endif
 
 static int apreq_xs_table_do_sub(void *data, const char *key,
@@ -670,7 +671,7 @@ upload_type(param)
     if (ct == NULL)
         Perl_croak(aTHX_ "$param->upload_type: can't find Content-Type header");
     
-    if ((sc = index(ct, ';')))
+    if ((sc = strchr(ct, ';')))
         len = sc - ct;
     else
         len = strlen(ct);
