@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/04/25 18:11:15 $]
+Last modified at [$Date: 2003/05/06 03:31:57 $]
 
      2.0.0  in development
 
@@ -32,8 +32,6 @@ RELEASE SHOWSTOPPERS:
 
         1. Safety features (see above).
 
-        2. `Prefetching' filter reads are unimplemented.
-
 
 CURRENT VOTES:
 
@@ -41,7 +39,7 @@ CURRENT VOTES:
 
 TODO:
 
-    * more Apache::Test tests in glue/perl/t.
+    * Apache::Test tests in env/t.
 
     * Populate the glue/ directory (perl, tcl, etc.).
 
@@ -63,8 +61,5 @@ BUGS:
 
 WISH LIST:
 
-    * Build system (.dsp files?) for Win32.  I'm assuming 
-
-           % ./buildconf && configure... 
-
-      doesn't work on Windows. [joes]
+     APR should adopt our table implementation.  joes offered a patch to
+     dev@apr on 4/28/2003 but it was apparently mistaken as porno-spam.
