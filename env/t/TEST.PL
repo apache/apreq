@@ -39,6 +39,7 @@ sub configure {
 package My::TestConfig;
 use Apache::TestTrace;
 use Apache::TestConfigC;
+use Config;
 use Apache::Build;
 use constant WIN32 => Apache::Build::WIN32;
 
@@ -87,4 +88,24 @@ clean:
 EOF
     }
     close $fh or die "close $makefile: $!";
+}
+
+sub cmodules_makefile_vars {
+    my $make = $ENV{MAKE} || $Config{make};
+    return <<EOF; # XXX: do we need to propagate all the vars in config.nice?
+MAKE=$make
+EOF
+}
+
+sub cmodules_make {
+     my $self = shift;
+     my $targ = shift || 'all';
+     my $make = $ENV{MAKE} || $Config{make};
+
+     my $cmd = "cd $self->{cmodules_dir} && $make $targ";
+     debug $cmd;
+     system $cmd;
+     if ($?) {
+         die "Failed to build c-modules";
+     }
 }

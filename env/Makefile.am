@@ -40,7 +40,7 @@ if HAVE_APACHE_TEST
 
 run_tests : t/TEST
 	-cp -f test_cgi t/cgi-bin
-	@PERL@ t/TEST
+	MAKE=$(MAKE) @PERL@ t/TEST
 else
 
 run_tests:
@@ -51,7 +51,7 @@ endif
 test :: all check run_tests
 
 test_clean : cmodules_clean
-	-@PERL@ t/TEST -clean
+	-MAKE=$(MAKE) @PERL@ t/TEST -clean
 	-rm -rf t/htdocs t/logs t/modules t/TEST t/cgi-bin/test_cgi t/cgi-bin/.libs t/conf/extra.conf
 
 cmodules_clean:

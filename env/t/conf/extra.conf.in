@@ -1,4 +1,5 @@
 ScriptAlias /cgi-bin/ "@ServerRoot@/cgi-bin/"
+LockFile @ServerRoot@/logs/accept.lock
 
 <Directory "@ServerRoot@/cgi-bin">
    AllowOverride None

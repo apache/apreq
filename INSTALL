@@ -8,6 +8,8 @@ directly from cvs, you can generate the list of prerequisites:
 
 INSTRUCTIONS:
 
+FreeBSD users must substitute "gmake" for "make" below.
+
 Unix build, where libtool/automake/autoconf works:
 
             % ./configure --with-apache2-apxs=/path/to/apache2/bin/apxs
