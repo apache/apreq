@@ -181,73 +181,97 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
 }
 
 APR_INLINE
-static apr_status_t get_pair(const char **data,
+static apr_status_t get_pair(apr_pool_t *p, const char **data,
                              const char **n, apr_size_t *nlen,
-                             const char **v, apr_size_t *vlen)
+                             const char **v, apr_size_t *vlen, unsigned unquote)
 {
-    const char *d = *data;
-    unsigned char in_quotes = 0;
+    const char *hdr, *key, *val;
 
-    while(apr_isspace(*d))
-        ++d;
+    hdr = *data;
 
-    *n = d;
+    while (apr_isspace(*hdr) || *hdr == '=')
+        ++hdr;
 
-    while (apr_isalnum(*d))
-        ++d;
+    key = strchr(hdr, '=');
 
-    *nlen = d - *n;
-
-    while(apr_isspace(*d))
-        ++d;
-
-    if (*d != '=') {
-        *data = d;
-        *v = d;
-        *vlen = 0;
+    if (key == NULL)
         return APR_NOTFOUND;
+
+    val = key + 1;
+
+    do --key; 
+    while (key > hdr && apr_isspace(*key));
+
+    *n = key;
+
+    while (key >= hdr && !apr_isspace(*key))
+        --key;
+
+    *nlen = *n - key;
+    *n = key + 1;
+
+    while (apr_isspace(*val))
+        ++val;
+
+    if (*val == '"') {
+        unsigned saw_backslash = 0;
+        for (*v = (unquote) ? ++val : val++; *val; ++val) {
+            switch (*val) {
+            case '"':
+                *data = val + 1;
+
+                if (!unquote) {
+                    *vlen = (val - *v) + 1;
+                }
+                else if (!saw_backslash) {
+                    *vlen = val - *v;
+                }
+                else {
+                    char *dest = apr_palloc(p, val - *v), *d = dest;
+                    const char *s = *v;
+                    while (s < val) {
+                        if (*s == '\\')
+                            ++s;
+                        *d++ = *s++;
+                    }
+
+                    *vlen = d - dest;
+                    *v = dest;
+                }
+                
+                return APR_SUCCESS;
+            case '\\':
+                saw_backslash = 1;
+                if (val[1] != 0)
+                    ++val;
+            default:
+                break;
+            }
+        }
+        /* bad attr: no terminating quote found */
+        return APR_EGENERAL;
     }
-
-
-    do ++d;
-    while (apr_isspace(*d));
-
-    *v = d;
-
-    for (;;++d) {
-        switch (*d) {
-
-        case ';':
-        case ',':
-            if (in_quotes)
-                break;
-            /* else fall through */
-        case 0:
-            goto pair_result;
-
-        case '\\':
-            if (*++d) {
+    else {
+        /* value is not wrapped in quotes */
+        for (*v = val; *val; ++val) {
+            switch (*val) {
+            case ';':
+            case ',':
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+                *data = val;
+                *vlen = val - *v;
+                return APR_SUCCESS;
+            default:
                 break;
             }
-            else {  /* shouldn't end on a sour note */
-                *vlen = d - *v;
-                *data = d;
-                return APR_EGENERAL;
-            }
-
-        case '"':
-            in_quotes = ! in_quotes;
-
         }
     }
 
- pair_result:
-
-    *vlen = d - *v;
-    *data = d;
-
-    if (in_quotes)
-        return APR_EGENERAL;
+    *data = val;
+    *vlen = val - *v;
 
     return APR_SUCCESS;
 }
@@ -361,7 +385,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
             }
 
             ++hdr;
-            status = get_pair(&hdr, &name, &nlen, &value, &vlen);
+            status = get_pair(p, &hdr, &name, &nlen, &value, &vlen, 1);
             if (status != APR_SUCCESS) {
                 j->status = status;
                 apreq_log(APREQ_ERROR status, env,
@@ -396,17 +420,16 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
                 apreq_add_cookie(j, c);
             }
 
-            status = get_pair(&hdr, &name, &nlen, &value, &vlen);
+            status = get_pair(p, &hdr, &name, &nlen, &value, &vlen, 0);
 
             if (status == APR_SUCCESS) {
                 c = apreq_make_cookie(p, name, nlen, value, vlen);
                 c->version = version;
             }
             else {
-                apreq_log(APREQ_WARN status, env, 
-                          "Skipping bad NAME=VALUE pair: %s", 
-                           apr_pstrmemdup(p, name, hdr-name));
-                c = NULL;
+                if (status == APR_EGENERAL)
+                    j->status = APR_EGENERAL;
+                return j;
             }
         }
     }
@@ -421,8 +444,8 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
 {
     /*  The format string must be large enough to accomodate all
      *  of the cookie attributes.  The current attributes sum to 
-     *  ~80 characters (w/ 6 padding chars per attr), so anything 
-     *  over that should number be fine.
+     *  ~90 characters (w/ 6-8 padding chars per attr), so anything 
+     *  over 100 number be fine.
      */
 
     char format[128] = "%s=%s";
@@ -433,16 +456,22 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
     if (c->v.name == NULL)
         return -1;
     
-#define ADD_ATTR(name) do { strcpy(f,c->name ? "; " #name "=%s" : \
-                                    "%.0s"); f+= strlen(f); } while (0)
 #define NULL2EMPTY(attr) (attr ? attr : "")
 
 
     if (c->version == NETSCAPE) {
         char expires[APR_RFC822_DATE_LEN] = {0};
 
-        ADD_ATTR(path);
-        ADD_ATTR(domain);
+#define ADD_NS_ATTR(name) do {                  \
+    if (c->name != NULL)                        \
+        strcpy(f, "; " #name "=%s");            \
+    else                                        \
+        strcpy(f, "%0.s");                      \
+    f += strlen(f);                             \
+} while (0)
+
+        ADD_NS_ATTR(path);
+        ADD_NS_ATTR(domain);
 
         if (c->max_age != -1) {
             strcpy(f, "; expires=%s");
@@ -467,13 +496,23 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
     strcpy(f,"; Version=%d");
     f += strlen(f);
 
-    ADD_ATTR(path);
-    ADD_ATTR(domain);
-    ADD_ATTR(port);
-    ADD_ATTR(comment);
-    ADD_ATTR(commentURL);
+/* ensure RFC attributes are always quoted */
+#define ADD_RFC_ATTR(name) do {                 \
+    if (c->name != NULL)                        \
+        if (*c->name == '"')                    \
+            strcpy(f, "; " #name "=%s");        \
+        else                                    \
+            strcpy(f, "; " #name "=\"%s\"");    \
+    else                                        \
+        strcpy(f, "%0.s");                      \
+    f += strlen (f);                            \
+} while (0)
 
-#undef ADD_ATTR
+    ADD_RFC_ATTR(path);
+    ADD_RFC_ATTR(domain);
+    ADD_RFC_ATTR(port);
+    ADD_RFC_ATTR(comment);
+    ADD_RFC_ATTR(commentURL);
 
     strcpy(f, c->max_age != -1 ? "; max-age=%" APR_TIME_T_FMT : "");
 

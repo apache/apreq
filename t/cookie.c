@@ -25,7 +25,7 @@ static apreq_jar_t *j = NULL;
 static void jar_make(CuTest *tc)
 {
     j = apreq_jar(p,"a=1; foo=bar; fl=left; fr=right;bad; ns=foo=1&bar=2,"
-                  "frl=right-left; flr=left-right; fll=left-left; bad");
+                  "frl=right-left; flr=left-right; fll=left-left; good_one=1;bad");
     CuAssertPtrNotNull(tc, j);
 }
 
@@ -93,18 +93,18 @@ static void rfc_cookie(CuTest *tc)
 
     CuAssertStrEquals(tc,"rfc=out; Version=1", apreq_cookie_as_string(c,p));
     c->domain = apr_pstrdup(p, "example.com");
-    CuAssertStrEquals(tc,"rfc=out; Version=1; domain=example.com", 
+    CuAssertStrEquals(tc,"rfc=out; Version=1; domain=\"example.com\"", 
                       apreq_cookie_as_string(c,p));
 
     c->path = apr_pstrdup(p, "/quux");
     CuAssertStrEquals(tc, 
-              "rfc=out; Version=1; path=/quux; domain=example.com",
+              "rfc=out; Version=1; path=\"/quux\"; domain=\"example.com\"",
                       apreq_cookie_as_string(c,p));
 
     apreq_cookie_expires(c, "+3m");
     expires = apreq_atoi64t("+3m");
     CuAssertStrEquals(tc,apr_psprintf(p,
-         "rfc=out; Version=1; path=/quux; domain=example.com; max-age=%ld",
+         "rfc=out; Version=1; path=\"/quux\"; domain=\"example.com\"; max-age=%ld",
                expires), apreq_cookie_as_string(c,p));
 
 }
