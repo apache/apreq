@@ -11,7 +11,7 @@ Apache::*::Error - Exception classes for Apache::Request, Apache::Upload, Apache
     $r = APR::Pool->new;
     $req = Apache::Request->new($r);
     $req->body_status(0);
-    $req->parse;
+    $req->parse; # XXX sets up body table
     $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
     $req->body->add($u);
     $jar = Apache::Cookie::Jar->new($r);
@@ -60,7 +60,8 @@ an Error object will not itself throw an error by calling its methods.
 
 =head1 Apache::Request::Error
 
-detects param parsing errors
+These exceptions are derived from APR::Error and Apache::Request,
+and indicate that an error occurred during param parsing.
 
 
 =for example begin
@@ -70,12 +71,15 @@ detects param parsing errors
 =for example end
 
 =for example_testing
+
 
 
 
 =head1 Apache::Upload::Error
 
-detects errors during interaction with the filesystem.
+These exceptions are derived from APR::Error and Apache::Upload, 
+and indicate that some Apache::Upload method failed (often caused
+by a filesystem error).
 
 
 =for example begin
@@ -88,9 +92,12 @@ detects errors during interaction with the filesystem.
 
 
 
+
 =head1 Apache::Cookie::Jar::Error
 
-detects cookie parsing errors
+These exceptions are derived from APR::Error and Apache::Cookie::Jar,
+and indicate that the cookie parser failed to successfully parse the
+incoming Cookie header.
 
 
 =for example begin
@@ -106,8 +113,12 @@ detects cookie parsing errors
 
 =head1 Apache::Cookie::Error
 
-detects bad cookies (usually during bake or bake2).
+These exceptions are derived from APR::Error and Apache::Cookie.
+Their presence indicates that an Apache::Cookie method failed.
+Typically they are caused by 
 
+        1) attempting to bake(2) a non-compliant cookie, 
+        2) attempting to set an unsupported cookie attribute.
 
 =for example begin
 

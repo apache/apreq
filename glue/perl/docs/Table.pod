@@ -23,8 +23,8 @@ Apache::*::Table - Table classes for Apache::Request, Apache::Upload, and Apache
 
     {
         my $do_data = "";
-        $table->do( sub { $do_data .= "@_"; 1 } );
-        ok $do_data eq "test 1foo bar1foo bar2";
+        $table->do( sub { $do_data .= "@_,"; 1 } );
+        ok $do_data eq "test 1,foo bar1,foo bar2,";
     }
 
 =for example end
@@ -92,8 +92,8 @@ provided by Apache::Upload).  Their values are Apache::Upload objects.
 =head1 Apache::Cookie::Table
 
 These tables arise from the C<cookies> method of Apache::Cookie::Jar, and
-their values are Apache::Cookie objects.
-
+their values are Apache::Cookie objects (or Apache::Cookie derived objects- 
+see the discussion of C<VALUE_CLASS> in L<Apache::Cookie>).
 
 =for example begin
 

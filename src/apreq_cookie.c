@@ -546,20 +546,35 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(const apreq_cookie_t *c,
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
                                               void *env)
 {
-    char *s = apreq_cookie_as_string(c,apreq_env_pool(env));
-    return apreq_env_set_cookie(env, s);
+    char s[APREQ_COOKIE_MAX_LENGTH];
+    int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
+    if (len < APREQ_COOKIE_MAX_LENGTH)
+        return apreq_env_set_cookie(env, s);
+
+    apreq_log(APREQ_ERROR APR_INCOMPLETE, env, 
+              "serialized cookie length exceeds limit %d", 
+              APREQ_COOKIE_MAX_LENGTH - 1);
+    return APR_INCOMPLETE;
 }
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
                                                void *env)
 {
-    char *s;
-    s = apreq_cookie_as_string(c, apreq_env_pool(env));
+    char s[APREQ_COOKIE_MAX_LENGTH];
+    if ( c->version != NETSCAPE ) {
+        int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
+        if (len < APREQ_COOKIE_MAX_LENGTH)
+            return apreq_env_set_cookie2(env, s);
 
-    if ( c->version != NETSCAPE )
-        return apreq_env_set_cookie2(env, s);
+        apreq_log(APREQ_ERROR APR_INCOMPLETE, env, 
+                  "serialized cookie length exceeds limit %d", 
+                  APREQ_COOKIE_MAX_LENGTH - 1);
 
+        return APR_INCOMPLETE;
+    }
     apreq_log(APREQ_ERROR APR_EGENERAL, env,
               "Cannot bake2 a Netscape cookie: %s", s);
+
+
     return APR_EGENERAL;
 }
