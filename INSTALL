@@ -24,24 +24,22 @@ INSTRUCTIONS:
 
 Unix build, where libtool/automake/autoconf works:
 
-  (optional)% ./buildconf
             % ./configure --with-apache2-apxs=/path/to/apache2/bin/apxs
-            % make && make test
-  (optional)% make perl_glue
-  (optional)% make perl_test
+            % make
+  (optional)% make test
             % make install
-  (optional)% make perl_install
 
 
-Or using the CPAN/perlish way:
+Or using the CPAN/perlish way (which includes the Apache::Request and
+Apache::Cookie modules):
 
-  (optional)% ./buildconf
             % perl Makefile.PL --with-apache2-apxs=/path/to/apache2/bin/apxs
-            % make && make test
-  (optional)% make perl_glue
-  (optional)% make perl_test
+            % make
+  (optional)% make test
             % make install
-  (optional)% make perl_install
+
+Developers and other folks using httpd-apreq-2 directly from cvs need to
+execute "./buildconf" prior to running "./configure".
 
 
 Alternately, here's a recipe to install mod_apreq.c as a static apache module:
@@ -60,7 +58,6 @@ Alternately, here's a recipe to install mod_apreq.c as a static apache module:
             % ./configure --with-apache2-src=/path/to/httpd-2.0
             % make
   (optional)% make test
-            % make httpd_install
             % make install
 
 

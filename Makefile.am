@@ -20,8 +20,8 @@ endif
 apreq2_config:
 
 dist-hook:
-	rm -rf `find $(distdir)/build -name CVS`
-	rm -rf `find $(distdir)/build -name '*~'`
+	rm -rf `find $(distdir) -name '*CVS'`
+	rm -rf `find $(distdir) -name '*~'`
 
 docs:	src env glue build/doxygen.conf
 	doxygen build/doxygen.conf

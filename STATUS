@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/10/13 18:24:46 $]   -*-text-*-
+Last modified at [$Date: 2003/10/18 21:03:06 $]   -*-text-*-
 /** @page STATUS
 
      2.0.0  in development
@@ -15,10 +15,14 @@ CURRENT RELEASE NOTES:
 
 RELEASE SHOWSTOPPERS:
 
-    - Choose a versioning system:
-      -# src/,  (libtool-based, following apr)
-      -# env/,  (module-magic-number ?)   
-      -# glue/, (per-language ?)
+    - Incorporate prereq checks into build system:
+
+      -# autoconf et.al version tests in buildconf,
+      -# perl module checks in Makefile.PL,
+      -# doxygen, ap[ru] & httpd version checks in configure.ac
+
+    - Fix *nix build system so "% make dist" generates a CPAN-friendly
+      and fully functional tarball.
 
 CURRENT VOTES:
 

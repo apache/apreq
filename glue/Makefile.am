@@ -1,8 +1,6 @@
 EXTRA_DIST = perl
 
 dist-hook:
-	rm -rf `find $(distdir)/glue -name CVS`
-	rm -rf `find $(distdir)/glue -name '*~'`
 
 perl_config:
 	cd perl; @PERL@ ../../build/xsbuilder.pl run
