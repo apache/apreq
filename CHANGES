@@ -5,6 +5,14 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- C API [Bojan Smojver]
+  Bake cookies with err_headers_out so they are
+  sent on non-2xx server responses (ie. a 304 redirect).
+  Also ensure that headers are copied with apr_table_add
+  instead of apr_table_addn.  Since apreq_cookie_bake()
+  allocates from the stack, the Set-Cookie headers would 
+  occasionally get mangled without this patch.
+
 - C API [joes]
   Add apreq_register_parser(), which allows users to add
   their own parsers to apreq_parser()'s recognized MIME types.

@@ -169,7 +169,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME               "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER       20040809
+#define APREQ_MODULE_MAGIC_NUMBER       20041119
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -208,7 +208,7 @@ static apr_status_t apache2_header_out(void *env, const char *name,
                                        char *value)
 {
     dR;
-    apr_table_addn(r->headers_out, name, value);
+    apr_table_add(r->err_headers_out, name, value);
     return APR_SUCCESS;
 }
 
