@@ -93,11 +93,7 @@ static int apreq_xs_request_upload_table_keys(void *data, const char *key,
         return 1;
 
     sv = newSVpv(key,0);
-
-    sv_magic(sv, d->parent, PERL_MAGIC_vstring, Nullch, -1);
-    SvMAGIC(sv)->mg_ptr = (char *)val;
-    SvRMAGICAL_on(sv);
-
+    APREQ_XS_TABLE_ADD_KEY_MAGIC(apreq_env_pool(d->env),sv,d->parent,val);
     XPUSHs(sv_2mortal(sv));
     PUTBACK;
     return 1;
