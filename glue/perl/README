@@ -17,15 +17,185 @@ DEVELOPER NOTES
 
 APR::Request::* should be a simple translation of the apreq C API:
 
-apreq_handle_t -> APR::Request instance
-apreq_module_t -> APR::Request derived class.
+apreq_handle_t -> APR::Request-derived instance.
+apreq_module_t -> APR::Request-derived class.
 apreq_param_t  -> APR::Request::Param
 apreq_cookie_t -> APR::Request::Cookie
 apreq_parser_t -> APR::Request::Parser (todo)
 apreq_hook_t   -> APR::Request::Hook (todo)
 
 
-Hopefully the old Apache(2)::Request and Apache(2)::Cookie APIs can be 
-built from those modules, mostly in Perl (instead of XS).
+--------------------------------------------------
+Current APR:: module breakdown
+--------------------------------------------------
+
+APR::Request
+
+  subs:
+    encode
+    decode
+
+  methods:
+    parse
+    read_limit
+    brigade_limit
+    temp_dir
+    header_in
+    header_out
+
+  missing:
+    add_hook (requires APR::Request::Hook)
+    parser (requires APR::Request::Parser)
 
 
+==================================================
+
+APR::Request::CGI @ISA=(APR::Request)
+
+  method:
+    param
+
+  ctor:
+    new
+
+==================================================
+
+APR::Request::Apache2 @ISA=(APR::Request)
+
+  method:
+    param
+
+  ctor:
+    new
+
+==================================================
+
+APR::Request::Error  @ISA=(APR::Error, APR::Request)
+
+  subs:
+    strerror
+
+==================================================
+
+APR::Request::Cookie
+
+  provides:
+    APR::Request::jar()
+    APR::Request::Cookie::Table
+      methods:
+        get, FETCH
+        FIRSTKEY, NEXTKEY
+        cookie_class
+      missing:
+        rest of const apr_table_t * API (do, etc)
+
+  methods:
+    name
+    value
+    secure
+    version
+    is_tainted
+    as_string
+    bake
+    bake2
+    expires
+    path
+    domain
+    port
+    comment
+    commentURL
+
+    freeze
+    thaw
+
+    bind_handle
+
+  ctor:
+    new
+
+==================================================
+
+APR::Request::Param
+
+  provides:
+    APR::Request::args()
+    APR::Request::body()
+    APR::Request::param()
+    APR::Request::params()
+
+    APR::Request::Param::Table
+      methods:
+        get, FETCH
+        FIRSTKEY, NEXTKEY
+        param_class
+        uploads
+      missing:
+        rest of const apr_table_t * API (do, etc)
+
+    APR::Request::Brigade
+      methods:
+        TIEHANDLE, new
+        READ
+        READLINE
+    APR::Request::Brigade::IO
+        read
+        readline
+
+  methods:
+    name
+    value
+    info
+    upload
+    upload_link
+    upload_slurp
+    upload_size
+    upload_type
+    upload_tempname
+    upload_io
+    upload_fh
+
+
+--------------------------------------------------
+Current (pure-perl) Apache2:: module breakdown
+--------------------------------------------------
+
+Apache2::Request @ISA=(Apache2::RequestRec, APR::Request::Apache2)
+
+==================================================
+
+Apache2::Cookie @ISA=(APR::Request::Cookie)
+
+  provides:
+    Apache2::Cookie::Jar @ISA=(APR::Request::Apache2)
+      methods:
+        cookies
+
+  subs:
+    encode
+    decode
+
+  methods:
+    new
+    fetch
+    set_attr
+    freeze
+    thaw
+    value
+
+==================================================
+
+Apache2::Upload @ISA=(APR::Request::Param)
+
+  provides:
+    Apache2::Request::upload
+
+  methods:
+    slurp
+    type
+    size
+    link
+    tempname
+    fh
+    io
+    filename
+    bb          (need to deprecate this)
