@@ -70,6 +70,7 @@ CuSuite *testtable(void);
 CuSuite *testcookie(void);
 CuSuite *testenv(void);
 CuSuite *testparam(void);
+CuSuite *testparser(void);
 
 /* Assert that RV is an APR_SUCCESS value; else fail giving strerror
  * for RV and CONTEXT message. */

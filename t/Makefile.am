@@ -2,7 +2,7 @@ INCLUDES = -I../src -I@APACHE2_INCLUDES@
 LIBS = -L../src
 
 noinst_LIBRARIES = libapreq_tests.a
-libapreq_tests_a_SOURCES = CuTest.c env.c tables.c cookie.c params.c
+libapreq_tests_a_SOURCES = CuTest.c env.c tables.c cookie.c params.c parsers.c
 libapreq_tests_a_LIBADD = ../src/libapreq.la
 
 check_PROGRAMS = testall

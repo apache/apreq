@@ -81,6 +81,7 @@ static const struct testlist {
     {"tables", testtable},
     {"cookies", testcookie},
     {"params", testparam},
+    {"parsers", testparser},
     {"LastTest", NULL}
 };
 

@@ -75,7 +75,7 @@ static apr_pool_t *env_pool(void *ctx)
 
 static const char *env_in(void *ctx, const char *name)
 {
-    return NULL;
+    return ctx;
 }
 
 static apr_status_t env_out(void *ctx, const char *name, char *value)

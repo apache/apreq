@@ -425,16 +425,21 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *pool,
     parser->v.status = HDR_NAME;
 
     for (e = APR_BRIGADE_FIRST(bb), nlen = glen = vlen = 0;
-         ! APR_BUCKET_IS_EOS(e) && e != APR_BRIGADE_SENTINEL(bb);
-         e = APR_BUCKET_NEXT(e))
+         e != APR_BRIGADE_SENTINEL(bb); e = APR_BUCKET_NEXT(e))
     {
         apr_size_t off = 0, dlen;
         const char *data;
-        apr_status_t s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
+        apr_status_t s;
+        if (APR_BUCKET_IS_EOS(e))
+            return parser->v.status = APR_EOF;
+
+        s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
 
         if ( s != APR_SUCCESS )
             return s;
 
+        if (dlen == 0)
+            continue;
 
     parse_hdr_bucket:
 
@@ -454,26 +459,25 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *pool,
                 switch (data[off++]) {
 
                 case '\n':
-                    if (off < dlen) {
+                    if (off < dlen)
                         apr_bucket_split(e, off);                       
-                    }
 
                     e = APR_BUCKET_NEXT(e);
 
-                    do apr_bucket_delete( APR_BRIGADE_FIRST(bb) ); 
-                    while (e != APR_BRIGADE_FIRST(bb));
+                    do {
+                        apr_bucket *f = APR_BRIGADE_FIRST(bb);
+                        apr_bucket_delete(f); 
+                    } while (e != APR_BRIGADE_FIRST(bb));
 
                     return APR_SUCCESS;
 
                 case ':':
                     ++glen; 
-                    ++off;
                     parser->v.status = HDR_GAP;
                     goto parse_hdr_bucket;
 
                 default:
                     ++nlen;
-                    ++off;
                 }
 
             }
@@ -506,10 +510,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *pool,
         case HDR_VALUE:
 
             while (off < dlen) {
-                if (data[off++] != '\n')
-                    ++vlen;
-                else {
-                    --vlen;
+                ++vlen;
+                if (data[off++] == '\n') {
                     parser->v.status = HDR_NEWLINE;
                     goto parse_hdr_bucket;
                 }
@@ -533,11 +535,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *pool,
 
                 default:
                     /* can parse brigade now */
-                    if (off > 0) {
-                        apr_bucket_split(e, off - 1);
-                        e = APR_BUCKET_NEXT(e);
-                    }
-
+                    if (off > 0)
+                        apr_bucket_split(e, off);
                     s = split_header(pool, t, bb, nlen, glen, vlen);
                     if (s != APR_SUCCESS)
                         return s;
@@ -582,7 +581,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *pool,
 
 struct mfd_ctx {
     void                        *hook_data;
-    apreq_table_t               *t;
+    apreq_parser_t              *hdr_parser;
     apr_bucket_brigade          *bb;
     const apr_strmatch_pattern  *pattern;
     char                         bdry[1];
@@ -604,27 +603,32 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
         const char *buf;
         apr_status_t s;
 
-
         if (APR_BUCKET_IS_EOS(e))
             return APR_EOF;
+
 
         s = apr_bucket_read(e, &buf, &len, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
             return s;
 
         if (len == 0) {
+            apr_bucket *f = e;
             e = APR_BUCKET_NEXT(e);
+            apr_bucket_delete(f);
             continue;
         }
 
         if (strncmp(bdry + off, buf, MIN(len, blen - off)) == 0) {
             if ( len >= blen - off ) {
                 /* complete match */
-                apr_bucket_split(e, blen - off);
+                if (len > blen - off)
+                    apr_bucket_split(e, blen - off);
                 e = APR_BUCKET_NEXT(e);
 
-                do apr_bucket_delete( APR_BRIGADE_FIRST(in) );
-                while (APR_BRIGADE_FIRST(in) != e);
+                do {
+                    apr_bucket *f = APR_BRIGADE_FIRST(in);
+                    apr_bucket_delete(f);
+                } while (APR_BRIGADE_FIRST(in) != e);
 
                 return APR_SUCCESS;
             }
@@ -635,12 +639,11 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
         }
         else if (off > 0) {
             /* prior (partial) strncmp failed, restart */
-            apr_bucket *f;
             do {
-                f = APR_BRIGADE_FIRST(in);
+                apr_bucket *f = APR_BRIGADE_FIRST(in);
                 APR_BUCKET_REMOVE(f);
                 APR_BRIGADE_INSERT_TAIL(out, f);
-            } while (e != f);
+            } while (e != APR_BRIGADE_FIRST(in));
             off = 0;
         }
 
@@ -689,7 +692,7 @@ static apr_status_t nextval(const char **line, const char *name,
         while (apr_isspace(*loc) && loc - *line > nlen)
             --loc;
 
-        loc -= nlen;
+        loc -= nlen - 1;
 
         if (strncasecmp(loc, name, nlen) != 0)
             return APR_NOTFOUND;
@@ -708,7 +711,7 @@ static apr_status_t nextval(const char **line, const char *name,
     while (apr_isspace(*loc) && loc - *line > nlen)
         --loc;
 
-    loc -= nlen;
+    loc -= nlen - 1;
 
     if (strncasecmp(loc, name, nlen) != 0)
         return APR_NOTFOUND;
@@ -720,7 +723,6 @@ static apr_status_t nextval(const char **line, const char *name,
         ++*val;
         in_quotes = 1;
     }
-    
     for(loc = *val; *loc; ++loc) {
         switch (*loc) {
         case ' ':
@@ -773,7 +775,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
         memcpy(ctx->bdry, CRLF "--", 4);
 
         s = nextval(&ct, "boundary", &bdry, &blen);
-        
+
         if (s != APR_SUCCESS)
             return s;
 
@@ -783,9 +785,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
         memcpy(ctx->bdry + 4, bdry, blen);
         ctx->bdry[4 + blen] = 0;
         ctx->pattern = apr_strmatch_precompile(pool,ctx->bdry,1);
-
-        APR_BRIGADE_INSERT_HEAD(bb,
-                  apr_bucket_immortal_create(crlf,2,bb->bucket_alloc));
+        ctx->hdr_parser = apreq_make_parser(pool,"",NULL,NULL,NULL);
 
         if (ctx->bb == NULL)
             ctx->bb = apr_brigade_create(pool, bb->bucket_alloc);
@@ -802,7 +802,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
     case MFD_INIT:
         {
             apr_status_t s;
-            s = split_on_bdry(pool, ctx->bb, bb, ctx->pattern, ctx->bdry);
+            s = split_on_bdry(pool, ctx->bb, bb, NULL, ctx->bdry + 2);
             if (s != APR_SUCCESS)
                 return s;
 
@@ -819,30 +819,32 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 
             parser->v.status = MFD_HEADER;
             apr_brigade_cleanup(ctx->bb);
-            ctx->t = NULL;
+            ctx->hdr_parser->out = NULL;
         }
         /* fall through */
 
     case MFD_HEADER:
         {
-            apreq_parser_t par = {0};
             apr_status_t s;
             const char *cd, *name, *filename;
             apr_size_t nlen, flen;
+            apreq_table_t *t;
 
-            if (ctx->t == NULL)
-                ctx->t = apreq_make_table(pool, APREQ_NELTS);
+            if (ctx->hdr_parser->out == NULL)
+                ctx->hdr_parser->out = apreq_make_table(pool, APREQ_NELTS);
 
-            par.out = (void *)ctx->t;
-            s = apreq_parse_headers(pool, bb, &par);
+            s = apreq_parse_headers(pool, bb, ctx->hdr_parser);
 
             if (s != APR_SUCCESS)
-                return s;
+                if (s == APR_EOF)
+                    return APR_SUCCESS;
+                else
+                    return s;
 
-            cd = apreq_table_get(ctx->t, "Content-Disposition");
+            t = ctx->hdr_parser->out;
+            cd = apreq_table_get(t, "Content-Disposition");
 
-            if (cd == NULL || 
-                nextval(&cd, "form-data", &name, &nlen) != APR_SUCCESS) {
+            if (cd == NULL) {
                 parser->v.status = MFD_ERROR;
                 return APR_BADARG;
             }
@@ -866,7 +868,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
             else {
                 apreq_param_t *param = apreq_make_param(pool, name, nlen, 
                                                         filename, flen);
-                param->info = ctx->t;
+                param->info = t;
                 param->bb = apr_brigade_create(pool, 
                                                apr_bucket_alloc_create(pool));
 
@@ -902,12 +904,12 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
                     parser->v.status = MFD_ERROR;
                     return s;
                 }
-
+                len = off;
                 param = apr_palloc(pool, len + sizeof *param);
                 param->charset = APREQ_CHARSET;
                 param->language = NULL;
                 param->bb = NULL;
-                param->info = ctx->t;
+                param->info = ctx->hdr_parser->out;
 
                 v = &param->v;
                 v->name = name;
@@ -915,7 +917,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
                 apr_brigade_flatten(ctx->bb, v->data, &len);
                 v->size = len;
                 v->data[v->size] = 0;
-
+                apreq_table_add(req->body, v);
                 parser->v.status = MFD_NEXTLINE;
                 goto mfd_parse_brigade;
 
@@ -938,7 +940,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 
             arr = apreq_table_elts(req->body);
             param = apreq_value_to_param(*(apreq_value_t **)
-                       (arr->elts + (arr->elt_size * arr->nelts-1)));
+                       (arr->elts + (arr->elt_size * (arr->nelts-1))));
 
             switch (s) {
 
@@ -960,7 +962,6 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
                 }
                 else
                     APR_BRIGADE_CONCAT(param->bb, ctx->bb);
-
                 parser->v.status = MFD_NEXTLINE;
                 goto mfd_parse_brigade;
 
