@@ -65,7 +65,12 @@ APACI, as the libapreq patch requires it. For example, if you're letting
 mod_perl's Makefile build Apache, configure it like this:
 
 % cd mod_perl-1.xx
-% perl Makefile.PL USE_APACI=1  EVERYTHING=1
+% perl Makefile.PL USE_APACI=1 EVERYTHING=1 APACI_ARGS="--without-execstrip"
+
+Be sure to pass the "--without-execstrip" argument to to the
+APACI_ARGS; this seems to be required to compile Apache with mod_perl
+on Mac OS X. If you compile Apache by hand, you'll need to pass the
+--without-execstrip option to its ./configure script.
 
 If you want to use Apache::Request and Apache::Cookie, you'll also need to
 remove the -lapreq linking flags within Request/Makefile.PL and
@@ -75,14 +80,11 @@ commands should do the trick:
 % perl -pi.bak -e 's/-lapreq//' Request/Makefile.PL Cookie/Makefile.PL
 
 And finally, the normal Perl build of libapreq should work. Note that you'll
-need libwwwperl and URI installed in order to run make test. Be sure to pass
-the "--without-execstrip" argument to to the APACI_ARGS; this seems to be
-required to compile Apache with mod_perl on Mac OS X.
+need libwwwperl and URI installed in order to run make test.
 
-% perl Makefile.PL APACI_ARGS="--without-execstrip"
+% perl Makefile.PL
 % make
 % make test
 % sudo make install
 
-If you compile Apache by hand, you'll need to pass the --without-execstrip
-option to its ./configure script. 
+
