@@ -6,7 +6,7 @@ use 5.005;
 my $Is_Win32 = ($^O eq "MSWin32") || $ENV{WIN32_TEST};
 
 my $conf_data = join '', <DATA>;
-$conf_data =~ s/(blib\/arch)/$FindBin::Bin\/$1/;
+$conf_data =~ s|(blib/arch)|$FindBin::Bin/$1|;
 
 if (not $Is_Win32) {
   eval {
