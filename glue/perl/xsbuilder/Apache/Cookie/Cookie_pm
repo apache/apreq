@@ -1,0 +1,49 @@
+use strict;
+use warnings FATAL => 'all';
+
+package Apache::Cookie::Jar;
+use base 'APR::Table';
+sub value_class { 'Apache::Cookie' }
+
+package Apache::Cookie;
+push our(@ISA), __PACKAGE__ -> env;
+
+use overload '"' => sub {${$_[0]}};
+sub status { ${$_[0]} + 0 }
+
+sub new {
+    my ($class, $env, %attrs) = @_;
+    my $name  = delete $attrs{name}  || delete $attrs{-name};
+    my $value = delete $attrs{value} || delete $attrs{-value};
+    return unless defined $name and defined $value;
+
+    my $cookie = $class->make($env, $class->freeze($name, $value));
+    $cookie->set_attr(%args);
+    return $cookie;
+}
+
+sub fetch {
+    my $self = shift;
+    my $jar = $self->jar(@_);
+    return wantarray ? map +($_->name, $_), $jar->get() : $jar;
+}
+
+sub freeze {
+    my ($class, $name, $value) = @_;
+    return ($name, url_encode($value)) if not ref $value;
+    return ($name, $value->freeze) if $value->can("freeze");
+    if ($value->isa("ARRAY")) {
+        return $name, join '&', map url_encode($_), @$value;
+    }
+    elsif ($value->isa("HASH")) {
+        return $name, join '&', map url_encode($_), %$value;
+    }
+    else {
+        die "Can't freeze '$value'";
+    }
+}
+
+sub thaw {
+    my $self = shift;
+    return $self->name, map url_decode($_), split /&/, $self;
+}
