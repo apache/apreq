@@ -654,6 +654,32 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
 }
 
 
+/*
+ * is_2616_token() is the verbatim definition from section 2.2
+ * in the rfc itself.  We try to optimize it around the
+ * expectation that the argument is not a token, which 
+ * should be the typical usage.
+ */
+
+static APR_INLINE
+unsigned is_2616_token(const char c) {
+    switch (c) {
+    case ' ': case ';': case ',': case '"': case '\t':
+        /* The chars we are expecting are listed above;
+           the chars below for are just for completeness. */
+    case '?': case '=': case '@': case ':': case '\\': case '/':
+    case '(': case ')':
+    case '<': case '>':
+    case '{': case '}':
+    case '[': case ']':
+        return 0;
+    default:
+        if (apr_iscntrl(c))
+            return 0;
+    }
+    return 1;
+}
+
 APREQ_DECLARE(apr_status_t)
     apreq_header_attribute(const char *hdr,
                            const char *name, const apr_size_t nlen,
@@ -661,7 +687,7 @@ APREQ_DECLARE(apr_status_t)
 {
     const char *key, *v;
 
-    /*Must ensure first char isn't '=', so we can safely backstep. */
+    /* Must ensure first char isn't '=', so we can safely backstep. */
     while (*hdr == '=')
         ++hdr;
 
@@ -680,55 +706,44 @@ APREQ_DECLARE(apr_status_t)
 
         if (*v == '"') {
             ++v;
-            /* value is inside quotes */
-            for (*val = v; *v; ++v) {
-                switch (*v) {
-                case '"':
-                    goto finish;
-                case '\\':
-                    if (v[1] != 0)
-                        ++v;
-                default:
-                    break;
-                }
+            *val = v;
+
+        look_for_end_quote:
+            switch (*v) {
+            case '"':
+                break;
+            case 0:
+                return APREQ_ERROR_BADSEQ;
+            case '\\':
+                if (v[1] != 0)
+                    ++v;
+            default:
+                ++v;
+                goto look_for_end_quote;
             }
-            /* bad token: no terminating quote found */
-            return APREQ_ERROR_BADTOKEN;
         }
         else {
-            /* value is not wrapped in quotes */
-            for (*val = v; *v; ++v) {
-                switch (*v) {
-                case ' ':
-                case ';':
-                case ',':
-                case '\t':
-                case '\r':
-                case '\n':
-                    goto finish;
-                default:
-                    break;
-                }
+            *val = v; 
+
+        look_for_terminator:
+            switch (*v) {
+            case 0:
+            case ' ':
+            case ';':
+            case ',':
+            case '\t':
+            case '\r':
+            case '\n':
+                break;
+            default:
+                ++v;
+                goto look_for_terminator;
             }
         }
 
- finish:
         if (strncasecmp(key, name, nlen) == 0) {
             *vlen = v - *val;
-            if (key > hdr) {
-                /* ensure preceding character isn't a token, per rfc2616, s2.2 */
-                switch (key[-1]) {
-                case '(': case ')': case '<': case '>': case '@':
-                case ',': case ';': case ':': case '\\': case '"':
-                case '/': case '[': case ']': case '?': case '=':
-                case '{': case '}': case ' ': case '\t':
-                    return APR_SUCCESS;
-                default:
-                    if (apr_iscntrl(key[-1]))
-                        return APR_SUCCESS;
-                }
-            }
-            else
+            if (key == hdr || ! is_2616_token(key[-1]))
                 return APR_SUCCESS;
         }
         hdr = v;
