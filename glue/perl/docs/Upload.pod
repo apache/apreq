@@ -2,6 +2,9 @@
 
 Apache::Upload - Methods for dealing with file uploads.
 
+=for testing
+ok 1;
+
 =for future testing
     use Apache2;
     use APR::Pool;
@@ -10,6 +13,9 @@ Apache::Upload - Methods for dealing with file uploads.
     $req = Apache::Request->new($r);
     $upload = Apache::Upload->new($r, name => "foo", value => __FILE__);
     $req->body->add($upload);
+
+
+
 
 =head1 SYNOPSIS
 
@@ -23,50 +29,115 @@ Apache::Upload - Methods for dealing with file uploads.
     my $fh = $upload->fh;
     print while <$fh>;
 
+
+
+
 =head1 DESCRIPTION
 
+Apache::Upload is a new module based on the original package included
+in Apache::Request 1.X.  Users requiring the upload API must now 
+C<use Apache::Upload>, which adds the C<upload> method to Apache::Request.
+Apache::Upload is largely backwards-compatible with the original 1.X API.
+See the L<PORTING from 1.X> section below for a list of known issues.
 
-=head1 Apache::Upload METHODS
+This manpage documents the Apache::Upload and Apache::Upload::Brigade packages.  
+Apache::Upload::Table and Apache::Upload::Error are also provided by this module, 
+but are documented elsewhere.  For a list of related manpages, read the L<SEE ALSO> 
+section below.
+
+
+
+
+=head1 Apache::Upload
+
+
+
 
 =head2 name
 
-The name of the filefield parameter:
+    $upload->name()
+
+The name of the HTML form element which generated the upload.
 
     my $name = $upload->name;
 
+
+
+
 =head2 filename
+
+    $upload->filename()
 
 The filename of the uploaded file:
 
     my $filename = $upload->filename;
 
-=head2 C<fh>
 
-Create an I<APR::PerlIO> filehandle from which the upload's contents 
-may be read.
 
-=head2 C<io>
 
-Creates a tied IO handle.  This method is much more efficient 
-than C<fh>, but the handle itself is not seekable.  The handle
-is tied to an Apache::Upload::Brigade object, which is a subclass
-of APR::Brigade.  Use the brigade API on the tied object if you
-want to manipulate the IO stream beyond simply reading from it.
+=head2 fh
 
-=head2 C<bb([$new_brigade])>
+    $upload->fh()
+
+Creates filehandle reference to the upload's spooled tempfile,
+which contains the full contents of the upload.
+
+
+
+
+=head2 io
+
+    $upload->io()
+
+Creates a tied IO handle.  This method is a more efficient version 
+of C<fh>, but with C<io> the handle ref returned is not seekable.  
+It is tied to an Apache::Upload::Brigade object, so you may use the 
+brigade API on the tied object if you want to manipulate the IO stream 
+(beyond simply reading from it).
+
+The returned reference is actually an object which has C<read> and 
+C<readline> methods available.  However these methods are just 
+syntactic sugar for the underlying C<READ> and C<READLINE> methods from 
+Apache::Upload::Brigade.  
+
+    $io = $upload->io;
+    print while $io->read($_); # equivalent to: tied(*$io)->READ($_)
+
+
+See L<READ|read> and L<READLINE|readline> below for additional notes 
+on their usage.
+
+
+
+=head2 bb
+
+    $upload->bb()
+    $upload->bb($set)
 
 Returns an I<APR::Brigade> which represents the upload's contents.
 Passing an optional I<APR::Brigade> argument will reassign the 
 brigade, which effectively replaces the original contents of the 
 upload.
 
-=head2 C<size()>
+
+
+
+=head2 size
+
+    $upload->size()
+
 
 The size of the upload in bytes:
 
     my $size = $upload->size;
 
-=head2 C<info([$table])>
+
+
+
+=head2 info
+
+    $upload->info()
+    $upload->info($set)
 
 The additional header information for the uploaded file.
 Returns a hash reference tied to the I<APR::Table> class.
@@ -87,7 +158,12 @@ Examples:
     #reassign table
     $upload->info($apr_table_object);
 
-=head2 C<type()>
+
+
+
+=head2 type
+
+    $upload->type()
 
 Returns the MIME type of the given I<Apache::Upload> object.
 
@@ -97,7 +173,12 @@ Returns the MIME type of the given I<Apache::Upload> object.
     my $type = $upload->info->{"Content-Type"};
     $type =~ s/;.*$//ms;
 
-=head2 C<link()>
+
+
+
+=head2 link
+
+    $upload->link()
 
 To avoid recopying the upload's internal tempfile brigade on a 
 *nix-like system, I<link> will create a hard link to it:
@@ -111,7 +192,13 @@ as the brigade's tempfile.  If this or any other reason prevents
 the OS from linking the files, C<link()> will instead 
 copy the temporary file to the specified location.
 
-=head2 C<slurp($contents)>
+
+
+
+=head2 slurp
+
+    $upload->slurp($contents)
+
 
 Reads the full contents of a file upload into the scalar argument.
 The return value is the length of the file.
@@ -120,14 +207,86 @@ The return value is the length of the file.
   $upload->slurp(my $contents);
   print $contents; 
 
-=head2 C<tempname()>
+
+
+
+=head2 tempname
+
+    $upload->tempname()
 
 Provides the name of the spool file.
 
-=head1 API CHANGES from v1.X to v2.X
 
-C<info($header)> is replaced by C<info($table)>.
-C<type()> returns only the MIME-type portion of the Content-Type header.
+
+
+=head1 Apache::Upload::Brigade
+
+
+This class is derived from APR::Brigade, providing additional
+methods for TIEHANDLE, READ and READLINE.  To be memory efficient,
+these methods delete buckets from the brigade as soon as their 
+data is actually read, so you cannot C<seek> on handles tied to
+this class.  Such handles have semantics similar to that of a 
+read-only socket.
+
+
+
+=head2 TIEHANDLE
+
+    Apache::Upload::Brigade->TIEHANDLE($bb)
+
+Creates a copy of the bucket brigade represented by $bb, and
+blesses that copy into the Apache::Upload::Brigade class.  This
+provides syntactic sugar for using perl's builtin C<read>, C<readline>,
+and C<< <> >> operations on handles tied to this package:
+
+    use Symbol;
+    $fh = gensym;
+    tie *$fh, "Apache::Upload:Brigade", $bb;
+    print while <$fh>;
+
+
+
+
+=head2 READ
+
+    $bb->READ($contents)
+    $bb->READ($contents, $length)
+    $bb->READ($contents, $length, $offset)
+
+Reads data from the brigade $bb into $contents.  When omitted
+$length defaults to C<-1>, which reads the first bucket into $contents.  
+A positive $length will read in $length bytes, or the remainder of the 
+brigade, whichever is greater. $offset represents the index in $context 
+to read the new data.
+
+
+
+
+=head2 READLINE
+
+    $bb->READLINE()
+
+Returns the first line of data from the bride. Lines are terminated by
+linefeeds (the '\012' character), but we may eventually use C<$/> instead.
+
+
+
+
+
+
+=head1 PORTING from 1.X
+
+=over 4
+
+=item * C<info($header)> is replaced by C<info($table)>.
+
+=item * C<type()> returns only the MIME-type portion of the Content-Type header.
+
+=back
+
+
+
 
 =head1 SEE ALSO
 
@@ -135,9 +294,19 @@ L<Apache::Cookie>, L<Apache::Upload>, L<APR::Table>
 
 
 
-=head1 MISSING DOCS
 
- Apache::Upload::Table.
+=head1 COPYRIGHT
 
-=for testing
-ok 1;
+  Copyright 2003-2004  The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
