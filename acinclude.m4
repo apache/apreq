@@ -114,12 +114,12 @@ AC_DEFUN([AC_APREQ], [
         APREQ_MAJOR_VERSION=`$get_version major $version_hdr APREQ`
         APREQ_DOTTED_VERSION=`$get_version all $version_hdr APREQ`
 
-        echo "libapreq Version: $APREQ_DOTTED_VERSION"
-
         APREQ_LIBNAME="apreq$APREQ_MAJOR_VERSION"
         APREQ_INCLUDES=""
         APREQ_LDFLAGS=""
         APREQ_EXPORT_LIBS=""
+
+        echo "lib$APREQ_LIBNAME Version: $APREQ_DOTTED_VERSION"
 
         AC_SUBST(APREQ_LIBNAME)
         AC_SUBST(APREQ_LDFLAGS)

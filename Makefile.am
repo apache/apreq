@@ -32,7 +32,7 @@ release_test:
 	-rm -rf $(distdir)
 	tar xzvf $(distdir).tar.gz
 	@cd $(distdir); @PERL@ -M$(EUM) -e "die 'Bogus MANIFEST' if $(EUM)::manicheck"
-	@cd $(distdir); @PERL@ Makefile.PL -apxs @APACHE2_APXS@ && make test
+	@cd $(distdir); @PERL@ Makefile.PL -apxs @APACHE2_APXS@ && $(MAKE) test
 	rm -rf $(distdir)
 	@echo "$(distdir).tar.gz is kosher."
 
@@ -73,27 +73,27 @@ docs/apr.tag:
 test: lib_test env_test $(PERL_TEST)
 
 env_test:
-	cd env; make test
+	cd env; $(MAKE) test
 
 lib_test: check
 	t/testall -v
 
 perl_install:
-	cd glue/perl; make install
+	cd glue/perl; $(MAKE) install
 
 perl_test:
-	cd glue/perl; make test
+	cd glue/perl; $(MAKE) test
 
 perl_glue:
 	cd glue/perl; @PERL@ ../../build/xsbuilder.pl run
 	cd glue/perl; @PERL@ Makefile.PL -apxs @APACHE2_APXS@
-	cd glue/perl; make
+	cd glue/perl; $(MAKE)
 
 if BUILD_HTTPD
 
 install-exec-local: httpd_install
 
 httpd_install:
-	cd @APACHE2_SRC@; make install
+	cd @APACHE2_SRC@; $(MAKE) install
 
 endif
