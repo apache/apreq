@@ -1,16 +1,13 @@
 use APR::Table;
 use APR::Bucket;
 use APR::Brigade;
-use APR::PerlIO;
 use APR::Error;
 use Apache::Request;
 
 package Apache::Upload;
 sub fh {
-    my $upload = shift;
-    my $fh = do {local *FH};
-    tie *$fh, "Apache::Upload::Brigade", $upload->bb;
-    return $fh;
+    tie local (*FH), "Apache::Upload::Brigade", shift->bb;
+    return *FH{IO};
 }
 
 package Apache::Upload::Error;
