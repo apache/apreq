@@ -88,14 +88,12 @@ LINK32_OBJS= \
 	"$(INTDIR)\CuTest.obj" \
 	"$(INTDIR)\env.obj" \
 	"$(INTDIR)\params.obj" \
-	"$(INTDIR)\tables.obj" \
 	"$(INTDIR)\testall.obj" \
 	"$(OUTDIR)\libapreq.lib" \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib" \
 	"$(APACHE)\lib\libhttpd.lib" \
-	"$(INTDIR)\parsers.obj" \
-	"$(INTDIR)\performance.obj"
+        "$(INTDIR)\parsers.obj"
 
 "$(OUTDIR)\testall.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -152,14 +150,12 @@ LINK32_OBJS= \
 	"$(INTDIR)\CuTest.obj" \
 	"$(INTDIR)\env.obj" \
 	"$(INTDIR)\params.obj" \
-	"$(INTDIR)\tables.obj" \
 	"$(INTDIR)\testall.obj" \
 	"$(OUTDIR)\libapreq.lib" \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib" \
 	"$(APACHE)\lib\libhttpd.lib" \
-	"$(INTDIR)\parsers.obj" \
-	"$(INTDIR)\performance.obj"
+        "$(INTDIR)\parsers.obj" 
 
 "$(OUTDIR)\testall.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -197,18 +193,6 @@ SOURCE=..\t\params.c
 SOURCE=..\t\parsers.c
 
 "$(INTDIR)\parsers.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-SOURCE=..\t\performance.c
-
-"$(INTDIR)\performance.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-SOURCE=..\t\tables.c
-
-"$(INTDIR)\tables.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
