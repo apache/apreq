@@ -106,17 +106,18 @@ APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
                                                   apreq_hook_t *hook,
                                                   void *ctx)
 {
-    apreq_parser_t *p = apr_palloc(pool, APREQ_CTX_MAXSIZE + sizeof *p);
+    apreq_parser_t *p = apr_palloc(pool, sizeof *p);
     p->content_type = apr_pstrdup(pool,type);
     p->parser = parser;
     p->hook = hook;
     p->ctx = ctx;
     return p;
 }
+
 APREQ_DECLARE(apreq_hook_t *) apreq_make_hook(apr_pool_t *pool,
-                                                APREQ_DECLARE_HOOK(*hook),
-                                                apreq_hook_t *next,
-                                                void *ctx)
+                                              APREQ_DECLARE_HOOK(*hook),
+                                              apreq_hook_t *next,
+                                              void *ctx)
 {
     apreq_hook_t *h = apr_palloc(pool, sizeof *h);
     h->hook = hook;

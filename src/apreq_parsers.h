@@ -98,9 +98,8 @@ typedef struct apreq_cfg_t {
                                        const apreq_cfg_t *cfg,       \
                                        apr_bucket_brigade *bb)
 
-#define APREQ_CTX_MAXSIZE  128
-#define apreq_run_parser(psr,cfg,t,bb) psr->parser(psr,cfg,t,bb)
-#define apreq_run_hook(h,pool,cfg,bb) h->hook(h,pool,cfg,bb)
+#define apreq_run_parser(psr,cfg,t,bb) (psr)->parser(psr,cfg,t,bb)
+#define apreq_run_hook(h,pool,cfg,bb) (h)->hook(h,pool,cfg,bb)
 
 typedef struct apreq_hook_t apreq_hook_t;
 typedef struct apreq_parser_t apreq_parser_t;
