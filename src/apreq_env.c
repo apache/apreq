@@ -187,9 +187,9 @@ static apr_status_t cgi_header_out(void *env, const char *name,
     dP;
     apr_file_t *out;
     int bytes;
-    apr_file_open_stdout(&out, p);
+    apr_status_t s = apr_file_open_stdout(&out, p);
+    apreq_log(APREQ_DEBUG s, p, "Setting header: %s => %s", name, value);
     bytes = apr_file_printf(out, "%s: %s" CRLF, name, value);
-    apreq_log(APREQ_DEBUG 0, p, "Setting header: %s => %s", name, value);
     return bytes > 0 ? APR_SUCCESS : APR_EGENERAL;
 }
 
@@ -228,6 +228,7 @@ static void cgi_log(const char *file, int line, int level,
     apr_file_open_stderr(&err, p);
     apr_file_printf(err, "[%s(%d): %s] %s\n", file, line, 
             apr_strerror(status,buf,255),apr_pvsprintf(p,fmt,vp));
+    apr_file_flush(err);
 }
 
 static apr_status_t cgi_read(void *env, 
