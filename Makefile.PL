@@ -1,5 +1,6 @@
 use ExtUtils::MakeMaker;
 use strict;
+use 5.005;
 
 my $myVERSION = MM->parse_version('Request/Request.pm');
 $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
