@@ -41,7 +41,7 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
    Commit the changes and tag the tree (tr/0-9a-zA-Z/_/c in the 
    version number)
 
-        % cvs commit -m "2.XX-dev released." STATUS
+        % cvs commit -m "2.XX-dev released." STATUS CHANGES
         % cvs tag v2_XX_dev
 
 6. Regenerate the release 

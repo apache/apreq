@@ -95,8 +95,11 @@ APREQ_XS_DEFINE_GET(table,   PARAM_TABLE, param, NULL, 1);
 static int apreq_xs_upload_table_keys(void *data, const char *key,
                                       const char *val)
 {
+#ifdef USE_ITHREADS
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
     dTHXa(d->perl);
+#endif
+
     dSP;
 
     if (key) {

@@ -264,8 +264,11 @@ struct apreq_xs_do_arg {
 static int apreq_xs_table_keys(void *data, const char *key,
                                const char *val)
 {
+#ifdef USE_ITHREADS
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
     dTHXa(d->perl);
+#endif
+
     dSP;
 
     if (key)
