@@ -39,9 +39,12 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s)
     while (apr_isspace(*p))
         ++p;
 
-    switch (apr_tolower(*p)) {
+    switch (*p) {
+      case 'G': /* fall thru */
       case 'g': return n * 1024*1024*1024;
+      case 'M': /* fall thru */
       case 'm': return n * 1024*1024;
+      case 'K': /* fall thru */
       case 'k': return n * 1024;
     }
 
@@ -428,9 +431,6 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
 
     rv = apr_palloc(p, len);
 
-    if (n == 0)
-        return rv;
-
     /* Pass two --- copy the argument strings into the result space */
 
     d = rv;
@@ -510,7 +510,7 @@ static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v,
     if (s != APR_SUCCESS)
         return s;
 
-    while (--n >= 0)
+    while (--n >= 0 && bytes_avail <= len)
         bytes_avail += v[n].iov_len;
 
 
@@ -525,11 +525,8 @@ static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v,
         v[n].iov_base = (char *)(v[n].iov_base) + len;
 
         if (n > 0) {
-            struct iovec *dest = v;
-            do {
-                *dest++ = v[n++];
-            }  while (n < *nelts);
-            *nelts = dest - v;
+            (*nelts) -= n;
+            memmove(v, v + n, sizeof(*v) * *nelts);
         }
         else {
             s = apreq_fwritev(f, v, nelts, &len);

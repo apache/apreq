@@ -102,7 +102,7 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
     *(const apreq_value_t **)&v = &p->v;
 
     if (vlen > 0) {
-        status = apreq_decode(v->data, &vlen, word + nlen + 1, vlen);
+        status = apreq_decode(v->data, &v->dlen, word + nlen + 1, vlen);
         if (status != APR_SUCCESS) {
             *param = NULL;
             return status;
@@ -113,13 +113,12 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
     }
     v->name = v->data + vlen + 1;
 
-    status = apreq_decode(v->name, &nlen, word, nlen);
+    status = apreq_decode(v->name, &v->nlen, word, nlen);
     if (status != APR_SUCCESS) {
         *param = NULL;
         return status;
     }
-    v->nlen = nlen;
-    v->dlen = vlen;
+
     *param = p;
 
     return APR_SUCCESS;
