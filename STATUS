@@ -28,7 +28,8 @@ CURRENT RELEASE NOTES:
 RELEASE SHOWSTOPPERS:
 
      - The api docs and perl glue are currently broken.
-     - Remove all "_env" tags, perhaps moving apreq_env.h to apreq_handle.h.
+     - Remove all "_env" tags, perhaps moving apreq_env.h to apreq_handle.h,
+       or renaming it to apreq.h and moving the original to apreq_common.h.
      - Improve the APREQ_ERROR related code.
      - Improve the custom & cgi module code.
 
