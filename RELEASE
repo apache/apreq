@@ -1,0 +1,63 @@
+Instructions for httpd-apreq Release Manager (RM)
+
+1. Prep the package for CPAN by running:
+
+        % sh BUILD.sh
+        % perl Makefile.PL
+        % make dist
+
+   This will generate a libapreq-1.X.tar.gz candidate in the 
+   current directory.   You should keep this source tree
+   intact to generate the final release.
+
+2. Test the generated file's './configure ...' build and
+   'perl Makefile.PL ...' build. Make sure all perl tests pass.
+
+3. Upload a release candidate to httpd.apache.org/~username
+   and post a candidate announcement to apreq-dev@.
+
+4. Give the apreq-dev@ participants 48 hours to comment on
+   the candidate.  If there's no problems, proceed to the next
+   step.  Otherwise, try to address the issues, commit fixes to,
+   cvs, and start over.  You can repeat this process on the 
+   modperl@ list, but that choice is up to the RM.
+
+5. The candidate is ok. Now return to the original source tree
+   and edit ./Changes:
+
+   =item 1.X - <Today's Date>
+
+   libapreq-1.X released.
+
+6.  Tag the tree, s/./_/g in the version number, and roll the release.
+
+    % cvs tag v1_X
+    % make dist
+
+7. Test the release package, repeating step 2.  If all tests pass,
+   sign and (optionally) md5sum it:
+
+    % gpg --detach-sign --armor libapreq-1.X.tar.gz
+    % md5sum libapreq-1.X.tar.gz > libapreq-1.X.tar.gz.md5
+
+8. Upload (scp) the package, signature, and md5 checksum to www.apache.org
+   for distribution:
+
+    % scp libapreq-1.X.tar.gz* \
+      <username>@www.apache.org:/www/httpd.apache.org/dist/httpd/libapreq/
+
+   Get another developer to confirm the uploaded package signatures
+   and md5 checksums are ok.
+
+    % gpg --verify libapreq-1.X.tar.gz.asc
+    % md5sum --check libapreq.1.X.tar.gz.md5
+
+9. Upload the package to CPAN. Doublecheck that the md5 checksum
+   received from PAUSE is correct.
+
+10. Post announcement to modperl@ and apreq-dev@ list:
+
+        Subject: [ANNOUNCE] libapreq 1.X release
+
+    Include the md5 signature in the announcement, as well as
+    a list of the latest Changes (since the previous release).
