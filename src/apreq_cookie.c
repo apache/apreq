@@ -18,6 +18,7 @@
 #include "apreq_env.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
+#include "apr_date.h"
 
 #define RFC      APREQ_COOKIE_VERSION_RFC
 #define NETSCAPE APREQ_COOKIE_VERSION_NETSCAPE
@@ -49,8 +50,11 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
 
     if (!strcasecmp(time_str, "now"))
         c->max_age = 0;
-    else
-        c->max_age = apr_time_from_sec(apreq_atoi64t(time_str));
+    else {
+        c->max_age = apr_date_parse_rfc(time_str);
+        if (c->max_age == APR_DATE_BAD)
+            c->max_age = apr_time_from_sec(apreq_atoi64t(time_str));
+    }
 }
 
 static int has_rfc_cookie(void *ctx, const char *key, const char *val)
