@@ -1,3 +1,6 @@
+#ifndef _APACHE_COOKIE_H
+#define _APACHE_COOKIE_H
+
 #include "apache_request.h"
 
 typedef array_header ApacheCookieJar;
@@ -50,3 +53,5 @@ void ApacheCookie_bake(ApacheCookie *c);
 #endif
 
 #define APC_ERROR APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, c->r
+
+#endif

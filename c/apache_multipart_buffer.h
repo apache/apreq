@@ -1,3 +1,6 @@
+#ifndef _APACHE_MULTIPART_BUFFER_H
+#define _APACHE_MULTIPART_BUFFER_H
+
 #include "apache_request.h"
 
 /*#define DEBUG 1*/
@@ -27,3 +30,5 @@ table *multipart_buffer_headers(multipart_buffer *self);
 int multipart_buffer_read(multipart_buffer *self, char *buf, int bytes);
 char *multipart_buffer_read_body(multipart_buffer *self); 
 int multipart_buffer_eof(multipart_buffer *self);
+
+#endif
