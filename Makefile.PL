@@ -137,7 +137,7 @@ sub win32_setup {
   require Win32;
   my $apache;
  SEARCH: {
-    for my $drive ('C'..'G') {
+    for my $drive ('C' .. 'Z') {
       for my $p ('Apache', 'Program Files/Apache', 
 		 'Program Files/Apache Group/Apache') {
 	if (-e "$drive:/$p/Apache.exe") {
