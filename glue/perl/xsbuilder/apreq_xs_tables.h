@@ -90,11 +90,11 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, const char *name, I32 nlen,
 
 
 #define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
-#define apreq_xs_table2sv(t,class,parent,name,tainted)          \
-     apreq_xs_table_c2perl(aTHX_ t, name, name ? strlen(name) : 0, class, parent, tainted)
+#define apreq_xs_table2sv(t,class,parent,name,nlen,tainted)          \
+     apreq_xs_table_c2perl(aTHX_ t, name, nlen, class, parent, tainted)
 
 
-#define APREQ_XS_DEFINE_TABLE_MAKE(attr,pkg)                            \
+#define APREQ_XS_DEFINE_TABLE_MAKE(attr,pkg, plen)                      \
 static XS(apreq_xs_table_##attr##_make)                                 \
 {                                                                       \
                                                                         \
@@ -112,7 +112,7 @@ static XS(apreq_xs_table_##attr##_make)                                 \
     parent = SvRV(ST(1));                                               \
     env = (void *)SvIVX(parent);                                        \
     t = apr_table_make(apreq_env_pool(env), APREQ_NELTS);               \
-    sv = apreq_xs_table2sv(t, class, parent, pkg, SvTAINTED(parent));   \
+    sv = apreq_xs_table2sv(t, class, parent, pkg, plen, SvTAINTED(parent));   \
     XSprePUSH;                                                          \
     PUSHs(sv);                                                          \
     XSRETURN(1);                                                        \
@@ -290,7 +290,7 @@ static XS(apreq_xs_##attr##_get)                                        \
             apr_table_t *t = apreq_xs_##attr##_sv2table(obj);           \
             if (t != NULL) {                                            \
                 SV *tsv = apreq_xs_table2sv(t, class, d.parent,         \
-                                            d.pkg, d.tainted);          \
+                          d.pkg, d.pkg ? strlen(d.pkg) : 0, d.tainted); \
                 PUSHs(sv_2mortal(tsv));                                 \
             }                                                           \
             PUTBACK;                                                    \
