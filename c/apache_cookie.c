@@ -161,6 +161,7 @@ ApacheCookieJar *ApacheCookie_parse(request_rec *r, const char *data)
 	    ++data;
 	}
 	key = ap_getword(r->pool, &pair, '=');
+	ap_unescape_url((char *)key);
 	c = ApacheCookie_new(r, "-name", key, NULL);
 	if (c->values) {
 	    c->values->nelts = 0;
