@@ -52,8 +52,8 @@
  * <http://www.apache.org/>.
  */
 
-#ifndef APR_TEST_INCLUDES
-#define APR_TEST_INCLUDES
+#ifndef APREQ_TEST_INCLUDES
+#define APREQ_TEST_INCLUDES
 
 #include "CuTest.h"
 #include "apr_pools.h"

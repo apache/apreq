@@ -427,43 +427,46 @@ static int combine(apreq_table_cmp_t *cmp,
                    apreq_table_entry_t *o, int a, 
                    int b, const int n)
 {
-    int left = b[o+n].tree[LEFT];
-    int right = b[o+n].tree[RIGHT];
-    int next;
+    int left, right, next;
 
     if (b < 0)
         return a;
 
-    for( next = b+n; next[o].tree[NEXT] >= 0; next = next[o].tree[NEXT])
+    b += n;
+
+    left = b[o].tree[LEFT];
+    right = b[o].tree[RIGHT];
+
+    for(next = b; next[o].tree[NEXT] >= 0; next = next[o].tree[NEXT])
         next[o].tree[NEXT] += n;
 
     if (a >= 0) {
         int rv = a;
         int parent = a[o].tree[PARENT];
         if (parent >= 0) {
-            parent[o].tree[LR(a)] = b+n;
+            parent[o].tree[LR(a)] = b;
             a[o].tree[PARENT] = -1;
         }
 
-        if (insert(cmp,o,&a,a,b+o+n, TREE_PUSH) < 0)
-            rv = b + n;
+        if (insert(cmp,o,&a,a,b+o, TREE_PUSH) < 0)
+            rv = b;
 
-        if (b[o+n].tree[PARENT] >= 0)
-            PROMOTE(o,&a,b+n);
+        if (b[o].tree[PARENT] >= 0)
+            PROMOTE(o,&a,b);
 
-        b[o+n].tree[PARENT] = parent;
-        b[o+n].tree[LEFT]  = combine(cmp, o, b[o+n].tree[LEFT],  left,  n);
-        b[o+n].tree[RIGHT] = combine(cmp, o, b[o+n].tree[RIGHT], right, n);
+        b[o].tree[PARENT] = parent;
+        b[o].tree[LEFT]  = combine(cmp, o, b[o].tree[LEFT],  left,  n);
+        b[o].tree[RIGHT] = combine(cmp, o, b[o].tree[RIGHT], right, n);
 
         return rv;
     }
     else {
-        if (b[o+n].tree[PARENT] >= 0)
-            b[o+n].tree[PARENT] += n;
-        b[o+n].tree[LEFT]  = combine(cmp, o, -1,  left,  n);
-        b[o+n].tree[RIGHT] = combine(cmp, o, -1, right, n);
+        if (b[o].tree[PARENT] >= 0)
+            b[o].tree[PARENT] += n;
+        b[o].tree[LEFT]  = combine(cmp, o, -1,  left, n);
+        b[o].tree[RIGHT] = combine(cmp, o, -1, right, n);
 
-        return b + n;
+        return b;
     }
 
 }

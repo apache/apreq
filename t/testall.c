@@ -55,7 +55,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "test_apr.h"
+#include "test_apreq.h"
 
 /* Top-level pool which can be used by tests. */
 apr_pool_t *p;
