@@ -97,8 +97,11 @@ typedef struct {
 #ifdef PerlIO
 typedef PerlIO * InputStream;
 
-#ifndef PerlIO_importFILE
-#define PerlIO_importFILE(fp,flags)	(PerlIO*)fp
+/* XXX: or should this be #ifdef PERL_IMPLICIT_SYS ? */
+#ifdef WIN32
+#   ifndef PerlIO_importFILE
+#      define PerlIO_importFILE(fp,flags)	(PerlIO*)fp
+#   endif
 #endif
 
 #ifdef SFIO
