@@ -33,6 +33,12 @@ NULL=
 NULL=nul
 !ENDIF 
 
+OUTDIR=.\libs
+INTDIR=.\libs
+# Begin Custom Macros
+OutDir=.\libs
+# End Custom Macros
+
 !IF  "$(CFG)" == "testall - Win32 Release"
 ALL : "$(OUTDIR)\testall.exe"
 
