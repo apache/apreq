@@ -185,6 +185,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
  * @param bb  Brigade to parse. See remarks below.
  * @return    APR_INCOMPLETE if the parse is incomplete,
  *            APR_SUCCESS if the parser is finished (saw eos),
+ *            APR_ENOTIMPL if no parser is available for this request
+ *                         (i.e. unrecognized Content-Type header),
  *            unrecoverable error value otherwise.
  */
 

@@ -282,11 +282,11 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
 APREQ_DECLARE(apr_status_t) apreq_parse_request(apreq_request_t *req, 
                                                 apr_bucket_brigade *bb)
 {
-    if (req->parser == NULL)
+    if (req->parser == NULL) {
         req->parser = apreq_parser(req->env,NULL);
-    if (req->parser == NULL)
-        return APR_EINIT;
-
+        if (req->parser == NULL)
+            return APR_ENOTIMPL;
+    }
     if (req->body == NULL)
         req->body = apr_table_make(apreq_env_pool(req->env),APREQ_NELTS);
 
