@@ -4,7 +4,7 @@ Revision history for libapreq
 
 =item 1.12 - February 27, 2003
 
-Applied Tatsuhiko Miyagawa's patch for handling %uXXXX strings.
+Applied IKEBE Tomohiro's patch for handling %uXXXX strings.
 
 =item 1.11 - February 27, 2003
 
