@@ -93,6 +93,15 @@ static XS(apreq_xs_request_config)
         else if (strcasecmp(attr, "MAX_BRIGADE") == 0) {
             apreq_env_max_brigade(req->env, (apr_ssize_t)apreq_atoi64f(val));
         }
+        else if (strcasecmp(attr, "DISABLE_UPLOADS") == 0) {
+            ;
+        }
+        else if (strcasecmp(attr, "UPLOAD_HOOK") == 0) {
+            ;
+        }
+        else if (strcasecmp(attr, "HOOK_DATA") == 0) {
+            ;
+        }
         else {
             Perl_warn(aTHX_ "Apache::Request::config: "
                       "Unrecognized attribute %s", attr);

@@ -2,11 +2,17 @@
 const apr_size_t | UV
 apr_size_t | UV
 struct SV  | SV
+apr_status_t | IV
+const char *  | PV
+char * | PV
+void | VOID
+void * | PTR
+const void * | PTR
 
 #data structure stuff
-struct apr_pool_t           | APR::Pool
+struct apr_pool_t           | APR::Pool | T_POOLOBJ
 struct apr_array_header_t   | APR::ArrayHeader
-struct apr_table_t          | APR::Table
+struct apr_table_t          | APR::Table | T_HASHOBJ
 struct apr_bucket_brigade   | APR::Brigade
 #apr_table_entry_t           | APR::TableEntry
 #struct apr_hash_t           | APR::Hash

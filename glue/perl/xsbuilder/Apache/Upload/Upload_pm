@@ -3,6 +3,7 @@ use APR::Table;
 use APR::Bucket;
 use APR::Brigade;
 use APR::PerlIO;
+use Apache::Request;
 
 package Apache::Upload::Table;
 push our(@ISA), "APR::Table";

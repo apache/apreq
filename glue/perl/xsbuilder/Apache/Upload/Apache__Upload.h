@@ -18,6 +18,10 @@
 /* avoid namespace collisions from perl's XSUB.h */
 #include "modperl_perl_unembed.h"
 
+/* XXX modperl_* dependency for T_HASHOBJ support */
+#include "modperl_common_util.h"
+
+
 /* Temporary work-around for missing apr_perlio.h file.
  * #include "apr_perlio.h" 
  */
@@ -141,6 +145,7 @@ APREQ_XS_DEFINE_GET(upload, UPLOAD_TABLE, param, UPLOAD_PKG, RETVAL->bb);
 APREQ_XS_DEFINE_GET(upload_table, UPLOAD_TABLE, param, UPLOAD_PKG, 1);
 APREQ_XS_DEFINE_ENV(upload);
 
+
 APR_INLINE
 static XS(apreq_xs_upload_link)
 {
@@ -257,6 +262,29 @@ static XS(apreq_xs_upload_size)
         Perl_croak(aTHX_ "$upload->size: can't get brigade length");
     }
     XSRETURN_IV((IV)len);
+}
+static XS(apreq_xs_upload_type)
+{
+    dXSARGS;
+    apreq_param_t *upload;
+    const char *ct, *sc;
+    STRLEN len;
+
+    if (items != 1 || !SvROK(ST(0)))
+        Perl_croak(aTHX_ "Usage: $upload->type()");
+
+    upload = apreq_xs_sv2param(ST(0));
+    ct = apr_table_get(upload->info, "Content-Type");
+    if (ct == NULL)
+        Perl_croak(aTHX_ "$upload->type: can't find Content-Type header");
+    
+    if ((sc = strchr(ct, ';')))
+        len = sc - ct;
+    else
+        len = strlen(ct);
+
+    ST(0) = sv_2mortal(newSVpvn(ct,len));
+    XSRETURN(1);
 }
 
 static APR_OPTIONAL_FN_TYPE(apr_perlio_apr_file_to_glob) *f2g;

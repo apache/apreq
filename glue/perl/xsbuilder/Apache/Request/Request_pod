@@ -31,7 +31,7 @@ and are therefore parsed using case-insensitive keys.
 
 =back
 
-=head2 new  
+=head2 C<new>  
 
 creates a new C<Apache::Request> object with an environment object $r:
 
@@ -44,18 +44,18 @@ The following attributes are optional:
 
 =over 4
 
-=item POST_MAX, MAX_BODY
+=item C<POST_MAX>, C<MAX_BODY>
 
 Limit the size of POST data (in bytes).
 
-=item DISABLE_UPLOADS [TODO]
+=item C<DISABLE_UPLOADS> [TODO]
 
 Disable file uploads.
 
-=item TEMP_DIR
+=item C<TEMP_DIR>
 
 Sets the directory where upload files are spooled.  On a *nix-like
-that supports link(2), the TEMP_DIR should be located on the same
+that supports I<link(2)>, the TEMP_DIR should be located on the same
 file system as the final destination file:
 
  use Apache::Upload;
@@ -65,12 +65,12 @@ file system as the final destination file:
 
 For more details on C<link>, see the L<Apache:Upload> manpage.
 
-=item HOOK_DATA (requires L<Apache::Upload>)
+=item C<HOOK_DATA> (requires C<Apache::Upload>)
 
 Extra configuration info passed to an upload hook.
 See the description for the next item, C<UPLOAD_HOOK>.
 
-=item UPLOAD_HOOK (requires L<Apache::Upload>)
+=item C<UPLOAD_HOOK> (requires C<Apache::Upload>)
 
 Sets up a callback to run whenever file upload data is read. This
 can be used to provide an upload progress meter during file uploads.
@@ -89,7 +89,7 @@ $upload->fh after the hook exits.
 
 =back
 
-=head2 C<instance> [DEPRECATED]
+=head2 C<instance($r)> [DEPRECATED]
 
 The default (and only) behavior of I<Apache::Request> is to intelligently
 cache B<POST> data for the duration of the request.  Thus there is no longer
@@ -100,7 +100,7 @@ I<Apache::Request> object created during the request's lifetime.
 However an C<instance()> method is aliased to C<new()> in this release
 to ease the pain of porting from 1.X to 2.X.
 
-=head2 C<param>
+=head2 C<param([$name])>
 
 Get the request parameters (using case-insensitive keys) by
 mimicing the OO interface of C<CGI::param>.
@@ -130,14 +130,14 @@ blocks of the incoming request body until it has found the
 the "foo" param.
 
 
-=head2 parms, params [DEPRECATED]
+=head2 C<parms>, C<params> [DEPRECATED]
 
 The functionality of these functions is assumed by C<param>,
 so they are no longer necessary.  Aliases to C<param> are
 provided in this release for backwards compatibility,
 however they may be removed from a future release.
 
-=head2 args
+=head2 C<args([$name])>
 
 Returns an I<Apache::Request::Table> object containing the query-string 
 parameters of the I<Apache::Request> object.
@@ -149,7 +149,7 @@ parameter associated with the given name:
 
    my $arg = $req->args($name);
 
-=head2 body
+=head2 C<body([$name])>
 
 Returns an I<Apache::Request::Table> object containing the POST data 
 parameters of the I<Apache::Request> object.
@@ -162,7 +162,7 @@ parameter associated with the given name:
    my $param = $req->body($name);
 
 
-=head2 upload (requires Apache::Upload)
+=head2 C<upload([$name])> (requires Apache::Upload)
 
 With no arguments, this returns an I<Apache::Upload::Table> object in 
 scalar context, or the names of all I<Apache::Upload> objects in
@@ -190,7 +190,7 @@ Apache::Request object to delegate to.)  For example:
 	}
 
 
-=head1 CHANGES in Apache::Request API from 1.X to 2.X
+=head1 API CHANGES from 1.X to 2.X
 
 =over 4
 
@@ -210,7 +210,7 @@ Apache::Request object to delegate to.)  For example:
 
 =head1 SEE ALSO
 
-Apache::Cookie(3), Apache::Upload(3), APR::Table(3)
+L<Apache::Cookie>, L<Apache::Upload>, L<APR::Table>
 
 =head1 CREDITS
 

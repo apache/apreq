@@ -44,6 +44,7 @@ sub handler {
     elsif ($test eq 'fh_read') {
         my $upload = $req->upload(($req->upload)[0]);
         my $fh = $upload->fh;
+        return unless $upload->info->{"Content-Type"} eq $upload->type;
         $r->print(<$fh>);
     }
 

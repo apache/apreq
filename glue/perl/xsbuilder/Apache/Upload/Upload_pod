@@ -1,3 +1,22 @@
+=head1 NAME 
+
+Apache::Upload - Methods for dealing with file uploads.
+
+=head1 SYNOPSIS
+
+    use Apache::Upload;
+
+    my $req = Apache::Request->new($r);  # $r is an Apache::RequestRec
+    my $upload_table = $req->upload;
+    my $upload = $req->upload("file_field"); # same as $upload_table->{file_field}
+    my $size = $upload->size;
+    $upload->slurp(my $file_contents);
+    my $fh = $upload->fh;
+    print while <$fh>;
+
+=head1 DESCRIPTION
+
+
 =head1 Apache::Upload METHODS
 
 =head2 name
@@ -12,66 +31,91 @@ The filename of the uploaded file:
 
     my $filename = $upload->filename;
 
-=head2 bb [replaces fh]
+=head2 C<fh>
 
-The APR::Brigade containing the contents of the uploaded file.
+Create an I<APR::PerlIO> filehandle from which the upload's contents 
+may be read.
 
-=head2 size [TODO]
+=head2 C<bb([$new_brigade])>
 
-The size of the file in bytes:
+Returns an I<APR::Brigade> which represents the upload's contents.
+Passing an optional I<APR::Brigade> argument will reassign the 
+brigade, which effectively replaces the original contents of the 
+upload.
+
+=head2 C<size()>
+
+The size of the upload in bytes:
 
     my $size = $upload->size;
 
-=head2 info
+=head2 C<info([$table])>
 
 The additional header information for the uploaded file.
-Returns a hash reference tied to the I<Apache::Table> class.
-An optional I<key> argument can be passed to return the value of 
-a given header rather than a hash reference.  Examples:
+Returns a hash reference tied to the I<APR::Table> class.
+An optional C<$table> argument can be passed to reassign
+the upload's internal (apr_table_t) info table to the one
+C<$table> represents.
+
+Examples:
 
     my $info = $upload->info;
     while (my($key, $val) = each %$info) {
 	...
     }
 
-    my $val = $upload->info("Content-type");
+    # fetch upload's Content-Type header
+    my $type = $upload->info->{"Content-type"};
 
-=head2 type [TODO]
+    #reassign table
+    $upload->info($apr_table_object);
 
-Returns the I<Content-Type> for the given I<Apache::Upload> object:
+=head2 C<type()>
+
+Returns the MIME type of the given I<Apache::Upload> object.
 
     my $type = $upload->type;
+
     #same as
-    my $type = $upload->info("Content-Type");
+    my $type = $upload->info->{"Content-Type"};
+    $type =~ s/;.*$//ms;
 
-=head2 tempname [XXX- Does this mesh with brigade API?]
-
-Provides the name of the spool file. This method is reserved for
-debugging purposes, and is possibly subject to change in a future
-version of Apache::Request.
-
-=head2 link
+=head2 C<link()>
 
 To avoid recopying the upload's internal tempfile brigade on a 
 *nix-like system, I<link> will create a hard link to it:
 
-  my $upload = $apr->upload('file');
+  my $upload = $req->upload('file');
   $upload->link("/path/to/newfile") or
       die sprintf "link from '%s' failed: $!", $upload->tempname;
 
-Typically the new name must lie on the same file system as the
-brigade's tempfile. Check your system's link(2) manpage for details.
+Typically the new name must lie on the same device and partition 
+as the brigade's tempfile.  If this or any other reason prevents
+the OS from linking the files, C<link()> will instead 
+copy the temporary file to the specified location.
 
-=head2 slurp
+=head2 C<slurp($contents)>
 
 Reads the full contents of a file upload into the scalar argument.
-The return value is currently an APR status code (0 on success, error otherwise),
-but this may change in a future release (to bring this function
-in line with similar read-type functions in mp2).
+The return value is currently an I<APR> status code (0 on success, 
+error otherwise), but this may change in a future release (to bring 
+this function in line with similar read-type functions in mp2).
 
   # print out the upload file
   my $contents;
   print $contents if $upload->slurp($contents) == 0;
+
+
+=head1 API CHANGES from v1.X to v2.X
+
+C<tempname> has been removed from the API.
+C<info($header)> is replaced by C<info($table)>.
+C<type()> returns only the MIME-type portion of the Content-Type header.
+
+=head1 SEE ALSO
+
+L<Apache::Cookie>, L<Apache::Upload>, L<APR::Table>
+
 
 
 =head1 MISSING DOCS
