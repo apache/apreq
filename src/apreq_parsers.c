@@ -548,9 +548,51 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
 
 /********************* multipart/form-data *********************/
 
+APR_INLINE
+static apr_status_t brigade_start_string(apr_bucket_brigade *bb,
+                                         const char *start_string)
+{
+    apr_bucket *e;
+    apr_size_t slen = strlen(start_string);
+
+    for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
+         e = APR_BUCKET_NEXT(e))
+    {
+        const char *buf;
+        apr_status_t s, bytes_to_check;
+        apr_size_t blen;
+
+        if (slen == 0)
+            return APR_SUCCESS;
+
+        if (APR_BUCKET_IS_EOS(e))
+            return APR_EOF;
+
+        s = apr_bucket_read(e, &buf, &blen, APR_BLOCK_READ);
+
+        if (s != APR_SUCCESS)
+            return s;
+
+        if (blen == 0)
+            continue;
+
+        bytes_to_check = MIN(slen,blen);
+
+        if (strncmp(buf,start_string,bytes_to_check) != 0)
+            return APR_BADCH;
+
+        slen -= bytes_to_check;
+        start_string += bytes_to_check;
+    }
+
+    /* slen > 0, so brigade isn't large enough yet */
+    return APR_INCOMPLETE;
+}
+
 struct mfd_ctx {
     void                        *hook_data;
     apr_table_t                 *info;
+    apr_bucket_brigade          *in;
     apr_bucket_brigade          *bb;
     apreq_parser_t              *hdr_parser;
     const apr_strmatch_pattern  *pattern;
@@ -558,7 +600,8 @@ struct mfd_ctx {
     enum {
         MFD_INIT,  
         MFD_NEXTLINE, 
-        MFD_HEADER, 
+        MFD_HEADER,
+        MFD_POST_HEADER,
         MFD_PARAM, 
         MFD_UPLOAD, 
         MFD_ERROR 
@@ -753,10 +796,14 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                                             NULL,NULL);
         ctx->info = NULL;
         ctx->bb = apr_brigade_create(pool, bb->bucket_alloc);
+        ctx->in = apr_brigade_create(pool, bb->bucket_alloc);
 
         ctx->status = MFD_INIT;
         parser->ctx = ctx;
     }
+
+    APR_BRIGADE_CONCAT(ctx->in, bb);
+    bb = ctx->in;
 
  mfd_parse_brigade:
 
@@ -788,8 +835,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
     case MFD_HEADER:
         {
             apr_status_t s;
-            const char *cd, *name, *filename;
-            apr_size_t nlen, flen;
 
             if (ctx->info == NULL)
                 ctx->info = apr_table_make(pool, APREQ_NELTS);
@@ -798,6 +843,43 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             if (s != APR_SUCCESS)
                 return (s == APR_EOF) ? APR_SUCCESS : s;
+
+            ctx->status = MFD_POST_HEADER;
+        }
+        /* fall through */
+
+    case MFD_POST_HEADER:
+        {
+            /* Must handle special case of missing CRLF (mainly
+               coming from empty file uploads). See RFC2065 S5.1.1:
+
+                 body-part = MIME-part-header [CRLF *OCTET]
+
+               So the CRLF we already matched in MFD_HEADER may have been 
+               part of the boundary string! Both Konqueror (v??) and 
+               Mozilla-0.97 are known to emit such blocks.
+
+               Here we first check for this condition with 
+               brigade_start_string, and prefix the brigade with
+               an additional CRLF bucket if necessary.
+            */
+
+            const char *cd, *name, *filename;
+            apr_size_t nlen, flen;
+            apr_bucket *e;
+
+            switch (brigade_start_string(bb, ctx->bdry + 2)) {
+            case APR_INCOMPLETE:
+                return APR_INCOMPLETE;
+            case APR_SUCCESS:
+                /* part has no body- return CRLF to front */
+                e = apr_bucket_transient_create(CRLF, 2,
+                                                ctx->bb->bucket_alloc);
+                APR_BRIGADE_INSERT_HEAD(bb,e);
+                break;
+            default:
+                /* has body, ok */
+            }
 
             cd = apr_table_get(ctx->info, "Content-Disposition");
 
@@ -816,7 +898,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             s = apreq_header_attribute(cd, "filename", 8, &filename, &flen);
 
             if (s != APR_SUCCESS) {
-                apr_bucket *e;
                 name = apr_pstrmemdup(pool, name, nlen);
                 e = apr_bucket_transient_create(name, nlen,
                                                 ctx->bb->bucket_alloc);
@@ -832,18 +913,10 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 param->v.status = APR_INCOMPLETE;
                 apr_table_addn(t, param->v.name, param->v.data);
                 ctx->status = MFD_UPLOAD;
+                goto mfd_parse_brigade;
             }
-            /* XXX must handle special case of missing CRLF (mainly
-               coming from empty file uploads). See RFC2065 S5.1.1:
-
-                 body-part = MIME-part-header [CRLF *OCTET]
-
-               So the CRLF we already matched may have been part of
-               the boundary string! Both Konqueror (v??) and Mozilla-0.97
-               are known to emit such blocks.
-            */
         }
-        goto mfd_parse_brigade;
+        /* fall through */
 
     case MFD_PARAM:
         {
