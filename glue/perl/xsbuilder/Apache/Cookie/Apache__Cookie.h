@@ -158,7 +158,8 @@ static XS(apreq_xs_cookie_set_attr)
 
     for (j = 1; j + 1 < items; j += 2) {
         STRLEN alen, vlen;
-        const char *attr = SvPV(ST(j),alen), *val = SvPV(ST(j+1),vlen);
+        const char *attr = SvPVbyte(ST(j),alen), 
+                    *val = SvPVbyte(ST(j+1),vlen);
         status = apreq_cookie_attr(p, c, attr, alen, val, vlen); 
         if (status != APR_SUCCESS)
             break;

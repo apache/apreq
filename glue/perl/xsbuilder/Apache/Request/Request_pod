@@ -49,7 +49,7 @@ The following attributes are optional:
 
 =over 4
 
-=item POST_MAX [OK]
+=item POST_MAX
 
 Limit the size of POST data (in bytes).  I<Apache::Request::parse> will 
 return an error code if the size is exceeded:
@@ -63,7 +63,7 @@ return an error code if the size is exceeded:
      return $status;
  }
 
-=item DISABLE_UPLOADS [OK]
+=item DISABLE_UPLOADS
 
 Disable file uploads.  I<Apache::Request::parse> will return an
 error code if a file upload is attempted:
@@ -77,7 +77,7 @@ error code if a file upload is attempted:
      return $status;
  }
 
-=item TEMP_DIR [OK]
+=item TEMP_DIR
 
 Sets the directory where upload files are spooled.  On a *nix-like
 that supports link(2), the TEMP_DIR should be located on the same
@@ -112,7 +112,7 @@ $upload->fh after the hook exits.
 
 =back
 
-=head2 instance [DEPRECATED]
+=head2 instance [DEPRECATED, same as C<new>]
 
 The instance() class method allows Apache::Request to be a singleton.
 This means that whenever you call Apache::Request->instance() within a
@@ -275,13 +275,13 @@ Thus, the second example above can be simplified as:
 
 =over 4
 
-=head2 name [OK]
+=head2 name
 
 The name of the filefield parameter:
 
     my $name = $upload->name;
 
-=head2 filename [OK]
+=head2 filename
 
 The filename of the uploaded file:
 
@@ -346,7 +346,7 @@ Provides the name of the spool file. This method is reserved for
 debugging purposes, and is possibly subject to change in a future
 version of Apache::Request.
 
-=head2 link [OK]
+=head2 link
 
 To avoid recopying the spool file on a *nix-like system,
 I<link> will create a hard link to it:

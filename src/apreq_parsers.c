@@ -179,7 +179,6 @@ static apr_status_t split_urlword(apr_table_t *t,
 
     param->bb = NULL;
     param->info = NULL;
-    param->charset = UTF_8;
 
     v->name = v->data + vlen + 1;
 
@@ -1004,7 +1003,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 }
                 len = off;
                 param = apr_palloc(pool, len + sizeof *param);
-                param->charset = APREQ_CHARSET;
                 param->bb = NULL;
                 param->info = ctx->info;
 

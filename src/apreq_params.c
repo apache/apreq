@@ -80,7 +80,6 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
 {
     apreq_param_t *param = apr_palloc(p, nlen + vlen + 1 + sizeof *param);
     apreq_value_t *v = &param->v;
-    param->charset = APREQ_CHARSET;
     param->info = NULL;
     param->bb = NULL;
 
@@ -191,7 +190,6 @@ APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool,
         return NULL;
 
     param = apr_palloc(pool, nlen + vlen + 1 + sizeof *param);
-    param->charset = ASCII;     /* XXX: UTF_8 */
     param->info = NULL;
     param->bb = NULL;
 

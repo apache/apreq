@@ -256,8 +256,8 @@ static XS(apreq_xs_make_##type)                                         \
     class = SvPV_nolen(ST(0));                                          \
     env = (void *)SvIVX(SvRV(ST(1)));                                   \
     pool = apreq_env_pool(env);                                         \
-    key = SvPV(ST(2), klen);                                            \
-    val = SvPV(ST(3), vlen);                                            \
+    key = SvPVbyte(ST(2), klen);                                        \
+    val = SvPVbyte(ST(3), vlen);                                        \
     t = apreq_make_##type(pool, key, klen, val, vlen);                  \
                                                                         \
     ST(0) = sv_2mortal(apreq_xs_##type##2sv(t,class));                  \
@@ -390,7 +390,10 @@ static XS(apreq_xs_encode)
     if (items != 1)
         Perl_croak(aTHX_ "Usage: encode($string)");
 
-    src = SvPV(ST(0), slen);
+    src = SvPVbyte(ST(0), slen);
+    if (src == NULL)
+        XSRETURN_UNDEF;
+
     ST(0) = sv_newmortal();
     SvUPGRADE(ST(0), SVt_PV);
     SvGROW(ST(0), 3 * slen + 1);
@@ -409,7 +412,10 @@ static XS(apreq_xs_decode)
     if (items != 1)
         Perl_croak(aTHX_ "Usage: decode($string)");
 
-    src = SvPV(ST(0), slen);
+    src = SvPVbyte(ST(0), slen);
+    if (src == NULL)
+        XSRETURN_UNDEF;
+
     ST(0) = sv_newmortal();
     SvUPGRADE(ST(0), SVt_PV);
     SvGROW(ST(0), slen + 1);

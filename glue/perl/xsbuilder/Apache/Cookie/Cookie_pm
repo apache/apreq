@@ -53,9 +53,10 @@ sub freeze {
     }
 }
 
-sub value {
+sub thaw {
     my $self = shift;
-    return $self->thaw if $self->can("thaw");
     my @rv = map decode($_), split /&/, $self->raw_value;
     return wantarray ? @rv : $rv[0];
 }
+
+sub value { shift->thaw }

@@ -55,17 +55,7 @@
 
 #define apreq_xs_param2rv(ptr, class) apreq_xs_2sv(ptr,class)
 #define apreq_xs_rv2param(sv) ((apreq_param_t *)SvIVX(SvRV(sv)))
-
-
-APR_INLINE static SV *apreq_xs_param2sv(const apreq_param_t *param, 
-                                        const char *class)
-{
-    SV *sv = newSVpvn(param->v.data, param->v.size);
-    if (param->charset == UTF_8)
-        SvUTF8_on(sv);
-
-    return sv;
-}
+#define apreq_xs_param2sv(ptr,class) newSVpvn((ptr)->v.data,(ptr)->v.size)
 
 APREQ_XS_DEFINE_ENV(request);
 APREQ_XS_DEFINE_OBJECT(request);
@@ -127,6 +117,7 @@ APREQ_XS_DEFINE_GET(table,   PARAM_TABLE, param, NULL, 1);
 
 /* Upload API */
 /* supercede earlier function definition */
+#undef apreq_xs_param2sv
 #define apreq_xs_param2sv(param,class) apreq_xs_param2rv(param,class)
 #define apreq_xs_sv2param(sv) apreq_xs_rv2param(sv)
 
@@ -196,7 +187,8 @@ static XS(apreq_xs_request_config)
 
     for (j = 1; j + 1 < items; j += 2) {
         STRLEN alen, vlen;
-        const char *attr = SvPV(ST(j),alen), *val = SvPV(ST(j+1),vlen);
+        const char *attr = SvPVbyte(ST(j),alen), 
+                    *val = SvPVbyte(ST(j+1),vlen);
         status = apreq_request_config(req, attr, alen, val, vlen); 
         if (status != APR_SUCCESS)
             break;

@@ -77,12 +77,9 @@ extern "C" {
  * @{
  */
 
-#define APREQ_CHARSET  UTF_8;
 
 /** Common data structure for params and file uploads */
 typedef struct apreq_param_t {
-    enum { ASCII, UTF_8, UTF_16, ISO_LATIN_1 } charset; /**< Not sure this
-                                                         * field is needed */
     apr_table_t         *info; /**< header table associated with the param */
     apr_bucket_brigade  *bb;   /**< brigade to spool upload files */
     apreq_value_t        v;    /**< underlying name/value/status info */
