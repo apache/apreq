@@ -118,7 +118,7 @@ ApacheCookie_parse(sv, string=NULL)
 
     cookies = ApacheCookie_parse(c->r, string);
     if (!ApacheCookieJarItems(cookies)) {
-	XSRETURN_UNDEF;
+	XSRETURN_EMPTY;
     }
     if (GIMME == G_SCALAR) {
 	HV *hv = newHV();
