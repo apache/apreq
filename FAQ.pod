@@ -29,6 +29,6 @@ We recommend using (1), and falling back to (2) until you get (1) working.
 I<Apache::Upload> is now a separate module in apreq2, so you need to 
 C<use Apache::Upload> to load the C<Apache::Request::upload> function.
 
-=head1 CGI
+=head1 Using libapreq2 outside of Apache.
 
-Using libapreq2 outside of Apache.
+[...]
