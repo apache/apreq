@@ -9,8 +9,8 @@
 #endif 
 
 
-#define APREQ_DECLARE(d)                d
-#define APREQ_DECLARE_NONSTD(d)         d
+#define APREQ_DECLARE(d)                APR_DECLARE(d)
+#define APREQ_DECLARE_NONSTD(d)         APR_DECLARE_NONSTD(d)
 #define APREQ_URL_ENCTYPE               "application/x-www-form-urlencoded"
 #define APREQ_MFD_ENCTYPE               "multipart/form-data"
 #define APREQ_XML_ENCTYPE               "application/xml"

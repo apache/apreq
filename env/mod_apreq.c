@@ -79,6 +79,7 @@ struct env_ctx {
 
 static const char env_name[] = "APACHE2";
 static const char filter_name[] = "APREQ";
+
 module AP_MODULE_DECLARE_DATA apreq_module;
 
 static apr_pool_t *env_pool(void *ctx)
@@ -116,7 +117,7 @@ static APR_INLINE struct env_ctx *apreq_note(request_rec *r)
         ctx->req = NULL;
         ctx->jar = NULL;
         ctx->bb_in = ctx->bb_parse = NULL;
-        apr_table_add(r->notes, filter_name, (char *)ctx);
+        apr_table_addn(r->notes, filter_name, (char *)ctx);
     }
     return ctx;
 }
@@ -143,7 +144,12 @@ static void *env_request(void *ctx, void *req)
         apreq_request_t *oldreq = c->req;
 
         if (oldreq == NULL) {
+            dAPREQ_LOG;
+            ap_filter_rec_t *f = ap_get_input_filter_handle(filter_name);
+            apreq_log(APREQ_DEBUG 0, r, "Adding APREQ filter to input chain");
             /* XXX: SOMEHOW INJECT APREQ INPUT FILTER */
+            ap_add_input_filter_handle(f, NULL, r, r->connection);
+
         }
 
         c->req = (apreq_request_t *)req;
@@ -162,8 +168,7 @@ static apreq_cfg_t *env_cfg(void *ctx)
 static int dump_table(void *ctx, const char *key, const char *value)
 {
     request_rec *r = ctx;
-    dAPREQ_LOG;
-    apreq_log(APREQ_DEBUG 0, r, "%s => %s", key, value);
+    ap_rprintf(r, "\t%s => %s\n", key, value);
     return 1;
 }
 
@@ -200,7 +205,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             ctx->bb_parse = apr_brigade_create(r->pool, f->c->bucket_alloc);
         if (ctx->req == NULL) {
             apreq_parser_t *parser;
-            ctx->req = apreq_request(r,r->args);
+            ctx->req = apreq_request(r, NULL);
             parser = apreq_make_parser(r->pool, APREQ_URL_ENCTYPE,
                                        apreq_parse_urlencoded, NULL, ctx->req);
             apreq_register_parser(ctx->req, parser);
@@ -208,17 +213,16 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                                        apreq_parse_multipart, NULL, ctx->req);
             apreq_register_parser(ctx->req, parser);
         }
+        apreq_log(APREQ_DEBUG 0, r, "filter initialized");
     }
     else
         ctx = (struct env_ctx *)f->ctx;
 
     /* XXX configure filter & parser here */
 
+
     rv = ap_get_brigade(f->next, ctx->bb_in, AP_MODE_READBYTES,
                         block, readbytes);
-
-    apreq_log(APREQ_DEBUG rv, r, "dump args:");
-    apreq_table_do(dump_table, r, ctx->req->args, NULL);
 
 
     if (ctx->req->v.status == APR_INCOMPLETE) {
@@ -239,6 +243,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             }
         }
 
+        apreq_log(APREQ_DEBUG 0, r, "filter parsing");
         rv = apreq_parse(ctx->req, ctx->bb_parse);
 
         if (rv == APR_INCOMPLETE && saw_eos == 1)
@@ -248,21 +253,64 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     else {
         APR_BRIGADE_CONCAT(bb, ctx->bb_in);
     }
-
-    if (ctx->req->body) {
-        apreq_log(APREQ_DEBUG rv, r, "dump body:");
-        apreq_table_do(dump_table, r, ctx->req->body, NULL);
-    }
+    apreq_log(APREQ_DEBUG 0, r, "filter returned(%d)", rv);
 
     return rv;
 }
 
 
 
+static int test_handler(request_rec *r)
+{
+    apr_bucket_brigade *bb;
+    apreq_request_t *req;
+    apr_status_t s;
+    int saw_eos = 1;
+    dAPREQ_LOG;
+
+    if (strcmp(r->handler, "httpd-apreq") != 0)
+        return DECLINED;
+
+    apreq_log(APREQ_DEBUG 0, r, "initializing request");
+    req = apreq_request(r, NULL);
+
+
+    bb = apr_brigade_create(r->pool, r->connection->bucket_alloc);
+    
+    do {
+        apr_bucket *e;
+        apreq_log(APREQ_DEBUG 0, r, "pulling content thru input filters");
+        s = ap_get_brigade(r->input_filters, bb, AP_MODE_READBYTES,
+                           APR_BLOCK_READ, HUGE_STRING_LEN);
+
+        APR_BRIGADE_FOREACH(e,bb) {
+            if (APR_BUCKET_IS_EOS(e)) {
+                saw_eos = 1;
+                break;
+            }
+        }
+
+        apr_brigade_cleanup(bb);
+
+    } while (!saw_eos);
+
+    ap_set_content_type(r, "text/plain");
+    ap_rputs("GOT APREQ?\n\n",r);
+
+    ap_rputs("ARGS:\n");
+    apreq_table_do(dump_table, r, req->args, NULL);
+    if (req->body) {
+        ap_rputs("\nBODY:\n");
+        apreq_table_do(dump_table, r, req->body, NULL);
+    }
+    return OK;
+}
+
 static void register_hooks (apr_pool_t *p)
 {
     ap_register_input_filter(filter_name, apreq_filter, NULL, 
                              AP_FTYPE_CONTENT_SET);
+    ap_hook_handler(test_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
 

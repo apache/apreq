@@ -207,12 +207,6 @@ static APR_INLINE int search(apreq_table_entry_t *o,
     return 0;
 }
 
-/* XXX Are these macros really needed? */
-#define TREE_PUSH      1
-#define TREE_REPLACE   2
-
-#define TREE_POP       1
-#define TREE_DROP      2
 
 static int insert(apreq_table_entry_t *o, int *root, int x,
                   apreq_table_entry_t *elt,
@@ -222,76 +216,49 @@ static int insert(apreq_table_entry_t *o, int *root, int x,
     int s = search(o, &x, elt->key);
 
     if (s == 0) { /* found */
-        if (x < 0) { /* empty tree */
+        int parent = x;
+        if (parent < 0) { /* empty tree */
             *root = idx;
             elt->tree[LEFT]   = -1;
             elt->tree[RIGHT]  = -1;
             elt->tree[PARENT] = -1;
+            elt->color = BLACK;
             return -1;
         }
 
-        switch (flags) {
-            int parent;
+        elt->color = parent[o].color;
 
-        case TREE_PUSH:
-            parent = x;
+        while (parent[o].tree[NEXT] >= 0)
+            parent = parent[o].tree[NEXT];
 
-            while (parent[o].tree[NEXT] >= 0)
-                parent = parent[o].tree[NEXT];
-
-            parent[o].tree[NEXT]  = idx;
-            elt->tree[PARENT]      = -1;
-            elt->tree[RIGHT]       = -1;
-            elt->tree[LEFT]        = -1;
-            return x;
-
-        case TREE_REPLACE:
-            parent = x[o].tree[PARENT];
-
-            if (x[o].tree[LEFT] >= 0)
-                x[o].tree[LEFT][o].tree[PARENT] = idx;
-
-            if (x[o].tree[RIGHT] >= 0)
-                x[o].tree[RIGHT][o].tree[PARENT] = idx;
-
-            if (parent >= 0)
-                parent[o].tree[LR(x)] = idx;
-            else
-                *root = idx;
-
-            elt->tree[PARENT] = parent;
-            elt->tree[RIGHT]  = x[o].tree[RIGHT];
-            elt->tree[LEFT]   = x[o].tree[LEFT];
-            elt->color        = x[o].color;
-
-            return x;
-
-        default:
-            return -1;
-        }
+        parent[o].tree[NEXT]   = idx;
+        elt->tree[PARENT]      = -1;
+        elt->tree[RIGHT]       = -1;
+        elt->tree[LEFT]        = -1;
+        return x;
     }
 
 
     /* The element wasn't in the tree, so add it */
     x[o].tree[s < 0 ? LEFT : RIGHT] = idx;
+
     elt->tree[PARENT] =  x;
     elt->tree[RIGHT]  = -1;
     elt->tree[LEFT]   = -1;
 
     elt->color = RED;
 
-
     if (flags & TF_BALANCE) {
         while (idx[o].tree[PARENT] >= 0 && idx[o].tree[PARENT][o].color == RED)
         {
-        /* parent , grandparent, & parent_sibling nodes all exist */
+        /* parent & grandparent exist, parent_sibling may not */
 
             int parent = idx[o].tree[PARENT];
             int grandparent = parent[o].tree[PARENT];
             register const int parent_direction = LR(parent);
             int parent_sibling = grandparent[o].tree[!parent_direction];
 
-            if (parent_sibling[o].color == RED) {
+            if (parent_sibling >= 0 && parent_sibling[o].color == RED) {
                 parent[o].color            = BLACK;
                 parent_sibling[o].color    = BLACK;
                 grandparent[o].color       = RED;
@@ -300,13 +267,14 @@ static int insert(apreq_table_entry_t *o, int *root, int x,
             }
             else {  /* parent_sibling->color == BLACK */
 
-                if ( LR(idx) != parent_direction ) { /* opposite direction */
-                    rotate(o, root, parent, parent_direction); /* demotes idx */
+                if ( LR(idx) != parent_direction ) {
+                    /* demote parent & swap idx with parent */
+                    rotate(o, root, parent, parent_direction);
                     idx           = parent;
-                    parent        = idx[o].tree[PARENT]; /* idx's old sibling */
-                    /* grandparent is unchanged */
+                    parent        = idx[o].tree[PARENT];
                 }
 
+                /* promote parent */
                 parent[o].color      = BLACK;
                 grandparent[o].color = RED;
                 rotate(o, root, grandparent, !parent_direction);
@@ -323,61 +291,43 @@ static void delete(apreq_table_entry_t *o,
 {
     int x,y;
 
-    if ((flags & TREE_POP) && idx[o].tree[NEXT] >= 0) {
-        /* pop elt off the stack */
-        x = idx[o].tree[PARENT];
-        y = idx[o].tree[NEXT];
-        idx[o].tree[NEXT] = 0;
+    if (idx[o].tree[LEFT] < 0 || idx[o].tree[RIGHT] < 0) {
+        x = y = 1 + idx[o].tree[RIGHT] + idx[o].tree[LEFT];
 
-        y[o].tree[PARENT] = x;
-        y[o].tree[LEFT]   = idx[o].tree[LEFT];
-        y[o].tree[RIGHT]  = idx[o].tree[RIGHT];
-        y[o].color        = idx[o].color;
+
+        if (idx[o].tree[PARENT] >= 0)
+            idx[o].tree[PARENT][o].tree[LR(idx)] = x;
+        else
+            *root = x;
 
         if (x >= 0)
-            x[o].tree[LR(idx)] = y;
+            x[o].tree[PARENT] = idx[o].tree[PARENT];
         else
-            *root = y;
-
-        idx[o].tree[PARENT] = -1;
-        idx[o].tree[LEFT]   = -1;
-        idx[o].tree[RIGHT]  = -1;
-
-        return;
+            return;
     }
-
-    if (idx[o].tree[LEFT] < 0 || idx[o].tree[RIGHT] < 0)
-        y = idx;
     else {
         y = idx[o].tree[RIGHT];
         while (y[o].tree[LEFT] >= 0)
             y = y[o].tree[LEFT];
-    }
 
-    /* x is y's only child */
-    x = (y[o].tree[LEFT] >= 0) ? y[o].tree[LEFT] : y[o].tree[RIGHT];
+        x = y[o].tree[RIGHT];
 
-    /* remove y from the parent chain */
-    x[o].tree[PARENT] = y[o].tree[PARENT];
+        if (y[o].tree[PARENT] != idx) {
+            y[o].tree[RIGHT] = idx[o].tree[RIGHT];
 
-    if (y[o].tree[PARENT] >= 0)
-        y[o].tree[PARENT][o].tree[LR(y)] = x;
-    else
-        *root = x;
+            if (x >= 0) {
+                x[o].tree[PARENT] = y[o].tree[PARENT];
+                y[o].tree[PARENT][o].tree[LR(y)] = x;
+            }
+        }
 
-    if (y != idx) {     /* swap y[o] with idx[o] */
         y[o].tree[LEFT] = idx[o].tree[LEFT];
-        y[o].tree[RIGHT] = idx[o].tree[RIGHT];
         y[o].tree[PARENT] = idx[o].tree[PARENT];
         
-        if (y[o].tree[PARENT] >= 0)
-            y[o].tree[PARENT][o].tree[LR(y)] = y;
+        if (idx[o].tree[PARENT] >= 0)
+            idx[o].tree[PARENT][o].tree[LR(idx)] = y;
         else
             *root = y;
-
-        idx[o].tree[LEFT] = -1;
-        idx[o].tree[RIGHT] = -1;
-        idx[o].tree[PARENT] = -1;
     }
 
     if (y[o].color == RED) {
@@ -385,9 +335,10 @@ static void delete(apreq_table_entry_t *o,
         return;
     }
 
+
     /* rebalance tree (standard double-black promotion) */
 
-    x[o].color = idx[o].color; /* should this be y[o].color ??? */
+    x[o].color = idx[o].color;
 
     if (flags & TF_BALANCE) {
         while (x != *root && x[o].color == BLACK) 
@@ -455,7 +406,7 @@ static int combine(apreq_table_entry_t *o, int a,
             a[o].tree[PARENT] = -1;
         }
 
-        if (insert(o,&a,a,b+o, TREE_PUSH) < 0)
+        if (insert(o,&a,a,b+o,0) < 0)
             rv = b;
 
         if (b[o].tree[PARENT] >= 0)
@@ -666,8 +617,7 @@ APREQ_DECLARE(void) apreq_table_balance(apreq_table_t *t, const int on)
 
         memset(t->root,-1,TABLE_HASH_SIZE * sizeof(int));
         for (idx = 0; idx < t->a.nelts; ++idx)
-            insert(o, &t->root[TABLE_HASH(idx[o].key)], -1, &idx[o], 
-                   TF_BALANCE | TREE_PUSH);
+            insert(o, &t->root[TABLE_HASH(idx[o].key)], -1, &idx[o], TF_BALANCE);
 
         t->flags |= TF_BALANCE;
     }
@@ -874,12 +824,6 @@ APREQ_DECLARE(void) apreq_table_set(apreq_table_t *t, const apreq_value_t *val)
     int idx = t->root[TABLE_HASH(key)];
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
 
-#ifdef POOL_DEBUG
-    {
-        /* XXX */
-    }
-#endif
-
     if (idx >= 0 && search(o,&idx,key) == 0) {
         int n;
         idx[o].val = val;
@@ -895,7 +839,7 @@ APREQ_DECLARE(void) apreq_table_set(apreq_table_t *t, const apreq_value_t *val)
         e->val = val;
         e->tree[NEXT] = -1;
         insert((apreq_table_entry_t *)t->a.elts,
-               &t->root[TABLE_HASH(key)],idx,e,TREE_PUSH);
+               &t->root[TABLE_HASH(key)],idx,e,t->flags);
     }
 }
 
@@ -909,7 +853,7 @@ APREQ_DECLARE(void) apreq_table_unset(apreq_table_t *t, const char *key)
 
         LOCK_TABLE(t);
 
-        delete(o,&t->root[TABLE_HASH(key)],idx,TREE_DROP);
+        delete(o,&t->root[TABLE_HASH(key)],idx, t->flags);
 
         for ( n=idx; n>=0; n=n[o].tree[NEXT] )
             KILL(t,n);
@@ -962,7 +906,7 @@ APREQ_DECLARE(apr_status_t) apreq_table_merge(apreq_table_t *t,
         e->val = val;
         e->tree[NEXT] = -1;
         insert((apreq_table_entry_t *)t->a.elts,
-               &t->root[TABLE_HASH(key)],idx,e,TREE_PUSH);
+               &t->root[TABLE_HASH(key)],idx,e,t->flags);
     }
     return val->status;
 }
@@ -986,7 +930,7 @@ APREQ_DECLARE(apr_status_t) apreq_table_add(apreq_table_t *t,
         elt->key = val->name;
         elt->val = val;
         elt->tree[NEXT] = -1;
-        insert(o, root, *root, elt, TREE_PUSH);
+        insert(o, root, *root, elt, t->flags);
         return APR_SUCCESS;
     }
 
@@ -1022,7 +966,6 @@ APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t,
             if (DEAD(idx))
                 continue;
 
-
             if (idx[o].tree[NEXT] >= 0)
                 idx[o].tree[NEXT] += n;
             
@@ -1039,8 +982,7 @@ APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t,
             else if ( idx[o].tree[PARENT] >= 0 || 
                       s->root[hash] == idx-n ) 
             {
-                insert(o, &t->root[hash], t->root[hash], idx+o, 
-                       TREE_PUSH | TF_BALANCE);
+                insert(o, &t->root[hash], t->root[hash], idx+o, TF_BALANCE);
             }
         }
     }

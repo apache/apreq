@@ -75,14 +75,18 @@ static void table_make(CuTest *tc)
 {
     t1 = apreq_make_table(p, 5);
     CuAssertPtrNotNull(tc, t1);
+    apreq_table_balance(t1,1);
 }
 
 static void table_get(CuTest *tc)
 {
     const char *val;
+    apreq_table_set(t1, V(APREQ_URL_ENCTYPE,"foo"));
+    apreq_table_set(t1, V(APREQ_MFD_ENCTYPE,"bar"));
 
-    apreq_table_set(t1, V("foo","bar"));
-    val = apreq_table_get(t1,"foo");
+    val = apreq_table_get(t1,APREQ_URL_ENCTYPE);
+    CuAssertStrEquals(tc,"foo",val);
+    val = apreq_table_get(t1,APREQ_MFD_ENCTYPE);
     CuAssertStrEquals(tc,"bar",val);
 
 }
@@ -114,23 +118,46 @@ static void table_add(CuTest *tc)
     apreq_table_add(t1, V("add", "foo"));
     val = apreq_table_get(t1, "add");
     CuAssertStrEquals(tc, "bar", val);
-    apreq_table_add(t1, V("fl", "left"));
-    apreq_table_add(t1, V("fr", "right"));
-    apreq_table_add(t1, V("fll", "left-left"));
-    apreq_table_add(t1, V("frr", "right-right"));
-    apreq_table_add(t1, V("frl", "right-left"));
-    apreq_table_add(t1, V("flr", "left-right"));
-    apreq_table_add(t1, V("b", "bah"));
+
+
+    apreq_table_add(t1, V("f", "top"));
+    apreq_table_add(t1, V("fo", "child"));
+    apreq_table_add(t1, V("fro", "child-right"));
+
+    /*
+     *     f(5)  black                fo(6) black   
+     *      fo(6)  red       =>  f(5)red   fro(7)red
+     *       fro(7) red
+     *
+     */
+
+
+    apreq_table_add(t1, V("flo", "child-left"));
+    apreq_table_add(t1, V("flr", "child-left-right"));
+    apreq_table_add(t1, V("frr", "child-right-right"));
+    apreq_table_add(t1, V("frl", "child-right-left"));
+    apreq_table_add(t1, V("flr", "child-left-right"));
+    apreq_table_add(t1, V("fll", "child-left-left"));
+    apreq_table_add(t1, V("foo", "bar"));
+    apreq_table_add(t1, V("b", "bah humbug"));
     val = apreq_table_get(t1, "foo");
     CuAssertStrEquals(tc, "bar", val);
-    val = apreq_table_get(t1, "fl");
-    CuAssertStrEquals(tc, "left", val);
-    val = apreq_table_get(t1, "fr");
-    CuAssertStrEquals(tc, "right", val);
+    val = apreq_table_get(t1, "flr");
+    CuAssertStrEquals(tc, "child-left-right", val);
+}
+
+static void table_unset(CuTest *tc) {
+    const char *val;
+    apreq_table_unset(t1, "flo");
+    val = apreq_table_get(t1, "flo");
+    CuAssertPtrEquals(tc, NULL, val);
+
+    val = apreq_table_get(t1, "fro");
+    CuAssertStrEquals(tc, "child-right", val);
     val = apreq_table_get(t1, "fll");
-    CuAssertStrEquals(tc, "left-left", val);
+    CuAssertStrEquals(tc, "child-left-left", val);
     val = apreq_table_get(t1, "frl");
-    CuAssertStrEquals(tc, "right-left", val);
+    CuAssertStrEquals(tc, "child-right-left", val);
 
 }
 
@@ -157,22 +184,6 @@ static void table_clear(CuTest *tc)
 {
     apreq_table_clear(t1);
     CuAssertIntEquals(tc, 0, apreq_table_nelts(t1));
-}
-
-static void table_unset(CuTest *tc)
-{
-    const char *val;
-    apreq_table_t *t;
-
-    t = apreq_table_make(p, 1);
-    apreq_table_set(t, V("a", "1"));
-    apreq_table_set(t, V("b", "2"));
-    apreq_table_unset(t, "b");
-    CuAssertIntEquals(tc, 1, apreq_table_nelts(t));
-    val = apreq_table_get(t, "a");
-    CuAssertStrEquals(tc, val, "1");
-    val = apreq_table_get(t, "b");
-    CuAssertPtrEquals(tc, NULL, val);
 }
 
 static void table_overlap(CuTest *tc)
@@ -301,13 +312,13 @@ CuSuite *testtable(void)
     CuSuite *suite = CuSuiteNew("Table");
 
     SUITE_ADD_TEST(suite, table_make);
-    SUITE_ADD_TEST(suite, table_get);
+    SUITE_ADD_TEST(suite, table_get); 
     SUITE_ADD_TEST(suite, table_set);
     SUITE_ADD_TEST(suite, table_getnotthere);
     SUITE_ADD_TEST(suite, table_add);
+    SUITE_ADD_TEST(suite, table_unset);
     SUITE_ADD_TEST(suite, table_nelts);
     SUITE_ADD_TEST(suite, table_clear);
-    SUITE_ADD_TEST(suite, table_unset);
     SUITE_ADD_TEST(suite, table_overlap);
     SUITE_ADD_TEST(suite, table_elts);
     SUITE_ADD_TEST(suite, table_overlay);
