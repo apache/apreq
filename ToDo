@@ -18,6 +18,6 @@ o port to Mac OS/X
 
 o improve/automate build process for c, dtcl (autoconf support?)
 
-o test suite ?
+o Fix our Apache::Test-based test suite
 
 o optional build/link of libapreq.a directly into httpd?
