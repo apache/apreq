@@ -54,7 +54,7 @@ static int apreq_request_test_handler(request_rec *r)
     while ((s =ap_get_brigade(r->input_filters, bb, AP_MODE_READBYTES,
                               APR_BLOCK_READ, HUGE_STRING_LEN)) == APR_SUCCESS)
     {
-        if (APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(bb))
+        if (APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(bb)))
             break;
 
         apr_brigade_cleanup(bb);
