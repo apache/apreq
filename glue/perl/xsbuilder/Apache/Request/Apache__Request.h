@@ -106,7 +106,7 @@ static XS(apreq_xs_request)
     req = apreq_request(env, data);
 
     /*FIXME: mg_mg->ptr */
-    sv = apreq_xs_2sv(req, SvPV_nolen(ST(0)),SvRV(ST(1)));
+    sv = apreq_xs_2sv(req, SvPV_nolen(ST(0)), SvRV(ST(1)));
     SvTAINTED_on(SvRV(sv));
     ST(0) = sv_2mortal(sv);
     XSRETURN(1);

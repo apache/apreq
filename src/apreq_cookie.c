@@ -76,7 +76,7 @@ APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env)
         if (j == NULL || apreq_jar_nelts(j) == 0) 
             return NETSCAPE;
 
-        else if (apr_table_do(has_rfc_cookie, NULL, j->cookies) == 1)
+        else if (apr_table_do(has_rfc_cookie, NULL, j->cookies, NULL) == 1)
             return NETSCAPE;
 
         else

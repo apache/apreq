@@ -107,12 +107,19 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
     const char *val = apr_table_get(req->args, name);
 
     while (val == NULL) {
-        apr_status_t s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-        if (req->body == NULL)
-            return NULL;
-        val = apr_table_get(req->body, name);
-        if (s != APR_INCOMPLETE && val == NULL)
-            return NULL;
+        apr_status_t s = req->body_status;
+        switch (s) {
+        case APR_INCOMPLETE:
+        case APR_EINIT:
+            s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
+
+        default:
+            if (req->body == NULL)
+                return NULL;
+            val = apr_table_get(req->body, name);
+            if (s != APR_INCOMPLETE && val == NULL)
+                return NULL;
+        }
     }
 
     return apreq_value_to_param(apreq_strtoval(val));
@@ -124,9 +131,12 @@ APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *pool,
 {
     apr_status_t s;
 
-    do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-    while (s == APR_INCOMPLETE);
-
+    switch (req->body_status) {
+    case APR_INCOMPLETE:
+    case APR_EINIT:
+        do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
+        while (s == APR_INCOMPLETE);
+    }
     return req->body ? apr_table_overlay(pool, req->args, req->body) :
         apr_table_copy(pool, req->args);
 }
@@ -151,8 +161,12 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params_as_array(apr_pool_t *p,
 
     apr_table_do(param_push, arr, req->args, key, NULL);
 
-    do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-    while (s == APR_INCOMPLETE);
+    switch (req->body_status) {
+    case APR_INCOMPLETE:
+    case APR_EINIT:
+        do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
+        while (s == APR_INCOMPLETE);
+    }
 
     if (req->body)
         apr_table_do(param_push, arr, req->body, key, NULL);
@@ -318,9 +332,13 @@ APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
 {
     apr_table_t *t;
     apr_status_t s;
-    do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-    while (s == APR_INCOMPLETE);
 
+    switch (req->body_status) {
+    case APR_INCOMPLETE:
+    case APR_EINIT:
+        do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
+        while (s == APR_INCOMPLETE);
+    }
     if (req->body == NULL)
         return NULL;
 
@@ -348,14 +366,19 @@ APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
 {
     apreq_param_t *param = NULL;
     do {
-        apr_status_t s = apreq_env_read(req->env, APR_BLOCK_READ,
-                                        APREQ_READ_AHEAD);
-        if (req->body == NULL)
-            return NULL;
-        apr_table_do(upload_get, &param, req->body, key, NULL);
+        apr_status_t s = req->body_status;
+        switch (s) {
+        case APR_INCOMPLETE:
+        case APR_EINIT:
+            s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
 
-        if (s != APR_INCOMPLETE)
-            break;
+        default:
+            if (req->body == NULL)
+                return NULL;
+            apr_table_do(upload_get, &param, req->body, key, NULL);
+            if (s != APR_INCOMPLETE)
+                return param;
+        }
     } while (param == NULL);
 
     return param;
