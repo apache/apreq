@@ -68,7 +68,7 @@ sub win32_setup {
 		'TYPEMAPS' => [ "$ENV{MP_INC}/typemap" ],
 		'VERSION' => $myVERSION,
 		'OBJECT' => "@objs",
-		'INC'  => qq{ -I"$ENV{AP_INC}" -I"$ENV{MP_INC}" },
+                'INC'  => qq{ -I"$ENV{AP_INC}" -I"$ENV{AP_INC}/../os/win32" -I"$ENV{MP_INC}" },
   	       ); 
 }
 

@@ -40,7 +40,7 @@ sub win32_setup {
   WriteMakefile(
 		@mm_args,
 		'TYPEMAPS' => [ "$ENV{MP_INC}/typemap" ],
-		'INC' => qq{ -I../c -I"$ENV{AP_INC}" -I"$ENV{MP_INC}" },
+                'INC' => qq{ -I../c -I"$ENV{AP_INC}" -I"$ENV{AP_INC}/../os/win32" -I"$ENV{MP_INC}" },
 		'LIBS' => qq{ -L"$ENV{MP_LIB}" -lmod_perl -L"$ENV{APREQ_LIB}" -llibapreq -L"$ENV{AP_LIB}" -lApacheCore },
 		'OBJECT' => 'Cookie.o',
 	       );
