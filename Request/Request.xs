@@ -81,10 +81,26 @@
 
 typedef ApacheRequest * Apache__Request;
 typedef ApacheUpload  * Apache__Upload;
-typedef struct { 
-	SV* data;
-	SV* sub; 
-	} Hook;
+
+typedef struct {
+    SV *data;
+    SV *sub;
+} UploadHook;
+
+#define XsUploadHook       ((UploadHook *)RETVAL->hook_data)
+#define XsUploadHookNew(p) (void *)ap_pcalloc(p, sizeof(UploadHook))
+#define XsUploadHookSet(slot, sv) \
+     if (RETVAL->hook_data) { \
+         if (XsUploadHook->slot) { \
+             SvREFCNT_dec(XsUploadHook->slot); \
+         } \
+     } \
+     else { \
+         RETVAL->hook_data = XsUploadHookNew(r->pool); \
+         ap_register_cleanup(r->pool, (void*)XsUploadHook, \
+                             upload_hook_cleanup, ap_null_cleanup); \
+     } \
+     XsUploadHook->slot = SvREFCNT_inc(sv)
 
 #define ApacheUpload_fh(upload)       upload->fp
 #define ApacheUpload_size(upload)     upload->size
@@ -92,7 +108,6 @@ typedef struct {
 #define ApacheUpload_filename(upload) upload->filename
 #define ApacheUpload_next(upload)     upload->next
 #define ApacheUpload_tempname(upload) upload->tempname
-
 
 #ifdef PerlIO
 typedef PerlIO * InputStream;
@@ -126,7 +141,6 @@ typedef FILE * InputStream;
  *#define PerlLIO_seek(f) 		seek((f)) 
  *
  */
-
 
 static char *r_keys[] = { "_r", "r", NULL };
 
@@ -178,10 +192,11 @@ static SV *upload_bless(ApacheUpload *upload)
 
 static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
 {
-    Hook *hook = (Hook*) ptr;
+    UploadHook *hook = (UploadHook *)ptr;
 
-    if ( upload->fp == NULL && ! ApacheRequest_tmpfile(upload->req, upload) )
-	    return -1; /* error */
+    if (!(upload->fp && ApacheRequest_tmpfile(upload->req, upload))) {
+        return -1; /* error */
+    }
 
     {
     	SV *sv;
@@ -193,14 +208,14 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
     	SAVETMPS;
 
     	sv = sv_newmortal();
-    	sv_setref_pv( sv, "Apache::Upload", (void*)upload );
+    	sv_setref_pv(sv, "Apache::Upload", (void*)upload);
     	PUSHs(sv);
 
-    	sv = sv_2mortal( newSVpvn(buf,len) );
+    	sv = sv_2mortal(newSVpvn(buf,len));
     	SvTAINT(sv);
     	PUSHs(sv);
 
-    	sv = sv_2mortal( newSViv(len) );
+    	sv = sv_2mortal(newSViv(len));
     	SvTAINT(sv);
     	PUSHs(sv);
 
@@ -212,19 +227,26 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
     	LEAVE;
     }
 
-    return SvTRUE(ERRSV) ? -1 : PerlIO_write(PerlIO_importFILE(upload->fp,0), buf, len);
+    if (SvTRUE(ERRSV)) {
+        return -1;
+    }
+
+    return PerlIO_write(PerlIO_importFILE(upload->fp,0), buf, len);
 }
 
-static void clear_hook(void *ptr) {
-   Hook *hook = (Hook*) ptr;
-   if (hook->sub != Nullsv) {
-       (void)sv_2mortal(hook->sub);
-   }
-   if (hook->data != Nullsv) {
-       (void)sv_2mortal(hook->data);
-   }
-}
+static void upload_hook_cleanup(void *ptr)
+{
+    UploadHook *hook = (UploadHook *)ptr;
 
+    if (hook->sub) {
+        SvREFCNT_dec(hook->sub);
+        hook->sub = Nullsv;
+    }
+    if (hook->data) {
+        SvREFCNT_dec(hook->data);
+        hook->data = Nullsv;
+    }
+}
 
 #define upload_push(upload) \
     XPUSHs(sv_2mortal(upload_bless(upload))) 
@@ -294,14 +316,9 @@ ApacheRequest_new(class, r, ...)
 
 	case 'h':
 	   if (strcasecmp(key, "hook_data") == 0) {
-		if (RETVAL->hook_data == NULL) {
-		  RETVAL->hook_data = (void *)ap_pcalloc(r->pool, sizeof(Hook));
-		  ((Hook*)RETVAL->hook_data)->sub = Nullsv;
- 		}
-		((Hook*)RETVAL->hook_data)->data = newSVsv(ST(i+1));	
+                XsUploadHookSet(data, ST(i+1));
 		break;
 	   }
-
 	case 'p':
 	    if (strcasecmp(key, "post_max") == 0) {
 		RETVAL->post_max = (int)SvIV(ST(i+1));
@@ -314,12 +331,8 @@ ApacheRequest_new(class, r, ...)
 	    }
 	case 'u':
 	    if (strcasecmp(key, "upload_hook") == 0) {
-		if (RETVAL->hook_data == NULL) {
-		  RETVAL->hook_data = (void *)ap_pcalloc(r->pool, sizeof(Hook));
-	          ((Hook*)RETVAL->hook_data)->data = Nullsv;
- 		}
-		((Hook*)RETVAL->hook_data)->sub = newSVsv(ST(i+1));
-		RETVAL->upload_hook = &upload_hook;
+                XsUploadHookSet(sub, ST(i+1));
+                RETVAL->upload_hook = upload_hook;
 		break;
 	    }
 	default:
@@ -327,16 +340,11 @@ ApacheRequest_new(class, r, ...)
 	}
     }
 
-
     OUTPUT:
     RETVAL
 
     CLEANUP:
     apreq_add_magic(ST(0), robj, RETVAL);
-    if ( RETVAL->hook_data != NULL ) {
-    	ap_register_cleanup(r->pool, RETVAL->hook_data, 
-			   clear_hook, ap_null_cleanup);    
-    }
 
 char *
 ApacheRequest_script_name(req)
