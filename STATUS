@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/02 16:18:37 $]   -*-text-*-
+Last modified at [$Date: 2004/07/05 17:48:06 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -35,16 +35,6 @@ CURRENT VOTES:
       lobby test-dev to adopt the same solution for Apache::Test.  Otherwise
       our test suite will likely fail, even though the rest of the perl build
       system will presumably still work.
-
-            +1: joes
-             0:
-            -1:
-
-    - Should we replace req->body with an iterator API (added to
-      apreq_parser_t)?  The rationale is that this would make xml
-      parsing possible (xml data doesn't map naturally to apr_table_t).
-      Xml support is a requirement for XForms.  The disadvantage is that
-      there may be a performance hit due to the additional abstractions.
 
             +1: joes
              0:
