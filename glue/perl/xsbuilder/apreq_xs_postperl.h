@@ -55,6 +55,9 @@
 #ifndef APREQ_XS_POSTPERL_H
 #define APREQ_XS_POSTPERL_H
 
+/* backward compatibility macros support */
+#include "ppport.h"
+
 /**
  * @file apreq_xs_postperl.h
  * @brief XS include file for making Cookie.so and Request.so

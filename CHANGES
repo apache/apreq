@@ -6,7 +6,9 @@
 
 - February 16, 2004 - Perl API [stas]
 
-Add a proper support for ithreads
+Include ppport.h from blead-perl to support older perls.
+
+Add a proper support for ithreads.
 
 - December 31, 2003 - C API [Swen Schillig, joes]
 
