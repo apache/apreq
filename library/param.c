@@ -99,6 +99,7 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
     p = apr_palloc(pool, nlen + vlen + 1 + sizeof *p);
     p->info = NULL;
     p->upload = NULL;
+    p->flags = 0;
     *(const apreq_value_t **)&v = &p->v;
 
     if (vlen > 0) {
@@ -110,6 +111,7 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
     }
     else {
         v->data[0] = 0;
+        v->dlen = 0;
     }
     v->name = v->data + vlen + 1;
 
