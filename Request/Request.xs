@@ -193,7 +193,7 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
 {
     UploadHook *hook = (UploadHook *)ptr;
 
-    if (!(upload->fp && ApacheRequest_tmpfile(upload->req, upload))) {
+    if (!(upload->fp || ApacheRequest_tmpfile(upload->req, upload))) {
         return -1; /* error */
     }
 
