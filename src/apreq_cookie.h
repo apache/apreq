@@ -7,7 +7,11 @@
 extern "C" {
 #endif 
 
-typedef struct apreq_table_t apreq_jar_t;
+typedef struct apreq_jar_t {
+    apreq_table_t *cookies;
+    apr_pool_t    *pool;
+    void          *env;
+} apreq_jar_t;
 
 typedef enum { NETSCAPE, RFC } apreq_cookie_version_t;
 
@@ -31,8 +35,6 @@ typedef struct apreq_cookie_t {
         const char *expires; 
     } time;
 
-    void           *env;
-
     apreq_value_t   v;           /* "raw" value (extended struct) */
 
 } apreq_cookie_t;
@@ -52,8 +54,8 @@ typedef struct apreq_cookie_t {
  */
 
 int apreq_jar_items(apreq_jar_t *jar);
-#define apreq_jar_items(j) apreq_table_nelts(j)
-#define apreq_jar_nelts(j) apreq_table_nelts(j)
+#define apreq_jar_items(j) apreq_table_nelts(j->cookies)
+#define apreq_jar_nelts(j) apreq_table_nelts(j->cookies)
 
 /**
  * Fetches a cookie from the jar
@@ -64,7 +66,7 @@ int apreq_jar_items(apreq_jar_t *jar);
 
 apreq_cookie_t *apreq_cookie(const apreq_jar_t *jar, const char *name);
 #define apreq_cookie(j,k) apreq_value_to_cookie(apreq_char_to_value( \
-                              apreq_table_get(j,k)))
+                              apreq_table_get((j)->cookies,k)))
 
 /**
  * Adds a cookie by pushing it to the bottom of the jar.
@@ -74,7 +76,7 @@ apreq_cookie_t *apreq_cookie(const apreq_jar_t *jar, const char *name);
  */
 
 apr_status_t apreq_add_cookie(apreq_jar_t *jar, const apreq_cookie_t *c);
-#define apreq_add_cookie(jar,c)  apreq_table_add(jar, &(c)->v)
+#define apreq_add_cookie(jar,c)  apreq_table_add(jar->cookies, &(c)->v)
 
 /**
  * Parse the incoming "Cookie:" headers into a cookie jar.
@@ -109,14 +111,10 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx, const char *data);
  * @param value The cookie's value.
  * @param vlen  Length of value.
  */
-APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(void *ctx, 
+APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(apr_pool_t *p, 
                                   const apreq_cookie_version_t version,
                                   const char *name, const apr_size_t nlen, 
                                   const char *value, const apr_size_t vlen);
-
-
-APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c, 
-                                              char *attr, char *val);
 
 /**
  * Returns a string that represents the cookie as it would appear 
@@ -152,7 +150,7 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
  * replace with this value instead.  The time_str should be in a format
  * that apreq_atod() can understand, namely /[+-]?\d+\s*[YMDhms]/.
  */
-APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
+APREQ_DECLARE(void) apreq_cookie_expires(apr_pool_t *p, apreq_cookie_t *c, 
                                          const char *time_str);
 
 /**
@@ -160,7 +158,8 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
  *
  * @param c The cookie.
  */
-APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c);
+APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c, 
+                                              void *ctx);
 
 /* XXX: how about baking whole cookie jars, too ??? */
 
@@ -169,7 +168,8 @@ APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c);
  *
  * @param c The cookie.
  */
-APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c);
+APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c,
+                                               void *ctx);
 
 APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *ctx);
 
