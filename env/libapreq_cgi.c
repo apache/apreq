@@ -58,6 +58,7 @@
 #include "apreq_parsers.h"
 #include "apreq_cookie.h"
 #include "apr_strings.h"
+#include "apr_lib.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -182,7 +183,7 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
         APR_BRIGADE_INSERT_HEAD(ctx->bb, stdin_pipe);
     }
 
-    return apreq_request_parse(apreq_request(env,NULL), ctx->bb);
+    return apreq_parse_request(apreq_request(env,NULL), ctx->bb);
 }
 
 /** @} */
