@@ -79,7 +79,7 @@ sub MY::postamble {
 
     return copy_docs(@docs) . test_docs(\@docs,\@tests) . <<EOT;
 doc_test : @tests
-        \$(FULLPERLRUN) "-MExtUtils::Command::MM" "-e" "test_harness(\$(TEST_VERBOSE), '\$(INST_LIB)', '\$(INST_ARCHLIB)')" @tests
+	\$(FULLPERLRUN) "-Mblib" "-MTest::Harness" "-e" "runtests(\@ARGV)" @tests
 
 test :: doc_test
 
