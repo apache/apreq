@@ -22,96 +22,84 @@
 #include "apr_file_io.h"
 
 
-extern const apreq_env_module_t cgi_module;
-static const apreq_env_module_t *apreq_env = &cgi_module;
-
-extern void apreq_parser_initialize(void);
-
-
-APREQ_DECLARE(const apreq_env_module_t *) apreq_env_module(const apreq_env_module_t *mod)
-{
-    apreq_parser_initialize();
-    if (mod != NULL) {
-        const apreq_env_module_t *old_mod = apreq_env;
-        apreq_env = mod;
-        return old_mod;
-    }
-    return apreq_env;
-}
-
-
 APREQ_DECLARE_NONSTD(void) apreq_log(const char *file, int line,
                                      int level, apr_status_t status,
-                                     void *env, const char *fmt, ...)
+                                     apreq_env_handle_t *env,
+                                     const char *fmt, ...)
 {
     va_list vp;
     va_start(vp, fmt);
-    apreq_env->log(file,line,level,status,env,fmt,vp);
+    env->module->log(file,line,level,status,env,fmt,vp);
     va_end(vp);
 }
 
-APREQ_DECLARE(apr_pool_t *) apreq_env_pool(void *env)
+APREQ_DECLARE(apr_pool_t *) apreq_env_pool(apreq_env_handle_t *env)
 {
-    return apreq_env->pool(env);
+    return env->module->pool(env);
 }
 
-APREQ_DECLARE(apr_bucket_alloc_t *) apreq_env_bucket_alloc(void *env)
+APREQ_DECLARE(apr_bucket_alloc_t *) apreq_env_bucket_alloc(apreq_env_handle_t *env)
 {
-    return apreq_env->bucket_alloc(env);
+    return env->module->bucket_alloc(env);
 }
 
-APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar)
+APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(apreq_env_handle_t *env,
+                                           apreq_jar_t *jar)
 {
-    return apreq_env->jar(env,jar);
+    return env->module->jar(env,jar);
 }
 
-APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
+APREQ_DECLARE(apreq_request_t *) apreq_env_request(apreq_env_handle_t *env,
                                                    apreq_request_t *req)
 {
-    return apreq_env->request(env,req);
+    return env->module->request(env,req);
 }
 
-APREQ_DECLARE(const char *) apreq_env_query_string(void *env)
+APREQ_DECLARE(const char *) apreq_env_query_string(apreq_env_handle_t *env)
 {
-    return apreq_env->query_string(env);
+    return env->module->query_string(env);
 }
 
-APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name)
+APREQ_DECLARE(const char *) apreq_env_header_in(apreq_env_handle_t *env,
+                                                const char *name)
 {
-    return apreq_env->header_in(env, name);
+    return env->module->header_in(env, name);
 }
 
-APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, 
+APREQ_DECLARE(apr_status_t)apreq_env_header_out(apreq_env_handle_t *env,
                                                 const char *name,
                                                 char *val)
 {
-    return apreq_env->header_out(env,name,val);
+    return env->module->header_out(env,name,val);
 }
 
-APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
+APREQ_DECLARE(apr_status_t) apreq_env_read(apreq_env_handle_t *env,
                                            apr_read_type_e block,
                                            apr_off_t bytes)
 {
-    return apreq_env->read(env,block,bytes);
+    return env->module->read(env,block,bytes);
 }
 
-APREQ_DECLARE(const char *) apreq_env_temp_dir(void *env, const char *path)
+APREQ_DECLARE(const char *) apreq_env_temp_dir(apreq_env_handle_t *env,
+                                               const char *path)
 {
     if (path != NULL)
         /* ensure path is a valid pointer during the entire request */
         path = apr_pstrdup(apreq_env_pool(env),path);
 
-    return apreq_env->temp_dir(env,path);
+    return env->module->temp_dir(env,path);
 }
 
-APREQ_DECLARE(apr_off_t) apreq_env_max_body(void *env, apr_off_t bytes)
+APREQ_DECLARE(apr_off_t) apreq_env_max_body(apreq_env_handle_t *env,
+                                            apr_off_t bytes)
 {
-    return apreq_env->max_body(env,bytes);
+    return env->module->max_body(env,bytes);
 }
 
-APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(void *env, apr_ssize_t bytes)
+APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(apreq_env_handle_t *env,
+                                                 apr_ssize_t bytes)
 {
-    return apreq_env->max_brigade(env,bytes);
+    return env->module->max_brigade(env,bytes);
 }
 
 /** @} */

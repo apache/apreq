@@ -3,6 +3,8 @@ LIBS = ../src/lib@APREQ_LIBNAME@.la @APR_LTLIBS@ @APU_LTLIBS@
 LDFLAGS = @APR_LDFLAGS@ @APU_LDFLAGS@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
 EXTRA_DIST = t c-modules
+pkgincludedir = $(includedir)/@APREQ_LIBNAME@
+pkginclude_HEADERS = apreq_env_apache2.h
 mod_apreq_la_LDFLAGS = -export-dynamic -module -avoid-version -rpath `@APACHE2_APXS@ -q LIBEXECDIR`
 
 check_PROGRAMS = test_cgi

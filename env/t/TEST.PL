@@ -73,7 +73,7 @@ APXS=$self->{APXS}
 all: $lib
 
 $lib: $name.c
-        \$(APXS) -I../../../src $libs -llibhttpd $dversion -p -I$self->{cmodules_dir} -c $name.c
+        \$(APXS) -I../.. -I../../../src $libs -llibhttpd $dversion -p -I$self->{cmodules_dir} -c $name.c
 
 clean:
 	-erase @goners vc60.pdb 
@@ -85,7 +85,7 @@ APXS=$self->{APXS}
 all: $lib
 
 $lib: $name.c
-	\$(APXS) -L../../../src -I../../../src -lapreq2 $dversion -I$self->{cmodules_dir} -c $name.c
+	\$(APXS) -L../../../src -I../.. -I../../../src -lapreq2 $dversion -I$self->{cmodules_dir} -c $name.c
 
 clean:
 	-rm -rf $name.o $name.lo $name.slo $name.la .libs

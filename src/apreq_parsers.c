@@ -22,8 +22,6 @@
 #include "apr_xml.h"
 #include "apr_hash.h"
 
-void apreq_parser_initialize(void);
-
 #ifndef MAX
 #define MAX(A,B)  ( (A) > (B) ? (A) : (B) )
 #endif
@@ -89,7 +87,7 @@ APREQ_DECLARE(void) apreq_add_hook(apreq_parser_t *p,
 static apr_hash_t *default_parsers;
 static apr_pool_t *default_parser_pool;
 
-void apreq_parser_initialize(void)
+static void apreq_parser_initialize(void)
 {
     if (default_parsers != NULL)
         return;
@@ -116,14 +114,16 @@ APREQ_DECLARE(void) apreq_register_parser(const char *enctype,
 
 }
 
-APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
+APREQ_DECLARE(apreq_parser_t *)apreq_parser(apreq_env_handle_t *env, apreq_hook_t *hook)
 {
     apreq_parser_function_t *f;
     apr_pool_t *pool = apreq_env_pool(env);
     const char *type = apreq_env_content_type(env);
     apr_ssize_t tlen;
 
-    if (type == NULL || default_parsers == NULL)
+    apreq_parser_initialize();
+
+    if (type == NULL)
         return NULL;
 
     tlen = 0;
@@ -775,7 +775,7 @@ static apr_status_t split_on_bdry(apr_bucket_brigade *out,
 
 #define MAX_FILE_BUCKET_LENGTH ((apr_off_t) 1 << (6 * sizeof(apr_size_t)))
 
-APREQ_DECLARE(apr_status_t) apreq_brigade_concat(void *env,
+APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apreq_env_handle_t *env,
                                                  apr_bucket_brigade *out, 
                                                  apr_bucket_brigade *in)
 {
@@ -841,7 +841,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(void *env,
     return s;
 }
 
-static struct mfd_ctx *create_multipart_context(void *env,
+static struct mfd_ctx *create_multipart_context(apreq_env_handle_t *env,
                                                 char *enctype)
 {
     apr_status_t s;

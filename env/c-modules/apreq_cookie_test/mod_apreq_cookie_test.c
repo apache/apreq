@@ -29,10 +29,13 @@
 #include "apache_httpd_test.h"
 #include "apreq_params.h"
 #include "apreq_env.h"
+#include "apreq_cookie.h"
+#include "apreq_env_apache2.h"
 #include "httpd.h"
 
 static int apreq_cookie_test_handler(request_rec *r)
 {
+    apreq_env_handle_t *env;
     apreq_request_t *req;
     apr_status_t s;
     const apreq_jar_t *jar;
@@ -45,21 +48,23 @@ static int apreq_cookie_test_handler(request_rec *r)
     if (strcmp(r->handler, "apreq_cookie_test") != 0)
         return DECLINED;
 
-    apreq_log(APREQ_DEBUG 0, r, "initializing request");
-    req = apreq_request(r, NULL);
+    env = apreq_env_make_apache2(r);
+
+    apreq_log(APREQ_DEBUG 0, env, "initializing request");
+    req = apreq_request(env, NULL);
     test = apreq_param(req, "test");
     key = apreq_param(req, "key");
 
-    apreq_log(APREQ_DEBUG 0, r, "initializing cookie");
-    jar = apreq_jar(r, NULL);
-    cookie = apreq_cookie(jar, key->v.data);    
+    apreq_log(APREQ_DEBUG 0, env, "initializing cookie");
+    jar = apreq_jar(env, NULL);
+    cookie = apreq_cookie(jar, key->v.data);
     ap_set_content_type(r, "text/plain");
 
     if (strcmp(test->v.data, "bake") == 0) {
-        s = apreq_cookie_bake(cookie, r);
+        s = apreq_cookie_bake(cookie, env);
     }
     else if (strcmp(test->v.data, "bake2") == 0) {
-        s = apreq_cookie_bake2(cookie, r);
+        s = apreq_cookie_bake2(cookie, env);
     }
     else {
         size = strlen(cookie->v.data);

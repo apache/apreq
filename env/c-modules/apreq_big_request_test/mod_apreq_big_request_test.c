@@ -29,6 +29,7 @@
 #include "apache_httpd_test.h"
 #include "apreq_params.h"
 #include "apreq_env.h"
+#include "apreq_env_apache2.h"
 #include "httpd.h"
 
 static int dump_table(void *count, const char *key, const char *value)
@@ -40,6 +41,7 @@ static int dump_table(void *count, const char *key, const char *value)
 
 static int apreq_big_request_test_handler(request_rec *r)
 {
+    apreq_env_handle_t *env;
     apreq_request_t *req;
     apr_table_t *params;
     int count = 0;
@@ -47,8 +49,10 @@ static int apreq_big_request_test_handler(request_rec *r)
     if (strcmp(r->handler, "apreq_big_request_test") != 0)
         return DECLINED;
 
-    apreq_log(APREQ_DEBUG 0, r, "initializing request");
-    req = apreq_request(r, NULL);
+    env = apreq_env_make_apache2(r);
+
+    apreq_log(APREQ_DEBUG 0, env, "initializing request");
+    req = apreq_request(env, NULL);
     params = apreq_params(r->pool, req);
     apr_table_do(dump_table, &count, params, NULL);
     ap_set_content_type(r, "text/plain");

@@ -27,8 +27,11 @@
 #include "apreq_env.h"
 #include "apreq_params.h"
 #include "apreq_cookie.h"
+#include "apreq_env_apache2.h"
 
-#define dR  request_rec *r = (request_rec *)env
+#define dR      struct env_config *c = (struct env_config*)env;\
+    request_rec *r = c->r;\
+    (void)r;
 
 struct dir_config {
     const char         *temp_dir;
@@ -59,6 +62,8 @@ static void *apreq_merge_dir_config(apr_pool_t *p, void *a_, void *b_)
 
 /* The "warehouse", stored in r->request_config */
 struct env_config {
+    apreq_env_handle_t  env;
+    request_rec        *r;
     apreq_jar_t        *jar;    /* Active jar for the current request_rec */
     apreq_request_t    *req;    /* Active request for current request_rec */
     ap_filter_t        *f;      /* Active apreq filter for this request_rec */
@@ -78,7 +83,6 @@ struct filter_ctx {
 };
 
 static const char filter_name[] = "APREQ";
-extern module AP_MODULE_DECLARE_DATA apreq_module;
 
 /**
  * @defgroup mod_apreq Apache 2.X Filter Module
@@ -172,8 +176,8 @@ extern module AP_MODULE_DECLARE_DATA apreq_module;
 #define APREQ_MODULE_MAGIC_NUMBER       20050105
 
 static void apache2_log(const char *file, int line, int level, 
-                        apr_status_t status, void *env, const char *fmt,
-                        va_list vp)
+                        apr_status_t status, apreq_env_handle_t *env,
+                        const char *fmt, va_list vp)
 {
     dR;
     ap_log_rerror(file, line, level, status, r, 
@@ -181,25 +185,25 @@ static void apache2_log(const char *file, int line, int level,
 }
 
 
-static const char *apache2_query_string(void *env)
+static const char *apache2_query_string(apreq_env_handle_t *env)
 {
     dR;
     return r->args;
 }
 
-static apr_pool_t *apache2_pool(void *env)
+static apr_pool_t *apache2_pool(apreq_env_handle_t *env)
 {
     dR;
     return r->pool;
 }
 
-static apr_bucket_alloc_t *apache2_bucket_alloc(void *env)
+static apr_bucket_alloc_t *apache2_bucket_alloc(apreq_env_handle_t *env)
 {
     dR;
     return r->connection->bucket_alloc;
 }
 
-static const char *apache2_header_in(void *env, const char *name)
+static const char *apache2_header_in(apreq_env_handle_t *env, const char *name)
 {
     dR;
     return apr_table_get(r->headers_in, name);
@@ -210,8 +214,8 @@ static const char *apache2_header_in(void *env, const char *name)
  * @bug Sending a Set-Cookie header on a 304
  * requires err_headers_out table.
  */
-static apr_status_t apache2_header_out(void *env, const char *name, 
-                                       char *value)
+static apr_status_t apache2_header_out(apreq_env_handle_t *env,
+                                       const char *name, char *value)
 {
     dR;
     apr_table_add(r->err_headers_out, name, value);
@@ -219,34 +223,9 @@ static apr_status_t apache2_header_out(void *env, const char *name,
 }
 
 
-APR_INLINE
-static struct env_config *get_cfg(request_rec *r)
-{
-    struct env_config *cfg = 
-        ap_get_module_config(r->request_config, &apreq_module);
-    if (cfg == NULL) {
-        struct dir_config *d = ap_get_module_config(r->per_dir_config, 
-                                                    &apreq_module);
-        cfg = apr_pcalloc(r->pool, sizeof *cfg);
-        ap_set_module_config(r->request_config, &apreq_module, cfg);
-
-        if (d) {
-            cfg->temp_dir    = d->temp_dir;
-            cfg->max_body    = d->max_body;
-            cfg->max_brigade = d->max_brigade;
-        } 
-        else {
-            cfg->max_body    = -1;
-            cfg->max_brigade = APREQ_MAX_BRIGADE_LEN;
-        }
-    }
-    return cfg;
-}
-
-static apreq_jar_t *apache2_jar(void *env, apreq_jar_t *jar)
+static apreq_jar_t *apache2_jar(apreq_env_handle_t *env, apreq_jar_t *jar)
 {
     dR;
-    struct env_config *c = get_cfg(r);
     if (jar != NULL) {
         apreq_jar_t *old = c->jar;
         c->jar = jar;
@@ -267,9 +246,10 @@ static void apreq_filter_relocate(ap_filter_t *f)
     }
 }
 
-static ap_filter_t *get_apreq_filter(request_rec *r)
+static ap_filter_t *get_apreq_filter(apreq_env_handle_t *env)
 {
-    struct env_config *cfg = get_cfg(r);
+    struct env_config *cfg = (struct env_config*)env;
+    request_rec *r = cfg->r;
 
     if (cfg->f != NULL)
        return cfg->f;
@@ -284,14 +264,13 @@ static ap_filter_t *get_apreq_filter(request_rec *r)
     return cfg->f;
 }
 
-static apreq_request_t *apache2_request(void *env, 
+static apreq_request_t *apache2_request(apreq_env_handle_t *env,
                                         apreq_request_t *req)
 {
     dR;
-    struct env_config *c = get_cfg(r);
 
     if (c->f == NULL)
-        get_apreq_filter(r);
+        get_apreq_filter(env);
 
     if (req != NULL) {
         apreq_request_t *old = c->req;
@@ -306,7 +285,8 @@ APR_INLINE
 static void apreq_filter_make_context(ap_filter_t *f)
 {
     request_rec *r = f->r;
-    struct env_config *cfg = get_cfg(r);
+    apreq_env_handle_t *env = apreq_env_make_apache2(r);
+    struct env_config *cfg = (struct env_config*)env;
     apreq_request_t *req = cfg->req;
     struct filter_ctx *ctx;
     apr_bucket_alloc_t *alloc;
@@ -324,7 +304,7 @@ static void apreq_filter_make_context(ap_filter_t *f)
         case APR_INCOMPLETE:
             break;
         default:
-            apreq_log(APREQ_DEBUG ctx->status, r, 
+            apreq_log(APREQ_DEBUG ctx->status, env, 
                       "cannot steal context: bad filter status");
             goto make_new_context;
         }
@@ -335,18 +315,18 @@ static void apreq_filter_make_context(ap_filter_t *f)
 
             if (req != NULL) {
                 if (req->parser != NULL) {
-                    apreq_log(APREQ_DEBUG ctx->status, r, 
+                    apreq_log(APREQ_DEBUG ctx->status, env,
                               "cannot steal context: new parser detected");
                     goto make_new_context;
                 }
             }
             else {
-                req = apreq_request(r, NULL);
+                req = apache2_request(env, NULL);
             }
 
             /* steal the parser output */
-            apreq_log(APREQ_DEBUG 0, r, "stealing parser output");
-            old_req = apreq_request(ctx->r, NULL);
+            apreq_log(APREQ_DEBUG 0, env, "stealing parser output");
+            old_req = apache2_request(apreq_env_make_apache2(ctx->r), NULL);
             req->parser = old_req->parser;
             req->body = old_req->body;
             req->body_status = old_req->body_status;
@@ -354,7 +334,7 @@ static void apreq_filter_make_context(ap_filter_t *f)
         }
 
         /* steal the filter context */
-        apreq_log(APREQ_DEBUG 0, r, "stealing filter context");
+        apreq_log(APREQ_DEBUG 0, env, "stealing filter context");
         f->ctx = f->next->ctx;
         r->proto_input_filters = f;
         ap_remove_input_filter(f->next);
@@ -388,18 +368,18 @@ static void apreq_filter_make_context(ap_filter_t *f)
             apr_int64_t content_length = apr_strtoi64(cl,&dummy,0);
 
             if (dummy == NULL || *dummy != 0) {
-                apreq_log(APREQ_ERROR APR_EGENERAL, r, 
+                apreq_log(APREQ_ERROR APR_EGENERAL, env,
                       "Invalid Content-Length header (%s)", cl);
                 ctx->status = APR_EGENERAL;
-                apreq_request(r, NULL)->body_status = APR_EGENERAL;
+                apache2_request(env, NULL)->body_status = APR_EGENERAL;
             }
             else if (content_length > (apr_int64_t)cfg->max_body) {
-                apreq_log(APREQ_ERROR APR_EGENERAL, r,
+                apreq_log(APREQ_ERROR APR_EGENERAL, env,
                           "Content-Length header (%s) exceeds configured "
                           "max_body limit (%" APR_OFF_T_FMT ")", 
                           cl, cfg->max_body);
                 ctx->status = APR_EGENERAL;
-                apreq_request(r, NULL)->body_status = APR_EGENERAL;
+                apache2_request(env, NULL)->body_status = APR_EGENERAL;
             }
         }
     }
@@ -409,12 +389,11 @@ static void apreq_filter_make_context(ap_filter_t *f)
  * Reads data directly into the parser.
  */
 
-static apr_status_t apache2_read(void *env, 
+static apr_status_t apache2_read(apreq_env_handle_t *env,
                                  apr_read_type_e block,
                                  apr_off_t bytes)
 {
-    dR;
-    ap_filter_t *f = get_apreq_filter(r); /*ensures correct filter for prefetch */
+    ap_filter_t *f = get_apreq_filter(env); /*ensures correct filter for prefetch */
     struct filter_ctx *ctx;
     apr_status_t s;
 
@@ -424,7 +403,7 @@ static apr_status_t apache2_read(void *env,
     if (ctx->status != APR_INCOMPLETE || bytes == 0)
         return ctx->status;
 
-    apreq_log(APREQ_DEBUG 0, r, "prefetching %" APR_OFF_T_FMT " bytes", bytes);
+    apreq_log(APREQ_DEBUG 0, env, "prefetching %" APR_OFF_T_FMT " bytes", bytes);
     s = ap_get_brigade(f, NULL, AP_MODE_READBYTES, block, bytes);
     if (s != APR_SUCCESS)
         return s;
@@ -432,10 +411,9 @@ static apr_status_t apache2_read(void *env,
 }
 
 
-static const char *apache2_temp_dir(void *env, const char *path)
+static const char *apache2_temp_dir(apreq_env_handle_t *env, const char *path)
 {
     dR;
-    struct env_config *c = get_cfg(r);
 
     if (path != NULL) {
         const char *rv = c->temp_dir;
@@ -451,10 +429,9 @@ static const char *apache2_temp_dir(void *env, const char *path)
 }
 
 
-static apr_off_t apache2_max_body(void *env, apr_off_t bytes)
+static apr_off_t apache2_max_body(apreq_env_handle_t *env, apr_off_t bytes)
 {
     dR;
-    struct env_config *c = get_cfg(r);
 
     if (bytes >= 0) {
         apr_off_t rv = c->max_body;
@@ -465,10 +442,10 @@ static apr_off_t apache2_max_body(void *env, apr_off_t bytes)
 }
 
 
-static apr_ssize_t apache2_max_brigade(void *env, apr_ssize_t bytes)
+static apr_ssize_t apache2_max_brigade(apreq_env_handle_t *env,
+                                       apr_ssize_t bytes)
 {
-    dR;
-    struct env_config *c = get_cfg(r);
+    struct env_config *c = (struct env_config*)env;
 
     if (bytes >= 0) {
         apr_ssize_t rv = c->max_brigade;
@@ -503,7 +480,8 @@ static apr_ssize_t apache2_max_brigade(void *env, apr_ssize_t bytes)
 static apr_status_t apreq_filter_init(ap_filter_t *f)
 {
     request_rec *r = f->r;
-    struct env_config *cfg = get_cfg(r);
+    apreq_env_handle_t *env = apreq_env_make_apache2(r);
+    struct env_config *cfg = (struct env_config*)env;
     ap_filter_t *in;
 
     if (f != r->proto_input_filters) {
@@ -516,14 +494,14 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
         {
             if (f == in) {
                 if (strcasecmp(r->input_filters->frec->name, filter_name) == 0) {
-                    apreq_log(APREQ_DEBUG 0, r, 
+                    apreq_log(APREQ_DEBUG 0, env,
                               "removing intermediate apreq filter");
                     if (cfg->f == f)
                         cfg->f = r->input_filters;
                     ap_remove_input_filter(f);
                 }
                 else {
-                    apreq_log(APREQ_DEBUG 0, r, 
+                    apreq_log(APREQ_DEBUG 0, env,
                               "relocating intermediate apreq filter");
                     apreq_filter_relocate(f);
                     cfg->f = f;
@@ -537,7 +515,7 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
      * if it is, we must deregister it now.
      */
     if (cfg->f == f) {
-        apreq_log(APREQ_DEBUG 0, r, "disabling stale protocol filter");
+        apreq_log(APREQ_DEBUG 0, env, "disabling stale protocol filter");
         cfg->f = NULL;
     }
     return APR_SUCCESS;
@@ -551,8 +529,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 {
     request_rec *r = f->r;
     struct filter_ctx *ctx;
+    apreq_env_handle_t *env;
     struct env_config *cfg;
-    apreq_request_t *req;
     apr_status_t rv;
 
     switch (mode) {
@@ -566,8 +544,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         return APR_ENOTIMPL;
     }
 
-    cfg = get_cfg(r);
-    req = cfg->req;
+    env = apreq_env_make_apache2(r);
+    cfg = (struct env_config*)env;
 
     if (f->ctx == NULL)
         apreq_filter_make_context(f);
@@ -586,7 +564,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                 rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
             
                 if (rv != APR_SUCCESS) {
-                    apreq_log(APREQ_ERROR rv, r, "ap_get_brigade failed");
+                    apreq_log(APREQ_ERROR rv, env, "ap_get_brigade failed");
                     return rv;
                 }
 
@@ -596,8 +574,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
                 if (cfg->max_body >= 0 && ctx->bytes_read > cfg->max_body) {
                     ctx->status = APR_EGENERAL;
-                    apreq_request(r, NULL)->body_status = APR_EGENERAL;
-                    apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (" APR_OFF_T_FMT
+                    apache2_request(env, NULL)->body_status = APR_EGENERAL;
+                    apreq_log(APREQ_ERROR ctx->status, env, "Bytes read (" APR_OFF_T_FMT
                               ") exceeds configured max_body limit (" APR_OFF_T_FMT ")",
                               ctx->bytes_read, cfg->max_body);
                 }
@@ -613,7 +591,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                 apr_bucket *e;
                 rv = apr_brigade_partition(bb, readbytes, &e);
                 if (rv != APR_SUCCESS && rv != APR_INCOMPLETE) {
-                    apreq_log(APREQ_ERROR rv, r, "partition failed");
+                    apreq_log(APREQ_ERROR rv, env, "partition failed");
                     return rv;
                 }
                 if (APR_BUCKET_IS_EOS(e))
@@ -628,7 +606,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                 ap_filter_t *next = f->next;
 
                 if (cfg->f != f) {
-                    apreq_log(APREQ_DEBUG ctx->status, r,
+                    apreq_log(APREQ_DEBUG ctx->status, env,
                               "removing inactive filter (%d)",
                               r->input_filters == f);
 
@@ -657,7 +635,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
             rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
             if (rv != APR_SUCCESS) {
-                apreq_log(APREQ_ERROR rv, r, "ap_get_brigade failed");
+                apreq_log(APREQ_ERROR rv, env, "ap_get_brigade failed");
                 return rv;
             }
             APREQ_BRIGADE_SETASIDE(bb, r->pool);
@@ -666,9 +644,9 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             apr_brigade_length(bb, 1, &len);
             total_read += len;
 
-            rv = apreq_brigade_concat(r, ctx->spool, bb);
+            rv = apreq_brigade_concat(env, ctx->spool, bb);
             if (rv != APR_SUCCESS && rv != APR_EOF) {
-                apreq_log(APREQ_ERROR rv, r,
+                apreq_log(APREQ_ERROR rv, env,
                           "apreq_brigade_concat failed; APREQ_TempDir problem?");
                 return rv;
             }
@@ -678,8 +656,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
         if (cfg->max_body >= 0 && ctx->bytes_read > cfg->max_body) {
             ctx->status = APR_EGENERAL;
-            apreq_request(r, NULL)->body_status = APR_EGENERAL;
-            apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (%" APR_OFF_T_FMT
+            apache2_request(env, NULL)->body_status = APR_EGENERAL;
+            apreq_log(APREQ_ERROR ctx->status, env, "Bytes read (%" APR_OFF_T_FMT
                       ") exceeds configured max_body limit (%" APR_OFF_T_FMT ")",
                       ctx->bytes_read, cfg->max_body);
         }
@@ -703,8 +681,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         return APR_SUCCESS;
 
     if (ctx->status == APR_INCOMPLETE) {
-        if (req == NULL)
-            req = apreq_request(r, NULL);
+        apreq_request_t *req = apache2_request(env, NULL);
 
         ctx->status = apreq_parse_request(req, ctx->bb);
         apr_brigade_cleanup(ctx->bb);
@@ -718,8 +695,6 @@ static APREQ_ENV_MODULE(apache2, APREQ_MODULE_NAME,
 
 static void register_hooks (apr_pool_t *p)
 {
-    const apreq_env_module_t *old_env;
-    old_env = apreq_env_module(&apache2_module);
     ap_register_input_filter(filter_name, apreq_filter, apreq_filter_init,
                              AP_FTYPE_PROTOCOL-1);
 }
@@ -798,3 +773,32 @@ module AP_MODULE_DECLARE_DATA apreq_module =
 	apreq_cmds,
 	register_hooks,
 };
+
+APREQ_DECLARE(apreq_env_handle_t*) apreq_env_make_apache2(request_rec *r) {
+    struct env_config *cfg =
+        ap_get_module_config(r->request_config, &apreq_module);
+    struct dir_config *d;
+
+    if (cfg != NULL)
+        return &cfg->env;
+
+    d = ap_get_module_config(r->per_dir_config,
+                             &apreq_module);
+    cfg = apr_pcalloc(r->pool, sizeof *cfg);
+    ap_set_module_config(r->request_config, &apreq_module, cfg);
+
+    cfg->env.module = &apache2_module;
+    cfg->r = r;
+
+    if (d == NULL) {
+        cfg->max_body    = -1;
+        cfg->max_brigade = APREQ_MAX_BRIGADE_LEN;
+    } else {
+        apreq_log(APREQ_DEBUG 0, &cfg->env, "copying temp_dir %s", d->temp_dir);
+        cfg->temp_dir    = d->temp_dir;
+        cfg->max_body    = d->max_body;
+        cfg->max_brigade = d->max_brigade;
+    }
+
+    return &cfg->env;
+}

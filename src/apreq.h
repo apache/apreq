@@ -147,10 +147,19 @@ apreq_value_t * apreq_merge_values(apr_pool_t *p,
                                    const apr_array_header_t *arr);
 
 /**
+ * An apreq environment, associated with an env module. The structure
+ * may have variable size, because the module may append its own data
+ * structures after it.
+ */
+typedef struct apreq_env_handle_t {
+    const struct apreq_env_module_t *module;
+} apreq_env_handle_t;
+
+/**
  * Fetches the enctype from the environment.
  * @param env Environment.
  */
-APREQ_DECLARE(const char *)apreq_enctype(void *env);
+APREQ_DECLARE(const char *)apreq_enctype(apreq_env_handle_t *env);
 
 /** @enum apreq_join_t Join type */
 typedef enum { 

@@ -47,7 +47,8 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
 }
 
 
-APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
+APREQ_DECLARE(apreq_request_t *) apreq_request(apreq_env_handle_t *env,
+                                               const char *qs)
 {
     apreq_request_t *req;
     apr_pool_t *p;

@@ -75,7 +75,7 @@ apreq_value_t * apreq_merge_values(apr_pool_t *p,
     return v;
 }
 
-APREQ_DECLARE(const char *)apreq_enctype(void *env)
+APREQ_DECLARE(const char *)apreq_enctype(apreq_env_handle_t *env)
 {
     char *enctype;
     const char *ct = apreq_env_content_type(env);

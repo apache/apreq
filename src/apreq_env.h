@@ -83,14 +83,16 @@
 
 APREQ_DECLARE_NONSTD(void) apreq_log(const char *file, int line,
                                      int level, apr_status_t status,
-                                     void *env, const char *fmt, ...);
+                                     apreq_env_handle_t *env,
+                                     const char *fmt, ...);
+
 /**
  * Pool associated with the environment.
  * @param env The current environment
  * @return The associated pool.
  */
 
-APREQ_DECLARE(apr_pool_t *) apreq_env_pool(void *env);
+APREQ_DECLARE(apr_pool_t *) apreq_env_pool(apreq_env_handle_t *env);
 
 /**
  * Bucket allocator associated with the environment.
@@ -98,7 +100,7 @@ APREQ_DECLARE(apr_pool_t *) apreq_env_pool(void *env);
  * @return The associated bucket allocator.
  */
 
-APREQ_DECLARE(apr_bucket_alloc_t *) apreq_env_bucket_alloc(void *env);
+APREQ_DECLARE(apr_bucket_alloc_t *) apreq_env_bucket_alloc(apreq_env_handle_t *env);
 
 /**
  * Get/set the jar currently associated to the environment.
@@ -108,7 +110,8 @@ APREQ_DECLARE(apr_bucket_alloc_t *) apreq_env_bucket_alloc(void *env);
  * jar == NULL gets the current jar, which will remain associated
  * after the call.
  */
-APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar);
+APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(apreq_env_handle_t *env,
+                                           apreq_jar_t *jar);
 
 /**
  * Get/set the request currently associated to the environment.
@@ -118,7 +121,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar);
  * req == NULL gets the current request, which will remain associated
  * after the call.
  */
-APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
+APREQ_DECLARE(apreq_request_t *) apreq_env_request(apreq_env_handle_t *env,
                                                    apreq_request_t *req);
 
 /**
@@ -126,7 +129,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
  * @param env The current environment.
  * @return The query string.
  */
-APREQ_DECLARE(const char *) apreq_env_query_string(void *env);
+APREQ_DECLARE(const char *) apreq_env_query_string(apreq_env_handle_t *env);
 
 /**
  * Fetch the header value (joined by ", " if there are multiple headers)
@@ -135,7 +138,8 @@ APREQ_DECLARE(const char *) apreq_env_query_string(void *env);
  * @param name The header name.
  * @return The value of the header, NULL if not found.
  */
-APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name);
+APREQ_DECLARE(const char *) apreq_env_header_in(apreq_env_handle_t *env,
+                                                const char *name);
 
 
 /**
@@ -167,7 +171,7 @@ APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name);
  * @param val Value of the outgoing header.
  * @return APR_SUCCESS on success, error code otherwise.
  */
-APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, 
+APREQ_DECLARE(apr_status_t)apreq_env_header_out(apreq_env_handle_t *env, 
                                                 const char *name,
                                                 char *val);
 
@@ -196,7 +200,7 @@ APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env,
  *         APR_SUCCESS if everything was read & parsed successfully,
  *         error code otherwise.
  */
-APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
+APREQ_DECLARE(apr_status_t) apreq_env_read(apreq_env_handle_t *env,
                                            apr_read_type_e block,
                                            apr_off_t bytes);
 
@@ -208,7 +212,8 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
  * path==NULL fetches the current directory without resetting it to NULL.
  */
 
-APREQ_DECLARE(const char *) apreq_env_temp_dir(void *env, const char *path);
+APREQ_DECLARE(const char *) apreq_env_temp_dir(apreq_env_handle_t *env,
+                                               const char *path);
 
 /**
  * Get/set the current max_body setting.  This is the maximum
@@ -220,7 +225,8 @@ APREQ_DECLARE(const char *) apreq_env_temp_dir(void *env, const char *path);
  *
  */
 
-APREQ_DECLARE(apr_off_t) apreq_env_max_body(void *env, apr_off_t bytes);
+APREQ_DECLARE(apr_off_t) apreq_env_max_body(apreq_env_handle_t *env,
+                                            apr_off_t bytes);
 
 /**
  * Get/set the current max_brigade setting.  This is the maximum
@@ -232,7 +238,8 @@ APREQ_DECLARE(apr_off_t) apreq_env_max_body(void *env, apr_off_t bytes);
  * bytes == -1 fetches the current max_brigade setting without modifying it.
  *
  */
-APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(void *env, apr_ssize_t bytes);
+APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(apreq_env_handle_t *env,
+                                                 apr_ssize_t bytes);
 
 /**
  * This must be fully defined for libapreq2 to operate properly 
@@ -244,18 +251,19 @@ APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(void *env, apr_ssize_t bytes);
 typedef struct apreq_env_module_t {
     const char *name;
     apr_uint32_t magic_number;
-    void (*log)(const char *,int,int,apr_status_t,void *,const char *,va_list);
-    apr_pool_t *(*pool)(void *);
-    apr_bucket_alloc_t *(*bucket_alloc)(void *);
-    apreq_jar_t *(*jar)(void *,apreq_jar_t *);
-    apreq_request_t *(*request)(void *,apreq_request_t *);
-    const char *(*query_string)(void *);
-    const char *(*header_in)(void *,const char *);
-    apr_status_t (*header_out)(void *, const char *,char *);
-    apr_status_t (*read)(void *,apr_read_type_e,apr_off_t);
-    const char *(*temp_dir)(void *, const char *);
-    apr_off_t (*max_body)(void *,apr_off_t);
-    apr_ssize_t (*max_brigade)(void *, apr_ssize_t);
+    void (*log)(const char *,int,int,apr_status_t,apreq_env_handle_t *,
+                const char *,va_list);
+    apr_pool_t *(*pool)(apreq_env_handle_t *);
+    apr_bucket_alloc_t *(*bucket_alloc)(apreq_env_handle_t *);
+    apreq_jar_t *(*jar)(apreq_env_handle_t *,apreq_jar_t *);
+    apreq_request_t *(*request)(apreq_env_handle_t *,apreq_request_t *);
+    const char *(*query_string)(apreq_env_handle_t *);
+    const char *(*header_in)(apreq_env_handle_t *,const char *);
+    apr_status_t (*header_out)(apreq_env_handle_t *, const char *,char *);
+    apr_status_t (*read)(apreq_env_handle_t *,apr_read_type_e,apr_off_t);
+    const char *(*temp_dir)(apreq_env_handle_t *, const char *);
+    apr_off_t (*max_body)(apreq_env_handle_t *,apr_off_t);
+    apr_ssize_t (*max_brigade)(apreq_env_handle_t *, apr_ssize_t);
 } apreq_env_module_t;
 
 /**
@@ -272,25 +280,29 @@ typedef struct apreq_env_module_t {
   pre##_request, pre##_query_string, pre##_header_in, pre##_header_out,     \
   pre##_read, pre##_temp_dir, pre##_max_body, pre##_max_brigade }
 
+/**
+ * Create an apreq handle which is suitable for a CGI program. It
+ * reads input from stdin and writes output to stdout.
+ */
+APREQ_DECLARE(apreq_env_handle_t*) apreq_env_make_cgi(apr_pool_t *pool);
 
 /**
- * Get/set function for the active environment stucture. Usually this
- * is called only once per process, to define the correct environment.
- * @param mod  The new active environment.
- * @return The previous active environment.  Note: a call using
- * mod == NULL fetches the current environment module without modifying it.
+ * Create a custom apreq handle which knows only some static
+ * values. Useful if you want to test the parser code or if you have
+ * got data from a custom source (neither Apache 2 nor CGI).
+ * @param pool the APR pool
+ * @param query_string the query string
+ * @param cookie value of the request "Cookie" header
+ * @param cookie2 value of the request "Cookie2" header
+ * @param content_type content type of the request body
+ * @param in a bucket brigade containing the request body
  */
-APREQ_DECLARE(const apreq_env_module_t *) apreq_env_module(const apreq_env_module_t *mod);
-
-/**
- * The current environment's name.
- */
-#define apreq_env_name (apreq_env_module(NULL)->name)
-
-/**
- * The current environment's magic (ie. version) number.
- */
-#define apreq_env_magic_number (apreq_env_module(NULL)->magic_number)
+APREQ_DECLARE(apreq_env_handle_t*) apreq_env_make_custom(apr_pool_t *pool,
+                                                         const char *query_string,
+                                                         const char *cookie,
+                                                         const char *cookie2,
+                                                         const char *content_type,
+                                                         apr_bucket_brigade *in);
 
 #ifdef __cplusplus
  }

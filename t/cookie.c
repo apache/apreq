@@ -24,7 +24,8 @@ static apreq_jar_t *j = NULL;
 
 static void jar_make(CuTest *tc)
 {
-    j = apreq_jar(p,"a=1; foo=bar; fl=left; fr=right;bad; ns=foo=1&bar=2,"
+    j = apreq_jar(apreq_env_make_custom(p, NULL, NULL, NULL, NULL, NULL),
+                  "a=1; foo=bar; fl=left; fr=right;bad; ns=foo=1&bar=2,"
                   "frl=right-left; flr=left-right; fll=left-left; good_one=1;bad");
     CuAssertPtrNotNull(tc, j);
 }
@@ -114,9 +115,9 @@ static void ua_version(CuTest *tc)
     apreq_cookie_version_t v;
     char version[] = "$Version=\"1\"";
 
-    v = apreq_ua_cookie_version(NULL);
+    v = apreq_ua_cookie_version(apreq_env_make_custom(p, NULL, NULL, NULL, NULL, NULL));
     CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_NETSCAPE, v);
-    v = apreq_ua_cookie_version(version);
+    v = apreq_ua_cookie_version(apreq_env_make_custom(p, NULL, NULL, version, NULL, NULL));
     CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_RFC, v);
 
 }

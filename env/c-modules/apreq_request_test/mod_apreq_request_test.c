@@ -30,18 +30,22 @@
 #include "apache_httpd_test.h"
 #include "apreq_params.h"
 #include "apreq_env.h"
+#include "apreq_env_apache2.h"
 #include "httpd.h"
 
 static int dump_table(void *ctx, const char *key, const char *value)
 {
     request_rec *r = ctx;
-    apreq_log(APREQ_DEBUG 0, r, "%s => %s", key, value);
+    apreq_env_handle_t *env;
+    env = apreq_env_make_apache2(r);
+    apreq_log(APREQ_DEBUG 0, env, "%s => %s", key, value);
     ap_rprintf(r, "\t%s => %s\n", key, value);
     return 1;
 }
 
 static int apreq_request_test_handler(request_rec *r)
 {
+    apreq_env_handle_t *env;
     apr_bucket_brigade *bb;
     apreq_request_t *req;
     apr_status_t s;
@@ -49,11 +53,13 @@ static int apreq_request_test_handler(request_rec *r)
     if (strcmp(r->handler, "apreq_request_test") != 0)
         return DECLINED;
 
-    apreq_log(APREQ_DEBUG 0, r, "initializing request");
-    req = apreq_request(r, NULL);
+    env = apreq_env_make_apache2(r);
+
+    apreq_log(APREQ_DEBUG 0, env, "initializing request");
+    req = apreq_request(env, NULL);
     bb = apr_brigade_create(r->pool, r->connection->bucket_alloc);
 
-    apreq_log(APREQ_DEBUG 0, r, "start parsing body");    
+    apreq_log(APREQ_DEBUG 0, env, "start parsing body");
     while ((s =ap_get_brigade(r->input_filters, bb, AP_MODE_READBYTES,
                               APR_BLOCK_READ, HUGE_STRING_LEN)) == APR_SUCCESS)
     {
@@ -63,7 +69,7 @@ static int apreq_request_test_handler(request_rec *r)
         apr_brigade_cleanup(bb);
 
     }
-    apreq_log(APREQ_DEBUG s, r, "finished parsing body");
+    apreq_log(APREQ_DEBUG s, env, "finished parsing body");
 
     ap_set_content_type(r, "text/plain");
     ap_rputs("ARGS:\n",r);

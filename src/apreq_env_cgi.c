@@ -20,9 +20,8 @@
 #include "apr_lib.h"
 #include "apr_env.h"
 
-#define dP apr_pool_t *p = (apr_pool_t *)env
-
-extern void apreq_parser_initialize(void);
+#define dP struct cgi_env *cgi_env = (struct cgi_env*)env; \
+    apr_pool_t *p = cgi_env->pool
 
 static struct {
     apreq_request_t    *req;
@@ -35,12 +34,17 @@ static struct {
     apr_off_t           bytes_read;
 } ctx = {NULL, NULL, APR_SUCCESS, NULL, -1, APREQ_MAX_BRIGADE_LEN, NULL, 0};
 
+struct cgi_env {
+    struct apreq_env_handle_t env;
+    apr_pool_t *pool;
+};
+
 #define CRLF "\015\012"
 
 #define APREQ_ENV_STATUS(rc_run, k) do {                                \
          apr_status_t rc = rc_run;                                      \
          if (rc != APR_SUCCESS) {                                       \
-             apreq_log(APREQ_DEBUG APR_EGENERAL, p,                     \
+             apreq_log(APREQ_DEBUG APR_EGENERAL, env,                   \
                        "Lookup of %s failed: status=%d", k, rc);        \
          }                                                              \
      } while (0)
@@ -48,17 +52,21 @@ static struct {
 #define APREQ_MODULE_NAME         "CGI"
 #define APREQ_MODULE_MAGIC_NUMBER 20041130
 
-static apr_pool_t *cgi_pool(void *env)
+static apr_pool_t *cgi_pool(apreq_env_handle_t *env)
 {
-    return (apr_pool_t *)env;
+    struct cgi_env *cgi_env = (struct cgi_env*)env;
+
+    return cgi_env->pool;
 }
 
-static apr_bucket_alloc_t *cgi_bucket_alloc(void *env)
+static apr_bucket_alloc_t *cgi_bucket_alloc(apreq_env_handle_t *env)
 {
-    return apr_bucket_alloc_create((apr_pool_t *)env);
+    struct cgi_env *cgi_env = (struct cgi_env*)env;
+
+    return apr_bucket_alloc_create(cgi_env->pool);
 }
 
-static const char *cgi_query_string(void *env)
+static const char *cgi_query_string(apreq_env_handle_t *env)
 {
     dP;
     char *value = NULL, qs[] = "QUERY_STRING";
@@ -66,7 +74,7 @@ static const char *cgi_query_string(void *env)
     return value;
 }
 
-static const char *cgi_header_in(void *env,
+static const char *cgi_header_in(apreq_env_handle_t *env,
                                  const char *name)
 {
     dP;
@@ -90,21 +98,21 @@ static const char *cgi_header_in(void *env,
     return value;
 }
 
-static apr_status_t cgi_header_out(void *env, const char *name,
+static apr_status_t cgi_header_out(apreq_env_handle_t *env, const char *name,
                                    char *value)
 {
     dP;
     apr_file_t *out;
     int bytes;
     apr_status_t s = apr_file_open_stdout(&out, p);
-    apreq_log(APREQ_DEBUG s, p, "Setting header: %s => %s", name, value);
+    apreq_log(APREQ_DEBUG s, env, "Setting header: %s => %s", name, value);
     bytes = apr_file_printf(out, "%s: %s" CRLF, name, value);
     apr_file_flush(out);
     return bytes > 0 ? APR_SUCCESS : APR_EGENERAL;
 }
 
 
-static apreq_jar_t *cgi_jar(void *env, apreq_jar_t *jar)
+static apreq_jar_t *cgi_jar(apreq_env_handle_t *env, apreq_jar_t *jar)
 {
     (void)env;
 
@@ -117,12 +125,11 @@ static apreq_jar_t *cgi_jar(void *env, apreq_jar_t *jar)
     return ctx.jar;
 }
 
-static apreq_request_t *cgi_request(void *env,
+static apreq_request_t *cgi_request(apreq_env_handle_t *env,
                                     apreq_request_t *req)
 {
     (void)env;
 
-    apreq_parser_initialize();
     if (req != NULL) {
         apreq_request_t *old_req = ctx.req;
         ctx.req = req;
@@ -151,8 +158,8 @@ static const TRANS priorities[] = {
 
 
 static void cgi_log(const char *file, int line, int level,
-                    apr_status_t status, void *env, const char *fmt,
-                    va_list vp)
+                    apr_status_t status, apreq_env_handle_t *env,
+                    const char *fmt, va_list vp)
 {
     dP;
     char buf[256];
@@ -196,7 +203,7 @@ static void cgi_log(const char *file, int line, int level,
 
 }
 
-static apr_status_t cgi_read(void *env,
+static apr_status_t cgi_read(apreq_env_handle_t *env,
                              apr_read_type_e block,
                              apr_off_t bytes)
 {
@@ -297,7 +304,7 @@ static apr_status_t cgi_read(void *env,
 }
 
 
-static const char *cgi_temp_dir(void *env, const char *path)
+static const char *cgi_temp_dir(apreq_env_handle_t *env, const char *path)
 {
     if (path != NULL) {
         dP;
@@ -315,7 +322,7 @@ static const char *cgi_temp_dir(void *env, const char *path)
 }
 
 
-static apr_off_t cgi_max_body(void *env, apr_off_t bytes)
+static apr_off_t cgi_max_body(apreq_env_handle_t *env, apr_off_t bytes)
 {
     (void)env;
 
@@ -328,7 +335,7 @@ static apr_off_t cgi_max_body(void *env, apr_off_t bytes)
 }
 
 
-static apr_ssize_t cgi_max_brigade(void *env, apr_ssize_t bytes)
+static apr_ssize_t cgi_max_brigade(apreq_env_handle_t *env, apr_ssize_t bytes)
 {
     (void)env;
 
@@ -342,3 +349,13 @@ static apr_ssize_t cgi_max_brigade(void *env, apr_ssize_t bytes)
 
 APREQ_ENV_MODULE(cgi, APREQ_MODULE_NAME,
                  APREQ_MODULE_MAGIC_NUMBER);
+
+APREQ_DECLARE(apreq_env_handle_t*) apreq_env_make_cgi(apr_pool_t *pool) {
+    struct cgi_env *handle;
+
+    handle = apr_pcalloc(pool, sizeof(*handle));
+    handle->env.module = &cgi_module;
+    handle->pool = pool;
+
+    return &handle->env;
+}

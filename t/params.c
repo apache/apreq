@@ -24,7 +24,7 @@ static apreq_request_t *r = NULL;
 
 static void request_make(CuTest *tc)
 {
-    r = apreq_request(NULL,"a=1;quux=foo+bar&a=2&plus=%2B;uplus=%U002b;okie=dokie;novalue1;novalue2=");
+    r = apreq_request(apreq_env_make_custom(p, NULL, NULL, NULL, NULL, NULL), "a=1;quux=foo+bar&a=2&plus=%2B;uplus=%U002b;okie=dokie;novalue1;novalue2=");
     CuAssertPtrNotNull(tc, r);
     CuAssertIntEquals(tc,8, apr_table_elts(r->args)->nelts);
 }

@@ -4,6 +4,10 @@
 
 @section v2_05 Changes with libapreq2-2.05
 
+- C API [Max Kellermann]
+  Introduce apreq_env_handle_t to replace the void *env usage.
+  Also added apreq_env_custom for making private handles, and new 
+  apreq_env_apache2.h to let mod_apreq export apreq_env_make_apache2.
 
 - C API [Max Kellermann]
   Rename apreq_env_t to apreq_env_module_t, to prepare for

@@ -27,16 +27,19 @@
 #include "apache_httpd_test.h"
 #include "apreq_params.h"
 #include "apreq_env.h"
+#include "apreq_env_apache2.h"
 #include "httpd.h"
 #include "util_filter.h"
 
 static const char filter_name[] =  "APREQ_OUTPUT_FILTER";
-module AP_MODULE_DECLARE_DATA apreq_output_filter_test_module;
+extern module AP_MODULE_DECLARE_DATA apreq_output_filter_test_module;
 
 static apr_status_t apreq_output_filter_test_init(ap_filter_t *f)
 {
+    apreq_env_handle_t *handle;
     apreq_request_t *req;
-    req = apreq_request(f->r, NULL);
+    handle = apreq_env_make_apache2(f->r);
+    req = apreq_request(handle, NULL);
     return APR_SUCCESS;
 }
 
@@ -47,8 +50,10 @@ struct ctx_t {
 
 static int dump_table(void *data, const char *key, const char *value)
 {
+    apreq_env_handle_t *env;
     struct ctx_t *ctx = (struct ctx_t *)data;
-    apreq_log(APREQ_DEBUG 0, ctx->r, "%s => %s", key, value);
+    env = apreq_env_make_apache2(ctx->r);
+    apreq_log(APREQ_DEBUG 0, env, "%s => %s", key, value);
     apr_brigade_printf(ctx->bb,NULL,NULL,"\t%s => %s\n", key, value);
     return 1;
 }
@@ -56,6 +61,7 @@ static int dump_table(void *data, const char *key, const char *value)
 static apr_status_t apreq_output_filter_test(ap_filter_t *f, apr_bucket_brigade *bb)
 {
     request_rec *r = f->r;
+    apreq_env_handle_t *env;
     apreq_request_t *req;
     apr_bucket_brigade *eos;
     struct ctx_t ctx = {r, bb};
@@ -65,8 +71,9 @@ static apr_status_t apreq_output_filter_test(ap_filter_t *f, apr_bucket_brigade 
 
     eos = apr_brigade_split(bb, APR_BRIGADE_LAST(bb));
 
-    req = apreq_request(r, NULL);
-    apreq_log(APREQ_DEBUG 0, r, "appending parsed data");
+    env = apreq_env_make_apache2(r);
+    req = apreq_request(env, NULL);
+    apreq_log(APREQ_DEBUG 0, env, "appending parsed data");
     apr_brigade_puts(bb, NULL, NULL, "\n--APREQ OUTPUT FILTER--\nARGS:\n");
     apr_table_do(dump_table, &ctx, req->args, NULL);
 
@@ -80,6 +87,7 @@ static apr_status_t apreq_output_filter_test(ap_filter_t *f, apr_bucket_brigade 
 
 static void register_hooks (apr_pool_t *p)
 {
+    (void)p;
     ap_register_output_filter(filter_name, apreq_output_filter_test, 
                               apreq_output_filter_test_init,
                               AP_FTYPE_CONTENT_SET);

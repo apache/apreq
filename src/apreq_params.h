@@ -60,7 +60,7 @@ typedef struct apreq_request_t {
     apr_table_t        *args;         /**< parsed query-string */
     apr_table_t        *body;         /**< parsed post data */
     apreq_parser_t     *parser;       /**< active parser for this request */
-    void               *env;          /**< request environment */
+    apreq_env_handle_t *env;          /**< request environment */
     apr_status_t        args_status;  /**< status of query-string parse */
     apr_status_t        body_status;  /**< status of post data parse */
 } apreq_request_t;
@@ -82,7 +82,8 @@ typedef struct apreq_request_t {
  * the apreq_env_read function.
  */
 
-APREQ_DECLARE(apreq_request_t *)apreq_request(void *env, const char *qs);
+APREQ_DECLARE(apreq_request_t *)apreq_request(apreq_env_handle_t *env,
+                                              const char *qs);
 
 
 /**
@@ -219,13 +220,13 @@ APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
 
 /** Parser arguments. */
 #define APREQ_PARSER_ARGS  apreq_parser_t *parser,     \
-                           void *env,                  \
+                           apreq_env_handle_t *env,        \
                            apr_table_t *t,             \
                            apr_bucket_brigade *bb
 
 /** Hook arguments */
 #define APREQ_HOOK_ARGS    apreq_hook_t *hook,         \
-                           void *env,                  \
+                           apreq_env_handle_t *env,        \
                            apreq_param_t *param,       \
                            apr_bucket_brigade *bb
 
@@ -298,7 +299,7 @@ struct apreq_parser_t {
  * @param in Brigade to append.
  * @return APR_SUCCESS on success, error code otherwise.
  */
-APREQ_DECLARE(apr_status_t) apreq_brigade_concat(void *env,
+APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apreq_env_handle_t *env,
                                                  apr_bucket_brigade *out, 
                                                  apr_bucket_brigade *in);
 
@@ -398,7 +399,7 @@ APREQ_DECLARE(void) apreq_add_hook(apreq_parser_t *p,
  * @return The parser; NULL if the environment's
  * Content-Type is unrecognized.
  */
-APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env,
+APREQ_DECLARE(apreq_parser_t *)apreq_parser(apreq_env_handle_t *env,
                                             apreq_hook_t *hook);
 
 

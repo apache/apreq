@@ -67,7 +67,7 @@ static int has_rfc_cookie(void *ctx, const char *key, const char *val)
                                       1 -> not found, keep going. */
 }
 
-APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env)
+APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(apreq_env_handle_t *env)
 {
     if (apreq_env_cookie2(env) == NULL) {
         apreq_jar_t *j = apreq_jar(env, NULL);
@@ -282,7 +282,8 @@ static apr_status_t get_pair(apr_pool_t *p, const char **data,
 }
 
 
-APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
+APREQ_DECLARE(apreq_jar_t *) apreq_jar(apreq_env_handle_t *env,
+                                       const char *hdr)
 {
     apr_pool_t *p = apreq_env_pool(env);
 
@@ -543,7 +544,7 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(const apreq_cookie_t *c,
 }
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
-                                              void *env)
+                                              apreq_env_handle_t *env)
 {
     char s[APREQ_COOKIE_MAX_LENGTH];
     int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
@@ -557,7 +558,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
 }
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
-                                               void *env)
+                                               apreq_env_handle_t *env)
 {
     char s[APREQ_COOKIE_MAX_LENGTH];
     if ( c->version != NETSCAPE ) {

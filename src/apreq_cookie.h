@@ -43,7 +43,7 @@ extern "C" {
 /** @brief This is the container class for libapreq cookies. */
 typedef struct apreq_jar_t {
     apr_table_t   *cookies;   /**< cookie table */
-    void          *env;       /**< environment */
+    apreq_env_handle_t *env;  /**< env handle */
     apr_status_t  status;     /**< status of "Cookie" header parse */
 } apreq_jar_t;
 
@@ -132,7 +132,7 @@ APREQ_DECLARE(void) apreq_jar_add(apreq_jar_t *jar,
  */
 
 
-APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr);
+APREQ_DECLARE(apreq_jar_t *) apreq_jar(apreq_env_handle_t *env, const char *hdr);
 
 /**
  * Returns a new cookie, made from the argument list.
@@ -214,7 +214,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
  * @param env Environment.
  */
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
-                                              void *env);
+                                              apreq_env_handle_t *env);
 
 /**
  * Add the cookie to the outgoing "Set-Cookie2" headers.
@@ -223,7 +223,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
  * @param env Environment.
  */
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
-                                               void *env);
+                                               apreq_env_handle_t *env);
 
 /**
  * Looks for the presence of a "Cookie2" header to determine whether
@@ -232,7 +232,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
  * @return APREQ_COOKIE_VERSION_RFC if rfc2965 is supported, 
  *         APREQ_COOKIE_VERSION_NETSCAPE otherwise.
  */
-APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env);
+APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(apreq_env_handle_t *env);
 
 #ifdef __cplusplus
  }
