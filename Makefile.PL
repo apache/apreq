@@ -134,33 +134,66 @@ EOF
 }
 
 sub win32_setup {
-  require Win32;
-  my $apache;
- SEARCH: {
-    for my $drive ('C' .. 'Z') {
-      for my $p ('Apache', 'Program Files/Apache', 
-		 'Program Files/Apache Group/Apache') {
-	if (-e "$drive:/$p/Apache.exe") {
-	  $apache = "$drive:/$p/Apache.exe";
-	  last SEARCH;
-	}
-      }
+    eval{require Win32;};
+    die "The libwin32 package is needed" if $@;
+    require File::Spec;
+    my $apache;
+    my $exe = 'Apache.exe';
+  SEARCH: {
+        my $candidate;
+        for (File::Spec->path) {
+            $candidate = File::Spec->catfile($_, $exe);
+            if (-e $candidate and check_win32_apache($candidate)) {
+                $apache = $candidate;
+                last SEARCH;
+            }
+        }
+        my @drives = drives();
+        last SEARCH unless (@drives > 0);
+        for my $drive (@drives) {
+            for ('Apache', 'Program Files/Apache', 
+                 'Program Files/Apache Group/Apache') {
+                $candidate = File::Spec->catfile($drive, $_, $exe);
+                if (-e $candidate and check_win32_apache($candidate)) {
+                    $apache = $candidate;
+                    last SEARCH;
+                }
+            }
+        }
     }
-  }
-  unless (-e $apache) {
-    require ExtUtils::MakeMaker;
-    ExtUtils::MakeMaker->import('prompt');
-    $apache = prompt("Where is your apache.exe located?", $apache);
-  }
-  
-  die "Can't find Apache.exe!" unless -e $apache;
-  
-  my $vers = qx{"$apache" -v};
-  die qq{"$apache" does not appear to be version 1.3}
-    unless $vers =~ m!Apache/1.3!;
-  $apache = Win32::GetShortPathName($apache);
-  $apache =~ s!\\!/!g;
-  push @ARGV, '-httpd', $apache;
+    unless (-e $apache) {
+         $apache = prompt("Please supply the full path to Apache.exe:", 
+                          $apache);
+    }
+    if (-d $apache) {
+        $apache = File::Spec->catfile($apache, $exe);
+    }
+    die "Can't find Apache.exe!" 
+        unless (-e $apache and check_win32_apache($apache));
+
+    $apache = Win32::GetShortPathName($apache);
+    $apache =~ s!\\!/!g;
+    push @ARGV, '-httpd', $apache;
+    print qq{Using "$apache".\n};
+}
+
+sub check_win32_apache {
+    my $apache = shift;
+    my $vers = qx{"$apache" -v};
+    return ($vers =~ m!Apache/1.3!) ? 1 : 0;
+}
+
+sub drives {
+    my @drives = ();
+    eval{require Win32API::File;};
+    return map {"$_:\\"} ('C' .. 'Z') if $@;
+    my @r = Win32API::File::getLogicalDrives();
+    return unless @r > 0;
+    for (@r) {
+        my $t = Win32API::File::GetDriveType($_);
+        push @drives, $_ if ($t == 3 or $t == 4);
+    }
+    return @drives > 0 ? @drives : undef;
 }
 
 __DATA__
