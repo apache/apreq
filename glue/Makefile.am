@@ -9,16 +9,16 @@ perl/Makefile: perl/xsbuilder perl/Makefile.PL
 	cd perl; @PERL@ Makefile.PL -apxs @APACHE2_APXS@
 
 perl_glue: perl/Makefile
-	cd perl; make
+	cd perl; $(MAKE)
 
 perl_test: perl/Makefile
-	cd perl; make test
+	cd perl; $(MAKE) test
 
 perl_install:
-	cd perl; make install
+	cd perl; $(MAKE) install
 
 perl_clean:
-	cd perl; make clean
+	cd perl; $(MAKE) clean
 
 if BUILD_PERL_GLUE
 
