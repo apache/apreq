@@ -4,6 +4,9 @@ Revision history for libapreq
 
 =item 0.32 - ?
 
+fix compile errors when PerlIO is used
+[dougm, Randy Kobes <randy@theoryx5.uwinnipeg.ca>]
+
 fix subclassing mechanism so the the value of an `r' or `_r' key can
 be a hash ref [dougm]
 

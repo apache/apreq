@@ -18,6 +18,13 @@ typedef ApacheUpload  * Apache__Upload;
 #define PerlLIO_close(fd) close((fd)) 
 #endif
 
+#ifdef PerlIO
+typedef PerlIO * InputStream;
+#else
+typedef FILE * InputStream;
+#define PerlIO_importFILE(fp,flags) fp
+#endif
+
 static char *r_keys[] = { "_r", "r", NULL };
 
 static SV *r_key_sv(SV *in)
@@ -199,12 +206,12 @@ MODULE = Apache::Request    PACKAGE = Apache::Upload   PREFIX = ApacheUpload_
 
 PROTOTYPES: DISABLE 
 
-FILE *
+InputStream
 ApacheUpload_fh(upload)
     Apache::Upload upload
 
     CODE:
-    if (!(RETVAL = ApacheUpload_fh(upload))) {
+    if (!(RETVAL = PerlIO_importFILE(ApacheUpload_fh(upload),0))) {
 	XSRETURN_UNDEF;
     }
 
