@@ -137,11 +137,6 @@ static int dump_table(void *ctx, const char *key, const char *value)
 }
 
 
-APREQ_LOG(env_log)
-{
-
-}
-
 const struct apreq_env APREQ_ENV =
 {
     env_name,
@@ -152,6 +147,6 @@ const struct apreq_env APREQ_ENV =
     env_jar,
     env_request,
     env_cfg,
-    env_log
+    NULL
  };
 

@@ -354,12 +354,13 @@ APREQ_DECLARE(apr_status_t) apreq_table_overlap(apreq_table_t *a,
 /** Iterator API */
 
 typedef struct apreq_table_iter_t {
-    const apreq_table_t *t;
     const apreq_value_t *v;
+    const apreq_table_t *t;
     int                  i;
 } apreq_table_iter_t;
 
-APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_fetch(apreq_table_iter_t *ti, int idx);
+APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_fetch(apreq_table_iter_t *ti,
+                                                         int idx);
 #define apreq_table_first(ti) apreq_table_fetch(ti,0)
 #define apreq_table_last(ti) apreq_table_fetch(ti,apreq_table_nelts((ti)->t)-1)
 

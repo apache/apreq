@@ -152,16 +152,16 @@ struct apreq_table_t {
                               (t)->ghosts--; } while (0)
 
 /* NEVER KILL AN ENTRY THAT'S STILL WITHIN THE FOREST */
-#define IN_FOREST(t,idx) ( (idx)[o].tree[PARENT] >= 0 || \
-                           (idx) == t->root[TABLE_HASH((idx)[o].key)] )
+#define IN_FOREST(t,idx) ( (idx)[o].tree[PARENT] >= 0 || ( !DEAD(idx) && \
+                           (idx) == t->root[TABLE_HASH((idx)[o].key)] ) )
 
 /********************* (internal) tree operations ********************/
 
 
-/* MUST ensure n's parent exists before using LR(n) */
+/* MUST ensure n's parent exists (>=0) before using LR(n) */
 #define LR(n) (  ( (n)[o].tree[PARENT][o].tree[LEFT] == (n) ) ? LEFT : RIGHT  )
 
-#define PROMOTE(o,r,p)  do rotate(o,r,p,!LR(p)); while (o[p].tree[PARENT] >= 0)
+#define PROMOTE(o,r,p)  do rotate(o,r,o[p].tree[PARENT],!LR(p)); while (o[p].tree[PARENT] >= 0)
 
 static APR_INLINE void rotate(apreq_table_entry_t *o, 
                               int *root,
@@ -427,24 +427,45 @@ static int combine(apreq_table_cmp_t *cmp,
                    apreq_table_entry_t *o, int a, 
                    int b, const int n)
 {
-    if (a < 0)
-        return b;
-    else if (b < 0)
+    int left = b[o+n].tree[LEFT];
+    int right = b[o+n].tree[RIGHT];
+    int next;
+
+    if (b < 0)
         return a;
-    else {
+
+    for( next = b+n; next[o].tree[NEXT] >= 0; next = next[o].tree[NEXT])
+        next[o].tree[NEXT] += n;
+
+    if (a >= 0) {
+        int rv = a;
         int parent = a[o].tree[PARENT];
-        int left = b[o].tree[LEFT] + n;
-        int right = b[o].tree[RIGHT] + n;
-        parent[o].tree[LR(a)] = b;
-        a[o].tree[PARENT] = -1;
-        b = insert(cmp,o,&a,b,b+o,TREE_PUSH);
-        if (a != b)
-            PROMOTE(o,&a,b);
-        b[o].tree[PARENT] = parent;
-        b[o].tree[LEFT]  = combine(cmp, o, b[o].tree[LEFT],  left,  n);
-        b[o].tree[RIGHT] = combine(cmp, o, b[o].tree[RIGHT], right, n);
-        return b;
+        if (parent >= 0) {
+            parent[o].tree[LR(a)] = b+n;
+            a[o].tree[PARENT] = -1;
+        }
+
+        if (insert(cmp,o,&a,a,b+o+n, TREE_PUSH) < 0)
+            rv = b + n;
+
+        if (b[o+n].tree[PARENT] >= 0)
+            PROMOTE(o,&a,b+n);
+
+        b[o+n].tree[PARENT] = parent;
+        b[o+n].tree[LEFT]  = combine(cmp, o, b[o+n].tree[LEFT],  left,  n);
+        b[o+n].tree[RIGHT] = combine(cmp, o, b[o+n].tree[RIGHT], right, n);
+
+        return rv;
     }
+    else {
+        if (b[o+n].tree[PARENT] >= 0)
+            b[o+n].tree[PARENT] += n;
+        b[o+n].tree[LEFT]  = combine(cmp, o, -1,  left,  n);
+        b[o+n].tree[RIGHT] = combine(cmp, o, -1, right, n);
+
+        return b + n;
+    }
+
 }
 
 
@@ -660,7 +681,7 @@ APREQ_DECLARE(void) apreq_table_balance(apreq_table_t *t, const int on)
         t->flags &= ~TF_BALANCE;
     }
 }
-
+#include <stdio.h>
 APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t)
 {
     if (t->flags & TF_MERGE) {
@@ -673,7 +694,8 @@ APREQ_DECLARE(apr_status_t) apreq_table_normalize(apreq_table_t *t)
         
         for (idx = 0; idx < t->a.nelts; ++idx) {
             int j = idx[o].tree[NEXT];
-
+/*            printf("GOT HERE(%d:%d:%d): %s\n", j, idx, arr.nelts, idx[o].key);
+ */
             if ( j >= 0 && IN_FOREST(t,idx) ) {
                 apreq_value_t *v;
 
@@ -884,7 +906,8 @@ APREQ_DECLARE(void) apreq_table_set(apreq_table_t *t, const apreq_value_t *val)
         e->key = key;
         e->val = val;
         e->tree[NEXT] = -1;
-        insert(t->cmp, o,&t->root[TABLE_HASH(key)],idx,e,TREE_PUSH);
+        insert(t->cmp,(apreq_table_entry_t *)t->a.elts,
+               &t->root[TABLE_HASH(key)],idx,e,TREE_PUSH);
     }
 }
 
@@ -959,7 +982,8 @@ APREQ_DECLARE(apr_status_t) apreq_table_merge(apreq_table_t *t,
         e->key = val->name;
         e->val = val;
         e->tree[NEXT] = -1;
-        insert(t->cmp,o,&t->root[TABLE_HASH(key)],idx,e,TREE_PUSH);
+        insert(t->cmp,(apreq_table_entry_t *)t->a.elts,
+               &t->root[TABLE_HASH(key)],idx,e,TREE_PUSH);
     }
     return val->status;
 }
@@ -990,7 +1014,7 @@ APREQ_DECLARE(apr_status_t) apreq_table_add(apreq_table_t *t,
         elt->key = val->name;
         elt->val = val;
         elt->tree[NEXT] = -1;
-        insert(t->cmp, o, root, *root, elt,TREE_PUSH);
+        insert(t->cmp, o, root, *root, elt, TREE_PUSH);
         return APR_SUCCESS;
     }
 
@@ -1012,9 +1036,10 @@ APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t,
 {
     const int n = t->a.nelts;
     int idx;
-    apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
+    apreq_table_entry_t *o;
 
     apr_array_cat(&t->a, &s->a);
+    o = (apreq_table_entry_t *)t->a.elts;
 
     LOCK_TABLE(t);
 
@@ -1132,10 +1157,10 @@ APREQ_DECLARE(apr_status_t) apreq_table_overlap(apreq_table_t *a,
     }
 
     apreq_table_cat(a, b);
+    a->flags |= TF_MERGE;
 
     if (flags == APR_OVERLAP_TABLES_SET) {
         apreq_value_merge_t *f = a->merge;
-
         a->merge = collapse;
         s = apreq_table_normalize(a);
         a->merge = f;
@@ -1149,7 +1174,8 @@ APREQ_DECLARE(apr_status_t) apreq_table_overlap(apreq_table_t *a,
 
 /********************* iterators ********************/
 
-APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_fetch(apreq_table_iter_t *ti, int idx)
+APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_fetch(
+                                       apreq_table_iter_t *ti, int idx)
 {
     const apreq_table_t *t = ti->t;
     apreq_table_entry_t *o = (apreq_table_entry_t *)t->a.elts;
@@ -1172,9 +1198,9 @@ APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_fetch(apreq_table_iter_t *ti,
         ti->i = idx;
 
     ti->v = idx[o].val;
-
     return APR_SUCCESS;
 }
+
 
 APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_next(apreq_table_iter_t *ti)
 {

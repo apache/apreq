@@ -509,7 +509,7 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
         memcpy(d,a[0]->data,a[0]->size);
         d += a[0]->size;
 
-        for (j = 0; j < n ; ++j) {
+        for (j = 1; j < n ; ++j) {
             memcpy(d, sep, slen);
             d += slen;
             memcpy(d, a[j]->data, a[j]->size);

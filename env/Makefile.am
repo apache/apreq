@@ -1,4 +1,4 @@
-INCLUDES = -I@APACHE2_INCLUDES@ -I../src
+INCLUDES = -I../src -I@APACHE2_INCLUDES@
 
 lib_LIBRARIES = libapreq_cgi.a
 noinst_LTLIBRARIES = mod_apreq.la
