@@ -4,7 +4,7 @@ build/
 
 
 
-UPDATING THE httpd-apreq HOME PAGE:
+UPDATING THE httpd-apreq SITE:
 
 RedHat Linux:
   1) Download and install j2re and j2sdk rpms from Sun's
@@ -16,8 +16,8 @@ RedHat Linux:
 
         http://ant.apache.org/bindownload.cgi
 
-    I just expanded the tar.gz file in /usr/java/ant, which
-    is alongside the jre and jdk directory trees.
+    (I just expanded the tar.gz file in /usr/java/ant, which
+     is alongside the jre and jdk directory trees.)
 
   3) Prep the (bash) environment:
 
@@ -28,9 +28,8 @@ RedHat Linux:
   4) Check out httpd-site from cvs.apache.org and run
 
     $ cd httpd-site
-    $ emacs xdocs/apreq/index.html
+    $ emacs xdocs/apreq
     $ ant
-    $ cvs commit -m "Added info on public cvs access, snapshots and list
-    archives for apreq." xdocs/apreq/index.html docs/apreq/index.html
+    $ cvs commit -m "..." xdocs/apreq/ docs/apreq/
 
   5) Wait 24 hours for the changes to appear on the website.
