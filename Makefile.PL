@@ -11,9 +11,6 @@ WriteMakefile(
 	      'NAME'	 => 'libapreq',
 	      'VERSION' => $myVERSION,
 	      'DIR' => [qw(c Request Cookie)], 
-	      'macro' => {
-		  CVSROOT => 'modperl.com:/local/cvs_repository',
-	      },
 	      );
 
 sub check_compat {
@@ -40,7 +37,7 @@ sub MY::postamble {
     return <<'EOF'; 
 
 cvs_tag :
-	cvs -d $(CVSROOT) tag v$(VERSION_SYM) . 
+	cvs tag v$(VERSION_SYM) . 
 	@echo update Apache/Request.pm's VERSION now 
 
 EOF
