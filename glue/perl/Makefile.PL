@@ -271,6 +271,21 @@ sub mod_xs {
     undef;
 }
 
+sub mod_pm {
+    my($self, $module, $complete) = @_;
+    my $dirname = $self->class_dirname($module);
+    my @parts = split '::', $module;
+    my $mod_pm = "$dirname/$parts[-1].pm";
+
+    for ($self -> xs_include_dir, @{ $self->{glue_dirs} }) {
+        my $file = "$_/$mod_pm";
+		$mod_pm = $file if $complete;
+        return $mod_pm if -e $file;
+    }
+
+    undef;
+}
+
 #inline mod_xs directly, so we can put XS directives there
 
 sub write_xs {
@@ -530,19 +545,24 @@ sub typemap_code
                             c2perl => 'apreq_xs_param2sv(ptr)',
                            },
         T_APREQ_HANDLE => {
-                            INPUT  => '$var = apreq_xs_perl2c(aTHX_ $arg, "r")',
-                            perl2c => 'apreq_xs_perl2c(aTHX_ sv, "r")',
+                            INPUT  => '$var = apreq_xs_perl2c(aTHX_ $arg, \"r\")',
+                            perl2c => 'apreq_xs_perl2c(aTHX_ sv, \"r\")',
                             c2perl => 'sv_setref_pv(newSV(0), class, ptr)',
                             OUTPUT => <<'EOT',
-    $arg = sv_setref_pv($arg, class, $var);
-    if (!sv_derived_from($arg, \"${ntype}\"))
+    $arg = sv_setref_pv(newSV(0), class, $var);
+    if (sv_derived_from($arg, \"${ntype}\")) {
+        SV *parent = ST(1);
+        SV *rv = SvRV($arg);
+        sv_magic(rv, parent, PERL_MAGIC_ext, Nullch, 0);
+    }
+    else
         Perl_croak(aTHX_ \"Usage: target class %s isn't derived from ${ntype}\", class);
 EOT
                            },
         T_APREQ_HANDLE_APACHE2 => {
-                            INPUT  => '$var = apreq_xs_perl2c(aTHX_ $arg, "r")',
+                            INPUT  => '$var = apreq_xs_perl2c(aTHX_ $arg, \"r\")',
                             OUTPUT => <<'EOT',
-    $arg = sv_setref_pv($arg, class, $var);
+    $arg = sv_setref_pv(newSV(0), class, $var);
     if (sv_derived_from($arg, \"${ntype}\")) {
         SV *parent = ST(1); /* r's SV */
         SV *rv = SvRV($arg);

@@ -105,7 +105,11 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
 
 #################### APR::Request stuff ####################
 
-MODULE=APR::Request  PACKAGE=APR::Request
+MODULE=APR::Request  PACKAGE=APR::Request PREFIX=apreq_
+apreq_jar_get
+apreq_body_get
+apreq_args_get
+
 #DEFINE_jar | apreq_xs_jar |
 #DEFINE_args | apreq_xs_args |
 #DEFINE_body | apreq_xs_body |
