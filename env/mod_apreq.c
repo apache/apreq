@@ -83,7 +83,7 @@
  */
 
 const char apreq_env_name[] = "APACHE2"; /**< internal name of module */
-const unsigned int apreq_env_magic_number = 20031014; /**< ABI version */
+const unsigned int apreq_env_magic_number = 20031023; /**< ABI version */
 
 /** The warehouse. */
 struct env_config {
@@ -207,14 +207,13 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
 {
     dR;
     struct env_config *c = get_cfg(r);
+
     if (c->f == NULL)
         get_apreq_filter(r);
 
     if (req != NULL) {
         apreq_request_t *old = c->req;
         c->req = req;
-        apreq_log(APREQ_DEBUG 0, r, 
-                  "apreq request is now initialized (%d)", req);
         return old;
     }
 
@@ -232,8 +231,6 @@ static void apreq_filter_make_context(ap_filter_t *f)
     ctx->spool   = apr_brigade_create(r->pool, alloc);
     ctx->status  = APR_INCOMPLETE;
     ctx->saw_eos = 0;
-    apreq_log(APREQ_DEBUG 0, r, 
-              "apreq filter context created." );    
 }
 
 /**
@@ -249,8 +246,6 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
     struct filter_ctx *ctx;
     apr_status_t s;
 
-    if (f == NULL)
-        return APR_NOTFOUND;
     if (f->ctx == NULL)
         apreq_filter_make_context(f);
     ctx = f->ctx;
@@ -263,7 +258,6 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
         return s;
     return ctx->status;
 }
-
 
 
 static apr_status_t apreq_filter_init(ap_filter_t *f)
@@ -292,8 +286,8 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
          */
 
         if (!APR_BRIGADE_EMPTY(ctx->spool)) {
-            apreq_request_t *req = apreq_env_request(r, NULL);
             struct env_config *cfg = get_cfg(r);
+            apreq_request_t *req = cfg->req;
 
             /* Adding "f" to the protocol filter chain ensures the 
              * spooled data is preserved across internal redirects.
@@ -326,17 +320,6 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
             apreq_filter_relocate(f);
         }
     } 
-    else {
-        apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
-        ctx = apr_palloc(r->pool, sizeof *ctx);
-        f->ctx       = ctx;
-        ctx->bb      = apr_brigade_create(r->pool, alloc);
-        ctx->spool   = apr_brigade_create(r->pool, alloc);
-        ctx->status  = APR_INCOMPLETE;
-        ctx->saw_eos = 0;
-        apreq_log(APREQ_DEBUG 0, r, 
-                  "apreq filter is initialized (%d)", f);
-    }
 
     return APR_SUCCESS;
 }
@@ -367,7 +350,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         return APR_ENOTIMPL;
     }
 
-    req = apreq_request(r, NULL);
+    req = get_cfg(r)->req;
 
     if (bb != NULL) {
 
@@ -409,13 +392,19 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             return ctx->status;
         }
 
+        /* assert(req); */
+
     }
     else if (!ctx->saw_eos) {
+
         /* prefetch read! */
+
         apr_bucket_brigade *tmp = apr_brigade_create(r->pool, 
                                       apr_bucket_alloc_create(r->pool));
         apr_bucket *last = APR_BRIGADE_LAST(ctx->spool);
         apr_size_t total_read = 0;
+
+        /* assert(req); */
 
         while (total_read < readbytes) {
             apr_off_t len;
