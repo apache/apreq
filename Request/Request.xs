@@ -533,7 +533,7 @@ ApacheUpload_fh(upload)
     if (fd < 0) 
         XSRETURN_UNDEF;
 
-    if ( !(RETVAL = PerlIO_fdopen(fd, "r")) )
+    if ( !(RETVAL = PerlIO_fdopen(fd, "rb")) )
 	XSRETURN_UNDEF;
 #else
     if (  ( RETVAL = PerlIO_importFILE(fp,0) ) == NULL  )
@@ -547,25 +547,25 @@ ApacheUpload_fh(upload)
     /* XXX: there may be a leak/segfault in here somewhere */
 #if PERL_REVISION == 5 && PERL_VERSION > 7
     if (ST(0) != &PL_sv_undef) {
-	IO *io = GvIOn((GV*)SvRV(ST(0)));
-	if (upload->req->parsed)
-	    PerlIO_seek(IoIFP(io), 0, 0);
+        IO *io = GvIOn((GV*)SvRV(ST(0)));
+        if (upload->req->parsed)
+            PerlIO_seek(IoIFP(io), 0, 0);
     }
 #else
-   if (ST(0) != &PL_sv_undef) {
-	IO *io = GvIOn((GV*)SvRV(ST(0)));
-	int fd = PerlIO_fileno(IoIFP(io));
-	PerlIO *fp;
+    if (ST(0) != &PL_sv_undef) {
+        IO *io = GvIOn((GV*)SvRV(ST(0)));
+        int fd = PerlIO_fileno(IoIFP(io));
+        PerlIO *fp;
 
-	fd = PerlLIO_dup(fd);
-	if (!(fp = PerlIO_fdopen(fd, "r"))) { 
-	    PerlLIO_close(fd);
-	    croak("fdopen failed!");
-	}
-	if (upload->req->parsed)
-	    PerlIO_seek(fp, 0, 0);
+        fd = PerlLIO_dup(fd);
+        if (!(fp = PerlIO_fdopen(fd, "rb"))) { 
+            PerlLIO_close(fd);
+            croak("fdopen failed!");
+        }
+        if (upload->req->parsed)
+            PerlIO_seek(fp, 0, 0);
 
-	IoIFP(io) = fp;  	
+        IoIFP(io) = fp;  	
     }
 #endif
 
