@@ -2,6 +2,11 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.21 - June 25, 2003
+Fix memory access problem with TEMP_DIR- see 
+http://marc.theaimsgroup.com/?l=apreq-dev&m=105647058517842&w=2
+Thanks to Jay Buffington for the spot.  [joes]
+
 =item 1.2 - June 19, 2003
 
 libapreq-1.2 released.
