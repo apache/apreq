@@ -34,28 +34,7 @@ NULL=nul
 !ENDIF 
 
 !IF  "$(CFG)" == "testall - Win32 Release"
-
-OUTDIR=.\libs
-INTDIR=.\libs
-# Begin Custom Macros
-OutDir=.\libs
-# End Custom Macros
-
 ALL : "$(OUTDIR)\testall.exe"
-
-
-CLEAN :
-	-@erase "$(INTDIR)\cookie.obj"
-	-@erase "$(INTDIR)\CuTest.obj"
-	-@erase "$(INTDIR)\env.obj"
-	-@erase "$(INTDIR)\params.obj"
-	-@erase "$(INTDIR)\parsers.obj"
-	-@erase "$(INTDIR)\performance.obj"
-	-@erase "$(INTDIR)\tables.obj"
-	-@erase "$(INTDIR)\testall.obj"
-	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(OUTDIR)\testall.exe"
-        -@erase "$(OUTDIR)\testall.pch"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -119,30 +98,7 @@ LINK32_OBJS= \
 
 !ELSEIF  "$(CFG)" == "testall - Win32 Debug"
 
-OUTDIR=.\libs
-INTDIR=.\libs
-# Begin Custom Macros
-OutDir=.\libs
-# End Custom Macros
-
 ALL : "$(OUTDIR)\testall.exe"
-
-
-CLEAN :
-	-@erase "$(INTDIR)\cookie.obj"
-	-@erase "$(INTDIR)\CuTest.obj"
-	-@erase "$(INTDIR)\env.obj"
-	-@erase "$(INTDIR)\params.obj"
-	-@erase "$(INTDIR)\parsers.obj"
-	-@erase "$(INTDIR)\performance.obj"
-	-@erase "$(INTDIR)\tables.obj"
-	-@erase "$(INTDIR)\testall.obj"
-	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(OUTDIR)\testall.exe"
-	-@erase "$(OUTDIR)\testall.ilk"
-	-@erase "$(OUTDIR)\testall.pdb"
-        -@erase "$(OUTDIR)\testall.pch"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"

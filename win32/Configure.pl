@@ -4,10 +4,11 @@ use warnings;
 use Getopt::Long;
 require File::Spec;
 require Win32;
-my ($apache, $debug, $help);
+my ($apache, $debug, $help, $no_perl);
 my $result = GetOptions( 'with-apache=s' => \$apache,
 			 'debug' => \$debug,
 			 'help' => \$help,
+                         'without-perl' => \$no_perl,
                        );
 usage() if $help;
 
@@ -20,17 +21,18 @@ path_ext();
 my $doxygen = which('doxygen');
 my $cfg = $debug ? 'Debug' : 'Release';
 
-eval {require ExtUtils::XSBuilder;};
-if ($@) {
-    warn "ExtUtils::XSBuilder must be installed for Perl glue\n";
+unless ($no_perl) {
+    eval {require ExtUtils::XSBuilder;};
+    if ($@) {
+        warn "ExtUtils::XSBuilder must be installed for Perl glue\n";
+    }
+    else {
+        my @args = ($^X, '../../build/xsbuilder.pl', 'run', 'run');
+        chdir '../glue/perl';
+        system(@args) == 0 or die "system @args failed: $!";
+        chdir '../../win32';
+    }
 }
-else {
-    my @args = ($^X, '../../build/xsbuilder.pl', 'run', 'run');
-    chdir '../glue/perl';
-    system(@args) == 0 or die "system @args failed: $!";
-    chdir '../../win32';
-}
-
 
 open my $make, '>Makefile' or die qq{Cannot open Makefile: $!};
 print $make <<"END";
@@ -38,6 +40,9 @@ print $make <<"END";
 
 CFG=$cfg
 APACHE=$apache
+PERL=$^X
+RM_F=\$(PERL) -MExtUtils::Command -e rm_f
+
 END
 
 print $make $_ while (<DATA>);
@@ -83,6 +88,7 @@ Options:
 
   --with-apache=C:\Path\to\Apache2 : specify the top-level Apache2 directory
   --debug                          : build a debug version
+  --without-perl                   : skip initializing the perl glue
   --help                           : print this help message
 
 With no options specified, an attempt will be made to find a suitable 
@@ -197,13 +203,8 @@ NULL=
 NULL=nul
 !ENDIF 
 
-!IF  "$(CFG)" == "Release"
 INTDIR=.\libs
 OUTDIR=.\libs
-!ELSE
-INTDIR=.\libs
-OUTDIR=.\libs
-!ENDIF
 
 ALL : "$(LIBAPREQ)"
 
@@ -211,10 +212,9 @@ $(LIBAPREQ):
 	$(MAKE) /nologo /f $(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)"
 
 CLEAN:
-	$(MAKE) /nologo /f $(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)" clean
-	$(MAKE) /nologo /f $(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" clean
-	$(MAKE) /nologo /f $(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)" clean
-	$(MAKE) /nologo /f $(CGI).mak CFG="$(CGI) - Win32 $(CFG)" APACHE="$(APACHE)" clean
+	cd libs
+        $(RM_F) *.pch *.exe *.exp *.lib *.pch *.idb *.so *.dll *.obj
+	cd ..
 
 TEST: $(LIBAPREQ)
 	$(MAKE) /nologo /f $(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)"

@@ -36,26 +36,16 @@ NULL=nul
 CPP=cl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "libapreq - Win32 Release"
-
 OUTDIR=.\libs
 INTDIR=.\libs
 # Begin Custom Macros
 OutDir=.\libs
 # End Custom Macros
 
+
+!IF  "$(CFG)" == "libapreq - Win32 Release"
+
 ALL : "$(OUTDIR)\libapreq.lib"
-
-
-CLEAN :
-	-@erase "$(INTDIR)\apreq.obj"
-	-@erase "$(INTDIR)\apreq_cookie.obj"
-	-@erase "$(INTDIR)\apreq_params.obj"
-	-@erase "$(INTDIR)\apreq_parsers.obj"
-	-@erase "$(INTDIR)\apreq_tables.obj"
-	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(OUTDIR)\libapreq.lib"
-        -@erase "$(OUTDIR)\libapreq.pch"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -79,25 +69,7 @@ LIB32_OBJS= \
 
 !ELSEIF  "$(CFG)" == "libapreq - Win32 Debug"
 
-OUTDIR=.\libs
-INTDIR=.\libs
-# Begin Custom Macros
-OutDir=.\libs
-# End Custom Macros
-
 ALL : "$(OUTDIR)\libapreq.lib"
-
-
-CLEAN :
-	-@erase "$(INTDIR)\apreq.obj"
-	-@erase "$(INTDIR)\apreq_cookie.obj"
-	-@erase "$(INTDIR)\apreq_params.obj"
-	-@erase "$(INTDIR)\apreq_parsers.obj"
-	-@erase "$(INTDIR)\apreq_tables.obj"
-	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(OUTDIR)\libapreq.lib"
-        -@erase "$(OUTDIR)\libapreq.pch"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -181,7 +153,6 @@ SOURCE=..\src\apreq_tables.c
 
 "$(INTDIR)\apreq_tables.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
-
 
 
 !ENDIF 

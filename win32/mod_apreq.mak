@@ -37,24 +37,15 @@ CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "mod_apreq - Win32 Release"
-
 OUTDIR=.\libs
 INTDIR=.\libs
 # Begin Custom Macros
 OutDir=.\libs
 # End Custom Macros
 
+!IF  "$(CFG)" == "mod_apreq - Win32 Release"
+
 ALL : "$(OUTDIR)\mod_apreq.dll"
-
-
-CLEAN :
-	-@erase "$(INTDIR)\mod_apreq.obj"
-	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(OUTDIR)\mod_apreq.so"
-	-@erase "$(OUTDIR)\mod_apreq.exp"
-	-@erase "$(OUTDIR)\mod_apreq.lib"
-        -@erase "$(OUTDIR)\mod_apreq.pch"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -79,25 +70,7 @@ LINK32_OBJS= \
 
 !ELSEIF  "$(CFG)" == "mod_apreq - Win32 Debug"
 
-OUTDIR=.\libs
-INTDIR=.\libs
-# Begin Custom Macros
-OutDir=.\libs
-# End Custom Macros
-
 ALL : "$(OUTDIR)\mod_apreq.dll"
-
-
-CLEAN :
-	-@erase "$(INTDIR)\mod_apreq.obj"
-	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(INTDIR)\vc60.pdb"
-	-@erase "$(OUTDIR)\mod_apreq.so"
-	-@erase "$(OUTDIR)\mod_apreq.exp"
-	-@erase "$(OUTDIR)\mod_apreq.ilk"
-	-@erase "$(OUTDIR)\mod_apreq.lib"
-	-@erase "$(OUTDIR)\mod_apreq.pdb"
-        -@erase "$(OUTDIR)\mod_apreq.pch"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -158,7 +131,6 @@ SOURCE=..\env\mod_apreq.c
 
 "$(INTDIR)\mod_apreq.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
-
 
 
 !ENDIF 
