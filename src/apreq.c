@@ -366,7 +366,7 @@ APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s,
                     *d++ = 0x80 | ((c >> 6) & 0x3f);
                     *d   = 0x80 | (c & 0x3f);
                 }
-                s += 4;
+                s += 5;
             }
 	    else {
 		badesc = 1;
