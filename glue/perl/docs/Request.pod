@@ -17,7 +17,7 @@ Apache::Request - Methods for dealing with client request data
     $req->args->add(foo => 1);
     $req->args->add(bar => 2);
     $req->args->add(foo => 3);
-
+    $req->body_status(0);
 
 
 
@@ -394,12 +394,13 @@ APR_SUCCESS on success, error otherwise.
 
     $req->body_status()
 
-Reports the current I<APR> status code of the POST data parser.
+Get/set the current I<APR> status code of the parsed POST data.
 APR_SUCCESS when parser has completed, APR_INCOMPLETE if parser
-has more data to parse, error otherwise.
+has more data to parse, APR_EINIT if no post data has been parsed,
+error otherwise.
 
 =for testing
-    is $req->body_status, 70023; # APR_EINIT ?
+    is $req->body_status, 0; # APR_SUCCESS
 
 
 
@@ -427,7 +428,7 @@ C<(args_status, body_status)>.
 
 Forces the request to be parsed immediately.  In void context,
 this will throw an Apache::Request::Error should the parser fail. 
-Otherwise it will return the parser's final I<APR> status code.
+Otherwise it will return the parser's I<APR> status code.
 
 However C<parse> should be avoided in most normal situations.  
 For example, in a mod_perl content handler it is more efficient
@@ -435,7 +436,7 @@ to write
 
     sub handler {
         my $r = shift;
-        $req = Apache::Request->new($r);
+        my $req = Apache::Request->new($r);
         $r->discard_request_body;   # efficiently parses the request body
         my $parser_status = $req->body_status;
 

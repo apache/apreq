@@ -96,6 +96,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
     else
         req->args_status = APR_SUCCESS;
 
+    req->body_status = APR_EINIT;
     return req;
 }
 
@@ -106,7 +107,7 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
     const char *val = apr_table_get(req->args, name);
 
     while (val == NULL) {
-        apr_status_t s = apreq_env_read(req->env, APR_BLOCK_READ,APREQ_READ_AHEAD);
+        apr_status_t s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
         if (req->body == NULL)
             return NULL;
         val = apr_table_get(req->body, name);
@@ -282,15 +283,23 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
 APREQ_DECLARE(apr_status_t) apreq_parse_request(apreq_request_t *req, 
                                                 apr_bucket_brigade *bb)
 {
-    if (req->parser == NULL) {
-        req->parser = apreq_parser(req->env,NULL);
-        if (req->parser == NULL)
-            return APR_ENOTIMPL;
-    }
-    if (req->body == NULL)
-        req->body = apr_table_make(apreq_env_pool(req->env),APREQ_NELTS);
+    switch (req->body_status) {
+    case APR_EINIT:
+        if (req->parser == NULL) {
+            req->parser = apreq_parser(req->env,NULL);
+            if (req->parser == NULL)
+                return APR_ENOTIMPL;
+        }
+        if (req->body == NULL)
+            req->body = apr_table_make(apreq_env_pool(req->env),APREQ_NELTS);
 
-    return APREQ_RUN_PARSER(req->parser, req->env, req->body, bb);
+
+    case APR_INCOMPLETE:
+        req->body_status = APREQ_RUN_PARSER(req->parser, req->env, 
+                                            req->body, bb);
+    default:
+        return req->body_status;
+    }
 }
 
 

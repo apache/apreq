@@ -33,7 +33,7 @@
         req = (apreq_request_t *)SvIVX(obj);                            \
         if (req->parser == NULL)                                        \
            break;                                                       \
-        switch (s = apreq_parse_request(req,NULL)) {                    \
+        switch (s = apreq_env_read(req->env, APR_BLOCK_READ, 0)) {      \
         case APR_INCOMPLETE:                                            \
         case APR_SUCCESS:                                               \
             break;                                                      \

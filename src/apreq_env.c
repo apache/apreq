@@ -142,7 +142,7 @@ static struct {
 
 
 #define APREQ_MODULE_NAME         "CGI"
-#define APREQ_MODULE_MAGIC_NUMBER 20040707
+#define APREQ_MODULE_MAGIC_NUMBER 20040731
 
 static apr_pool_t *cgi_pool(void *env)
 {
@@ -300,6 +300,29 @@ static apr_status_t cgi_read(void *env,
         APR_BRIGADE_INSERT_HEAD(ctx.in, stdin_pipe);
         APR_BRIGADE_INSERT_TAIL(ctx.in, eos);
         ctx.status = APR_INCOMPLETE;
+
+        if (ctx.max_body >= 0) {
+            const char *cl = apreq_env_header_in(env, "Content-Length");
+            if (cl != NULL) {
+                char *dummy;
+                apr_int64_t content_length = apr_strtoi64(cl,&dummy,0);
+
+                if (dummy == NULL || *dummy != 0) {
+                    apreq_log(APREQ_ERROR APR_EGENERAL, env,
+                              "Invalid Content-Length header (%s)", cl);
+                    ctx.status = APR_EGENERAL;
+                    req->body_status = APR_EGENERAL;
+                }
+                else if (content_length > (apr_int64_t)ctx.max_body) {
+                    apreq_log(APREQ_ERROR APR_EGENERAL, env,
+                              "Content-Length header (%s) exceeds configured "
+                              "max_body limit (%" APR_OFF_T_FMT ")", 
+                              cl, ctx.max_body);
+                    ctx.status = APR_EGENERAL;
+                    req->body_status = APR_EGENERAL;
+                }
+            }
+        }
     }
 
 
@@ -320,6 +343,7 @@ static apr_status_t cgi_read(void *env,
                           "Bytes read (%" APR_OFF_T_FMT 
                           ") exceeds configured limit (%" APR_OFF_T_FMT ")",
                           ctx.bytes_read, ctx.max_body);
+                req->body_status = APR_EGENERAL;
                 return ctx.status = APR_EGENERAL;
             }
         }
@@ -340,6 +364,7 @@ static apr_status_t cgi_read(void *env,
                           "Bytes read (%" APR_OFF_T_FMT 
                           ") exceeds configured limit (%" APR_OFF_T_FMT ")",
                           ctx.bytes_read, ctx.max_body);
+                req->body_status = APR_EGENERAL;
                 return ctx.status = APR_EGENERAL;
             }
         }

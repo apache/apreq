@@ -815,7 +815,10 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         ct = strchr(parser->enctype, ';');
         if (ct == NULL) {
             ctx->status = MFD_ERROR;
-            return APR_EINIT;
+            apreq_log(APREQ_ERROR APR_EGENERAL, env, 
+                      "mfd parser cannot find required "
+                      "semicolon in Content-Type header");
+            return APR_EGENERAL;
         }
         *ct++ = 0;
 
@@ -823,6 +826,9 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                                    (const char **)&ctx->bdry, &blen);
         if (s != APR_SUCCESS) {
             ctx->status = MFD_ERROR;
+            apreq_log(APREQ_ERROR APR_EGENERAL, env,
+                      "mfd parser cannot find boundary "
+                      "attribute in Content-Type header");
             return s;
         }
         ctx->bdry[blen] = 0;
@@ -841,7 +847,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         ctx->eos = apr_bucket_eos_create(bucket_alloc);
     }
     else if (ctx->status == MFD_COMPLETE) {
-        apreq_log(APREQ_DEBUG APR_SUCCESS, env, "mfd parser is already complete- "
+        apreq_log(APREQ_DEBUG APR_SUCCESS, env, 
+                  "mfd parser is already complete- "
                   "all further input brigades will be ignored.");
         return APR_SUCCESS;
     }

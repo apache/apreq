@@ -34,15 +34,10 @@
         req = (apreq_request_t *)SvIVX(obj);                            \
         s = req->args_status;                                           \
         if (s == APR_SUCCESS && req->parser)                            \
-            s = apreq_parse_request(req, NULL);                         \
-        switch (s) {                                                    \
-        case APR_INCOMPLETE:                                            \
-        case APR_SUCCESS:                                               \
-            break;                                                      \
-        default:                                                        \
+            s = req->body_status;                                       \
+        if (s != APR_SUCCESS)                                           \
             APREQ_XS_THROW_ERROR(request, s, "Apache::Request::param",  \
                                  "Apache::Request::Error");             \
-       }                                                                \
     }                                                                   \
 } while (0)
 
@@ -79,14 +74,10 @@
         req = (apreq_request_t *)SvIVX(obj);                            \
         if (req->parser == NULL)                                        \
            break;                                                       \
-        switch (s = apreq_parse_request(req,NULL)) {                    \
-        case APR_INCOMPLETE:                                            \
-        case APR_SUCCESS:                                               \
-            break;                                                      \
-        default:                                                        \
+        s = req->body_status;                                           \
+        if (s != APR_SUCCESS)                                           \
             APREQ_XS_THROW_ERROR(request, s, "Apache::Request::body",   \
                                  "Apache::Request::Error");             \
-        }                                                               \
     }                                                                   \
 } while (0)
 
@@ -415,7 +406,7 @@ static XS(apreq_xs_request_parse)
     while (s == APR_INCOMPLETE);
 
     if (req->body == NULL)
-        req->body = apr_table_make(req->env, APREQ_NELTS);
+        req->body = apr_table_make(apreq_env_pool(req->env), APREQ_NELTS);
 
     if (GIMME_V != G_VOID)
         XSRETURN_IV(s);

@@ -40,8 +40,8 @@ Apache::*::Table - Table classes for Apache::Request, Apache::Upload, and Apache
 This manpage documents the Apache::*::Table classes provided by the
 Apache::Request, Apache::Upload, and Apache::Cookie modules.  Table
 classes are all derived from APR::Table, however since the underlying 
-values they contain are not simple character arrays, the C<merge>, C
-<compress>, and C<overlap> methods from APR::Table are not implemented.
+values they contain are not simple character arrays, the C<merge>, C<compress>,
+and C<overlap> methods from APR::Table are not implemented.
 
 
 =head1 Apache::Request::Table

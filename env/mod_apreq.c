@@ -157,7 +157,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME               "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER       20040705
+#define APREQ_MODULE_MAGIC_NUMBER       20040731
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -313,13 +313,15 @@ static void apreq_filter_make_context(ap_filter_t *f)
                 apreq_log(APREQ_ERROR APR_EGENERAL, r, 
                       "Invalid Content-Length header (%s)", cl);
                 ctx->status = APR_EGENERAL;
+                apreq_request(r, NULL)->body_status = APR_EGENERAL;
             }
             else if (content_length > (apr_int64_t)cfg->max_body) {
-                apreq_log(APREQ_ERROR APR_EINIT, r,
+                apreq_log(APREQ_ERROR APR_EGENERAL, r,
                           "Content-Length header (%s) exceeds configured "
                           "max_body limit (%" APR_OFF_T_FMT ")", 
                           cl, cfg->max_body);
-                ctx->status = APR_EINIT;
+                ctx->status = APR_EGENERAL;
+                apreq_request(r, NULL)->body_status = APR_EGENERAL;
             }
         }
     }
@@ -510,6 +512,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                 old_req = apreq_request(ctx->r, NULL);
                 req->parser = old_req->parser;
                 req->body = old_req->body;
+                req->body_status = old_req->body_status;
                 ctx->r = r;
             }
 
@@ -526,6 +529,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             if (req->body != NULL) {
                 req->body = NULL;
                 req->parser = NULL;
+                req->body_status = APR_EINIT;
             }
         }
     }
@@ -555,6 +559,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
                 if (cfg->max_body >= 0 && ctx->bytes_read > cfg->max_body) {
                     ctx->status = APR_EGENERAL;
+                    apreq_request(r, NULL)->body_status = APR_EGENERAL;
                     apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (" APR_OFF_T_FMT
                               ") exceeds configured max_body limit (" APR_OFF_T_FMT ")",
                               ctx->bytes_read, cfg->max_body);
@@ -622,6 +627,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
         if (cfg->max_body >= 0 && ctx->bytes_read > cfg->max_body) {
             ctx->status = APR_EGENERAL;
+            apreq_request(r, NULL)->body_status = APR_EGENERAL;
             apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (%" APR_OFF_T_FMT
                       ") exceeds configured max_body limit (%" APR_OFF_T_FMT ")",
                       ctx->bytes_read, cfg->max_body);

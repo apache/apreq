@@ -62,6 +62,7 @@ typedef struct apreq_request_t {
     apreq_parser_t     *parser;       /**< active parser for this request */
     void               *env;          /**< request environment */
     apr_status_t        args_status;  /**< status of query-string parse */
+    apr_status_t        body_status;  /**< status of post data parse */
 } apreq_request_t;
 
 

@@ -4,6 +4,9 @@
 
 @section v2_04_dev Changes with libapreq2-2.04-dev
 
+- C API [joes]
+  Add body_status attribute to apreq_request_t, to allow the both
+  environment and the parser to report any errors encountered.
 
 - C API [randyk, joes]
   Cookie parser was locking up on non-alphanumeric chars in cookie names.

@@ -115,7 +115,7 @@ static void parse_multipart(CuTest *tc)
         tail = apr_brigade_split(bb, APR_BUCKET_NEXT(e));
         req->body = NULL;
         req->parser = NULL;
-
+        req->body_status = APR_EINIT;
         rv = apreq_parse_request(req,bb);
         CuAssertIntEquals(tc, (j < strlen(form_data)) ? APR_INCOMPLETE : APR_SUCCESS, rv);
         rv = apreq_parse_request(req, tail);

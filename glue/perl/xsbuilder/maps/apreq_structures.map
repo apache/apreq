@@ -20,6 +20,7 @@
 !   cfg
 !  env
    args_status
+   body_status
 </apreq_request_t>
 
 <apreq_cookie_t MODULE=Apache::Cookie>
