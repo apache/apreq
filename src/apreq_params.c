@@ -275,11 +275,10 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
                     vlen = qs - start - nlen - 1;
 
                 param = apreq_decode_param(pool, start, nlen, vlen);
+                if (param->v.status != APR_SUCCESS)
+                    return param->v.status;
 
-                if (param)
-                    apr_table_addn(t, param->v.name, param->v.data);
-                else
-                    return APR_BADARG;
+                apr_table_addn(t, param->v.name, param->v.data);
             }
 
             if (*qs == 0)
