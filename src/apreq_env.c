@@ -123,7 +123,7 @@ static struct {
 #define APREQ_ENV_STATUS(rc_run, k) do {                                \
          apr_status_t rc = rc_run;                                      \
          if (rc != APR_SUCCESS) {                                       \
-             apreq_log(APREQ_DEBUG 0, p,                                \
+             apreq_log(APREQ_DEBUG APR_EGENERAL, p,                     \
                        "Lookup of %s failed: status=%d", k, rc);        \
          }                                                              \
      } while (0)
@@ -219,20 +219,63 @@ static apreq_request_t *cgi_request(void *env,
     return ctx.req;
 }
 
+
+typedef struct {
+    char    *t_name;
+    int      t_val;
+} TRANS;
+
+static const TRANS priorities[] = {
+    {"emerg",   APREQ_LOG_EMERG},
+    {"alert",   APREQ_LOG_ALERT},
+    {"crit",    APREQ_LOG_CRIT},
+    {"error",   APREQ_LOG_ERR},
+    {"warn",    APREQ_LOG_WARNING},
+    {"notice",  APREQ_LOG_NOTICE},
+    {"info",    APREQ_LOG_INFO},
+    {"debug",   APREQ_LOG_DEBUG},
+    {NULL,      -1},
+};
+
+
 static void cgi_log(const char *file, int line, int level, 
                     apr_status_t status, void *env, const char *fmt,
                     va_list vp)
 {
     dP;
     char buf[256];
+    char *log_level_string, *remote_addr;
+    unsigned log_level = APREQ_LOG_WARNING;
+    char date[APR_CTIME_LEN];
 #ifndef WIN32
-    apr_file_t *err;
+        apr_file_t *err;
+#endif
+
+
+    if (apr_env_get(&log_level_string, "LOG_LEVEL", p) == APR_SUCCESS)
+        log_level = (log_level_string[0] - '0');
+
+    level &= APREQ_LOG_LEVELMASK;
+
+    if (level > log_level)
+        return;
+
+    if (apr_env_get(&remote_addr, "REMOTE_ADDR", p) != APR_SUCCESS)
+        remote_addr = "address unavailable";
+
+    apr_ctime(date, apr_time_now());
+
+#ifndef WIN32
+
     apr_file_open_stderr(&err, p);
-    apr_file_printf(err, "[%s(%d): %s] %s\n", file, line, 
-            apr_strerror(status,buf,255),apr_pvsprintf(p,fmt,vp));
+    apr_file_printf(err, "[%s] [%s] [%s] %s(%d): %s: %s\n",
+                    date, priorities[level].t_name, remote_addr, file, line, 
+                    apr_strerror(status,buf,255),apr_pvsprintf(p,fmt,vp));
     apr_file_flush(err);
+
 #else
-    fprintf(stderr, "[%s(%d): %s] %s\n", file, line, 
+    fprintf(stderr, "[%s] [level] [client] %s(%d): %s: %s\n", 
+            date, priorities[level].t_name. remote_addr, file, file, 
             apr_strerror(status,buf,255),apr_pvsprintf(p,fmt,vp));
 #endif
 
