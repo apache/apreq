@@ -85,6 +85,20 @@ $upload->fh after the hook exits.
 
 =back
 
+=head2 instance
+
+The default (and only) behavior of I<Apache::Request> is to intelligently
+cache B<POST> data for the duration of the request.  Thus there is no longer
+the need for a separate C<instance()> method as existed in I<Apache::Request>
+for Apache 1.3 - all B<POST> data is always available from each and every 
+I<Apache::Request> object created during the request's lifetime.
+
+If you need an C<instance()> method to make ease the pains of porting to
+Apache 2.0, you can add this shortcut to your C<startup.pl>:
+
+    use Apache::Request;
+    *Apache::Request::instance = \&Apache::Request::new;
+
 =head2 param
 
 Get or set (TODO) the request parameters (using case-insensitive keys) by
