@@ -471,7 +471,7 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
             /* mozilla empty-file (missing CRLF) hack */
             fill_buffer(mbuff);
             if(strEQ(mbuff->buf_begin, mbuff->boundary))
-                continue;
+                r->remaining -= 2, continue;
 
 	    while ((blen = multipart_buffer_read(mbuff, buff, sizeof(buff)))) {
 		if (req->upload_hook != NULL) {
