@@ -141,12 +141,16 @@ static XS(apreq_xs_table_##attr##_##method)                             \
                                                                         \
         if (SvROK(ST(items-1))) {                                       \
             RETVAL = (apreq_##attr##_t *)SvIVX(SvRV(ST(items-1)));      \
+            if (SvTAINTED(SvRV(ST(items-1))))                           \
+                SvTAINTED_on(obj);                                      \
         }                                                               \
         else if (items == 3) {                                          \
             key = SvPV(ST(1),klen);                                     \
             val = SvPV(ST(2),vlen);                                     \
             RETVAL = apreq_make_##attr(apreq_env_pool(env), key, klen,  \
                                        val, vlen);                      \
+            if (SvTAINTED(ST(1)) || SvTAINTED(ST(2)))                   \
+                SvTAINTED_on(obj);                                      \
         }                                                               \
         apr_table_##method##n(t, RETVAL->v.name, RETVAL->v.data);       \
         XSRETURN_EMPTY;                                                 \
