@@ -23,11 +23,11 @@
 static int apreq_xs_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv, 
                                   const char *name, int namelen)
 {
-    /* prefetch the object */
+    /* Prefetch the value whenever the table iterator is > 0 */
     MAGIC *tie_magic = mg_find(nsv, PERL_MAGIC_tiedelem);
     SV *obj = SvRV(tie_magic->mg_obj);
     if (SvCUR(obj))
-        Perl_magic_getpack(aTHX_ nsv, tie_magic);
+        SvGETMAGIC(nsv);
     return 0;
 }
 
