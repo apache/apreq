@@ -1,16 +1,14 @@
-This is where "ports" of apreq-2 go.
+This is where "ports" of apreq-2 are made.
 
 To port apreq-2 to a particular application, you need
-to populate 
-
-         extern struct apreq_env APReq;
-
-See apreq_env.h in core/ for details.
+to provide definitions for all the declarations in 
+src/apreq_env.h.
 
 Layout:
 
-        env/<port>/
-                   <stuff for libtool>
-                   <source files>
-                   t/* <unit tests for the port>
+        env/
+            Makefile.am  - build system configuration
+            *.c          - available environments
+            c-modules/   - test modules
+            t/*.t        - unit tests
 

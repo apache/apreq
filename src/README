@@ -38,9 +38,10 @@ Data structures and relations:
 
            req->body != NULL: req->v.data now points to the active parser.
 
-                req->v.status == APR_INCOMPLETE: Parsing in progress.
-                req->v.status == APR_SUCCESS: Parsing complete.
-                req->v.status == <other>: parser error, parsing aborted.             
+                status: (as returned by apreq_env_read)
+                         APR_INCOMPLETE: Parsing in progress.
+                         APR_SUCCESS: Parsing complete.
+                         <other>: parser error, parsing aborted.             
 
 
   PARSER EXTENSIONS:
@@ -48,6 +49,6 @@ Data structures and relations:
     apreq_parser_t: extends apreq_value_t to represent a parser callback,
                     with its associated configuration data.
 
-    APREQ_HOOK: extends multipart/form-data by transforming the input 
-                brigade and pushing buckets onto the current param->bb.
+    apreq_hook_t: extends multipart/form-data by transforming the input 
+                  brigade and pushing buckets onto the current param->bb.
 
