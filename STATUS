@@ -52,6 +52,8 @@ CURRENT VOTES:
 
 TODO:
 
+    - Write tests for the apache 1.3.x module.
+
     - Fix the broken make dependencies, especially in the module 
       and glue subdirs.  The libtool workaround (for OSX IIRC) 
       that copies module/.libs to module/t is especially bogus.
