@@ -79,6 +79,18 @@
  */
 
 /**
+ * @defgroup apreq_xs_table Table Classes
+ * @ingroup apreq_xs
+ * @htmlinclude Table.html
+ */
+
+/**
+ * @defgroup apreq_xs_error Error Classes
+ * @ingroup apreq_xs
+ * @htmlinclude Error.html
+ */
+
+/**
  * @page apreq_faq FAQ
  * @htmlinclude FAQ.html
  */

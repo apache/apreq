@@ -5,11 +5,6 @@ APU_SRCDIR=`@APU_CONFIG@ --srcdir`
 APR_SRCDIR=`@APR_CONFIG@ --srcdir`
 APU_DOX = (cd $(APU_SRCDIR); cat docs/doxygen.conf - | doxygen -)
 APR_DOX = (cd $(APR_SRCDIR); cat docs/doxygen.conf - | doxygen -)
-POD_PREFIX=glue/perl/xsbuilder/Apache
-COOKIE_POD=$(POD_PREFIX)/Cookie/Cookie_pod
-REQUEST_POD=$(POD_PREFIX)/Request/Request_pod
-UPLOAD_POD=$(POD_PREFIX)/Upload/Upload_pod
-FAQ_POD=FAQ.pod
 SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi
 EUM=ExtUtils::Manifest
 
@@ -46,7 +41,7 @@ reconfig:
 docs_clean:
 	-rm -rf docs
 
-docs:	src env glue build/doxygen.conf apr_tags pod2html docs/html/feather.gif
+docs:	pod2html build/doxygen.conf apr_tags docs/html/feather.gif
 	@PERL@ build/version_check.pl doxygen
 	doxygen build/doxygen.conf
 
@@ -55,16 +50,15 @@ docs_install: docs
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
 	cp -a docs $(DESTDIR)$(pkgdatadir)
 
-pod2html: Request.html Cookie.html Upload.html FAQ.html
+%.html: glue/perl/docs/%.pod Makefile.am 
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
 
-Cookie.html: Makefile.am $(COOKIE_POD)
-	pod2html <$(COOKIE_POD) | perl -0777 -pe '$(SED_BODY_TAG)' > Cookie.html
-Request.html: Makefile.am $(REQUEST_POD)
-	pod2html <$(REQUEST_POD)| perl -0777 -pe '$(SED_BODY_TAG)' > Request.html
-Upload.html: Makefile.am $(UPLOAD_POD)
-	pod2html <$(UPLOAD_POD)| perl -0777 -pe '$(SED_BODY_TAG)' > Upload.html
-FAQ.html: Makefile.am $(FAQ_POD)
-	pod2html <$(FAQ_POD) | perl -0777 -pe '$(SED_BODY_TAG)' > FAQ.html
+pod2html :: Request.html Cookie.html Upload.html Table.html Error.html FAQ.html
+
+FAQ.html: Makefile.am FAQ.pod
+	pod2html < FAQ.pod | perl -0777 -pe '$(SED_BODY_TAG)' > FAQ.html
+
+
 
 apr_tags: docs/apr.tag docs/apu.tag
 
