@@ -232,24 +232,14 @@ APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
 /**
  * Declares a API parser.
  */
-#ifndef WIN32
-#define APREQ_DECLARE_PARSER(f) APREQ_DECLARE(apr_status_t) \
-                                (f) (APREQ_PARSER_ARGS)
-#else
 #define APREQ_DECLARE_PARSER(f) APREQ_DECLARE_NONSTD(apr_status_t) \
                                 (f) (APREQ_PARSER_ARGS)
-#endif
 
 /**
  * Declares an API hook.
  */
-#ifndef WIN32
-#define APREQ_DECLARE_HOOK(f)   APREQ_DECLARE(apr_status_t) \
-                                (f) (APREQ_HOOK_ARGS)
-#else
 #define APREQ_DECLARE_HOOK(f)   APREQ_DECLARE_NONSTD(apr_status_t) \
                                 (f) (APREQ_HOOK_ARGS)
-#endif
 
 /**
  * Singly linked list of hooks.
