@@ -9,7 +9,7 @@ use warnings FATAL => 'all';
 use Apache2;
 use Apache::Build;
 require Win32 if Apache::Build::WIN32;
-
+my $version = "2.XX-dev"; # DUMMY VALUE
 use Cwd;
 my $cwd = Apache::Build::WIN32 ?
     Win32::GetLongPathName(cwd) : cwd;
@@ -27,6 +27,7 @@ my ($apache_includes, $apr_libs, $apreq_libname);
 
 if (Apache::Build::WIN32) {
     # XXX May need fixing, Randy!
+    # XXX How do we set $version in the Win32 build?
     my $apache_dir = Apache::Build->build_config()->dir;
     ($apache_includes = "-I$apache_dir" . '/include') =~ s!\\!/!g;
     ($apr_libs = $apache_dir . '/lib') =~ s!\\!/!g;
@@ -54,6 +55,11 @@ else {
     $config =~ m/^s,\@APREQ_LIBNAME\@,([^,]+)/m or
         die "Can't find apreq libname";
     $apreq_libname = $1;
+
+    $config =~ m/^s,\@PACKAGE_VERSION\@,([^,]+)/m or
+        die "Can't find package version";
+    $version = $1;
+
 }
 my $apr_lib_flags = Apache::Build::WIN32 ? 
     qq{-L$apr_libs -llibapr -llibaprutil} : 
@@ -147,7 +153,6 @@ sub preprocess
         ::c_macro("APREQ_DECLARE", "apreq.h")->();
         ::c_macro("APREQ_DECLARE_HOOK", "apreq_parsers.h")->();
         ::c_macro("APREQ_DECLARE_PARSER", "apreq_parsers.h")->();
-#        ::c_macro("APREQ_DECLARE_LOG", "apreq_env.h")->();
         ::c_macro("APR_DECLARE")->();
         ::c_macro("XS")-> ();
     }
@@ -238,7 +243,7 @@ if (-f '$mmargspath')
 
 ModPerl::MM::WriteMakefile(
     'NAME'      => '$class',
-    'VERSION'   => '0.01',
+    'VERSION'   => '$version',
     'TYPEMAPS'  => [qw(@$mp2_typemaps $typemap)],
     'INC'       => "-I.. -I../.. -I../../.. -I$src_dir -I$xs_dir $apache_includes",
     'LIBS'      => "$apreq_lib_flags $apr_lib_flags",

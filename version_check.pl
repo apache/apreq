@@ -13,6 +13,12 @@ sub xsb_version {
     require ExtUtils::XSBuilder;
     return our $VERSION;
 }
+
+sub a_t_version {
+    require Apache::Test;
+    $Apache::Test::VERSION;
+}
+
 sub mp2_version {
     eval {
         require Apache2;
@@ -33,12 +39,13 @@ my %prereq = (
                     apu => { test => \&gnu_version, version => "0.9.4" },
                    perl => { test => \&gnu_version, version => "5.6.1" },
               xsbuilder => { test => \&xsb_version, version => "0.23"  },
-                   mp2  => { test => \&mp2_version, version => "1.99_09"},
+                    mp2 => { test => \&mp2_version, version => "1.99_09"},
                 doxygen => { test => \&gnu_version, version => "1.3"   },
+            apache_test => { test => \&a_t_version, version => "1.03"  },
              );
 
 if (@ARGV == 0) {
-    printf "%10s: %s\n", $_, $prereq{$_}->{version} for sort keys %prereq;
+    printf "%12s:  %s\n", $_, $prereq{$_}->{version} for sort keys %prereq;
     exit 0;
 }
 
