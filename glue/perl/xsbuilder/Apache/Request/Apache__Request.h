@@ -33,7 +33,7 @@
     default:                                                            \
         req = (apreq_request_t *)SvIVX(obj);                            \
         s = req->args_status;                                           \
-        if (s == APR_SUCCESS && req->parser)                            \
+        if (s == APR_SUCCESS && req->body_status != APR_EINIT)          \
             s = req->body_status;                                       \
         if (s != APR_SUCCESS)                                           \
             APREQ_XS_THROW_ERROR(request, s, "Apache::Request::param",  \
@@ -72,12 +72,14 @@
             break;                                                      \
     default:                                                            \
         req = (apreq_request_t *)SvIVX(obj);                            \
-        if (req->parser == NULL)                                        \
-           break;                                                       \
-        s = req->body_status;                                           \
-        if (s != APR_SUCCESS)                                           \
+        switch(s = req->body_status) {                                  \
+        case APR_EINIT:                                                 \
+        case APR_SUCCESS:                                               \
+            break;                                                      \
+        default:                                                        \
             APREQ_XS_THROW_ERROR(request, s, "Apache::Request::body",   \
                                  "Apache::Request::Error");             \
+        }                                                               \
     }                                                                   \
 } while (0)
 
