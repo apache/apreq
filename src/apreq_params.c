@@ -88,6 +88,25 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
     return param;
 }
 
+APR_INLINE APREQ_DECLARE(apr_bucket_brigade *)
+        apreq_param_brigade(const apreq_param_t *param)
+{
+    apr_bucket_brigade *bb;
+    apr_bucket *e;
+
+    if (param->bb == NULL)
+        return NULL;
+
+    bb = apr_brigade_create(param->bb->p, param->bb->bucket_alloc);
+    APR_BRIGADE_FOREACH(e,param->bb) {
+        apr_bucket *c;
+        apr_bucket_copy(e, &c);
+        APR_BRIGADE_INSERT_TAIL(bb, c);
+    }
+    return bb;
+}
+
+
 APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
 {
     apreq_request_t *req;
