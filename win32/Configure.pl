@@ -2,6 +2,8 @@
 use strict;
 use warnings;
 use Getopt::Long;
+require File::Spec;
+require Win32;
 my ($apache, $debug, $help);
 my $result = GetOptions( 'with-apache=s' => \$apache,
 			 'debug' => \$debug,
@@ -13,7 +15,23 @@ $apache ||= search();
 check($apache);
 $apache =~ s!/!\\!g;
 
+my @path_ext;
+path_ext();
+my $doxygen = which('doxygen');
 my $cfg = $debug ? 'Debug' : 'Release';
+
+eval {require ExtUtils::XSBuilder;};
+if ($@) {
+    warn "ExtUtils::XSBuilder must be installed for Perl glue\n";
+}
+else {
+    my @args = ($^X, '../../build/xsbuilder.pl', 'run', 'run');
+    chdir '../glue/perl';
+    system(@args) == 0 or die "system @args failed: $!";
+    chdir '../../win32';
+}
+
+
 open my $make, '>Makefile' or die qq{Cannot open Makefile: $!};
 print $make <<"END";
 # Microsoft Developer Studio Generated NMAKE File.
@@ -23,7 +41,20 @@ APACHE=$apache
 END
 
 print $make $_ while (<DATA>);
+
+if ($doxygen) {
+    print $make <<"END";
+
+docs: 
+	cd ..
+	"$doxygen" build\\doxygen.conf
+	cd win32
+
+END
+}
+
 close $make;
+
 
 print << 'END';
 
@@ -34,9 +65,13 @@ A Makefile has been generated. You can now run
   nmake mod_apreq     - builds mod_apreq
   nmake libapreq_cgi  - builds libapreq_cgi
   nmake clean         - clean
+END
+    if ($doxygen) {
+print << 'END';
+  nmake docs          - build documents
 
 END
-
+}
 
 sub usage {
     print <<'END';
@@ -87,8 +122,6 @@ the desired top-level Apache2 directory.
 
 END
     }
-
-    require Win32;
     return Win32::GetShortPathName($apache);
 }
 
@@ -102,6 +135,31 @@ sub check {
     die qq{"$apache" does not appear to be version 2.0}
         unless $vers =~ m!Apache/2.0!;
     return 1;
+}
+
+sub path_ext {
+    if ($ENV{PATHEXT}) {
+        push @path_ext, split ';', $ENV{PATHEXT};
+        for my $ext (@path_ext) {
+            $ext =~ s/^\.*(.+)$/$1/;
+        }
+    }
+    else {
+        #Win9X: doesn't have PATHEXT
+        push @path_ext, qw(com exe bat);
+    }
+}
+
+sub which {
+    my $program = shift;
+    return undef unless $program;
+    my @a = map {File::Spec->catfile($_, $program) } File::Spec->path();
+    for my $base(@a) {
+        return $base if -x $base;
+        for my $ext (@path_ext) {
+            return "$base.$ext" if -x "$base.$ext";
+        }
+    }
 }
 
 __DATA__
@@ -140,11 +198,11 @@ NULL=nul
 !ENDIF 
 
 !IF  "$(CFG)" == "Release"
-INTDIR=.\Release
-OUTDIR=.\Release
+INTDIR=.\libs
+OUTDIR=.\libs
 !ELSE
-INTDIR=.\Debug
-OUTDIR=.\Debug
+INTDIR=.\libs
+OUTDIR=.\libs
 !ENDIF
 
 ALL : "$(LIBAPREQ)"
@@ -160,6 +218,7 @@ CLEAN:
 
 TEST: $(LIBAPREQ)
 	$(MAKE) /nologo /f $(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)"
+        set PATH=%PATH%;$(APACHE)\bin
 	cd $(INTDIR) && $(TESTALL).exe -v
 
 $(MOD): $(LIBAPREQ)
