@@ -150,16 +150,27 @@ static struct {
 
 
 #define APREQ_MODULE_NAME         "CGI"
-#define APREQ_MODULE_MAGIC_NUMBER 20041130
+#define APREQ_MODULE_MAGIC_NUMBER 20050112
 
 static apr_pool_t *cgi_pool(void *env)
 {
     return (apr_pool_t *)env;
 }
 
+static apr_status_t bucket_alloc_cleanup(void *data)
+{
+    apr_bucket_alloc_t *ba = data;
+    apr_bucket_alloc_destroy(ba);
+    return APR_SUCCESS;
+}
+
 static apr_bucket_alloc_t *cgi_bucket_alloc(void *env)
 {
-    return apr_bucket_alloc_create((apr_pool_t *)env);
+    dP;
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
+    apr_pool_cleanup_register(p, ba, bucket_alloc_cleanup, 
+                                     bucket_alloc_cleanup);
+    return ba;
 }
 
 static const char *cgi_query_string(void *env)
@@ -304,7 +315,7 @@ static apr_status_t cgi_read(void *env,
     apr_status_t s;
 
     if (ctx.in == NULL) {
-        apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(p);
+        apr_bucket_alloc_t *alloc = cgi_bucket_alloc(p);
         apr_bucket *stdin_pipe, *eos = apr_bucket_eos_create(alloc);
         apr_file_t *in;
         apr_file_open_stdin(&in, p);
