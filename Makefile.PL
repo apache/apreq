@@ -49,6 +49,7 @@ else {
         if exists $opts{apxs} and not exists $opts{"with-apache2-apxs"};
 
     $opts .= join " ", map {"--$_=$opts{$_}"} keys %opts;
-    print "./configure $opts\n";
-    exec  "./configure $opts";
+    my $cmd = "./configure $opts";
+    print "$cmd\n";
+    exec  $cmd;
 }
