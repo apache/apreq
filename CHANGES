@@ -5,6 +5,14 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- C API [Max Kellermann]
+  mod_apreq must check the return value of apreq_brigade_concat
+  to avoid a RAM-consuming infinite loop.  A bad APREQ_TempDir 
+  setting can cause this situation.
+
+- C API [joes]
+  Provide workaround for chunked trailers bug in ap_http_filter.
+
 - C, Perl API [joes]
   Several upload-related bugfixes:
    1) apreq_upload and apreq_uploads did not search the full body table,
