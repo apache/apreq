@@ -1,7 +1,7 @@
-Last modified at [$Date: 2003/10/30 02:23:26 $]   -*-text-*-
+Last modified at [$Date: 2003/10/31 21:38:35 $]   -*-text-*-
 /** @page STATUS
 
-     2.0.1  in development
+     2.01-dev in development
 
 Contributors looking for a mission:
 
@@ -14,10 +14,6 @@ CURRENT RELEASE NOTES:
 
 
 RELEASE SHOWSTOPPERS:
-
-    - Incorporate prereq checks into build system:
-
-      -# perl module checks in Makefile.PL
 
 
 CURRENT VOTES:
