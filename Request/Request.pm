@@ -272,18 +272,23 @@ you are not overriding to it:
 	}
 	sub AUTOLOAD {
 		my $proto = shift;
+		return unless ref $proto;
 		our $AUTOLOAD;
 		my $name = $AUTOLOAD;
 		$name =~ s/^.*:://;
-		return $proto->$name(@_);
+		return $proto->{r}->$name(@_);
 	}
 
-In fact, the aggregate/delegate solution is made easier by some magic in the
-Apache::Request class. If the instances of your subclass are hash references
-then you can actually inherit from Apache::Request as long as the
-Apache::Request object is stored in an attribute called "r" or "_r". (The
-Apache::Request class effectively does the delegation for you automagically, as
-long as it knows where to find the Apache::Request object to delegate to.)
+A fancier AUTOLOAD() subroutine could be written to handle class methods too if
+required, but we leave that as an exercise for the reader because in fact the
+Apache::Request class provides some magic that makes the aggregate/delegate
+solution much easier.
+
+If the instances of your subclass are hash references then you can actually
+inherit from Apache::Request as long as the Apache::Request object is stored in
+an attribute called "r" or "_r". (The Apache::Request class effectively does the
+delegation for you automagically, as long as it knows where to find the
+Apache::Request object to delegate to.)
 
 Thus, the second example above can be simplified as:
 
