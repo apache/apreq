@@ -4,7 +4,7 @@
 
 - November 12, 2003 - Perl API [joes]
 
-Fix missing SvRV() in Apache::Cookie::set_attr(),
+Fix bogus pool/cookie initializers in Apache::Cookie::set_attr(),
 which caused Apache::Cookie::new to segfault.  Bug
 first reported to modperl list by Wolfgang Kubens.
 
