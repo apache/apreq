@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/06/12 05:23:43 $]
+Last modified at [$Date: 2003/06/12 06:08:53 $]
 
      2.0.0  in development
 
@@ -62,7 +62,11 @@ TODO:
   * symbol exports files:
     - win32 now has hardcoded .def files (need to automate, e.g. based
       on exports.c ala httpd-2.0)
-    - aix needs .exp files 
+    - aix needs .exp files
+
+  * on Win32, figure out how to build things so Apache::Cookie
+    and Apache::Request don't need to be linked against mod_apreq
+    to resolve missing apreq_env* symbols. 
 
 
 OPEN ISSUES:
