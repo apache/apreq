@@ -103,7 +103,7 @@ AC_DEFUN([AC_APREQ], [
           USE_VPATH=1
         fi
 
-        if test -n "$USE_MAINTAINER_MODE"; then
+        if test "x$USE_MAINTAINER_MODE" != "xno"; then
             CPPFLAGS="$CPPFLAGS -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -Werror"
         fi
 

@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src env glue t
-EXTRA_DIST = README INSTALL CHANGES MANIFEST.SKIP Makefile.PL buildconf build win32 docs
+EXTRA_DIST = README INSTALL CHANGES FAQ MANIFEST.SKIP Makefile.PL buildconf build win32 docs
 APU_SRCDIR=`@APU_CONFIG@ --srcdir`
 APR_SRCDIR=`@APR_CONFIG@ --srcdir`
 APU_DOX = (cd $(APU_SRCDIR); cat - docs/doxygen.conf | doxygen -)
