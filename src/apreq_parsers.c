@@ -438,7 +438,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
     apr_bucket *e;
     struct hdr_ctx *ctx;
 
-/* use parser->v.status to maintain state */
+/* use ctx->status to maintain state */
 #define HDR_NAME        0
 #define HDR_GAP         1
 #define HDR_VALUE       2

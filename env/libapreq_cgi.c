@@ -64,7 +64,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define dCTX struct env_ctx *ctx = (struct env_ctx *)env
+#define dP apr_pool_t *p = (apr_pool_t *)env
 
 /**
  * @file libapreq_cgi.c
@@ -81,48 +81,44 @@
  * @{
  */
 
-struct env_ctx {
-    apr_pool_t         *pool;
+static struct {
     apreq_request_t    *req;
     apreq_jar_t        *jar;
-    apr_bucket_brigade *bb;
-    int                 loglevel;
     apr_status_t        status;
-};
+} ctx;
 
 const char apreq_env_name[] = "CGI";
-const unsigned int apreq_env_magic_number = 20031014;
+const unsigned int apreq_env_magic_number = 20031024;
 
 #define CRLF "\015\012"
 
-#define APREQ_ENV_STATUS(rc_run, k) do { \
-         apr_status_t rc = rc_run; \
-         if (rc != APR_SUCCESS) { \
-             apreq_log(APREQ_DEBUG 0, ctx, \
-                       "Lookup of %s failed: status=%d", k, rc); \
-         } \
+#define APREQ_ENV_STATUS(rc_run, k) do {                                \
+         apr_status_t rc = rc_run;                                      \
+         if (rc != APR_SUCCESS) {                                       \
+             apreq_log(APREQ_DEBUG 0, p,                                \
+                       "Lookup of %s failed: status=%d", k, rc);        \
+         }                                                              \
      } while (0)
 
 APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
 {
-    dCTX;
-    return ctx->pool;
+    return (apr_pool_t *)env;
 }
 
 APREQ_DECLARE(const char *)apreq_env_query_string(void *env)
 {
-    dCTX;
-    char *value, qs[] = "QUERY_STRING";
-    APREQ_ENV_STATUS(apr_env_get(&value, qs, ctx->pool), qs);
+    dP;
+    char *value = NULL, qs[] = "QUERY_STRING";
+    APREQ_ENV_STATUS(apr_env_get(&value, qs, p), qs);
     return value;
 }
 
 APREQ_DECLARE(const char *)apreq_env_header_in(void *env, 
                                                const char *name)
 {
-    dCTX;
-    char *key = apr_pstrdup(ctx->pool, name);
-    char *k, *value=NULL, *http_key, http[] = "HTTP_";
+    dP;
+    char *key = apr_pstrcat(p, "HTTP_", name, NULL);
+    char *k, *value = NULL;
     for (k = key; *k; ++k) {
         if (*k == '-')
             *k = '_';
@@ -130,14 +126,13 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
             *k = apr_toupper(*k);
     }
 
-    if (!strcmp(key, "CONTENT_TYPE") || !strcmp(key, "CONTENT_LENGTH")) {
-        APREQ_ENV_STATUS(apr_env_get(&value, key, ctx->pool), key);
+    if (!strcmp(key, "HTTP_CONTENT_TYPE") 
+        || !strcmp(key, "HTTP_CONTENT_LENGTH")) {
+
+        key += 5; /* strlen("HTTP_") */
     }
-    else {
-        http_key = (char *) apr_palloc(ctx->pool, sizeof(http) + strlen(key));
-        http_key = strcat(strcpy(http_key, http), key);
-        APREQ_ENV_STATUS(apr_env_get(&value, http_key, ctx->pool), http_key);
-    }
+
+    APREQ_ENV_STATUS(apr_env_get(&value, key, p), key);
 
     return value;
 }
@@ -145,52 +140,49 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
 APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, const char *name, 
                                                 char *value)
 {
-    dCTX;
+    dP;
     apr_file_t *out;
     int bytes;
-    apr_file_open_stdout(&out, ctx->pool);
+    apr_file_open_stdout(&out, p);
     bytes = apr_file_printf(out, "%s: %s" CRLF, name, value);
-    apreq_log(APREQ_DEBUG 0, ctx, "Setting header: %s => %s", name, value);
+    apreq_log(APREQ_DEBUG 0, p, "Setting header: %s => %s", name, value);
     return bytes > 0 ? APR_SUCCESS : APR_EGENERAL;
 }
 
 
 APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar)
 {
-    dCTX;
+
     if (jar != NULL) {
-        apreq_jar_t *old_jar = ctx->jar;
-        ctx->jar = jar;
+        apreq_jar_t *old_jar = ctx.jar;
+        ctx.jar = jar;
         return old_jar;
     }
 
-    return ctx->jar;
+    return ctx.jar;
 }
 
 APREQ_DECLARE(apreq_request_t *)apreq_env_request(void *env,
                                                   apreq_request_t *req)
 {
-    dCTX;
 
     if (req != NULL) {
-        apreq_request_t *old_req = ctx->req;
-        ctx->req = req;
+        apreq_request_t *old_req = ctx.req;
+        ctx.req = req;
         return old_req;
     }
-    return ctx->req;
+    return ctx.req;
 }
 
 
 APREQ_DECLARE_LOG(apreq_log)
 {
-    dCTX;
+    dP;
     va_list vp;
-    if (level < ctx->loglevel)
-        return;
 
     va_start(vp, fmt);
     fprintf(stderr, "[%s(%d)] %s\n", file, line, 
-            apr_pvsprintf(ctx->pool,fmt,vp));
+            apr_pvsprintf(p,fmt,vp));
     va_end(vp);
 }
 
@@ -198,20 +190,21 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
                                            apr_read_type_e block,
                                            apr_off_t bytes)
 {
-    dCTX;
-    if (ctx->bb == NULL) {
-        apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(ctx->pool);
-        apr_file_t *in;
-        apr_bucket *stdin_pipe, *b;
+    dP;
+    apreq_request_t *req = apreq_request(env, NULL);
 
-        ctx->bb = apr_brigade_create(ctx->pool, alloc);
-        apr_file_open_stdin(&in, ctx->pool);
+    if (req->body == NULL) {
+        apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(p);
+        apr_bucket_brigade *bb = apr_brigade_create(p, alloc);
+        apr_bucket *stdin_pipe, *eos = apr_bucket_eos_create(alloc);
+        apr_file_t *in;
+        apr_file_open_stdin(&in, p);
         stdin_pipe = apr_bucket_pipe_create(in,alloc);
-        APR_BRIGADE_INSERT_HEAD(ctx->bb, stdin_pipe);
-        b = apr_bucket_eos_create(alloc);
-        APR_BRIGADE_INSERT_TAIL(ctx->bb, b);
+        APR_BRIGADE_INSERT_HEAD(bb, stdin_pipe);
+        APR_BRIGADE_INSERT_TAIL(bb, eos);
+        ctx.status = apreq_parse_request(req, bb);
     }
-    return apreq_parse_request(apreq_request(env, NULL), ctx->bb);
+    return ctx.status;
 }
 
 /** @} */
