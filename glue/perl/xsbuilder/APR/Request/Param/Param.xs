@@ -296,9 +296,7 @@ value(obj, p1=NULL, p2=NULL)
     /*nada*/
 
   CODE:
-    RETVAL = newSVpvn(obj->v.data, obj->v.dlen);
-    if (apreq_param_is_tainted(obj))
-        SvTAINTED_on(RETVAL);
+    RETVAL = apreq_xs_param2sv(aTHX_ obj, NULL, NULL);
 
   OUTPUT:
     RETVAL
@@ -335,7 +333,7 @@ name(obj)
 
 
 IV
-tainted(obj, val=NULL)
+is_tainted(obj, val=NULL)
     APR::Request::Param obj
     SV *val
   PREINIT:
@@ -349,6 +347,26 @@ tainted(obj, val=NULL)
            apreq_param_taint_on(obj);
         else
            apreq_param_taint_off(obj);
+    }
+
+  OUTPUT:
+    RETVAL
+
+IV
+is_utf8(obj, val=NULL)
+    APR::Request::Param obj
+    SV *val
+  PREINIT:
+    /*nada*/
+
+  CODE:
+    RETVAL = apreq_param_is_utf8(obj);
+
+    if (items == 2) {
+        if (SvTRUE(val))
+           apreq_param_utf8_on(obj);
+        else
+           apreq_param_utf8_off(obj);
     }
 
   OUTPUT:

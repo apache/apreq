@@ -249,11 +249,11 @@ elsif ($test && $key) {
     apreq_log("Fetching cookie $key");
     if ($cookies{$key}) {
         if ($test eq "bake") {
-            $cookies{$key}->tainted(0);
+            $cookies{$key}->is_tainted(0);
             $cookies{$key}->bake;
         }
         elsif ($test eq "bake2") {
-            $cookies{$key}->tainted(0);
+            $cookies{$key}->is_tainted(0);
             $cookies{$key}->bake2;
         }
         print "Content-Type: text/plain\n\n";

@@ -22,11 +22,11 @@ sub handler {
 
     if ($key and $cookies{$key}) {
         if ($test eq "bake") {
-            $cookies{$key}->tainted(0);
+            $cookies{$key}->is_tainted(0);
             $cookies{$key}->bake;
         }
         elsif ($test eq "bake2") {
-            $cookies{$key}->tainted(0);
+            $cookies{$key}->is_tainted(0);
             $cookies{$key}->bake2;
         }
         $r->print($cookies{$key}->value);

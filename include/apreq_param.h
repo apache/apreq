@@ -61,6 +61,25 @@ void apreq_param_taint_off(apreq_param_t *p) {
     APREQ_FLAGS_OFF(p->flags, APREQ_TAINT);
 }
 
+/** @return 1 if the taint flag is set, 0 otherwise. */
+static APR_INLINE
+unsigned apreq_param_is_utf8(const apreq_param_t *p) {
+    return APREQ_CHARSET_UTF8
+        & APREQ_FLAGS_GET(p->flags, APREQ_CHARSET);
+}
+
+/** Sets the tainted flag. */
+static APR_INLINE
+void apreq_param_utf8_on(apreq_param_t *p) {
+    APREQ_FLAGS_SET(p->flags, APREQ_CHARSET, APREQ_CHARSET_UTF8);
+}
+
+/** Turns off the taint flag. */
+static APR_INLINE
+void apreq_param_utf8_off(apreq_param_t *p) {
+    APREQ_FLAGS_SET(p->flags, APREQ_CHARSET, APREQ_CHARSET_UNKNOWN);
+}
+
 
 /** Upgrades args and body table values to apreq_param_t structs. */
 static APR_INLINE

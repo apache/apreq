@@ -285,7 +285,7 @@ version(obj, val=0)
     RETVAL
 
 IV
-tainted(obj, val=NULL)
+is_tainted(obj, val=NULL)
     APR::Request::Cookie obj
     SV *val
   PREINIT:
