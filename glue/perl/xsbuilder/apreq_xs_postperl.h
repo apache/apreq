@@ -338,7 +338,7 @@ static XS(apreq_xs_##attr##_get)                                        \
         }                                                               \
                                                                         \
         RETVAL = apreq_xs_##attr##_##type(ST(0), key);                  \
-        if (!(COND) || !RETVAL)                                         \
+        if (!RETVAL || !(COND))                                         \
             XSRETURN_UNDEF;                                             \
         ST(0) = sv_2mortal(apreq_xs_##type##2sv(RETVAL,subclass));      \
         XSRETURN(1);                                                    \

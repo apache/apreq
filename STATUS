@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/04/08 15:16:38 $]   -*-text-*-
+Last modified at [$Date: 2004/04/13 00:41:55 $]   -*-text-*-
 /** @page STATUS
 
      2.03-dev under development
@@ -66,9 +66,6 @@ OPEN ISSUES:
 
 
 BUGS:
-
-    - $req->upload() in list context fails to filter out non-uploads.
-      Also $req->upload("nonexistent-key-name") reportedly segfaults.
 
     - Strange bug when ssl is enabled & lots of fields are present: see
         http://marc.theaimsgroup.com/?t=107766265600001&r=1&w=2

@@ -38,13 +38,16 @@ APREQ_XS_DEFINE_OBJECT(request);
 #define apreq_xs_args_push(sv,d,k) apreq_xs_push(args,sv,d,k)
 #define apreq_xs_body_push(sv,d,k) apreq_xs_push(body,sv,d,k)
 #define apreq_xs_table_push(sv,d,k) apreq_xs_push(table,sv,d,k)
+#define apreq_xs_upload_do      (items==1 ? apreq_xs_upload_table_keys  \
+                                : apreq_xs_upload_table_values)
+
 #define apreq_xs_upload_push(sv,d,key) do {                             \
     apreq_request_t *req = apreq_xs_sv2(request,sv);                    \
     apr_status_t s;                                                     \
     do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);   \
     while (s == APR_INCOMPLETE);                                        \
     if (req->body)                                                      \
-        apr_table_do(apreq_xs_do(upload), d, req->body, key, NULL);     \
+        apr_table_do(apreq_xs_upload_do, d, req->body, key, NULL);      \
 } while (0)
 
 #define apreq_xs_upload_table_push(sv,d,k) apreq_xs_push(upload_table,sv,d,k)
@@ -89,6 +92,25 @@ APREQ_XS_DEFINE_GET(table,   PARAM_TABLE, param, NULL, 1);
 #define apreq_xs_param2sv(param,class) apreq_xs_param2rv(param,class)
 #define apreq_xs_sv2param(sv) apreq_xs_rv2param(sv)
 
+static int apreq_xs_upload_table_keys(void *data, const char *key,
+                                      const char *val)
+{
+    struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
+    apreq_param_t *param = apreq_value_to_param(apreq_strtoval(val));
+    dTHXa(d->perl);
+    dSP;
+    if (param->bb == NULL)      /* not an upload, so skip it */
+        return 1;
+
+    if (key)
+        XPUSHs(sv_2mortal(newSVpv(key,0)));
+    else
+        XPUSHs(&PL_sv_undef);
+
+    PUTBACK;
+    return 1;
+
+}
 
 #define UPLOAD_TABLE  "Apache::Upload::Table"
 #define UPLOAD_PKG    "Apache::Upload"

@@ -3,6 +3,10 @@
 
 @section v2_03_dev Changes with libapreq2-2.03-dev
 
+- Perl API [joes]
+  $req->upload() in list context failed to filter out non-uploads.
+  Also $req->upload("nonexistent-key-name") segfaults.
+
 - Perl test suite
   t/TEST.PL must run parent class' pre_configure to get the
   configuration right
