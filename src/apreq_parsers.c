@@ -1060,10 +1060,9 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             case APR_SUCCESS:
                 if (parser->hook) {
-                    apr_bucket *eos = apr_bucket_eos_create(bb->bucket_alloc);
-                    APR_BRIGADE_INSERT_TAIL(ctx->bb, eos);
+                    APR_BRIGADE_INSERT_TAIL(ctx->bb, ctx->eos);
                     s = APREQ_RUN_HOOK(parser->hook, env, param, ctx->bb);
-                    apr_bucket_delete(eos);
+                    APR_BUCKET_REMOVE(ctx->eos);
                     if (s != APR_SUCCESS) {
                         ctx->status = MFD_ERROR;
                         return s;
