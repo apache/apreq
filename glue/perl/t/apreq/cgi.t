@@ -292,7 +292,7 @@ elsif ($method) {
     else  {
         die "unknown method: $method";
     }
-    my $temp_file = File::Spec->catfile($temp_dir, "$basename$$");
+    my $temp_file = File::Spec->catfile($temp_dir, $basename);
     unlink $temp_file if -f $temp_file;
     open my $wfh, ">", $temp_file or die "Can't open $temp_file: $!";
     binmode $wfh;
@@ -309,7 +309,7 @@ size: $size
 filename: $basename
 md5: $cs
 END
-#    unlink $temp_file if -f $temp_file;
+    unlink $temp_file if -f $temp_file;
 }
 
 else {
