@@ -333,7 +333,7 @@ APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s,
             else if (*s == 0)
                 return s - (const char *)d;
         }
-	d = (char *)s;
+        d = (char *)s;
     }
 
     for (; s < end; ++d, ++s) {
