@@ -13,11 +13,11 @@ static XS(apreq_xs_parse)
     XSprePUSH;
     EXTEND(SP, 3);
     s = apreq_jar(req, &t);
-    PUSHs(sv_2mortal(newSViv(s)));
+    PUSHs(sv_2mortal(apreq_xs_error2sv(aTHX_ s)));
     s = apreq_args(req, &t);
-    PUSHs(sv_2mortal(newSViv(s)));
+    PUSHs(sv_2mortal(apreq_xs_error2sv(aTHX_ s)));
     s = apreq_body(req, &t);
-    PUSHs(sv_2mortal(newSViv(s)));
+    PUSHs(sv_2mortal(apreq_xs_error2sv(aTHX_ s)));
     PUTBACK;
 }
 
@@ -173,5 +173,3 @@ temp_dir(req, val=NULL)
 
   OUTPUT:
     RETVAL
-
-

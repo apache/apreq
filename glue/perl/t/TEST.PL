@@ -3,8 +3,8 @@
 use strict;
 use warnings FATAL => 'all';
 use Apache2;
-use Apache::Build;
-use constant WIN32 => Apache::Build::WIN32;
+use Apache2::Build;
+use constant WIN32 => Apache2::Build::WIN32;
 
 use Cwd;
 my $cwd = WIN32 ?
@@ -12,7 +12,7 @@ my $cwd = WIN32 ?
 $cwd =~ m{^(.+)/glue/perl$} or die "Can't find base cvs directory";
 my $base_dir = $1;
 my $module_dir = "$base_dir/module";
-my $mod_apreq2_dir = Apache::Build::WIN32 ?
+my $mod_apreq2_dir = Apache2::Build::WIN32 ?
     "$base_dir/win32/libs" : "$module_dir/apache2/.libs";
 
 use base 'Apache::TestRunPerl';

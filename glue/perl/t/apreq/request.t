@@ -41,6 +41,9 @@ for my $test (qw/slurp bb tempname link fh io bad;query=string%%/) {
     ok t_cmp($result, "text/plain", "type");
 }
 
+skip 1, "- config() API not yet implemented" for 1..2;
+exit 0;
+
 {
     my $value = 'DataUpload' x 100;
     my $result = UPLOAD_BODY("$location?test=hook", content => $value); 

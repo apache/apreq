@@ -7,6 +7,13 @@ static XS(XS_APR__Request__Error_nil)
 
 MODULE = APR::Request::Error       PACKAGE = APR::Request::Error
 
+SV *strerror(s)
+    apr_status_t s
+  CODE:
+    RETVAL = apreq_xs_error2sv(aTHX_ s);
+  OUTPUT:
+    RETVAL
+
 SV *as_string(hv, p1=NULL, p2=NULL)
     APR::Request::Error hv
     SV *p1

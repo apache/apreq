@@ -1,5 +1,4 @@
-package Apache::Cookie;
-use Apache::RequestRec;
+package Apache2::Cookie;
 use APR::Request::Cookie;
 use APR::Request::Apache2;
 use APR::Request qw/encode decode/;
@@ -31,8 +30,8 @@ sub fetch {
     my $class = shift;
     my $req = shift;
     unless (defined $req) {
-        my $usage = 'Usage: Apache::Cookie->fetch($r): missing argument $r';
-        $req = eval {Apache->request} or die <<EOD;
+        my $usage = 'Usage: Apache2::Cookie->fetch($r): missing argument $r';
+        $req = eval {Apache2->request} or die <<EOD;
 $usage: attempt to fetch global Apache->request failed: $@.
 EOD
     }
@@ -53,7 +52,7 @@ sub set_attr {
 
 sub freeze {
     my ($class, $value) = @_;
-    die 'Usage: Apache::Cookie->freeze($value)' unless @_ == 2;
+    die 'Usage: Apache2::Cookie->freeze($value)' unless @_ == 2;
 
     if (not ref $value) {
         return encode($value);
@@ -78,9 +77,9 @@ sub value {
     return shift->thaw;
 }
 
-package Apache::Cookie::Jar;
+package Apache2::Cookie::Jar;
 use APR::Request::Apache2;
 push our @ISA, qw/APR::Request::Apache2/;
-sub cookies { Apache::Cookie->fetch(shift) }
+sub cookies { Apache2::Cookie->fetch(shift) }
 
 1;

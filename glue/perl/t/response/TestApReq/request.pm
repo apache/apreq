@@ -3,14 +3,15 @@ package TestApReq::request;
 use strict;
 use warnings FATAL => 'all';
 
-use Apache::RequestRec;
-use Apache::RequestIO;
-use Apache::Request ();
-use Apache::Connection;
-use Apache::Upload;
+use Apache2::RequestRec;
+use Apache2::RequestIO;
+use Apache2::Request ();
+use Apache2::Connection;
+use Apache2::Upload;
 use APR::Pool;
+use APR::Bucket;
 use APR::PerlIO;
-use Apache::ServerUtil;
+use Apache2::ServerUtil;
 use File::Spec;
 
 my $data;
@@ -27,9 +28,9 @@ sub hook {
 sub handler {
     my $r = shift;
     my $temp_dir =
-        File::Spec->catfile(Apache::ServerUtil::server_root, 'logs'); 
-    my $req = Apache::Request->new($r);#, POST_MAX => 1_000_000,
-                                       #TEMP_DIR => $temp_dir);
+        File::Spec->catfile(Apache2::ServerUtil::server_root, 'logs'); 
+    my $req = Apache2::Request->new($r);#, POST_MAX => 1_000_000,
+                                        #TEMP_DIR => $temp_dir);
     $req->temp_dir($temp_dir);
     $req->read_limit(1_000_000);
     $req->content_type('text/plain');
@@ -43,7 +44,7 @@ sub handler {
         $req->print($value);
     }
     elsif ($test eq 'slurp') {
-        my ($upload) = $req->upload;#values %{$req->upload};
+        my ($upload) = values %{$req->upload};
         $upload->slurp(my $data);
         if ($upload->size != length $data) {
             $req->print("Size mismatch: size() reports ", $upload->size,
@@ -115,8 +116,9 @@ sub handler {
         $r->print(<$io>);
     }
     elsif ($test eq 'bad') {
+        require APR::Request::Error;
         eval {my $q = $req->args('query')};
-        if (ref $@ eq "Apache::Request::Error") {
+        if (ref $@ && $@->isa("APR::Request::Error")) {
             $req->upload("HTTPUPLOAD")->slurp(my $data);
             $req->print($data);
         }
@@ -136,7 +138,7 @@ sub handler {
     elsif ($test eq 'disable_uploads') {
         $req->config(DISABLE_UPLOADS => 1);
         eval {my $upload = $req->upload('HTTPUPLOAD')};
-        if (ref $@ eq "Apache::Request::Error") {
+        if (ref $@ eq "Apache2::Request::Error") {
             my $args = $@->{_r}->args('test'); # checks _r is an object ref
             my $upload = $@->upload('HTTPUPLOAD'); # no exception this time!
             die "args test failed" unless $args eq $test;

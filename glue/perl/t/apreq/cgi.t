@@ -157,8 +157,6 @@ ok t_cmp($body, "\tfoo => 1$line_end",
 }
 
 # file upload tests
-skip 1, "- Upload API not yet implemented" for 1..10;
-exit 0;
 
 foreach my $name (@names) {
     my $url = ( ($name =~ /\.pod$/) ?
@@ -209,7 +207,6 @@ use strict;
 use File::Basename;
 use warnings FATAL => 'all';
 use blib;
-use Apache2;
 use APR;
 use APR::Pool;
 use APR::Request::Param;
@@ -265,40 +262,43 @@ elsif ($method) {
     my $temp_dir = File::Spec->tmpdir;
     my $has_md5  = $req->args('has_md5');
     require Digest::MD5 if $has_md5;
-    my $upload = $req->upload(($req->upload)[0]);
-    my $type = $upload->type;
-    my $basename = File::Basename::basename($upload->filename);
+    my $body = $req->body;
+    $body->param_class("APR::Request::Param");
+    my ($param) = values %{$body->uploads($p)};
+    my $type = $param->upload_type;
+    my $basename = File::Basename::basename($param->upload_filename);
     my ($data, $fh);
 
     if ($method eq 'slurp') {
-        $upload->slurp($data);
+        $param->upload_slurp($data);
     }
     elsif ($method eq 'fh') {
-        read $upload->fh, $data, $upload->size;
+        read $param->upload_fh, $data, $param->upload_size;
     }
     elsif ($method eq 'tempname') {
-        my $name = $upload->tempname;
+        my $name = $param->upload_tempname;
         open $fh, "<", $name or die "Can't open $name: $!";
         binmode $fh;
-        read $fh, $data, $upload->size;
+        read $fh, $data, $param->upload_size;
         close $fh;
     }
     elsif ($method eq 'link') {
         my $link_file = File::Spec->catfile($temp_dir, "linkfile");
         unlink $link_file if -f $link_file;
-        $upload->link($link_file) or die "Can't link to $link_file: $!";
+        $param->upload_link($link_file) or die "Can't link to $link_file: $!";
         open $fh, "<", $link_file or die "Can't open $link_file: $!";
         binmode $fh;
-        read $fh, $data, $upload->size;
+        read $fh, $data, $param->upload_size;
         close $fh;
         unlink $link_file if -f $link_file;
     }
     elsif ($method eq 'io') {
-        read $upload->io, $data, $upload->size;
+        read $param->upload_io, $data, $param->upload_size;
     }
     else  {
         die "unknown method: $method";
     }
+
     my $temp_file = File::Spec->catfile($temp_dir, $basename);
     unlink $temp_file if -f $temp_file;
     open my $wfh, ">", $temp_file or die "Can't open $temp_file: $!";

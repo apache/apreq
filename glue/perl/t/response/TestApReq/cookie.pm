@@ -3,18 +3,17 @@ package TestApReq::cookie;
 use strict;
 use warnings FATAL => 'all';
 
-use Apache::Request ();
-use Apache::RequestIO;
-use Apache::RequestRec;
-use Apache::Connection;
+use Apache2::RequestIO;
+use Apache2::RequestRec;
+use Apache2::Connection;
 
-use Apache::Cookie ();
-use Apache::Request ();
+use Apache2::Cookie ();
+use Apache2::Request ();
 
 sub handler {
     my $r = shift;
-    my $req = Apache::Request->new($r);
-    my %cookies = Apache::Cookie->fetch($r);
+    my $req = Apache2::Request->new($r);
+    my %cookies = Apache2::Cookie->fetch($r);
 
     $r->content_type('text/plain');
     my $test = $req->APR::Request::args('test');
@@ -33,9 +32,10 @@ sub handler {
     }
     else {
         my @expires;
-        @expires = ("expires", $req->APR::Request::args('expires')) if $req->APR::Request::args('expires');
-        my $cookie = Apache::Cookie->new($r, name => "foo",
-                                            value => "bar", @expires);
+        @expires = ("expires", $req->APR::Request::args('expires'))
+            if $req->APR::Request::args('expires');
+        my $cookie = Apache2::Cookie->new($r, name => "foo",
+                                              value => "bar", @expires);
         if ($test eq "bake") {
             $cookie->bake($req);
         }

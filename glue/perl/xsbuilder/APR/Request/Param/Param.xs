@@ -301,6 +301,20 @@ value(obj, p1=NULL, p2=NULL)
   OUTPUT:
     RETVAL
 
+SV *
+upload_filename(obj)
+    APR::Request::Param obj
+  PREINIT:
+
+  CODE:
+    if (obj->upload != NULL)
+        RETVAL = apreq_xs_param2sv(aTHX_ obj, NULL, NULL);
+    else
+        RETVAL = &PL_sv_undef;
+
+  OUTPUT:
+    RETVAL
+
 
 
 BOOT:
@@ -626,5 +640,22 @@ upload_tempname(param, req=apreq_xs_sv2handle(aTHX_ ST(0)))
     if (s != APR_SUCCESS)
         Perl_croak(aTHX_ "$param->upload_link($file): can't get spool file name");
 
+  OUTPUT:
+    RETVAL
+
+
+MODULE = APR::Request::Param    PACKAGE = APR::Request::Param::Table
+
+SV *
+uploads(t, pool)
+    APR::Request::Param::Table t
+    APR::Pool pool
+  PREINIT:
+    SV *obj = apreq_xs_sv2object(aTHX_ ST(0), TABLE_CLASS, 't');
+    SV *parent = apreq_xs_sv2object(aTHX_ ST(0), HANDLE_CLASS, 'r');
+    MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
+  CODE:
+    RETVAL = apreq_xs_table2sv(aTHX_ apreq_uploads(t, pool), HvNAME(SvSTASH(obj)), 
+                               parent, mg->mg_ptr, mg->mg_len);
   OUTPUT:
     RETVAL

@@ -2,13 +2,13 @@ package TestApReq::big_input;
 
 use strict;
 use warnings FATAL => 'all';
-use Apache::Request ();
-use Apache::RequestIO;
-use Apache::RequestRec;
+use Apache2::Request ();
+use Apache2::RequestIO;
+use Apache2::RequestRec;
 
 sub handler {
     my $r = shift;
-    my $req = Apache::Request->new($r);
+    my $req = Apache2::Request->new($r);
     my $len = 0;
 
     for ($req->param) {

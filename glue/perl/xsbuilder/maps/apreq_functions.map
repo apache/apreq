@@ -110,11 +110,6 @@ apreq_hook_add
 apreq_header_in
 apreq_header_out
 
-
-MODULE=APR::Request  PACKAGE=APR::Request PREFIX=APR__Request_
-DEFINE_parse | apreq_xs_parse |
-
-
 MODULE=APR::Request  PACKAGE=APR::Request PREFIX=APR__Request_
 DEFINE_parse | apreq_xs_parse |
 
@@ -158,3 +153,13 @@ DEFINE_FETCH    | apreq_xs_table_FETCH |
 DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
 DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
 #DEFINE_do       | apreq_xs_table_do |
+
+MODULE=APR::Request::Param PACKAGE=APR::Request::Brigade PREFIX=APR__Request__Brigade_
+DEFINE_new | apreq_xs_brigade_copy |
+DEFINE_TIEHANDLE | apreq_xs_brigade_copy |
+DEFINE_READ | apreq_xs_brigade_read |
+DEFINE_READLINE | apreq_xs_brigade_readline |
+
+MODULE=APR::Request::Param PACKAGE=APR::Request::Brigade::IO  PREFIX=APR__Request__Brigade__IO_
+DEFINE_read | apreq_xs_brigade_read |
+DEFINE_readline | apreq_xs_brigade_readline |

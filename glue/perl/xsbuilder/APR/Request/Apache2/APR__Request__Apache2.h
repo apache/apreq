@@ -137,7 +137,7 @@ static XS(apreq_xs_apache2_param)
         request_rec *r;
         const apr_table_t *t;
 
-        r = modperl_xs_sv2request_rec(aTHX_ sv, "Apache::RequestRec", cv);
+        r = modperl_xs_sv2request_rec(aTHX_ sv, "Apache2::RequestRec", cv);
 
         d.pkg = NULL;
         d.parent = obj;

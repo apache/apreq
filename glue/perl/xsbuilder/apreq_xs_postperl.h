@@ -33,6 +33,7 @@ typedef apr_table_t    apreq_xs_param_table_t;
 typedef apr_table_t    apreq_xs_cookie_table_t;
 typedef HV             apreq_xs_error_t;
 typedef char*          apreq_xs_subclass_t;
+#define APR__Request__Param__Table const apr_table_t *
 
 #define HANDLE_CLASS "APR::Request"
 #define COOKIE_CLASS "APR::Request::Cookie"

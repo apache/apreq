@@ -29,12 +29,12 @@ static int apreq_xs_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv,
 
     if (idx > 0 && idx <= arr->nelts) {
         const apr_table_entry_t *te = (const apr_table_entry_t *)arr->elts;
-        const char *cookie_class = mg_find(obj, PERL_MAGIC_ext)->mg_ptr;
         apreq_cookie_t *c = apreq_value_to_cookie(te[idx-1].val);
-        SV *parent = mg_find(obj, PERL_MAGIC_ext)->mg_obj;
+        MAGIC *my_magic = mg_find(obj, PERL_MAGIC_ext);
 
         SvMAGICAL_off(nsv);
-        sv_setsv(nsv, sv_2mortal(apreq_xs_cookie2sv(aTHX_ c, cookie_class, parent)));
+        sv_setsv(nsv, sv_2mortal(apreq_xs_cookie2sv(aTHX_ c, my_magic->mg_ptr,
+                                                    my_magic->mg_obj)));
     }
 
     return 0;

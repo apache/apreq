@@ -17,8 +17,8 @@ use Apache::TestReportPerl ();
 use Config;
 use File::Find qw(finddepth);
 use File::Basename;
-use Apache::Build;
-use constant WIN32 => Apache::Build::WIN32;
+use Apache2::Build;
+use constant WIN32 => Apache2::Build::WIN32;
 use Cwd;
 use ExtUtils::XSBuilder::ParseSource;
 
@@ -95,7 +95,7 @@ my $apreq_libs = WIN32 ?
     qq{-L$base_dir/win32/libs -llib$apreq_libname -lmod_apreq2 -L$perl_lib -llibaprext -L$apache_dir/lib -lmod_perl} :
     qx{$base_dir/apreq2-config --link-ld --ldflags --libs};
 
-my $mp2_typemaps = Apache::Build->new->typemaps;
+my $mp2_typemaps = Apache2::Build->new->typemaps;
 
 package My::ParseSource;
 use base qw/ExtUtils::XSBuilder::ParseSource/;
@@ -247,7 +247,7 @@ sub MY::postamble {
 doc_test : @tests
 	\$(FULLPERLRUN) "-Mblib" "-MTest::Harness" "-e" "runtests(\@ARGV)" @tests
 
-test :: doc_test
+#test :: doc_test
 
 EOT
     } else {
@@ -464,45 +464,21 @@ $txt .= qq{
 
 }
 
-# another bug in WrapXS.pm - 
-# must insert a space before typemap definition
+# For now, just copy the typemap file in xsbuilder til we
+# can remove ExtUtils::XSBuilder.
 
 sub write_typemap
 {
     my $self = shift;
+
     my $typemap = $self->typemap;
     my $map = $typemap->get;
     my %seen;
 
     my $fh = $self->open_class_file('', 'typemap');
     print $fh "$self->{noedit_warning_hash}\n";
-
-    while (my($type, $t) = each %$map) {
-        my $class = $t -> {class} ;
-        $class ||= $type;
-        next if $seen{$type}++ || $typemap->special($class);
-
-        my $typemap = $t -> {typemapid} ;
-        if ($class =~ /::/) {
-            next if $seen{$class}++ ;
-            $class =~ s/::$// ;
-            print $fh "$class\t$typemap\n";
-        }
-        else {
-            print $fh "$type\t$typemap\n";
-        }
-    }
-
-    my $typemap_code = $typemap -> typemap_code ;
-
-    foreach my $dir ('INPUT', 'OUTPUT') {
-        print $fh "\n$dir\n" ;
-        while (my($type, $code) = each %{$typemap_code}) {
-            print $fh "$type\n\t$code->{$dir}\n\n" if ($code->{$dir}) ;
-        }
-    }
-
-    close $fh;
+    open my $tfh, "$xs_dir/typemap" or die $!;
+    print $fh $_ while <$tfh>;
 }
 
 

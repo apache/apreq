@@ -32,11 +32,7 @@ sub mm_version {
 
 sub mp2_version {
     eval {
-        require Apache2;
-        require mod_perl;
-        $mod_perl::VERSION;
-    } or do {
-        require mod_perl;
+        require mod_perl2;
         $mod_perl::VERSION;
     };
 }

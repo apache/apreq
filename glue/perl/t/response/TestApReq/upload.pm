@@ -3,16 +3,16 @@ package TestApReq::upload;
 use strict;
 use warnings FATAL => 'all';
 
-use Apache::RequestRec;
-use Apache::RequestIO;
-use Apache::Request ();
-use Apache::Upload;
+use Apache2::RequestRec;
+use Apache2::RequestIO;
+use Apache2::Request ();
+use Apache2::Upload;
 use File::Spec;
 require File::Basename;
 
 sub handler {
     my $r = shift;
-    my $req = Apache::Request->new($r);
+    my $req = Apache2::Request->new($r);
     my $temp_dir = File::Spec->tmpdir;
 
     my $method  = $req->args('method');
