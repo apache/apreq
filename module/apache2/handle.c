@@ -184,7 +184,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
             /* riff on Duff's device */
             apreq_filter_read(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
 
-    default:
+    case APR_SUCCESS:
 
             val = apr_table_get(ctx->body, name);
             if (val != NULL)
@@ -192,6 +192,15 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
 
         } while (ctx->status == APR_INCOMPLETE);
 
+        break;
+
+    default:
+
+        if (ctx->body != NULL) {
+            val = apr_table_get(ctx->body, name);
+            if (val != NULL)
+                return apreq_value_to_param(val);
+        }
     }
 
     return NULL;
