@@ -58,6 +58,9 @@
 
 #include "apreq_cookie.h"
 #include "apreq_env.h"
+#include "apr_strings.h"
+#include "apr_lib.h"
+
 
 APREQ_DECLARE(int) (apreq_jar_items)(apreq_jar_t *jar)
 {
@@ -80,7 +83,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
                                          const char *time_str)
 {
     if ( c->version == NETSCAPE )
-        c->time.expires = apreq_expires(apreq_env_pool(c->ctx), 
+        c->time.expires = apreq_expires(apreq_env_pool(c->env), 
                                         time_str,
                                         NSCOOKIE);
     else
@@ -118,6 +121,8 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c,
                                               char *attr,
                                               char *val)
 {
+    dAPREQ_LOG;
+
     if ( attr[0] ==  '-' || attr[0] == '$' )
         ++attr;
 
@@ -135,7 +140,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c,
             return APR_SUCCESS;
         }
         else {
-            apreq_warn(c->ctx, APR_BADARG, 
+            apreq_log(APREQ_WARN APR_BADARG, c->env, 
                        "Bad Version number (no digits found).");
             return APR_BADARG;
         }
@@ -176,7 +181,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c,
 
     };
 
-    apreq_warn(c->ctx, APR_ENOTIMPL, 
+    apreq_log(APREQ_WARN APR_ENOTIMPL, c->env,
                "unknown cookie attribute: `%s' => `%s'", 
                attr, val);
 
@@ -192,7 +197,7 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(void *ctx,
     apreq_cookie_t *c = apr_palloc(p, vlen + sizeof *c);
     apreq_value_t *v = &c->v;
 
-    c->ctx = ctx;
+    c->env = ctx;
     v->size = vlen;
     v->name = apr_pstrmemdup(p, name, nlen);
     memcpy(v->data, value, vlen);
@@ -289,6 +294,8 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
     const char *name, *value; 
     apr_size_t nlen, vlen;
 
+    dAPREQ_LOG;
+
     /* initialize jar */
     
     if (data == NULL) {
@@ -316,10 +323,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
 
     origin = data;
 
-#ifdef DEBUG
-    apreq_debug(ctx, 0, "parsing cookie data: %s", data);
-#endif
-
+    apreq_log(APREQ_DEBUG 0, ctx, "parsing cookie data: %s", data);
 
     /* parse data */
 
@@ -357,14 +361,16 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
 
         case '$':
             if (c == NULL) {
-                apreq_error(ctx, APR_BADCH, "Saw attribute, "
-                            "execting NAME=VALUE cookie pair: %s", data);
+                apreq_log(APREQ_ERROR APR_BADCH, ctx,
+                      "Saw attribute, expecting NAME=VALUE cookie pair: %s",
+                          data);
                 return j;
             }
             else if (version == NETSCAPE) {
                 c->v.status = APR_EMISMATCH;
-                apreq_error(ctx, c->v.status, "Saw attribute in a "
-                                 "Netscape Cookie header: %s", data);
+                apreq_log(APREQ_ERROR c->v.status, ctx, 
+                          "Saw attribute in a Netscape Cookie header: %s", 
+                          data);
                 return j;
             }
 
@@ -375,7 +381,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
                                      apr_pstrmemdup(p,value, vlen));    
             else {
                 c->v.status = status;
-                apreq_warn(ctx, c->v.status, 
+                apreq_log(APREQ_WARN c->v.status, ctx,
                            "Ignoring bad attribute pair: %s", data);
             }
             break;
@@ -389,8 +395,8 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *ctx,
                 apreq_add_cookie(j, c);
             }
             else {
-                apreq_warn(ctx, status, "Skipping bad NAME=VALUE pair: %s",
-                           data);
+                apreq_log(APREQ_WARN status, ctx,
+                          "Skipping bad NAME=VALUE pair: %s", data);
             }
         }
     }
@@ -479,40 +485,44 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(apr_pool_t *p,
 
 APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c)
 {
-    char *s = apreq_cookie_as_string(apreq_env_pool(c->ctx),c);
+    char *s = apreq_cookie_as_string(apreq_env_pool(c->env),c);
+    dAPREQ_LOG;
 
     if (s == NULL) {
-        apreq_error(c->ctx, APR_ENAMETOOLONG, "Serialized cookie "
-                    "exceeds APREQ_COOKIE_LENGTH = %d", 
+        apreq_log(APREQ_ERROR APR_ENAMETOOLONG, c->env, 
+                  "Serialized cookie exceeds APREQ_COOKIE_LENGTH = %d", 
                     APREQ_COOKIE_LENGTH);
         return APR_ENAMETOOLONG;
     }
 
-    return apreq_env_set_cookie(c->ctx, s);
+    return apreq_env_set_cookie(c->env, s);
 }
 
 APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c)
 {
-    char *s = apreq_cookie_as_string(apreq_env_pool(c->ctx),c);
+    char *s = apreq_cookie_as_string(apreq_env_pool(c->env),c);
+    dAPREQ_LOG;
 
     if ( s == NULL ) {
-        apreq_error(c->ctx, APR_ENAMETOOLONG, "Serialized cookie "
-                    "exceeds APREQ_COOKIE_LENGTH = %d", 
+        apreq_log(APREQ_ERROR APR_ENAMETOOLONG, c->env,
+                  "Serialized cookie exceeds APREQ_COOKIE_LENGTH = %d", 
                     APREQ_COOKIE_LENGTH);
         return APR_ENAMETOOLONG;
     }
     else if ( c->version == NETSCAPE ) {
-        apreq_error(c->ctx, APR_EMISMATCH, "Cannot bake2 "
-                    "a Netscape cookie: %s", s);
+        apreq_log(APREQ_ERROR APR_EMISMATCH, c->env,
+                  "Cannot bake2 a Netscape cookie: %s", s);
         return APR_EMISMATCH;
     }
 
-    return apreq_env_set_cookie2(c->ctx, s);
+    return apreq_env_set_cookie2(c->env, s);
 }
 
 
 
-
+/* The functions below belong somewhere else, since they
+   generally make use of "common conventions" for cookie values. 
+   (whereas the cookie specs regard values as opaque) */
 
 #ifdef NEEDS_A_NEW_HOME
 

@@ -58,6 +58,8 @@
 
 #include "apreq_parsers.h"
 #include "apreq_env.h"
+#include "apr_lib.h"
+#include "apr_strings.h"
 
 #ifndef MAX
 #define MAX(A,B)  ( (A) > (B) ? (A) : (B) )
@@ -69,6 +71,7 @@
 #ifndef CRLF
 #define CRLF    "\015\012"
 #endif
+
 
 APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
                                                   const char *enctype,
@@ -97,9 +100,53 @@ APREQ_DECLARE(apr_status_t) apreq_register_parser(apreq_request_t *req,
 {
     apreq_parser_t *p = apreq_make_parser(req->pool, enctype, 
                                           parser, hook, out);
-    return apreq_env_add_parser(req->ctx, &p->v);
+    if (req->body == NULL)
+        return apreq_table_add((apreq_table_t *)req->v.data, &p->v);
+    else
+        return APR_EGENERAL;
 }
 
+
+APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req)
+{
+
+    if (req->v.name == NULL)
+        return req->v.status;
+
+    if (req->body == NULL && req->v.status == APR_SUCCESS) {
+        const char *q = apreq_table_get((apreq_table_t *)req->v.data,
+                                                         req->v.name);
+        if (q == NULL)
+            return req->v.status = APR_NOTFOUND;
+
+        req->body = apreq_table_make(req->pool, APREQ_NELTS);
+
+        *(apreq_parser_t **)req->v.data = 
+            apreq_value_to_parser(apreq_strtoval(q));
+
+        req->v.size = sizeof(apreq_parser_t *);
+        req->v.status = APR_INCOMPLETE;
+    }
+
+    if (req->v.status == APR_INCOMPLETE && req->body != NULL) {
+        apreq_parser_t *p;
+        apr_bucket_brigade *bb;
+        apr_status_t s;
+        p = (apreq_parser_t *)req->v.data;
+
+        s = apreq_env_get_brigade(req->env, &bb);
+        if (s != APR_SUCCESS)
+            return s;
+
+        req->v.status = p->parser(req->pool, bb, p);
+    }
+
+    return req->v.status;
+}
+
+
+
+/******************** application/x-www-form-urlencoded ********************/
 
 static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
                                   apr_bucket_brigade *bb, 
@@ -111,7 +158,7 @@ static apr_status_t split_urlword(apr_pool_t *pool, apreq_table_t *t,
     const apr_size_t glen = 1;
     apreq_value_t *v = &param->v;
 
-    param->bb = NULL; /* XXX: could use to retain original encoded data */
+    param->bb = NULL;
     param->info = NULL;
     param->charset = UTF_8;
     param->language = NULL;
@@ -223,9 +270,6 @@ APREQ_DECLARE(apr_status_t) apreq_parse_urlencoded(apr_pool_t *pool,
 
  parse_url_brigade:
 
-    /* parse the brigade for CRLF_CRLF-terminated header block, 
-     * each time starting from the front of the brigade.
-     */
     parser->v.status = URL_NAME;
 
     for (e  =  APR_BRIGADE_FIRST(bb), nlen = vlen = 0;
@@ -551,6 +595,9 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *pool,
     return APR_INCOMPLETE;
 }
 
+
+/********************* multipart/form-data *********************/
+
 struct mfd_ctx {
     void                *hook_data;
     apreq_table_t       *t;
@@ -626,6 +673,7 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
     return APR_INCOMPLETE;
 }
 
+
 static apr_status_t getval(const char **line, const char *name,
                            const char **val, apr_size_t *vlen)
 {
@@ -671,6 +719,7 @@ static apr_status_t getval(const char **line, const char *name,
     return APR_SUCCESS;
 }
 
+
 static const char crlf[] = CRLF; 
 
 APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
@@ -690,7 +739,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 #define MFD_ERROR   -1
 
     if (parser->v.size == 0) {
-        const char *bdry, *ct = apreq_env_content_type(req->ctx);
+        const char *bdry, *ct = apreq_env_content_type(req->env);
         apr_size_t blen;
         apr_status_t s;
 

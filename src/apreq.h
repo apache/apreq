@@ -6,9 +6,6 @@
 #endif 
 
 #include "apr_tables.h" 
-#include "apr_lib.h"
-#include "apr_pools.h"
-#include "apr_strings.h"
 
 #include <stddef.h>
 
@@ -21,22 +18,12 @@
 #define APREQ_XML_ENCTYPE               "application/xml"
 #define APREQ_XML_ENCTYPE_LENGTH        15
 
-/* defaults */
 #define APREQ_NELTS                     8
-#define APREQ_BUFFER_SIZE               8192
-#define APREQ_BODY_SIZE                (APREQ_BUFFER_SIZE * 1024)
-
-typedef struct apreq_cfg_t {
-    apr_off_t max_len;
-    char *temp_dir;
-    int run_hooks;
-} apreq_cfg_t;
-
 
 typedef struct apreq_value_t {
     const char          *name;
-    apr_size_t           size;
     apr_status_t         status;
+    apr_size_t           size;
     char                 data[1];
 } apreq_value_t;
 
@@ -65,12 +52,13 @@ APREQ_DECLARE(apreq_value_t *) apreq_merge_values(apr_pool_t *p,
 
 
 typedef enum { AS_IS, ENCODE, DECODE, QUOTE } apreq_join_t;
+
 APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 
                                        const char *sep, 
                                        const apr_array_header_t *arr, 
                                        apreq_join_t mode);
 
-/* XXX: should we drop this and replace it with apreq_index ? */
+
 typedef enum {FULL, PARTIAL} apreq_match_t;
 
 char *apreq_memmem(char* hay, apr_size_t haylen, 
@@ -104,13 +92,14 @@ APREQ_DECLARE(apr_ssize_t) apreq_unescape(char *str);
  * either as an ::NSCOOKIE or ::HTTP date */
 
 typedef enum {HTTP, NSCOOKIE} apreq_expires_t;
+
 APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str, 
                                     const apreq_expires_t type);
 
 /* file sizes (KMG) to bytes */
 apr_int64_t apreq_atoi64(const char *s);
 
-/* "duration" strings (YMDhms) to seconds */
+/* "time" strings (YMDhms) to seconds */
 long apreq_atol(const char *s);
 
 #ifdef __cplusplus

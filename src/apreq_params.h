@@ -98,9 +98,10 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
 typedef struct apreq_request_t {
     apreq_table_t      *args;         /* query_string params */
     apreq_table_t      *body;
+
     apr_pool_t         *pool;
-    void               *ctx;
-    apr_status_t        status;
+    void               *env;
+    apreq_value_t       v;
 } apreq_request_t;
 
 /**
@@ -110,7 +111,6 @@ typedef struct apreq_request_t {
 
 APREQ_DECLARE(apreq_request_t *)apreq_request(void *ctx);
 
-APREQ_DECLARE(apr_status_t)apreq_parse(apreq_request_t *req);
 
 /**
  * Returns the first parameter value for the requested key,

@@ -52,16 +52,6 @@
  * <http://www.apache.org/>.
  */
 
-/*
- * Resource allocation code... the code here is responsible for making
- * sure that nothing leaks.
- *
- * rst --- 4/95 --- 6/95
- */
-
-/*
-#include "apr_private.h"
-*/
 #include "apr_general.h"
 #include "apr_pools.h"
 #include "apreq_tables.h"

@@ -32,7 +32,7 @@ typedef struct apreq_cookie_t {
         const char *expires; 
     } time;
 
-    void           *ctx;
+    void           *env;
 
     apreq_value_t   v;           /* "raw" value (extended struct) */
 
@@ -88,7 +88,7 @@ apr_status_t apreq_add_cookie(apreq_jar_t *jar, const apreq_cookie_t *c);
  * data with the result of apreq_env_cookie(ctx), parse that,
  * and store the resulting jar back within the environment.
  * This Orcish maneuver is designed to mimimize parsing work,
- * since generating the cookie jar is fairly expensive.
+ * since generating the cookie jar is relatively expensive.
  *
  */
 

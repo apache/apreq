@@ -58,6 +58,7 @@
 
 #include "apreq_params.h"
 #include "apreq_env.h"
+#include "apr_strings.h"
 
 #define p2v(param) ( (param) ? &(param)->v : NULL )
 #define UPGRADE(s) apreq_value_to_param(apreq_char_to_value(s))
@@ -92,19 +93,36 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 {
 
     apreq_request_t *req, *old_req = apreq_env_request(ctx, NULL);
-    char *query_string;
-    apr_pool_t      *p;
+    const char *query_string, *ct;
+    apr_pool_t *p;
+
+    dAPREQ_LOG;
 
     if (old_req != NULL)
         return old_req;
 
     p = apreq_env_pool(ctx);
-    req = apr_palloc(p, sizeof *req);
+    req = apr_palloc(p, sizeof(apreq_table_t *) + sizeof *req);
 
-    req->status = APR_EINIT;
-    req->ctx    = ctx;
-    req->args   = apreq_make_table(p, APREQ_NELTS);
-    req->body   = NULL;
+    *(apreq_table_t **)&req->v.data = apreq_make_table(p, APREQ_NELTS);
+    req->v.size   = sizeof(apreq_table_t *);
+    req->v.status = APR_EINIT;
+    req->env      = ctx;
+    req->args     = apreq_make_table(p, APREQ_NELTS);
+    req->body     = NULL;
+
+    ct = apreq_env_content_type(ctx);
+
+    if (ct == NULL)
+        req->v.name = NULL;
+    else {
+        char *enctype = apr_pstrdup(req->pool, ct);
+        char *semicolon = strchr(enctype, ';');
+        if (semicolon)
+            *semicolon = 0;
+
+        req->v.name = enctype;
+    }
 
     /* XXX get/set race condition here wrt apreq_env_request.
      * apreq_env_request probably needs a write lock ???
@@ -112,37 +130,20 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 
     old_req = apreq_env_request(ctx, req);
 
-    if (old_req != NULL)
+    if (old_req != NULL) {
+        apreq_env_request(ctx, old_req); /* reset old_req */
         return old_req;
+    }
 
-#ifdef DEBUG
-    apreq.debug(ctx, 0, "making new request");
-#endif
+    apreq_log(APREQ_DEBUG req->v.status, ctx, "making new request");
 
     /* XXX need to install copy/merge callbacks for apreq_param_t */
     req->pool = p;
     query_string = apreq_env_args(ctx);
-    req->status = (query_string == NULL) ? APR_SUCCESS :
+    req->v.status = (query_string == NULL) ? APR_SUCCESS :
         apreq_split_params(p, req->args, query_string, strlen(query_string));
  
     return req;
-}
-
-
-APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req)
-{
-    if (req->body == NULL) {
-        if (req->status == APR_SUCCESS) {
-            req->body = apreq_table_make(req->pool, APREQ_NELTS);
-            return apreq_env_parse(req);
-        }
-        else
-            return req->status;
-    }
-    else if (req->status == APR_EAGAIN || req->status == APR_INCOMPLETE)
-        return apreq_env_parse(req);
-    else
-        return req->status;
 }
 
 
