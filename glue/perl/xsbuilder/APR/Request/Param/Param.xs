@@ -1,5 +1,10 @@
 #include "apreq_xs_tables.h"
 #define TABLE_CLASS "APR::Request::Param::Table"
+
+#ifndef index
+#define index strchr
+#endif
+
 static int apreq_xs_table_do_sub(void *data, const char *key,
                                  const char *val)
 {
