@@ -2,9 +2,6 @@
 
 use strict;
 use warnings FATAL => 'all';
-
-use lib qw(lib Apache-Test/lib);
-
 use Apache2;
 use Apache::Build;
 require Win32 if Apache::Build::WIN32;

@@ -2,8 +2,6 @@
 use strict;
 use warnings 'FATAL';
 
-
-my $usage = "Usage: version_check.pl tool version_string [path/to/tool]";
 my ($tool, $path) = @ARGV;
 $path = $tool unless defined $path;
 
@@ -44,7 +42,7 @@ if (@ARGV == 0) {
     exit 0;
 }
 
-die "$0 failed: unknown tool '$tool'." unless $prereq{$tool};
+die "$0 failed: unknown tool '$tool'.\n" unless $prereq{$tool};
 my $version = $prereq{$tool}->{version};
 my @version = split /\./, $version;
 

@@ -1,0 +1,35 @@
+# Version control files and dirs.
+\bRCS\b
+\bCVS\b
+,v$
+\.cvsignore$
+
+# Makemaker generated files and dirs.
+^MANIFEST\.
+Makefile$
+^blib/
+^MakeMaker‐\d
+
+# Temp, old and emacs backup files.
+~$
+\.old$
+^#.*#$
+^\.#
+
+# libtool stuff
+/\.libs
+\.la$
+\.lo$
+\.o$
+\.a$
+\.slo$
+\.so$
+
+# perl glue
+glue/perl/blib
+glue/perl/xsbuilder/tables
+
+#Apache Test stuff
+t/TEST$
+t/conf/*.conf$
+t/logs

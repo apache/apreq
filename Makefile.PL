@@ -17,7 +17,7 @@ if (WIN32) {
 }
 else {
     my @opts = qw(with-apache2-apxs with-apache2-src
-                  with-apr-config with-apu-config);
+                  with-apr-config with-apu-config apxs);
 
     my @flags = qw/enable-maintainer-mode enable-perl-glue disable-perl-glue/;
     my %opts;
@@ -30,6 +30,8 @@ else {
     $opts .= "--enable-perl-glue " unless exists $opts{"disable-perl-glue"};
 
     delete @opts{@flags};
+    $opts{"with-apache2-apxs"} = delete $opts{apxs} 
+        if exists $opts{apxs} and not exists $opts{"with-apache2-apxs"};
 
     $opts .= join " ", map {"--$_=$opts{$_}"} keys %opts;
     print "./configure $opts\n";

@@ -46,7 +46,7 @@ test :: all check run_tests
 
 test_clean : cmodules_clean
 	-@PERL@ t/TEST -clean
-	-rm -rf t/htdocs t/logs t/modules t/TEST t/cgi-bin/test_cgi
+	-rm -rf t/htdocs t/logs t/modules t/TEST t/cgi-bin/test_cgi t/cgi-bin/.libs t/conf/extra.conf
 
 cmodules_clean:
 	-cd c-modules && $(MAKE) clean

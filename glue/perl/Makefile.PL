@@ -32,7 +32,8 @@ ModPerl::MM::WriteMakefile(
     NAME => 'libapreq2',
     VERSION => '0.1',
     DIR => [qw(xs)],
-    clean => { DIRS => "blib", FILES => "t/TEST @scripts" },
+    clean => { FILES => "xs t/logs t/TEST @scripts" },
+    realclean => { FILES => "xsbuilder/tables" },
 );
 
 __END__

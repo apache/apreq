@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src env glue t
-EXTRA_DIST = INSTALL CHANGES build
+EXTRA_DIST = README INSTALL CHANGES MANIFEST.SKIP Makefile.PL build win32
 APU_SRCDIR=`@APU_CONFIG@ --srcdir`
 APR_SRCDIR=`@APR_CONFIG@ --srcdir`
 APU_DOX = (cd $(APU_SRCDIR); cat - docs/doxygen.conf | doxygen -)
@@ -8,6 +8,7 @@ APR_DOX = (cd $(APR_SRCDIR); cat - docs/doxygen.conf | doxygen -)
 COOKIE_POD=glue/perl/blib/lib/Apache/Cookie.pod
 REQUEST_POD=glue/perl/blib/lib/Apache/Request.pod
 SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi
+EUM=ExtUtils::Manifest
 
 bin_SCRIPTS = apreq2_config
 
@@ -17,11 +18,24 @@ else
 PERL_TEST = 
 endif
 
-apreq2_config:
+release: distdir
+	@PERL@ build/version_check.pl > $(distdir)/PREREQUISITES
+	echo MANIFEST > $(distdir)/MANIFEST
+	cd $(distdir); ./buildconf
+	@cd $(distdir); @PERL@ -M$(EUM) -e "$(EUM)::mkmanifest"
+	@PERL@ -ple '$$_="$(distdir)/$$_"' $(distdir)/MANIFEST | tar -czf $(distdir).tar.gz -T -
+	rm -rf $(distdir)
+	@echo "Made $(distdir).tar.gz"
 
-dist-hook:
-	rm -rf `find $(distdir) -name '*CVS'`
-	rm -rf `find $(distdir) -name '*~'`
+release_test:
+	-rm -rf $(distdir)
+	tar xzvf $(distdir).tar.gz
+	@cd $(distdir); @PERL@ -M$(EUM) -e "die 'Bogus MANIFEST' if $(EUM)::manicheck"
+	@cd $(distdir); @PERL@ Makefile.PL -apxs @APACHE2_APXS@ && make test
+	rm -rf $(distdir)
+	@echo "$(distdir).tar.gz is kosher."
+
+apreq2_config:
 
 docs:	src env glue build/doxygen.conf
 	doxygen build/doxygen.conf
