@@ -67,6 +67,35 @@ sub package {'Apache::Request'}
 
 # ParseSource.pm v 0.23 bug: line 214 should read
 # my @dirs = @{$self->include_dirs};
+# for now, we override it here just to work around the bug
+
+sub find_includes {
+    my $self = shift;
+    return $self->{includes} if $self->{includes};
+    require File::Find;
+    my(@dirs) = @{$self->include_dirs};
+    unless (-d $dirs[0]) {
+        die "could not find include directory";
+    }
+    # print "Will search @dirs for include files...\n" if ($verbose) ;
+    my @includes;
+    my $unwanted = join '|', @{$self -> unwanted_includes} ;
+
+    for my $dir (@dirs) {
+        File::Find::finddepth({
+                               wanted => sub {
+                                   return unless /\.h$/;
+                                   return if ($unwanted && (/^($unwanted)/o));
+                                   my $dir = $File::Find::dir;
+                                   push @includes, "$dir/$_";
+                               },
+                               follow => $^O ne 'MSWin32',
+                              }, $dir);
+    }
+    return $self->{includes} = $self -> sort_includes (\@includes) ;
+}
+
+
 sub include_dirs {["$base_dir/src",]}# "$base_dir/glue/perl/xsinclude"]}
 
 sub preprocess
