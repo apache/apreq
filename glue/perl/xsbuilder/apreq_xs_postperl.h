@@ -159,10 +159,12 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
     return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
 }
 
+#define apreq_xs_2sv(t,class,parent)                    \
+             apreq_xs_c2perl(aTHX_ t, env, class, parent)
 
-#define apreq_xs_2sv(t,class,parent) apreq_xs_c2perl(aTHX_ t, env, class,parent)
-#define apreq_xs_sv2(type,sv)((apreq_##type##_t *)apreq_xs_perl2c(aTHX_ sv, \
-                                                                  #type))
+#define apreq_xs_sv2(type,sv)((apreq_##type##_t *)      \
+                               apreq_xs_perl2c(aTHX_ sv, #type))
+
 #define apreq_xs_sv2env(sv) apreq_xs_perl2env(aTHX_ sv)
 
 /** Converts apreq_env to a Perl package, which forms the
@@ -220,8 +222,8 @@ static XS(apreq_xs_##type)                                              \
     data = (items == 3)  ?  SvPV_nolen(ST(2)) :  NULL;                  \
     obj = apreq_##type(env, data);                                      \
                                                                         \
-    ST(0) = obj ? sv_2mortal( apreq_xs_2sv(obj, SvPV_nolen(ST(0)),ST(1)) ) :  \
-                  &PL_sv_undef;                                         \
+    ST(0) = obj ? sv_2mortal(apreq_xs_2sv(obj, SvPV_nolen(ST(0)),ST(1)))\
+                : &PL_sv_undef;                                         \
     XSRETURN(1);                                                        \
 }
 
@@ -282,8 +284,11 @@ static int apreq_xs_table_keys(void *data, const char *key,
 }
 
 #define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
-#define apreq_xs_table2sv(t,class,parent) apreq_xs_table_c2perl(aTHX_ t, env, class,parent)
-#define apreq_xs_do(attr)          (items == 1 ? apreq_xs_table_keys \
+
+#define apreq_xs_table2sv(t,class,parent)                               \
+                  apreq_xs_table_c2perl(aTHX_ t, env, class, parent)
+
+#define apreq_xs_do(attr)          (items == 1 ? apreq_xs_table_keys    \
                                    : apreq_xs_##attr##_table_values)
 
 #define apreq_xs_push(attr,sv,d,key) do {                               \
@@ -323,7 +328,8 @@ static int apreq_xs_##attr##_table_values(void *data, const char *key,  \
         apreq_##type##_t *RETVAL =                                      \
                           apreq_value_to_##type(apreq_strtoval(val));   \
         if (COND)                                                       \
-            XPUSHs(sv_2mortal(apreq_xs_##type##2sv(RETVAL,subclass,d->parent)));  \
+            XPUSHs(sv_2mortal(                                          \
+                   apreq_xs_##type##2sv(RETVAL,subclass,d->parent)));   \
     } else                                                              \
         XPUSHs(&PL_sv_undef);                                           \
                                                                         \
@@ -359,14 +365,15 @@ static XS(apreq_xs_##attr##_get)                                        \
         if (items == 1) {                                               \
             apr_table_t *t = apreq_xs_##attr##_sv2table(sv);            \
             if (t != NULL)                                              \
-                XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class,sv)));         \
+                XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class,sv)));      \
             PUTBACK;                                                    \
             break;                                                      \
         }                                                               \
                                                                         \
         RETVAL = apreq_xs_##attr##_##type(sv, key);                     \
         if (RETVAL && (COND))                                           \
-            XPUSHs(sv_2mortal(apreq_xs_##type##2sv(RETVAL,subclass,sv)));  \
+            XPUSHs(sv_2mortal(                                          \
+                   apreq_xs_##type##2sv(RETVAL,subclass,sv)));          \
                                                                         \
     default:                                                            \
         PUTBACK;                                                        \

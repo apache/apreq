@@ -445,7 +445,7 @@ static XS(apreq_xs_upload_tempname)
         s = apreq_file_mktemp(&file, apreq_env_pool(env), tmpdir);
 
         if (s != APR_SUCCESS) {
-            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_tempname:"
+            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_tempname: "
                       "apreq_file_mktemp failed");
             Perl_croak(aTHX_ "$upload->tempname: can't make tempfile");
         }
@@ -453,9 +453,10 @@ static XS(apreq_xs_upload_tempname)
         s = apreq_brigade_fwrite(file, &len, bb);
 
         if (s != APR_SUCCESS) {
-            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_tempname:"
+            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_tempname: "
                       "apreq_brigade_fwrite failed");
-            Perl_croak(aTHX_ "$upload->tempname: can't write brigade to tempfile");
+            Perl_croak(aTHX_ "$upload->tempname: "
+                       "can't write brigade to tempfile");
         }
 
         last = apr_bucket_file_create(file, len, 0, bb->p, bb->bucket_alloc);
@@ -564,7 +565,7 @@ APREQ_DECLARE_HOOK(apreq_xs_hook_wrapper)
         SvPVX(ctx->bucket_data) = (char *)data;
         SvCUR(ctx->bucket_data) = (STRLEN)len;
 
-        eval_upload_hook(aTHX_ ctx->hook, ctx->upload, ctx->bucket_data, 
+        eval_upload_hook(aTHX_ ctx->hook, ctx->upload, ctx->bucket_data,
                          ctx->hook_data);
 
         if (SvTRUE(ERRSV)) {

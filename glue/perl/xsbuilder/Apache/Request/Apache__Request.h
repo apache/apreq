@@ -89,9 +89,8 @@
 
 #define apreq_xs_table_error_check
 
-#define apreq_xs_param2rv(ptr, class, parent) apreq_xs_2sv(ptr,class,parent)
-#define apreq_xs_rv2param(sv) ((apreq_param_t *)SvIVX(SvRV(sv)))
-#define apreq_xs_param2sv(ptr,class,parent) newSVpvn((ptr)->v.data,(ptr)->v.size)
+#define apreq_xs_param2sv(ptr, class, parent)                           \
+                newSVpvn((ptr)->v.data,(ptr)->v.size)
 
 APREQ_XS_DEFINE_ENV(request);
 APREQ_XS_DEFINE_OBJECT(request);
@@ -156,7 +155,8 @@ static XS(apreq_xs_request_config)
         if (strcasecmp(attr,"POST_MAX")== 0
             || strcasecmp(attr, "MAX_BODY") == 0) 
         {
-            status = apreq_env_max_body(req->env,(apr_off_t)apreq_atoi64f(val));
+            status = apreq_env_max_body(req->env,
+                                        (apr_off_t)apreq_atoi64f(val));
         }
         else if (strcasecmp(attr, "TEMP_DIR") == 0) {
             apreq_env_temp_dir(req->env, val);
