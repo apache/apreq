@@ -7,7 +7,7 @@ use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 use HTTP::Cookies;
 
-plan tests => 6;
+plan tests => 7;
 
 my $location = "/TestApReq__cookie";
 
@@ -16,6 +16,13 @@ my $location = "/TestApReq__cookie";
     my $value = 'bar';
     ok t_cmp($value,
              GET_BODY("$location?test=new"),
+             $test);
+}
+{
+    my $test  = 'new';
+    my $value = 'bar';
+    ok t_cmp($value,
+             GET_BODY("$location?test=new;expires=%2B3M"),
              $test);
 }
 {

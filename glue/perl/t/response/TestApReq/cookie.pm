@@ -30,8 +30,11 @@ sub handler {
         $r->print($cookies{$key}->value);
     }
     else {
+        my @expires;
+        @expires = ("expires", $req->param('expires')) if $req->param('expires');
+
         my $cookie = Apache::Cookie->new($r, name => "foo",
-                                            value => "bar");
+                                            value => "bar", @expires);
         if ($test eq "bake") {
             $cookie->bake;
         }
