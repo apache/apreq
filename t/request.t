@@ -54,13 +54,13 @@ sub get_test {
 
     param_test(sub {
 	my($url, $data) = @_;
-        HTTP::Request::Common::GET("$url?$data");
+        HTTP::Request::Common::GET("$url;$data");
     });
 }
 
 sub param_test {
     my $cv = shift;
-    my $url = "http://localhost:$ENV{PORT}/request-param.pl";
+    my $url = "http://localhost:$ENV{PORT}/request-param.pl?key=val";
     my $data = 
 	"ONE=ONE_value&TWO=TWO_value&" .
 	"THREE=M1&THREE=M2&THREE=M3";
@@ -70,9 +70,11 @@ sub param_test {
     my $page = $response->content;
     print $response->as_string unless $response->is_success;
     my $expect = <<EOF;
+param key => val
 param ONE => ONE_value
 param TWO => TWO_value
 param THREE => M1,M2,M3
+param key => val
 EOF
     my $ok = $page eq $expect;
     test ++$i, $ok;

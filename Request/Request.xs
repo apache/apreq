@@ -342,6 +342,30 @@ int
 ApacheRequest_parse(req)
     Apache::Request req
 
+
+Apache::Table
+ApacheRequest_query_params(req)
+    Apache::Request req
+
+    PREINIT:
+    table *parms;
+
+    CODE:
+    parms = ApacheRequest_query_params(req, req->r->pool);
+    ST(0) = mod_perl_tie_table(parms);
+
+Apache::Table
+ApacheRequest_post_params(req)
+    Apache::Request req
+
+    PREINIT:
+    table *parms;
+
+    CODE:
+    parms = ApacheRequest_post_params(req, req->r->pool);
+    ST(0) = mod_perl_tie_table(parms);
+
+
 void
 ApacheRequest_parms(req, parms=NULL)
     Apache::Request req

@@ -1,5 +1,5 @@
+#!perl
 use strict;
-use Apache::test qw(skip_test have_httpd test have_module);
 use Apache::src ();
 #use lib qw(lib blib/lib blib/arch);
 eval 'require Apache::Cookie' or die $@;

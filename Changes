@@ -2,6 +2,11 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.11 - February 27, 2003
+
+Add req->nargs to C API to distinguish between query string and 
+request body params.
+
 =item 1.05 - January 5, 2003
 
 Include patch and supporting documentation for OS X [David Wheeler].

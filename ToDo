@@ -16,10 +16,6 @@ o improve/automate build process for c, dtcl (autoconf support?)
 
 o Fix our Apache::Test-based test suite
 
-o Document build/install process for OS X.
-
-o optional build/link of libapreq.a directly into httpd?
-
 o solve the memory leak for:
   my $r = shift;
   $r = Apache::Request->new($r);
