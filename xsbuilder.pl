@@ -354,6 +354,81 @@ sub write_typemap
     close $fh;
 }
 
+use constant GvSHARED => 0;
+
+sub write_xs {
+    my($self, $module, $functions) = @_;
+
+    my $fh = $self->open_class_file($module, '.xs');
+    print $fh "$self->{noedit_warning_c}\n";
+
+    my @includes = @{ $self->includes };
+
+    if (my $mod_h = $self->mod_h($module)) {
+        push @includes, $mod_h;
+    }
+
+    for (@includes) {
+        print $fh qq{\#include "$_"\n\n};
+    }
+
+    my $last_prefix = "";
+    my $fmap = $self -> typemap -> {function_map} ;
+    my $myprefix = $self -> my_xs_prefix ;
+
+    for my $func (@$functions) {
+        my $class = $func->{class};
+        if ($class)
+            {
+            my $prefix = $func->{prefix};
+            $last_prefix = $prefix if $prefix;
+
+            if ($func->{name} =~ /^$myprefix/o) {
+                #e.g. mpxs_Apache__RequestRec_
+                my $class_prefix = $fmap -> class_c_prefix($class);
+                if ($func->{name} =~ /$class_prefix/) {
+                    $prefix = $fmap -> class_xs_prefix($class);
+                }
+            }
+
+            $prefix = $prefix ? "  PREFIX = $prefix" : "";
+            print $fh "MODULE = $module    PACKAGE = $class $prefix\n\n";
+            }
+
+        print $fh $func->{code};
+    }
+
+    if (my $destructor = $self->typemap->destructor($last_prefix)) {
+        my $arg = $destructor->{argspec}[0];
+
+        print $fh <<EOF;
+void
+$destructor->{name}($arg)
+    $destructor->{class} $arg
+
+EOF
+    }
+
+    print $fh "PROTOTYPES: disabled\n\n";
+    print $fh "BOOT:\n";
+    print $fh $self->boot($module);
+    print $fh "    items = items; /* -Wall */\n";
+    print $fh <<'EOT' if $module eq "Apache::Upload";
+    f2g = APR_RETRIEVE_OPTIONAL_FN(apr_perlio_apr_file_to_glob);
+    if (f2g == NULL)
+        Perl_croak(aTHX_ "Failed to locate apr_perlio_apr_file_to_glob during BOOT");
+EOT
+    print $fh "\n";
+    if (my $newxs = $self->{newXS}->{$module}) {
+        for my $xs (@$newxs) {
+            print $fh qq{   cv = newXS("$xs->[0]", $xs->[1], __FILE__);\n};
+            print $fh qq{   GvSHARED_on(CvGV(cv));\n} if GvSHARED;
+        }
+    }
+
+    close $fh;
+}
+
 package My::TypeMap;
 use base 'ExtUtils::XSBuilder::TypeMap';
 
