@@ -202,21 +202,20 @@ static void apreq_filter_relocate(ap_filter_t *f)
 static ap_filter_t *get_apreq_filter(request_rec *r)
 {
     struct env_config *cfg = get_cfg(r);
-    ap_filter_t *f = r->input_filters;
 
-    if (cfg->f != NULL)
-        return cfg->f;
+    if (cfg->f == r->input_filters)
+       return cfg->f;
 
-    for (;;) {
-        if (strcmp(f->frec->name, filter_name) == 0)
-            return cfg->f = f;
-        if (f == r->proto_input_filters)
-            break;
-        f = f->next;
-    }
+    if (strcmp(r->input_filters->frec->name, filter_name) == 0)
+        return cfg->f = r->input_filters;
 
     cfg->f = ap_add_input_filter(filter_name, NULL, r, r->connection);
-    apreq_filter_relocate(cfg->f);
+
+/* ap_add_input_filter does not guarantee cfg->f == r->input_filters,
+ * so we reposition the new filter there as necessary.
+ */
+
+    apreq_filter_relocate(cfg->f); 
     return cfg->f;
 }
 
@@ -284,7 +283,7 @@ static apr_status_t apache2_read(void *env,
                                  apr_off_t bytes)
 {
     dR;
-    ap_filter_t *f = get_apreq_filter(r);
+    ap_filter_t *f = get_apreq_filter(r); /*ensures correct filter for prefetch */
     struct filter_ctx *ctx;
     apr_status_t s;
 
@@ -379,13 +378,19 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
     if (f != r->input_filters) {
         ctx->status = APR_SUCCESS;
+
         if (cfg->f == f) {
-            cfg->f = NULL;
+            /* This is the wrong apreq filter to use since
+             * there are other input filters behind it.  Must
+             * append a new apreq filter to the top of the
+             * chain and flush out the parser data
+             */
+            get_apreq_filter(r);
             if (req) {
                 req->parser = NULL;
                 req->body = NULL;
             }
-            get_apreq_filter(r);
+            /* assert(bb != NULL); this must never be a prefetch read */
         }
     }
 
@@ -500,7 +505,6 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         if (req == NULL)
             req = apreq_request(r, NULL);
 
-        assert(req->env == r);
         ctx->status = apreq_parse_request(req, ctx->bb);
         apr_brigade_cleanup(ctx->bb);
     }
