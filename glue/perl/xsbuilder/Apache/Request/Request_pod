@@ -246,6 +246,16 @@ To avoid recopying the upload's internal tempfile brigade on a
 Typically the new name must lie on the same file system as the
 brigade's tempfile. Check your system's link(2) manpage for details.
 
+=head2 slurp
+
+Reads the full contents of a file upload into the scalar argument.
+The return value is the APR status code (0 on success, error otherwise).
+
+  # print out the upload file
+  my $contents;
+  print $contents if $upload->slurp($contents) == 0;
+
+
 =head1 SEE ALSO
 
 APR::Table(3)

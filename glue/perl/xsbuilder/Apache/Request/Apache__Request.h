@@ -171,6 +171,40 @@ static XS(apreq_xs_upload_link)
 }
 
 
+static XS(apreq_xs_upload_slurp)
+{
+    dXSARGS;
+    MAGIC *mg;
+    void *env;
+    char *data;
+    apr_off_t len;
+    apr_bucket_brigade *bb;
+    apr_bucket *e;
+    apr_status_t s;
+
+    if (items != 2 || !SvROK(ST(0)))
+        Perl_croak(aTHX_ "Usage: $upload->slurp($data)");
+
+    if (!(mg = mg_find(SvRV(ST(0)), PERL_MAGIC_ext)))
+        Perl_croak(aTHX_ "$upload->slurp($data): can't find env");
+
+    env = mg->mg_ptr;
+    bb = apreq_xs_rv2param(ST(0))->bb;
+
+    s = apr_brigade_length(bb, 0, &len);
+    if (s != APR_SUCCESS)
+        XSRETURN_IV(s);
+
+    SvUPGRADE(ST(1), SVt_PV);
+    data = SvGROW(ST(1), len + 1);
+    data[len] = 0;
+    SvCUR_set(ST(1), len);
+    SvPOK_only(ST(1));
+
+    s = apr_brigade_flatten(bb, data, &len);
+    XSRETURN_IV(s);
+}
+
 static XS(apreq_xs_request_config)
 {
     dXSARGS;

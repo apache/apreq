@@ -30,6 +30,7 @@ MODULE=Apache::Request PACKAGE=Apache::Upload PREFIX=Apache__Upload_
  char *:DEFINE_filename          | apreq_param_value(apreq_xs_rv2param(sv)) | SV *:sv
  apr_status_t:DEFINE_status      | apreq_param_status(apreq_xs_rv2param(sv)) | SV *:sv
  DEFINE_link                     | apreq_xs_upload_link |
+ DEFINE_slurp                    | apreq_xs_upload_slurp |
 
 MODULE=Apache::Request PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table_
  DEFINE_get     | apreq_xs_upload_table_get |
