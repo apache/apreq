@@ -36,12 +36,9 @@ NULL=nul
 CPP=cl.exe
 RSC=rc.exe
 
-OUTDIR=.\libs
-INTDIR=.\libs
-# Begin Custom Macros
-OutDir=.\libs
-# End Custom Macros
-
+CFG_HOME=$(APREQ_HOME)\win32
+OUTDIR=$(CFG_HOME)\libs
+INTDIR=$(CFG_HOME)\libs
 
 !IF  "$(CFG)" == "libapreq - Win32 Release"
 
@@ -125,31 +122,31 @@ LIB32_OBJS= \
 
 
 !IF "$(CFG)" == "libapreq - Win32 Release" || "$(CFG)" == "libapreq - Win32 Debug"
-SOURCE=..\src\apreq.c
+SOURCE=$(APREQ_HOME)\src\apreq.c
 
 "$(INTDIR)\apreq.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=..\src\apreq_cookie.c
+SOURCE=$(APREQ_HOME)\src\apreq_cookie.c
 
 "$(INTDIR)\apreq_cookie.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=..\src\apreq_params.c
+SOURCE=$(APREQ_HOME)\src\apreq_params.c
 
 "$(INTDIR)\apreq_params.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=..\src\apreq_parsers.c
+SOURCE=$(APREQ_HOME)\src\apreq_parsers.c
 
 "$(INTDIR)\apreq_parsers.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=..\src\apreq_tables.c
+SOURCE=$(APREQ_HOME)\src\apreq_tables.c
 
 "$(INTDIR)\apreq_tables.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)

@@ -4,13 +4,15 @@ use warnings;
 use FindBin;
 use Getopt::Long;
 require File::Spec;
+use Cwd;
 require Win32;
 use ExtUtils::MakeMaker;
 use File::Basename;
-my ($apache, $debug, $help, $no_perl);
-my $result = GetOptions( 'with-apache=s' => \$apache,
+my ($apache, $debug, $help, $no_perl, $perl);
+my $result = GetOptions( 'with-apache2=s' => \$apache,
 			 'debug' => \$debug,
 			 'help' => \$help,
+                         'with-perl=s' => \$perl,
                          'without-perl' => \$no_perl,
                        );
 usage() if $help;
@@ -18,8 +20,9 @@ usage() if $help;
 my @path_ext;
 path_ext();
 $apache ||= search();
-my $cfg_home = Win32::GetShortPathName($FindBin::Bin);
-$cfg_home =~ s!/!\\!g;
+my $apreq_home = Win32::GetShortPathName($FindBin::Bin);
+$apreq_home =~ s!/?win32$!!;
+$apreq_home =~ s!/!\\!g;
 
 my $doxygen = which('doxygen');
 my $cfg = $debug ? 'Debug' : 'Release';
@@ -30,10 +33,10 @@ unless ($no_perl) {
         warn "ExtUtils::XSBuilder must be installed for Perl glue\n";
     }
     else {
-        my @args = ($^X, '../../build/xsbuilder.pl', 'run', 'run');
-        chdir '../glue/perl';
-        system(@args) == 0 or die "system @args failed: $!";
-        chdir '../../win32';
+        my @args = ($^X, "$apreq_home/build/xsbuilder.pl", 'run', 'run');
+        chdir "$apreq_home/glue/perl";
+        system(@args) == 0 or die "($apreq_home ) system @args failed: $?";
+        chdir $apreq_home;
     }
 }
 
@@ -41,11 +44,12 @@ open(my $make, '>Makefile') or die qq{Cannot open Makefile: $!};
 print $make <<"END";
 # Microsoft Developer Studio Generated NMAKE File.
 
-CFG_HOME=$cfg_home
+APREQ_HOME=$apreq_home
 CFG=$cfg
 APACHE=$apache
 PERL=$^X
 RM_F=\$(PERL) -MExtUtils::Command -e rm_f
+DOXYGEN_CONF=\$(APREQ_HOME)\\build\\doxygen.conf.win32
 
 END
 
@@ -54,18 +58,18 @@ print $make $_ while (<DATA>);
 if ($doxygen) {
     print $make <<"END";
 
-docs: 
-	cd \$(CFG_HOME)\\..
-	"$doxygen" build\\doxygen.conf.win32
-	cd \$(CFG_HOME)
+docs:   \$(DOXYGEN_CONF)
+	cd \$(APREQ_HOME)
+        "$doxygen" \$(DOXYGEN_CONF)
+	cd \$(APREQ_HOME)
 
 END
 
     my $bin_abspath = Win32::GetShortPathName(dirname(which('doxysearch')));
-    open(my $conf, '../build/doxygen.conf') 
-        or die "Cannot read ../build/doxygen.conf: $!";
-    open(my $win32_conf, '>../build/doxygen.conf.win32')
-        or die "Cannot write to ../build/doxygen.conf.win32: $!";
+    open(my $conf, "$apreq_home/build/doxygen.conf") 
+        or die "Cannot read $apreq_home/build/doxygen.conf: $!";
+    open(my $win32_conf, ">$apreq_home/build/doxygen.conf.win32")
+        or die "Cannot write to $apreq_home/build/doxygen.conf.win32: $!";
     while (<$conf>) {
         s/^(PERL_PATH\s+=\s+).*/$1"$^X"/;
         s/^(BIN_ABSPATH\s+=\s+).*/$1$bin_abspath/;
@@ -78,9 +82,10 @@ END
 close $make;
 generate_defs();
 
-print << 'END';
+print << "END";
 
-A Makefile has been generated. You can now run
+A Makefile has been generated in $apreq_home.
+You can now run
 
   nmake               - builds the libapreq library
   nmake test          - runs the supplied tests
@@ -100,12 +105,12 @@ END
 sub usage {
     print <<'END';
 
- Usage: perl Configure.pl [--with-apache=C:\Path\to\Apache2] [--debug]
+ Usage: perl Configure.pl [--with-apache2=C:\Path\to\Apache2] [--debug]
         perl Configure.pl --help
 
 Options:
 
-  --with-apache=C:\Path\to\Apache2 : specify the top-level Apache2 directory
+  --with-apache2=C:\Path\to\Apache2 : specify the top-level Apache2 directory
   --debug                          : build a debug version
   --without-perl                   : skip initializing the perl glue
   --help                           : print this help message
@@ -156,7 +161,7 @@ sub search {
         die <<'END';
 
 Please run this configuration script again, and give
-the --with-apache=C:\Path\to\Apache2 option to specify
+the --with-apache2=C:\Path\to\Apache2 option to specify
 the desired top-level Apache2 directory.
 
 END
@@ -222,7 +227,7 @@ LIBRARY
 EXPORTS
 
 END
-    chdir '../env';
+    chdir "$apreq_home/env";
     my $match = qr{^apreq_env};
     foreach my $file(qw(mod_apreq libapreq_cgi)) {
         my %fns = ();
@@ -278,41 +283,42 @@ NULL=
 NULL=nul
 !ENDIF 
 
+CFG_HOME=$(APREQ_HOME)\win32
 LIBDIR=$(CFG_HOME)\libs
-PERLGLUE=$(CFG_HOME)\..\glue\perl
+PERLGLUE=$(APREQ_HOME)\glue\perl
 
 ALL : "$(LIBAPREQ)"
 
 $(LIBAPREQ):
-	$(MAKE) /nologo /f $(CFG_HOME)\$(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
 
 CLEAN:
         cd $(LIBDIR)
         $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
-        cd $(CFG_HOME)
+        cd $(APREQ_HOME)
 !IF EXIST("$(PERLGLUE)\Makefile")
         cd $(PERLGLUE)
         $(MAKE) /nologo clean
-        cd $(CFG_HOME)
+        cd $(APREQ_HOME)
 !ENDIF
 
 TEST: $(LIBAPREQ)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
         set PATH=%PATH%;$(APACHE)\bin
         cd $(LIBDIR) && $(TESTALL).exe -v
-        cd $(CFG_HOME)
+        cd $(APREQ_HOME)
 
 $(MOD): $(LIBAPREQ)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
 
 $(CGI): $(LIBAPREQ)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(CGI).mak CFG="$(CGI) - Win32 $(CFG)" APACHE="$(APACHE)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(CGI).mak CFG="$(CGI) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
 
 PERL_GLUE: $(MOD)
         cd $(PERLGLUE)
 	$(PERL) Makefile.PL
         $(MAKE) /nologo
-        cd $(CFG_HOME)
+        cd $(APREQ_HOME)
 
 PERL_TEST: $(MOD)
         cd $(PERLGLUE)
@@ -320,4 +326,4 @@ PERL_TEST: $(MOD)
 	$(PERL) Makefile.PL
 !ENDIF
         $(MAKE) /nologo test
-        cd $(CFG_HOME)
+        cd $(APREQ_HOME)

@@ -31,13 +31,11 @@ CFG=testall - Win32 Release
 NULL=
 !ELSE 
 NULL=nul
-!ENDIF 
+!ENDIF
 
-OUTDIR=.\libs
-INTDIR=.\libs
-# Begin Custom Macros
-OutDir=.\libs
-# End Custom Macros
+CFG_HOME=$(APREQ_HOME)\win32
+OUTDIR=$(CFG_HOME)\libs
+INTDIR=$(CFG_HOME)\libs
 
 !IF  "$(CFG)" == "testall - Win32 Release"
 ALL : "$(OUTDIR)\testall.exe"
@@ -46,7 +44,7 @@ ALL : "$(OUTDIR)\testall.exe"
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /I"$(APACHE)\include" /I"..\src" /Fp"$(INTDIR)\testall.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /I"$(APACHE)\include" /I"$(APREQ_HOME)\src" /Fp"$(INTDIR)\testall.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -108,7 +106,7 @@ ALL : "$(OUTDIR)\testall.exe"
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /I"$(APACHE)\include" /I"..\src" /Fp"$(INTDIR)\testall.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /I"$(APACHE)\include" /I"$(APREQ_HOME)\src" /Fp"$(INTDIR)\testall.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -166,42 +164,40 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "testall - Win32 Release" || "$(CFG)" == "testall - Win32 Debug"
-SOURCE=..\t\cookie.c
+SOURCE=$(APREQ_HOME)\t\cookie.c
 
 "$(INTDIR)\cookie.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=..\t\CuTest.c
+SOURCE=$(APREQ_HOME)\t\CuTest.c
 
 "$(INTDIR)\CuTest.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=..\t\env.c
+SOURCE=$(APREQ_HOME)\t\env.c
 
 "$(INTDIR)\env.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=..\t\params.c
+SOURCE=$(APREQ_HOME)\t\params.c
 
 "$(INTDIR)\params.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=..\t\parsers.c
+SOURCE=$(APREQ_HOME)\t\parsers.c
 
 "$(INTDIR)\parsers.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=..\t\testall.c
+SOURCE=$(APREQ_HOME)\t\testall.c
 
 "$(INTDIR)\testall.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
 
 !ENDIF 
 

@@ -37,11 +37,9 @@ CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
 
-OUTDIR=.\libs
-INTDIR=.\libs
-# Begin Custom Macros
-OutDir=.\libs
-# End Custom Macros
+CFG_HOME=$(APREQ_HOME)\win32
+OUTDIR=$(CFG_HOME)\libs
+INTDIR=$(CFG_HOME)\libs
 
 !IF  "$(CFG)" == "mod_apreq - Win32 Release"
 
@@ -50,12 +48,12 @@ ALL : "$(OUTDIR)\mod_apreq.dll"
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MOD_APREQ_EXPORTS" /I"$(APACHE)\include" /I"..\src" /Fp"$(INTDIR)\mod_apreq.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MOD_APREQ_EXPORTS" /I"$(APACHE)\include" /I"$(APREQ_HOME)\src" /Fp"$(INTDIR)\mod_apreq.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_apreq.bsc" 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /def:mod_apreq.def /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /def:$(CFG_HOME)\mod_apreq.def /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" 
 LINK32_OBJS= \
 	"$(INTDIR)\mod_apreq.obj" \
 	"$(APACHE)\lib\libapr.lib" \
@@ -75,12 +73,12 @@ ALL : "$(OUTDIR)\mod_apreq.dll"
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MOD_APREQ_EXPORTS" /I"$(APACHE)\include" /I"..\src" /Fp"$(INTDIR)\mod_apreq.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ  /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MOD_APREQ_EXPORTS" /I"$(APACHE)\include" /I"$(APREQ_HOME)\src" /Fp"$(INTDIR)\mod_apreq.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ  /c 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_apreq.bsc" 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /def:mod_apreq.def /pdb:"$(OUTDIR)\mod_apreq.pdb" /debug /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" /pdbtype:sept 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /def:$(CFG_HOME)\mod_apreq.def /pdb:"$(OUTDIR)\mod_apreq.pdb" /debug /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\mod_apreq.obj" \
 	"$(APACHE)\lib\libapr.lib" \
@@ -127,11 +125,10 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "mod_apreq - Win32 Release" || "$(CFG)" == "mod_apreq - Win32 Debug"
-SOURCE=..\env\mod_apreq.c
+SOURCE=$(APREQ_HOME)\env\mod_apreq.c
 
 "$(INTDIR)\mod_apreq.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
-
 
 !ENDIF 
 
