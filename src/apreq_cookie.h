@@ -125,8 +125,6 @@ typedef struct apreq_cookie_t {
 
 APREQ_DECLARE(apreq_cookie_t *)apreq_cookie(const apreq_jar_t *jar,
                                             const char *name);
-#define apreq_cookie(j,k) apreq_value_to_cookie(apreq_char_to_value( \
-                              apr_table_get((j)->cookies,k)))
 
 /**
  * Adds a cookie by pushing it to the bottom of the jar.
@@ -137,8 +135,6 @@ APREQ_DECLARE(apreq_cookie_t *)apreq_cookie(const apreq_jar_t *jar,
 
 APREQ_DECLARE(void) apreq_add_cookie(apreq_jar_t *jar, 
                                      const apreq_cookie_t *c);
-#define apreq_add_cookie(j,c) apr_table_addn((j)->cookies,\
-                                            (c)->v.name,(c)->v.data)
 
 /**
  * Parse the incoming "Cookie:" headers into a cookie jar.

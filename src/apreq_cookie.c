@@ -62,16 +62,18 @@
 #include "apr_lib.h"
 
 
-APREQ_DECLARE(apreq_cookie_t *) (apreq_cookie)(const apreq_jar_t *jar, 
-                                               const char *name)
+APREQ_DECLARE(apreq_cookie_t *) apreq_cookie(const apreq_jar_t *jar, 
+                                             const char *name)
 {
-    return apreq_cookie(jar,name);
+    return apreq_value_to_cookie(apreq_char_to_value(apr_table_get(jar->cookies,
+                                                                   name)));
 }
 
-APREQ_DECLARE(void) (apreq_add_cookie)(apreq_jar_t *jar, 
-                                       const apreq_cookie_t *c)
+APREQ_DECLARE(void) apreq_add_cookie(apreq_jar_t *jar, 
+                                     const apreq_cookie_t *c)
 {
-    apreq_add_cookie(jar,c);
+    apr_table_addn(jar->cookies,
+                   c->v.name,c->v.data);
 }
 
 APREQ_DECLARE(void) apreq_cookie_expires(apr_pool_t *p,
