@@ -14,6 +14,7 @@ use Apache::TestConfigPerl ();
 use Apache::TestSmokePerl ();
 use Apache::TestReportPerl ();
 
+use Config;
 use File::Find qw(finddepth);
 use File::Basename;
 use Apache::Build;
@@ -37,7 +38,7 @@ sub slurp($$)
     read $file, $_[0], -s $file;
 }
 
-my ($apache_includes, $apr_libs, $apreq_libname);
+my ($apache_includes, $apache_dir, $apr_libs, $apreq_libname, $perl_lib);
 
 if (WIN32) {
     # XXX May need fixing, Randy!
@@ -48,7 +49,7 @@ if (WIN32) {
     slurp my $make => "$base_dir/Makefile";
     $make =~ /^APACHE=(\S+)/m or
         die "Cannot find top-level Apache directory";
-    my $apache_dir = $1;
+    $apache_dir = $1;
     ($apache_includes = "-I$apache_dir" . '/include') =~ s!\\!/!g;
     ($apr_libs = "-L$apache_dir" . '/lib') =~ s!\\!/!g;
     $make =~ /^APR_LIB=(\S+)/m or
@@ -58,6 +59,8 @@ if (WIN32) {
         die "Cannot find aprutil lib";
     $apr_libs .= ' -l' . basename($1, '.lib');
     $apreq_libname = 'apreq2';
+    $perl_lib = $Config{installsitelib} . '\Apache2\auto\libaprext';
+    $perl_lib =~ s{\\}{\\\\}g;
 }
 else {
     slurp my $config => "$base_dir/config.status";
@@ -89,7 +92,7 @@ else {
 }
 
 my $apreq_libs = WIN32 ?
-    qq{-L$base_dir/win32/libs -llib$apreq_libname } :
+    qq{-L$base_dir/win32/libs -llib$apreq_libname -lmod_apreq2 -L$perl_lib -llibaprext -L$apache_dir/lib -lmod_perl} :
     qx{$base_dir/apreq2-config --link-ld --ldflags --libs};
 
 my $mp2_typemaps = Apache::Build->new->typemaps;
