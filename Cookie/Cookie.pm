@@ -6,7 +6,7 @@ use Apache::Table ();
 
 {
     no strict;
-    $VERSION = '1.1';
+    $VERSION = '1.2';
     __PACKAGE__->mod_perl::boot($VERSION);
 }
 
