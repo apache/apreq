@@ -4,6 +4,8 @@ Revision history for Perl extension Apache::Request.
 
 =item 0.32 - August 16, 1999
 
+deal properly with Apache::Cookie->new(key => undef) 
+
 fix problem with mozilla:
 [libapreq] unknown content-type: `application/x-www-form-urlencoded; charset=ISO-8859-1'
 thanks to Chris Adams and Jeff Baker for spotting

@@ -75,7 +75,9 @@ ApacheCookie_new(class, r, ...)
 		(void)hv_iterinit(hv); 
 		while ((sv = hv_iternextsv(hv, &value, &len))) { 
 		    (void)ApacheCookie_attr(RETVAL, key, value);
-		    (void)ApacheCookie_attr(RETVAL, key, SvPV(sv,na));
+		    (void)ApacheCookie_attr(RETVAL, key, 
+					    sv == &PL_sv_undef ? 
+					    "" : SvPV(sv,na));
 		}
 	    }
 	    else {
