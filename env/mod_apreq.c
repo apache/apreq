@@ -614,7 +614,7 @@ static const char *apreq_set_max_body(cmd_parms *cmd, void *data,
     conf->max_body = apreq_atoi64f(arg);
 
     if (conf->max_body < 0)
-        return "ApReqMaxBody requires a non-negative integer.";
+        return "APREQ_MaxBody requires a non-negative integer.";
 
     return NULL;
 }
@@ -632,7 +632,7 @@ static const char *apreq_set_max_brigade(cmd_parms *cmd, void *data,
     conf->max_brigade = apreq_atoi64f(arg);
 
     if (conf->max_brigade < 0)
-        return "ApReqMaxBody requires a non-negative integer.";
+        return "APREQ_MaxBrigade requires a non-negative integer.";
 
     return NULL;
 }
