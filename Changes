@@ -1,19 +1,8 @@
-Revision history for Perl extension Apache::Request.
+Revision history for libapreq
 
 =over 4
 
-=item 0.32 - tbd
-
-keep reusing same buffer when handling file uploads to prevent overzealous
-memory allocation [Yeasah Pell, Jim Winstead <jimw@apache.org>]
-
-handle internet explorer for the macintosh bug that sends corrupt mime
-boundaries when image submit buttons are used in multipart/form-data forms
-[Yeasah Pell]
-
-fix uninitialized variable in ApacheRequest_parse_urlencoded [Yeasah Pell]
-
-multipart_buffer.[ch] renamed to apache_multipart_buffer.[ch]
+=item 0.31_02 - December 17, 2000
 
 autoconf support
 [Tom Vaughan <tvaughan@aventail.com>]
@@ -29,6 +18,19 @@ fix parsing of Content-type header to deal with charsets
 
 fix nasty bug when connection is broken during file upload
 thanks to Jeff Baker for the spot
+
+multipart_buffer.[ch] renamed to apache_multipart_buffer.[ch]
+
+=item 0.31_01 - December 4, 2000
+
+keep reusing same buffer when handling file uploads to prevent overzealous
+memory allocation [Yeasah Pell, Jim Winstead <jimw@apache.org>]
+
+handle internet explorer for the macintosh bug that sends corrupt mime
+boundaries when image submit buttons are used in multipart/form-data forms
+[Yeasah Pell]
+
+fix uninitialized variable in ApacheRequest_parse_urlencoded [Yeasah Pell]
 
 =item 0.31 - July 2, 1999
 
