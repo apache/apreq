@@ -6,3 +6,5 @@ stamp-h
 config.status
 config.log
 config.cache
+configure
+Makefile.in
