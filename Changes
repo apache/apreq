@@ -2,6 +2,10 @@ Revision history for Perl extension Apache::Request.
 
 =over 4
 
+=item 0.30_03 - May 5, 1999
+
+when attaching request_rec* to Apache::Request object, dont let Perl copy it
+
 =item 0.30_02 - April 30, 1999
 
 always parse the query string (if present), including POST requests
