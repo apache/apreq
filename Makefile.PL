@@ -1,8 +1,12 @@
 use ExtUtils::MakeMaker;
 use strict;
+use FindBin;
 use 5.005;
 
 my $Is_Win32 = ($^O eq "MSWin32") || $ENV{WIN32_TEST};
+
+my $conf_data = join '', <DATA>;
+$conf_data =~ s/(blib\/arch)/$FindBin::Bin\/$1/;
 
 if (not $Is_Win32) {
   eval {
@@ -12,7 +16,7 @@ if (not $Is_Win32) {
     my %params = Apache::test->get_test_params();
     alarm 0;
     
-    Apache::test->write_httpd_conf(%params, include => join '', <DATA>);
+    Apache::test->write_httpd_conf(%params, include => $conf_data);
     *MY::test = sub {Apache::test->MM_test(%params)};
   };
   print "\n[timeout] skipping test setup...\n" if $@ eq "alarm\n";
@@ -156,7 +160,7 @@ sub write_win32_conf {
     print CONF $_;
   }
   close ORIG;
-  print CONF $_ while (<DATA>);
+  print CONF $conf_data;
   close CONF;
   *MY::test = sub {
 return << 'EOF';
