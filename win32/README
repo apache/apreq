@@ -5,6 +5,7 @@ to generate the top-level Makefile. Available options are:
 
   --with-apache=C:\Path\to\Apache2 : specify the top-level Apache2 directory
   --debug                          : build a debug version
+  --without-perl                   : skip initialization of perl glue
   --help                           : print a help message
 
 With no options specified, an attempt will be made to find a suitable 
@@ -18,4 +19,6 @@ be generated. This can be used as:
   nmake mod_apreq     - builds mod_apreq
   nmake libapreq_cgi  - builds libapreq_cgi
   nmake clean         - clean
+  nmake docs          - build documentation
 
+The 'docs' target is only available if a doxygen binary is detected.
