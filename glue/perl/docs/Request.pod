@@ -192,6 +192,7 @@ to ease the pain of porting from 1.X to 2.X.
 Get the request parameters (using case-insensitive keys) by
 mimicing the OO interface of C<CGI::param>.
 
+
 =for example begin
 
     # similar to CGI.pm
@@ -205,6 +206,7 @@ mimicing the OO interface of C<CGI::param>.
     # returns ref to Apache::Request::Table object representing 
     # all (args + body) params
     my $table = $req->param;
+    @table_keys = keys %$table;
 
 =for example end
 
@@ -212,6 +214,8 @@ mimicing the OO interface of C<CGI::param>.
     is $foo_value, 1;
     is "@foo_values", join " ", 1, 3, __FILE__;
     is "@param_names", "foo bar";
+    is "@table_keys", "foo bar foo foo";
+
 
 In list context, or when invoked with no arguments as 
 C<< $req->param() >>, C<param> induces libapreq2 to read 
@@ -234,6 +238,27 @@ args tables, even if the query-string parser or the body parser
 has failed.  In all other circumstances C<param> will throw an
 Apache::Request::Error object into $@ should either parser fail.
 
+=for example begin
+
+    $req->args_status(1); # set error state for query-string parser 
+    ok $req->param_status == 1;
+
+    $foo = $req->param("foo");
+    ok $foo == 1;
+    eval { @foo = $req->param("foo") };
+    ok $@->isa("Apache::Request::Error");
+    undef $@;
+    eval { my $not_found = $req->param("non-existent-param") };
+    ok $@->isa("Apache::Request::Error");
+
+    $req->args_status(0); # reset query-string parser state to "success"
+
+=for example end
+
+=for example_testing
+    # run example
+
+
 Note: modifications to the C<< scalar $req->param() >> table only
 affect the returned table object (the underlying C apr_table_t is 
 I<generated> from the parse data by apreq_params()).  Modifications 
@@ -248,7 +273,8 @@ libapreq2 applications.
 The functionality of these functions is assumed by C<param>,
 so they are no longer necessary.  Aliases to C<param> are
 provided in this release for backwards compatibility,
-however they may be removed from a future release.
+however they are deprecated and may be removed from a future 
+release.
 
 
 
@@ -261,18 +287,38 @@ however they may be removed from a future release.
 Returns an I<Apache::Request::Table> object containing the query-string 
 parameters of the I<Apache::Request> object.
 
+=for example begin
+
    my $args = $req->args;
+
+=for example end
+
+=for example_testing
+    my $n = 0;
+    while (($a, $b) = each %$args) {
+        is $a, (qw/foo bar foo/)[$n];
+        is $b, ++$n;
+    }
 
 An optional name parameter can be passed to return the query string
 parameter associated with the given name:
 
-   my $arg = $req->args($name);
+=for example begin
+
+    my $foo_arg = $req->args("foo");
+
+=for example end
+
+=for example_testing
+    is $foo_arg, 1;
 
 More generally, C<args()> follows the same pattern as C<param()>
 with respect to its return values and argument list.  The main difference
 is that modifications to the C<< scalar $req->args() >> table affect
 the underlying apr_table_t attribute in apreq_request_t, so their impact
 will be noticed by all libapreq2 applications during this request.
+
+
 
 
 =head2 body
@@ -283,7 +329,16 @@ will be noticed by all libapreq2 applications during this request.
 Returns an I<Apache::Request::Table> object containing the POST data 
 parameters of the I<Apache::Request> object.
 
-   my $body = $req->body;
+=for example begin
+
+    my $body = $req->body;
+
+=for example end
+
+=for example_testing
+    is join(" ", keys %$body), "foo";
+    is join(" ", values %$body), __FILE__;
+
 
 An optional name parameter can be passed to return the POST data
 parameter associated with the given name:
@@ -329,6 +384,9 @@ data, and will not be seen by other libapreq2 applications.
 Get/set the I<APR> status code of the query-string parser.
 APR_SUCCESS on success, error otherwise.
 
+=for testing
+    is $req->args_status, 0; # APR_SUCCESS
+
 
 
 
@@ -340,6 +398,8 @@ Reports the current I<APR> status code of the POST data parser.
 APR_SUCCESS when parser has completed, APR_INCOMPLETE if parser
 has more data to parse, error otherwise.
 
+=for testing
+    is $req->body_status, 70023; # APR_EINIT ?
 
 
 
@@ -352,6 +412,11 @@ an error during the query-string parse, otherwise this returns
 C<body_status>.  In list context this returns the list 
 C<(args_status, body_status)>.
 
+=for testing
+    is scalar($req->param_status), 
+       $req->args_status || $req->body_status;
+    is join(" ", $req->param_status), 
+       join(" ", $req->args_status, $req->body_status);
 
 
 
@@ -379,6 +444,7 @@ Apache::Request object to delegate to.)  For example:
 This is the complete list of changes to existing methods 
 from Apache::Request 1.X.  These issues need to be 
 addressed when porting 1.X apps to the new 2.X API.
+
 
 =over 4
 
