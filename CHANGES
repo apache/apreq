@@ -1,6 +1,6 @@
 /** @page CHANGES
 
-@section 2.0.0-dev Changes with libapreq-2.0.0-dev
+@section 2.0.0-dev Changes with libapreq2-0.0-dev
 
 - October 8, 2003 - configure: static mod_apreq.c [Bojan Smojver, joes]
 

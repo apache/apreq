@@ -68,7 +68,7 @@
  extern "C" {
 #endif 
 
-/** @defgroup LIBRARY libapreq.so.2 */
+/** @defgroup LIBRARY libapreq2     */
 /** @defgroup MODULES Environments  */
 /** @defgroup GLUE Language Bindings*/
 

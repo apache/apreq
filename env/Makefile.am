@@ -1,9 +1,13 @@
-INCLUDES = -I../src -I@APACHE2_INCLUDES@ -I@APR_INCLUDES@ -I@APU_INCLUDES@
-LIBS = ../src/libapreq.la @APR_LIBS@ @APU_LIBS@
+INCLUDES = -I../src @APACHE2_INCLUDES@ @APR_INCLUDES@ @APU_INCLUDES@
+LIBS = ../src/lib@APREQ_LIBNAME@.la @APR_LTLIBS@ @APU_LTLIBS@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
 
-lib_LIBRARIES = libapreq_cgi.a
-libapreq_cgi_a_SOURCES = libapreq_cgi.c
+# XXX: should name libapreq2_cgi.a w/ source file libapreq2_cgi.c
+# lib_LIBRARIES = lib@APREQ_LIBNAME@_cgi.a
+# lib@APREQ_LIBNAME@_cgi_a_SOURCES = lib@APREQ_LIBNAME@_cgi.c
+#
+#check_PROGRAMS = test_cgi
+#test_cgi_LDADD = lib@APREQ_LIBNAME@_cgi.a
 
 if BUILD_HTTPD
 
@@ -15,12 +19,12 @@ if BUILD_HTTPD
 # See the INSTALL file for details.
 
 @APACHE2_HTTPD@:
-	cd @APACHE2_SRC@ && make
+	cd @APACHE2_SRC@ && $(MAKE)
 
 all-local: @APACHE2_HTTPD@
 
-t/TEST : Makefile.am
-	@PERL@ -MApache::TestMM -e '$(TEST_CONFIG_SCRIPT)' -- -httpd @APACHE2_SRC@/.libs/httpd
+t/TEST : Makefile.am t/TEST.PL
+	@PERL@ -MApache::TestMM -e '$(TEST_CONFIG_SCRIPT)' -- -httpd @APACHE2_HTTPD@
 
 else
 
@@ -33,7 +37,7 @@ mod_apreq_la_LDFLAGS = -export-dynamic -module -avoid-version -rpath $(APACHE2_M
 install-exec-local: mod_apreq.la
 	@APACHE2_APXS@ -i -a -n apreq mod_apreq.la
 
-t/TEST : Makefile.am
+t/TEST : Makefile.am t/TEST.PL
 	@PERL@ -MApache::TestMM -e '$(TEST_CONFIG_SCRIPT)' -- -apxs @APACHE2_APXS@
 
 endif
@@ -41,11 +45,11 @@ endif
 run_tests : t/TEST
 	@PERL@ t/TEST
 
-test :: all run_tests
+test :: all check run_tests
 
 test_clean : cmodules_clean
 	-@PERL@ t/TEST -clean
-	-rm -rf t/conf t/htdocs t/logs t/modules t/TEST
+	-rm -rf t/htdocs t/logs t/modules t/TEST
 
 cmodules_clean:
 	-cd c-modules && $(MAKE) clean

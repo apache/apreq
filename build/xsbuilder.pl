@@ -13,7 +13,7 @@ require Win32 if Apache::Build::WIN32;
 use Cwd;
 my $cwd = Apache::Build::WIN32 ?
     Win32::GetLongPathName(cwd) : cwd;
-$cwd =~ m{^(.+httpd-apreq-2)} or die "Can't find base cvs directory";
+$cwd =~ m{^(.+)/glue/perl$} or die "Can't find base directory";
 my $base_dir = $1;
 my $src_dir = "$base_dir/src";
 my $xs_dir = "$base_dir/glue/perl/xsbuilder";
@@ -23,27 +23,44 @@ sub slurp($$)
     read $file, $_[0], -s $file;
 }
 
-my ($apache_includes, $apr_libs);
+my ($apache_includes, $apr_libs, $apreq_libname);
+
 if (Apache::Build::WIN32) {
+    # XXX May need fixing, Randy!
     my $apache_dir = Apache::Build->build_config()->dir;
-    ($apache_includes = $apache_dir . '/include') =~ s!\\!/!g;
+    ($apache_includes = "-I$apache_dir" . '/include') =~ s!\\!/!g;
     ($apr_libs = $apache_dir . '/lib') =~ s!\\!/!g;
+    $apreq_libname = "apreq";
 }
 else {
     slurp my $config => "$base_dir/config.status";
-    $config =~ /^s,\@APACHE2_INCLUDES\@,([^,]+)/m && -d $1 or
+    $config =~ /^s,\@APACHE2_INCLUDES\@,([^,]+)/m or
         die "Can't find apache include directory";
     $apache_includes = $1;
-    $config =~ m/^s,\@APACHE2_LIBS\@,([^,]+)/m && -d $1 or
-        die "Can't find apr lib directory";
+    $config =~ /^s,\@APR_INCLUDES\@,([^,]+)/m or
+        die "Can't find apache include directory";
+    $apache_includes .= " $1";
+    $config =~ /^s,\@APU_INCLUDES\@,([^,]+)/m or
+        die "Can't find apache include directory";
+    $apache_includes .= " $1";
+
+    $config =~ m/^s,\@APU_LDLIBS\@,([^,]+)/m or
+        die "Can't find apu libraries";
     $apr_libs = $1;
+    $config =~ m/^s,\@APR_LDLIBS\@,([^,]+)/m or
+        die "Can't find apr libraries";
+    $apr_libs .= " $1";
+
+    $config =~ m/^s,\@APREQ_LIBNAME\@,([^,]+)/m or
+        die "Can't find apreq libname";
+    $apreq_libname = $1;
 }
 my $apr_lib_flags = Apache::Build::WIN32 ? 
     qq{-L$apr_libs -llibapr -llibaprutil} : 
-    qq{-L$apr_libs -lapr-0 -laprutil-0};
+    qq{$apr_libs};
 my $apreq_lib_flags = Apache::Build::WIN32 ?
-    qq{-L$base_dir/win32/libs -llibapreq -lmod_apreq} :
-    qq{-L$src_dir/.libs -lapreq};
+    qq{-L$base_dir/win32/libs -llib$apreq_libname -lmod_apreq} :
+    qq{-L$src_dir/.libs -l$apreq_libname};
 
 my $mp2_typemaps = Apache::Build->new->typemaps;
 read DATA, my $grammar, -s DATA;
@@ -84,7 +101,7 @@ my @dirs = ("$base_dir/src", "$base_dir/glue/perl/xsbuilder");
 use base qw/ExtUtils::XSBuilder::ParseSource/;
 __PACKAGE__->$_ for shift || ();
 
-sub package {'Apache::libapreq'}
+sub package {'Apache::libapreq2'}
 sub unwanted_includes {["apreq_tables.h"]}
 # ParseSource.pm v 0.23 bug: line 214 should read
 # my @dirs = @{$self->include_dirs};
@@ -200,7 +217,6 @@ sub makefilepl_text {
     my $mmargspath = '../' x @parts ;
     $mmargspath .= 'mmargs.pl' ;
 
-    # XXX probably should gut EU::MM and use MP::MM instead
     my $txt = qq{
 $self->{noedit_warning_hash}
 use Apache2;
@@ -221,7 +237,7 @@ ModPerl::MM::WriteMakefile(
     'NAME'    => '$class',
     'VERSION' => '0.01',
     'TYPEMAPS' => [qw(@$mp2_typemaps $typemap)],
-    'INC'      => "-I.. -I../.. -I../../.. -I$src_dir -I$xs_dir -I$apache_includes",
+    'INC'      => "-I.. -I../.. -I../../.. -I$src_dir -I$xs_dir $apache_includes",
     'LIBS'     => "$apreq_lib_flags $apr_lib_flags",
 } ;
 $txt .= "'depend'  => $deps,\n" if ($deps) ;

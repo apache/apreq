@@ -29,8 +29,8 @@ Apache::TestMM::filter_args();
 Apache::TestMM::generate_script("t/TEST");
 
 ModPerl::MM::WriteMakefile(
-    NAME => 'libapreq',
-    VERSION => '0.01',
+    NAME => 'libapreq2',
+    VERSION => '0.1',
     DIR => [qw(xs)],
     clean => { DIRS => "blib", FILES => "t/TEST @scripts" },
 );

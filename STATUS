@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/10/12 19:49:56 $]   -*-text-*-
+Last modified at [$Date: 2003/10/13 18:24:46 $]   -*-text-*-
 /** @page STATUS
 
      2.0.0  in development
@@ -23,7 +23,6 @@ RELEASE SHOWSTOPPERS:
 CURRENT VOTES:
 
 
-
 TODO:
 
     - Figure out why there's problems (Win32 specific?) with
@@ -35,7 +34,7 @@ TODO:
 
     - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
 
-    - Add an apreq-config script similar to ap[ru]-config.
+    - Add an apreq2-config script similar to ap[ru]-config.
 
     - Bring Perl documentation up to speed.
 

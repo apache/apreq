@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.13)
-AC_INIT(libapreq - Apache Request Library, 2.0, apreq-dev@httpd.apache.org, libapreq)
+AC_INIT(libapreq - Apache Request Library, 2.0, apreq-dev@httpd.apache.org, apreq2)
 
 dnl this:
 dnl AC_CONFIG_AUX_DIR(build)
@@ -28,4 +28,6 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 dnl Checks for library functions.
 
 AC_APREQ
-AC_OUTPUT([Makefile src/Makefile env/Makefile t/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile env/Makefile t/Makefile])
+AC_CONFIG_FILES([apreq2-config], [chmod +x apreq2-config])
+AC_OUTPUT

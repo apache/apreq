@@ -9,7 +9,7 @@ require Win32 if WIN32;
 use Cwd;
 my $cwd = WIN32 ?
     Win32::GetLongPathName(cwd) : cwd;
-$cwd =~ m{^(.+httpd-apreq-2)} or die "Can't find base cvs directory";
+$cwd =~ m{^(.+)/env$} or die "Can't find base directory";
 my $base_dir = $1;
 my $env_dir = "$base_dir/env";
 my $env_dir_libs = WIN32 ?
@@ -80,7 +80,7 @@ APXS=$self->{APXS}
 all: $lib
 
 $lib: $name.c
-	\$(APXS) -L../../../src -I../../../src -lapreq $dversion -I$self->{cmodules_dir} -c $name.c
+	\$(APXS) -L../../../src -I../../../src -lapreq2 $dversion -I$self->{cmodules_dir} -c $name.c
 
 clean:
 	-rm -rf $name.o $name.lo $name.slo $name.la .libs

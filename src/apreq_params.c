@@ -65,7 +65,7 @@
 #define MAX_LEN         (1024 * 1024)
 #define MAX_BRIGADE_LEN (1024 * 256)
 #define MAX_FIELDS      (200)
-#define READ_AHEAD      (1024 * 64)
+#define MAX_READ_AHEAD  (1024 * 64)
     
 APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
                                                 const char *name, 
@@ -95,14 +95,13 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
     apreq_request_t *req;
     apreq_cfg_t *cfg;
     apr_pool_t *p;
-    apr_status_t s;
 
     /** default parser configuration */
     static const apreq_cfg_t default_cfg = {
-        MAX_LEN, /**< limit on POST data size */
+        MAX_LEN,          /**< limit on POST data size */
         MAX_BRIGADE_LEN,  /**< limit on brigade size */
-        MAX_FIELDS,         /**< maximum number of form fields */
-        READ_AHEAD    /**< maximum amount of prefetch data */
+        MAX_FIELDS,       /**< maximum number of form fields */
+        MAX_READ_AHEAD    /**< maximum amount of prefetch data */
     };
 
     if (qs == NULL) {
@@ -126,6 +125,8 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         old_req = apreq_env_request(env, req);
 
         if (old_req != NULL) {
+            apreq_log(APREQ_ERROR APR_EGENERAL, env, "race condition"
+                      "between consecutive calls of apreq_env_request");
             apreq_env_request(env, old_req); /* reset old_req */
             return old_req;
         }
@@ -146,8 +147,11 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
 
     *req->cfg = default_cfg;
 
-    s = (qs == NULL) ? APR_SUCCESS : 
-        apreq_parse_query_string(p, req->args, qs);
+    if (qs != NULL) {
+        apr_status_t s = apreq_parse_query_string(p, req->args, qs);
+        if (s != APR_SUCCESS)
+            apreq_log(APREQ_ERROR s, env, "invalid query string: %s", qs);
+    }
 
     return req;
 }
