@@ -34,6 +34,10 @@ my $cfg = $debug ? 'Debug' : 'Release';
 
 check_depends();
 
+my @tests = qw(cookie parsers params version);
+my @test_files = map {catfile('t', "$_.t")} @tests;
+generate_tests($apreq_home, \@tests);
+
 my %apr_libs;
 my %map = (apr => 'libapr.lib', apu => 'libaprutil.lib');
 my $devnull = devnull();
@@ -62,7 +66,7 @@ APACHE=$apache
 PERL=$^X
 RM_F=\$(PERL) -MExtUtils::Command -e rm_f
 DOXYGEN_CONF=\$(APREQ_HOME)\\build\\doxygen.conf.win32
-
+TEST_FILES = @test_files
 END
 
 print $make $_ while (<DATA>);
@@ -77,7 +81,7 @@ my $test = << 'END';
 TEST: $(LIBAPREQ) $(MOD)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(APREQ2_TEST).mak CFG="$(APREQ2_TEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
         set PATH=$(APREQ_HOME)\win32\libs;$(APACHE)\bin;$(PATH)
-        cd $(LIBDIR) && $(TESTALL).exe -v
+        $(PERL) "-MExtUtils::Command::MM" "-e" "test_harness()" $(TEST_FILES)
         cd $(APREQ_HOME)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
         if not exist "$(APREQ_ENV)\t\cgi-bin" mkdir "$(APREQ_ENV)\t\cgi-bin"
@@ -339,6 +343,20 @@ sub check_depends {
                 or warn "system @args failed: $?";
         }
     }
+}
+
+sub generate_tests {
+  my ($top, $test_files) = @_;
+  my $t = catdir $top, 't';
+  foreach my $test(@$test_files) {
+    my $file = catfile $t, $test;
+    open my $fh, '>', "$file.t" || die "Cannot open $file.t: $!";
+    print $fh <<"EOT";
+#!$^X
+exec '$file';
+EOT
+    close $fh;
+  }
 }
 
 sub fetch_apxs {
