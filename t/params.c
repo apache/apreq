@@ -67,6 +67,7 @@ static void string_decoding_in_place(CuTest *tc)
 {
     char *s1 = apr_palloc(p,4096);
     char *s2 = apr_palloc(p,4096);
+    char *s3 = apr_palloc(p,4096);
 
     strcpy(s1, "bend it like beckham");
     strcpy(s2, "dandy %3Edons");
@@ -74,10 +75,18 @@ static void string_decoding_in_place(CuTest *tc)
     CuAssertStrEquals(tc,"bend it like beckham",s1);
     apreq_unescape(s1);
     CuAssertStrEquals(tc,"bend it like beckham",s1);
+    s3 = apreq_escape(p, s1, 20);
+    CuAssertStrEquals(tc,"bend+it+like+beckham",s3);
+    apreq_unescape(s3);
+    CuAssertStrEquals(tc,"bend it like beckham",s3);
+
     CuAssertStrEquals(tc,"dandy %3Edons",s2);
     apreq_unescape(s2);
     CuAssertStrEquals(tc,"dandy >dons",s2);
-    
+    s3 = apreq_escape(p, s2, 11);
+    CuAssertStrEquals(tc,"dandy+%3edons",s3);
+    apreq_unescape(s3);
+    CuAssertStrEquals(tc,"dandy >dons",s3); 
 }
 
 static void header_attributes(CuTest *tc)
@@ -125,6 +134,30 @@ static void make_values(CuTest *tc)
     CuAssertStrEquals(tc, val, v2->data);
 }
 
+static void make_param(CuTest *tc)
+{
+    apreq_param_t *param, *result;
+    apr_size_t nlen = 3, vlen = 11;
+    char *name = apr_palloc(p,nlen+1);
+    char *val = apr_palloc(p,vlen+1);
+    char *encode = apr_palloc(p,vlen+nlen+1);
+    strcpy(name, "foo");
+    strcpy(val, "bar > alpha");
+ 
+    param = apreq_make_param(p, name, nlen, val, vlen);
+    CuAssertStrEquals(tc, name, param->v.name);
+    CuAssertIntEquals(tc, vlen, param->v.size);
+    CuAssertStrEquals(tc, val, param->v.data);
+
+    encode = apreq_encode_param(p, param);
+    CuAssertStrEquals(tc, "foo=bar+%3e+alpha", encode);
+
+    result = apreq_decode_param(p, encode, nlen, vlen+2);
+    CuAssertStrEquals(tc, name, result->v.name);
+    CuAssertIntEquals(tc, vlen, result->v.size);
+    CuAssertStrEquals(tc, val, result->v.data);
+}
+
 static void quote_strings(CuTest *tc)
 {
     apr_size_t exp_len, res_len, res_quote_len;
@@ -164,6 +197,7 @@ CuSuite *testparam(void)
     SUITE_ADD_TEST(suite, header_attributes);
     SUITE_ADD_TEST(suite, make_values);
     SUITE_ADD_TEST(suite, quote_strings);
+    SUITE_ADD_TEST(suite, make_param);
 
     return suite;
 }
