@@ -90,9 +90,10 @@ typedef struct apreq_param_t {
 #define apreq_param_name(p)  ((p)->v.name)
 #define apreq_param_value(p) ((p)->v.data)
 #define apreq_param_info(p) ((p)->info)
+#define apreq_param_status(p) ((p)->v.status)
 
 /** returns a copy of param->bb */
-APR_INLINE APREQ_DECLARE(apr_bucket_brigade *)
+APREQ_DECLARE(apr_bucket_brigade *)
         apreq_param_brigade(const apreq_param_t *param);
 
 APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
@@ -189,7 +190,6 @@ APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
 
 APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
                                             const char *key);
-
 
 
 /** @} */

@@ -88,12 +88,11 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
     return param;
 }
 
-APR_INLINE APREQ_DECLARE(apr_bucket_brigade *)
+APREQ_DECLARE(apr_bucket_brigade *)
         apreq_param_brigade(const apreq_param_t *param)
 {
     apr_bucket_brigade *bb;
     apr_bucket *e;
-
     if (param->bb == NULL)
         return NULL;
 
@@ -105,6 +104,7 @@ APR_INLINE APREQ_DECLARE(apr_bucket_brigade *)
     }
     return bb;
 }
+
 
 
 APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)

@@ -2,7 +2,7 @@
 #define apreq_xs_jar2env(j) j->env
 
 #define apreq_xs_cookie2sv(c,class) apreq_xs_2sv(c,class)
-//#define apreq_xs_jar2sv(j,class) apreq_xs_
+#define apreq_xs_sv2cookie(sv) ((apreq_cookie_t *)SvIVX(SvRV(sv)))
 
 APREQ_XS_DEFINE_ENV(cookie);
 APREQ_XS_DEFINE_ENV(jar);
@@ -15,6 +15,9 @@ APREQ_XS_DEFINE_OBJECT(jar);
 #define apreq_xs_table_push(sv,d,key) apreq_xs_push(table,sv,d,key)
 #define apreq_xs_jar_sv2table(sv) (apreq_xs_sv2(jar, sv)->cookies)
 #define apreq_xs_table_sv2table(sv) apreq_xs_sv2table(sv)
+#define apreq_xs_jar_sv2env(sv) apreq_xs_sv2(jar,sv)->env
+#define apreq_xs_table_sv2env(sv) apreq_xs_sv2env(SvRV(sv))
+
 #define apreq_xs_jar_cookie(sv,k) \
                 S2C(apr_table_get(apreq_xs_jar_sv2table(sv),k))
 #define apreq_xs_table_cookie(sv,k) \
@@ -56,7 +59,7 @@ static XS(apreq_xs_cookie_expires)
     c = apreq_xs_sv2(cookie,ST(0));
 
     if (items > 1) {
-        apr_pool_t *p = apreq_env_pool(apreq_xs_sv2env(cookie,ST(0)));
+        apr_pool_t *p = apreq_env_pool(apreq_xs_sv2env(ST(0)));
         const char *s = SvPV_nolen(ST(1));
         apreq_cookie_expires(p, c, s);
     }
@@ -82,7 +85,7 @@ static XS(apreq_xs_cookie_set_attr)
         XSRETURN_UNDEF;
 
     c = apreq_value_to_cookie(apreq_xs_sv2(cookie,ST(0)));
-    p = apreq_env_pool(apreq_xs_sv2env(cookie,ST(0)));
+    p = apreq_env_pool(apreq_xs_sv2env(ST(0)));
 
     for (j = 1; j + 1 < items; j += 2) {
         status = apreq_cookie_attr(p, c, SvPV_nolen(ST(j)), 

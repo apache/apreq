@@ -615,3 +615,123 @@ APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p,
     return rv->data;
 }
 
+
+APR_INLINE
+static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v, 
+                                  int *nelts, apr_size_t *bytes_written)
+{
+    apr_size_t len, bytes_avail = 0;
+    int n = *nelts;
+    apr_status_t s = apr_file_writev(f, v, n, &len);
+
+    *bytes_written = len;
+
+    if (s != APR_SUCCESS)
+        return s;
+
+    while (--n >= 0)
+        bytes_avail += v[n].iov_len;
+
+
+    if (bytes_avail > len) {
+        /* incomplete write: must shift v */
+        n = 0;
+        while (v[n].iov_len <= len) {
+            len -= v[n].iov_len;
+            ++n;
+        }
+        v[n].iov_len -= len;
+        v[n].iov_base = (char *)(v[n].iov_base) + len;
+
+        if (n > 0) {
+            struct iovec *dest = v;
+            do {
+                *dest++ = v[n++];
+            }  while (n < *nelts);
+            *nelts = dest - v;
+        }
+        else {
+            s = apreq_fwritev(f, v, nelts, &len);
+            *bytes_written += len;
+        }
+    }
+    else
+        *nelts = 0;
+
+    return s;
+}
+
+
+APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f, 
+                                                 apr_off_t *wlen,
+                                                 apr_bucket_brigade *bb)
+{
+    struct iovec v[APREQ_NELTS];
+    apr_status_t s;
+    apr_bucket *e;
+    int n = 0;
+    *wlen = 0;
+
+    APR_BRIGADE_FOREACH(e,bb) {
+        apr_size_t len;
+        if (n == APREQ_NELTS) {
+            s = apreq_fwritev(f, v, &n, &len);
+            if (s != APR_SUCCESS)
+                return s;
+            *wlen += len;
+        }
+        s = apr_bucket_read(e, (const char **)&(v[n].iov_base), 
+                            &len, APR_BLOCK_READ);
+        if (s != APR_SUCCESS)
+            return s;
+
+        v[n++].iov_len = len;
+    }
+
+    while (n > 0) {
+        apr_size_t len;
+        s = apreq_fwritev(f, v, &n, &len);
+        if (s != APR_SUCCESS)
+            return s;
+        *wlen += len;
+    }
+    return APR_SUCCESS;
+}
+
+APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
+                                              apr_pool_t *pool,
+                                              const char *path)
+{
+    apr_status_t rc = APR_SUCCESS;
+    char *tmpl;
+    if (path) {
+        rc = apr_filepath_merge(&tmpl, path, "apreqXXXXXX",
+                                APR_FILEPATH_NOTRELATIVE, pool);
+        if (rc != APR_SUCCESS)
+            return rc;
+    }
+    else {
+        char *tn = tempnam(NULL, "apreq");
+        if (tn == NULL)
+            return APR_EGENERAL;
+        tmpl = apr_pstrcat(pool, tn, "XXXXXX", NULL);
+        free(tn);
+    }
+    
+    return apr_file_mktemp(fp, tmpl,
+                           APR_CREATE | APR_READ | APR_WRITE
+                           | APR_EXCL | APR_DELONCLOSE | APR_BINARY, pool);
+}
+
+/* circumvents linker issue (perl's CCFLAGS != apr's CCFLAGS) on linux */
+APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb)
+{
+    apr_bucket *last = APR_BRIGADE_LAST(bb);
+    apr_bucket_file *f;
+    if (APR_BUCKET_IS_FILE(last)) {
+        f = last->data;
+        return f->fd;
+    }
+    else
+        return NULL;
+}

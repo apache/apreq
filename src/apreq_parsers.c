@@ -681,88 +681,21 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
     return APR_INCOMPLETE;
 }
 
-APR_INLINE
-static apr_status_t mfd_fwritev(apr_file_t *f, struct iovec *v, 
-                                int *nelts, apr_size_t *bytes_written)
-{
-    apr_size_t len, bytes_avail = 0;
-    int n = *nelts;
-    apr_status_t s = apr_file_writev(f, v, n, &len);
 
-    *bytes_written = len;
-
-    if (s != APR_SUCCESS)
-        return s;
-
-    while (--n >= 0)
-        bytes_avail += v[n].iov_len;
-
-
-    if (bytes_avail > len) {
-        /* incomplete write: must shift v */
-        n = 0;
-        while (v[n].iov_len <= len) {
-            len -= v[n].iov_len;
-            ++n;
-        }
-        v[n].iov_len -= len;
-        v[n].iov_base = (char *)(v[n].iov_base) + len;
-
-        if (n > 0) {
-            struct iovec *dest = v;
-            do {
-                *dest++ = v[n++];
-            }  while (n < *nelts);
-            *nelts = dest - v;
-        }
-        else {
-            s = mfd_fwritev(f, v, nelts, &len);
-            *bytes_written += len;
-        }
-    }
-
-    return s;
-}
-
-
-APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
-                                              apr_pool_t *pool,
-                                              const apreq_cfg_t *cfg)
-{
-    apr_status_t rc = APR_SUCCESS;
-    char *path = NULL;
-    
-    if (cfg && cfg->temp_dir) {
-        rc = apr_filepath_merge(&path, cfg->temp_dir, "apreqXXXXXX",
-                                APR_FILEPATH_NOTRELATIVE, pool);
-        if (rc != APR_SUCCESS)
-            return rc;
-    }
-    else {
-        char *tmp = tempnam(NULL, "apreq");
-        if (tmp == NULL)
-            return APR_EGENERAL;
-        path = apr_pstrcat(pool, tmp, "XXXXXX", NULL);
-        free(tmp);
-    }
-    
-    return apr_file_mktemp(fp, path, 
-                           APR_CREATE | APR_READ | APR_WRITE
-                           | APR_EXCL | APR_DELONCLOSE | APR_BINARY, pool);
-}
 
 #define MAX_FILE_BUCKET_LENGTH ( 1 << ( 6 * sizeof(apr_size_t) ) )
 
-APR_INLINE
-static apr_status_t mfd_bb_concat(apr_pool_t *pool, const apreq_cfg_t *cfg,
-                                  apr_bucket_brigade *out, 
-                                  apr_bucket_brigade *in)
+static apr_status_t apreq_bb_concat(apr_pool_t *pool, 
+                                    const apreq_cfg_t *cfg,
+                                    apr_bucket_brigade *out, 
+                                    apr_bucket_brigade *in)
 {
     apr_bucket *last = APR_BRIGADE_LAST(out);
     apr_status_t s;
     struct iovec v[APREQ_NELTS];
     apr_bucket_file *f;
     apr_bucket *e;
+    apr_off_t wlen;
     int n = 0;
 
     if (! APR_BUCKET_IS_FILE(last)) {
@@ -778,18 +711,19 @@ static apr_status_t mfd_bb_concat(apr_pool_t *pool, const apreq_cfg_t *cfg,
             return APR_SUCCESS;
         }
 
-        s = apreq_file_mktemp(&file, pool, cfg);
+        s = apreq_file_mktemp(&file, pool, cfg ? cfg->temp_dir : NULL);
         if (s != APR_SUCCESS)
             return s;
 
-        bb = apr_brigade_create(pool, out->bucket_alloc);
-        e = apr_bucket_file_create(file, len, 0, pool, out->bucket_alloc);
-        APR_BRIGADE_INSERT_HEAD(bb, e);
-        s = mfd_bb_concat(pool, cfg, bb, out);
+        s = apreq_brigade_fwrite(file, &wlen, out);
+
         if (s != APR_SUCCESS)
             return s;
-        APR_BRIGADE_CONCAT(out, bb);
-        last = APR_BRIGADE_LAST(out);
+
+        /* assert (wlen == len); */
+
+        last = apr_bucket_file_create(file, wlen, 0, pool, out->bucket_alloc);
+        APR_BRIGADE_INSERT_TAIL(out, last);
     }
 
     f = last->data;
@@ -801,40 +735,11 @@ static apr_status_t mfd_bb_concat(apr_pool_t *pool, const apreq_cfg_t *cfg,
         e->start = last->length;
         last = e;
     }
-
-    e = APR_BRIGADE_FIRST(in);
-
-    while (!APR_BRIGADE_EMPTY(in)) {
-        apr_size_t len;
-
-        if (e == APR_BRIGADE_SENTINEL(in) || n == APREQ_NELTS) {
-            int nvec = n;
-            s = mfd_fwritev(f->fd, v, &nvec, &len);
-            if (s != APR_SUCCESS)
-                return s;
-
-            /* nvec now holds the actual number written */
-            n -= nvec;
-
-            while (nvec-- > 0) {
-                apr_bucket *first = APR_BRIGADE_FIRST(in);
-                apr_bucket_delete(first);
-            }
-
-            last->length += len;
-        }
-        else {
-            s = apr_bucket_read(e, (const char **)&(v[n].iov_base), 
-                                &len, APR_NONBLOCK_READ);
-            if (s != APR_SUCCESS)
-                return s;
-
-            v[n++].iov_len = len;
-            e = APR_BUCKET_NEXT(e);
-        }
-    }
-
-    return APR_SUCCESS;
+    s = apreq_brigade_fwrite(f->fd, &wlen, in);
+    if (s != APR_SUCCESS)
+        return s;
+    last->length += wlen;
+    return apr_brigade_destroy(in);
 }
 
 
@@ -1115,7 +1020,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     if (s != APR_INCOMPLETE && s != APR_SUCCESS)
                         return s;
                 }
-                return mfd_bb_concat(pool, cfg, param->bb, ctx->bb);
+                return apreq_bb_concat(pool, cfg, param->bb, ctx->bb);
 
             case APR_SUCCESS:
                 if (parser->hook) {
@@ -1128,8 +1033,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                         return s;
                 }
 
-                param->v.status = mfd_bb_concat(pool, cfg,
-                                                param->bb, ctx->bb);
+                param->v.status = apreq_bb_concat(pool, cfg,
+                                                  param->bb, ctx->bb);
 
                 if (param->v.status != APR_SUCCESS)
                     return s;

@@ -6,6 +6,10 @@ use APR;
 use Apache::RequestRec;
 use Apache::RequestIO;
 use Apache::Request ();
+use Apache::Connection;
+use APR::Brigade;
+use APR::Bucket;
+use Apache::Filter;
 
 sub handler {
     my $r = shift;
@@ -13,35 +17,35 @@ sub handler {
 
     $req->content_type('text/plain');
 
-    my $test  = $req->param('test');
-    my $value = $req->param('value');
-
-    my $f = $r->input_filters;
+    my $test  = $req->args('test');
     my $method = $r->method;
-    my $bb = APR::Brigade->new($r->pool,
-                               $r->connection->bucket_alloc);
-    my $len = 0;
 
-    # ~ $apr->parse ???
     if ($method eq "POST") {
-        do {
+        # ~ $apr->parse ???
+        my $f = $r->input_filters;
+        my $bb = APR::Brigade->new($r->pool,
+                                   $r->connection->bucket_alloc);
+        while ($f->get_brigade($bb,0,0,8000) == 0) {
+            last if $bb->last->is_eos;
             $bb->destroy;
-            $f->get_brigade($bb, 0, 0, 8000);
-        } while $bb->last && !$bb->last->is_eos;
+        }
+        $bb->destroy;
     }
 
     if ($test eq 'param') {
+        my $value = $req->param('value');
         $req->print($value);
     }
     elsif ($test eq 'upload') {
         my ($upload) = values %{$req->upload};
-        $bb = $upload->bb;
-        my $b = $bb->first;
-        while ($b = $bb->first) {
+#        unlink("/tmp/foo");
+        my $bb = $upload->bb;
+        while (my $b = $bb->first) {
             $b->read(my $buffer);
             $r->print($buffer);
             $b->remove;
         }
+#        $upload->link("/tmp/foo");
     }
 
     return 0;

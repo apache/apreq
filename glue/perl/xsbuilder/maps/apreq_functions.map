@@ -17,8 +17,12 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Ta
  DEFINE_FETCH   | apreq_xs_table_get |
 
 MODULE=Apache::Request PACKAGE=Apache::Upload PREFIX=Apache__Upload_
-apr_bucket_brigade *:DEFINE_bb  | apreq_param_brigade(apreq_xs_sv2(param,sv))  | SV *:sv
-apr_table_t *:DEFINE_info | apreq_param_info(apreq_xs_sv2(param,sv)) | SV *:sv
+ apr_bucket_brigade *:DEFINE_bb  | apreq_param_brigade(apreq_xs_rv2param(sv)) | SV *:sv
+ apr_table_t *:DEFINE_info | apreq_param_info(apreq_xs_rv2param(sv)) | SV *:sv
+ DEFINE_link | apreq_xs_upload_link |
+ const char *:DEFINE_name | apreq_param_name(apreq_xs_rv2param(sv)) | SV *:sv
+ char *:DEFINE_value | apreq_param_value(apreq_xs_rv2param(sv)) | SV *:sv
+ apr_status_t:DEFINE_status | apreq_param_status(apreq_xs_rv2param(sv)) | SV *:sv
 
 MODULE=Apache::Request PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table_
  DEFINE_get     | apreq_xs_upload_table_get |
@@ -33,8 +37,8 @@ MODULE=Apache::Cookie PACKAGE=Apache::Cookie
  DEFINE_env        | apreq_xs_cookie_env  |
  const char *:DEFINE_name | apreq_cookie_name(c)  | apreq_cookie_t *:c
  const char *:DEFINE_value| apreq_cookie_value(c) | apreq_cookie_t *:c
- apr_status_t:DEFINE_bake | apreq_cookie_bake (apreq_xs_sv2(cookie,c), apreq_xs_sv2env(cookie,c)) | SV *:c
- apr_status_t:DEFINE_bake2| apreq_cookie_bake2(apreq_xs_sv2(cookie,c), apreq_xs_sv2env(cookie,c)) | SV *:c
+ apr_status_t:DEFINE_bake | apreq_cookie_bake (apreq_xs_sv2cookie(c), apreq_xs_sv2env(c)) | SV *:c
+ apr_status_t:DEFINE_bake2| apreq_cookie_bake2(apreq_xs_sv2cookie(c), apreq_xs_sv2env(c)) | SV *:c
 
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar PREFIX=Apache__Cookie__Jar_
  DEFINE_new        | apreq_xs_jar           |

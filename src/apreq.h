@@ -56,6 +56,8 @@
 #define APREQ_H
 
 #include "apr_tables.h" 
+#include "apr_file_io.h"
+#include "apr_buckets.h"
 #include <stddef.h>
 
 #ifndef apr_table_nelts
@@ -319,6 +321,16 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s);
  */
 
 APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s);
+
+APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
+                                                 apr_off_t *wlen,
+                                                 apr_bucket_brigade *bb);
+
+APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
+                                              apr_pool_t *pool,
+                                              const char *path);
+
+APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 
 /** @} */
 

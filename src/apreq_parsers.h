@@ -84,10 +84,6 @@ APREQ_DECLARE(apr_status_t)apreq_add_hook(apreq_parser_t *p,
 
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook);
 
-APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
-                                              apr_pool_t *pool,
-                                              const apreq_cfg_t *cfg);
-
 /** @} */
 #ifdef __cplusplus
  }

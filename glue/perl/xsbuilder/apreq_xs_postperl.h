@@ -72,10 +72,9 @@ static void *apreq_xs_perl2c(SV* in, const char *name)
  * and produces a pointer to the underlying C environment.
  */ 
 APR_INLINE
-static void *apreq_xs_perl2env(SV *sv, const char *name)
+static void *apreq_xs_perl2env(SV *sv)
 {
     MAGIC *mg;
-    sv = apreq_xs_find_obj(sv, name);
     if (sv != NULL && (mg = mg_find(sv, PERL_MAGIC_ext)))
         return mg->mg_ptr;
     return NULL;
@@ -122,7 +121,7 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
 
 #define apreq_xs_2sv(t,class) apreq_xs_c2perl(aTHX_ t, env, class)
 #define apreq_xs_sv2(type,sv)((apreq_##type##_t *)apreq_xs_perl2c(sv, #type))
-#define apreq_xs_sv2env(type,sv) apreq_xs_perl2env(sv,#type)
+#define apreq_xs_sv2env(sv) apreq_xs_perl2env(sv)
 
 /** Converts apreq_env to a Perl package, which forms the
  * base class for Apache::Request and Apache::Cookie::Jar objects.
@@ -145,7 +144,8 @@ static XS(apreq_xs_##type##_env)                        \
         XSRETURN(0);                                    \
                                                         \
     if (SvROK(ST(0))) {                                 \
-        void *env = apreq_xs_sv2env(type, ST(0));       \
+        SV *sv = apreq_xs_find_obj(ST(0), #type);       \
+        void *env = apreq_xs_sv2env(sv);                \
                                                         \
         if (env)                                        \
             ST(0) = sv_setref_pv(newSV(0), class, env); \
@@ -287,8 +287,8 @@ static XS(apreq_xs_##attr##_get)                                        \
     dXSARGS;                                                            \
     const char *key = NULL;                                             \
                                                                         \
-    if (items == 1 || items == 2) {                                     \
-        void *env = apreq_xs_sv2env(attr, ST(0));                       \
+    if (items == 1 || items == 2 && SvROK(ST(0))) {                     \
+        void *env = apreq_xs_##attr##_sv2env(ST(0));                    \
         struct apreq_xs_do_arg d = { env, aTHX };                       \
         apreq_##type##_t *RETVAL;                                       \
         if (items == 2)                                                 \
