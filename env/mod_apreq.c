@@ -378,19 +378,23 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     }
     else {
         /* prefetch read! */
+        apr_bucket_brigade *tmp = apr_brigade_create(r->pool, 
+                                      apr_bucket_alloc_create(r->pool));
         apr_bucket *last = APR_BRIGADE_LAST(ctx->spool);
-        if (!APR_BUCKET_IS_EOS(last)) {
-            apr_bucket_brigade *tmp = apr_brigade_create(r->pool, 
-                                          apr_bucket_alloc_create(r->pool));
+        apr_size_t total_read = 0;
 
+        while (!APR_BUCKET_IS_EOS(last) && total_read < readbytes) {
+            apr_off_t len;
             rv = ap_get_brigade(f->next, tmp, mode, block, readbytes);
             if (rv != APR_SUCCESS)
                 return rv;
 
             bb = apreq_copy_brigade(tmp);
-
+            apr_brigade_length(bb,0,&len);
+            total_read += len;
             APR_BRIGADE_CONCAT(ctx->spool, tmp);
             APR_BRIGADE_CONCAT(ctx->bb, bb);
+            last = APR_BRIGADE_LAST(ctx->spool);
         }
     }
     ctx->status = apreq_parse_request(apreq_request(r, NULL), ctx->bb);

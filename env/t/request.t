@@ -19,8 +19,7 @@ foreach my $location ('/apreq_request_test', '/apreq_access_test') {
 
 ok t_cmp(403, GET_RC("/apreq_access_test"), "access denied");
 
-# XXX 8000 filler chars bombs out- why?
-my $filler = "1234567" x 1000;
+my $filler = "0123456789" x 7000; # < 8000 + 64K
 my $body = POST_BODY("/apreq_access_test?foo=1;", 
                      content => "bar=2&quux=$filler;test=6");
 ok t_cmp(<<EOT, $body, "prefetch credentials");
