@@ -140,7 +140,7 @@ APR_DECLARE_OPTIONAL_FN(SV *,
 
 /* uploads are represented by the full apreq_param_t in C */
 #define apreq_upload_t apreq_param_t
-#define apreq_xs_param2sv(ptr,class)  apreq_xs_2sv(ptr,class)
+#define apreq_xs_param2sv(ptr,class,parent)  apreq_xs_2sv(ptr,class,parent)
 #define apreq_xs_sv2param(sv) ((apreq_upload_t *)SvIVX(SvRV(sv)))
 
 static int apreq_xs_upload_table_keys(void *data, const char *key,

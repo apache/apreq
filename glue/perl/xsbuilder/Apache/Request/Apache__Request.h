@@ -89,9 +89,9 @@
 
 #define apreq_xs_table_error_check
 
-#define apreq_xs_param2rv(ptr, class) apreq_xs_2sv(ptr,class)
+#define apreq_xs_param2rv(ptr, class, parent) apreq_xs_2sv(ptr,class,parent)
 #define apreq_xs_rv2param(sv) ((apreq_param_t *)SvIVX(SvRV(sv)))
-#define apreq_xs_param2sv(ptr,class) newSVpvn((ptr)->v.data,(ptr)->v.size)
+#define apreq_xs_param2sv(ptr,class,parent) newSVpvn((ptr)->v.data,(ptr)->v.size)
 
 APREQ_XS_DEFINE_ENV(request);
 APREQ_XS_DEFINE_OBJECT(request);

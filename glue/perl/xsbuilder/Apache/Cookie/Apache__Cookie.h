@@ -17,7 +17,7 @@
 #define apreq_xs_jar2cookie(j) j->cookies
 #define apreq_xs_jar2env(j) j->env
 
-#define apreq_xs_cookie2sv(c,class) apreq_xs_2sv(c,class)
+#define apreq_xs_cookie2sv(c,class,parent) apreq_xs_2sv(c,class,parent)
 #define apreq_xs_sv2cookie(sv) ((apreq_cookie_t *)SvIVX(SvRV(sv)))
 
 /** 
