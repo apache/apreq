@@ -601,10 +601,11 @@ APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p,
 
     t->flags = f;
 
-    for ( ; e < end; e++) {
-        apreq_value_t *v = e->val ? 
-            apreq_make_value(p,e->key,e->val,strlen(e->val)) : 
-            NULL;
+    for ( ; e < end; ++e) {
+        apreq_value_t *v = apreq_make_value(p, e->key, strlen(e->key), 
+                                            e->val, e->val ? 
+                                                    strlen(e->val) :
+                                                    0);
         apreq_table_add(t, v);
     }
     return t;

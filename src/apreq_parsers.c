@@ -75,6 +75,8 @@ APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(
                                                   apr_pool_t *p,
                                                   const char *enctype,
                                                   APREQ_PARSER(*parser),
+                                                  APREQ_HOOK(*hook),
+                                                  void *hook_data,
                                                   void *out)
 {
     apreq_parser_t *p = apr_palloc(pool, APREQ_CTX_MAXSIZE + sizeof *p);
@@ -428,9 +430,9 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *p,
                 switch (data[off++]) {
 
                 case '\n':
-                    /* No more headers: split, shift & bail out */
-                    if (off < dlen)
-                        apr_bucket_split(e, off);
+                    if (off < dlen) {
+                        apr_bucket_split(e, off);                       
+                    }
 
                     e = APR_BUCKET_NEXT(e);
 
@@ -443,6 +445,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *p,
                     ++glen; 
                     ++off;
                     parser->v.status = HDR_GAP;
+                    saw_newline = 0;
                     goto parse_hdr_bucket;
 
                 default:
@@ -552,6 +555,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_headers(apr_pool_t *p,
 }
 
 struct mfd_ctx {
+    void                *hook_data;
     apreq_table_t       *t;
     apr_bucket_brigade  *bb;
     char                bdry[1];
@@ -561,7 +565,7 @@ struct mfd_ctx {
 static apr_status_t split_on_bdry(apr_pool_t *pool, 
                                   apr_bucket_brigade *out,
                                   apr_bucket_brigade *in,
-                                  char *bdry, apreq_parser_t *parser)
+                                  char *bdry)
 {
     apr_bucket_t *e = APR_BRIGADE_FIRST(in);
     apr_size_t blen = strlen(bdry);
@@ -626,6 +630,53 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
     return APR_INCOMPLETE;
 }
 
+static apr_status_t getval(const char **line, const char *name,
+                           const char **val, apr_size_t *vlen)
+{
+    const char *v = strstr(*line, name), *rv;
+    int in_quotes = 0;
+
+    if (v == NULL)
+        return APR_NOT_FOUND;
+
+    v += strlen(name);
+
+    while (*v) {
+        if (v == '=' || apr_isspace(val))
+            ++v;
+        else
+            break;
+    }
+
+    if (v == '"') {
+        ++v;
+        in_quotes = 1;
+    }
+    
+    for(*val = v; *v; ++v) {
+        switch (*v) {
+        case ';':
+            if (in_quotes)
+                continue;
+            /* else fall through */
+        case '"':
+            break;
+        case '\\':
+            if (in_quotes && v[1] != 0)
+                ++v;
+            break;
+        default:
+            break;
+        }
+    }
+
+    *vlen = v - *val;
+    *line = (*v == 0) ? val : val + 1;
+    return APR_SUCCESS;
+}
+
+static const char crlf[] = "\r\n"; 
+
 APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
                                                   apr_bucket_brigade *bb,
                                                   apreq_parser_t *parser)
@@ -636,135 +687,213 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
 
 #define MAX_BLEN  100
 
-#define MFD_HEADER  0
-#define MFD_PARAM   1
-#define MFD_UPLOAD  2
+#define MFD_INIT    0
+#define MFD_HEADER  1
+#define MFD_PARAM   2
+#define MFD_UPLOAD  3
 #define MFD_ERROR  -1
 
     if (parser->v.size == 0) {
-        apr_ssize_t total = 0;
-        char blen = 0;
+        char off = 0;
+        char *bdry, *ct = apreq_env_content_type(req->ctx);
+        apr_size_t blen;
+        apr_status_t s;
 
-        ctx->bdry[blen++] = '\r';
-        ctx->bdry[blen++] = '\n';
+        ctx->bdry[off++] = '\r';
+        ctx->bdry[off++] = '\n';
+        ctx->bdry[off++] = '-';
+        ctx->bdry[off++] = '-';
 
-        /* parse first line for mfd boundary */
-        while (1) {
-            apr_size_t dlen;
-            char *data, *newline;
-            apr_bucket_t *f = APR_BRIGADE_FIRST(bb);
+        s = getval(&ct, "boundary", &bdry, &blen);
+        
+        if (s != APR_SUCCESS)
+            return s;
+
+        memcpy(ctx->bdry + off, bdry, blen);
+        ctx->bdry[off + blen] = 0;
+
+        APR_BRIGADE_INSERT_HEAD(bb,
+                  apr_bucket_immortal_create(crlf,2,bb->bucket_alloc));
+
+        ctx->bb ||= apr_brigade_create(pool, bb->bucket_alloc);
+
+        parser->v.status == MFD_INIT;
+        parser->v.size = sizeof *ctx;
+    }
+
+ parse_mfd_brigade:
+    switch (parser->v.status) {
+
+    case MFD_INIT:
+        {
             apr_status_t s;
-
-            if (f == APR_BRIGADE_SENTINEL(bb))
-                return APR_EAGAIN;
-
-            if (APR_BUCKET_IS_EOS(f))
-                return APR_EOS;
-
-            s = apr_bucket_read(f, &data, &dlen, APR_BLOCK_READ);
+            s = split_on_bdry(pool, ctx->bb, bb, ctx->bdry);
             if (s != APR_SUCCESS)
                 return s;
 
-            newline = memchr(data, '\n', dlen);
-
-            if (newline != NULL) {
-                if (newline + 1 < data + dlen)
-                    apr_bucket_split(f, newline + 1 - data);
-                else
-                    dlen = newline - data;
-
-                if (blen + dlen >= MAX_BLEN)
-                    return APR_BADARG;
-                memcpy(ctx->bdry + blen, data, dlen);
-                apr_bucket_delete(f);
-                blen += dlen;
-                break;
-            }
-
-            if (blen + dlen >= MAX_BLEN)
-                return APR_BADARG;
-            memcpy(ctx->bdry + blen, data, dlen);
-            apr_bucket_delete(f);
-            blen += dlen;
+            parser->v.status = MFD_NEXTLINE;
         }
+        /* fall through */
 
-        blen -= 2; /* ignore trailing CRLF */
-        ctx->bdry[blen] = 0;
+    case MFD_NEXTLINE:
+        {
+            apr_status_t s;
+            s = split_on_bdry(pool, ctx->bb, bb, crlf);
+            if (s != APR_SUCCESS)
+                return s;
 
-        parser->v.size = blen + sizeof *ctx;
-        parser->v.status = MFD_HEADER;
-
-    }
-
-    switch (parser->v.status) {
+            parser->v.status = MFD_HEADER;
+            apr_brigade_cleanup(ctx->bb);
+            ctx->t = NULL;
+        }
+        /* fall through */
 
     case MFD_HEADER:
-    {
-        apreq_parser_t par = {0};
-        apr_status_t s;
-        char *cd;
-
-        if (ctx->t == NULL)
-            ctx->t = apreq_make_table(pool, APREQ_NELTS);
-
-        par.out = (void *)ctx->t;
-        
-        s = apreq_parse_headers(pool, bb, &par);
-
-        if (s != APR_SUCCESS)
-            return s;
-
-        parser->v.status = MFD_VALUE;
-        ctx->bb = apr_brigade_create(pool, apr_bucket_alloc_create(pool));
-
-        /* parse Content-Disposition header to determine value type */
-        cd = apreq_table_get(ctx->t, "Content-Disposition");
-
-
-
-        /* fall thru */
-    }
-
-    case MFD_PARAM:
-    case MFD_UPLOAD:
-    {
-        apr_status_t s = split_on_bdry(pool, ctx->bb, bb, 
-                                       ctx->bdry, parser);
-        if (s != APR_SUCCESS)
-            return s;
-
-        if (parser->v.status == MFD_PARAM) {
-            apr_size_t len;
-            apreq_param_t *param;
-            apreq_value_t *v;
+        {
+            apreq_parser_t par = {0};
             apr_status_t s;
+            char *cd, *name, *filename;
+            apr_size_t nlen, flen;
 
-            s = apr_brigade_length(ctx->bb, 1, &len);
+            ctx->t ||= apreq_make_table(pool, APREQ_NELTS);
+            par.out = (void *)ctx->t;
+            s = apreq_parse_headers(pool, bb, &par);
 
+            if (s != APR_SUCCESS)
+                return s;
+
+            parser->v.status = MFD_VALUE;
+
+            /* parse Content-Disposition header to determine value type */
+            cd = apreq_table_get(ctx->t, "Content-Disposition");
+            if (cd == NULL) {
+                parser->v.status = MFD_ERROR;
+                return APR_BADARG;
+            }
+
+            s = getval(&cd, "name", &name, &nlen);
             if (s != APR_SUCCESS) {
                 parser->v.status = MFD_ERROR;
+                return APR_BADARG;
+            }
+
+
+            s = getval(&cd, "filename", &filename, &flen);
+
+            if (s != APR_SUCCESS) {
+                apr_bucket__t *e;
+                name = apr_pstrmemdup(pool, name, nlen);
+                e = apr_bucket_transient_create(name, nlen,
+                                                ctx->bb->bucket_alloc);
+                APR_BRIGADE_INSERT_HEAD(ctx->bb,e);
+                parser->v.status = MFD_PARAM;
+            } 
+            else {
+                apreq_param_t *param = apreq_make_param(pool, name, nlen, 
+                                                        filename, flen);
+                param->info = ctx->t;
+                param->bb = apr_brigade_create(pool, 
+                                               apr_bucket_alloc_create(pool));
+
+                apreq_table_add(req->body, param);
+                parser->v.status = MFD_UPLOAD;
+            }
+        }
+        goto mfd_parse_brigade;
+
+    case MFD_PARAM:
+        {
+            apr_status_t s = split_on_bdry(pool, ctx->bb, bb, ctx->bdry);
+            apr_bucket_t *e;
+            apreq_param_t *param;
+            apreq_value_t *v;
+            char *name;
+            apr_size_t len;
+
+            switch (s) {
+
+            case APR_INCOMPLETE:
+                return s;
+
+            case APR_SUCCESS:
+                e = APR_BRIGADE_FIRST(ctx->bb);
+                apr_bucket_read(e, &name, &len, APR_READ_BLOCK);
+                apr_bucket_delete(e);
+
+                s = apr_brigade_length(ctx->bb, 1, &len);
+                if (s != APR_SUCCESS) {
+                    parser->v.status = MFD_ERROR;
+                    return s;
+                }
+
+                param = apr_palloc(pool, len + sizeof *param);
+                param->charset = APREQ_CHARSET;
+                param->language = NULL;
+                param->bb = NULL;
+                param->info = ctx->t;
+
+                v = &param->v;
+                v->name = name;
+                v->status = APR_SUCCESS;
+                apr_brigade_flatten(ctx->bb, v->data, len);
+                v->size = len;
+                v->data[v->size] = 0;
+
+                parser->v.status == MFD_NEXTLINE;
+                goto parse_mfd_brigade;
+
+            default:
+                parser->v.status == MFD_ERROR;
                 return s;
             }
 
 
-            param = apr_palloc(pool, len + sizeof *param);
-            v = &param->v;
-            param->charset = UTF_8;
-            param->language = NULL;
-            param->info = ctx->t;
-            param->bb = ctx->bb;
-            v->size = len;
-            v->status = apr_brigade_flatten(ctx->bb, v->data, &v->size);
-
-            apreq_table_add(req->body, v);
         }
+        break;
 
+    case MFD_UPLOAD:
+        {
+            apr_status_t s = split_on_bdry(pool, ctx->bb, bb, ctx->bdry);
+            apreq_param_t *param;
+            apreq_value_t *v;
+            int dummy;
 
-        parser->v.status = MFD_VALUE;
-        ctx->t = NULL;
-        ctx->bb = NULL;
-    }
-    break;
+            switch (s) {
+
+            case APR_INCOMPLETE:
+                apreq_table_last(req->body, &v, &off);
+                param = apreq_value_to_param(v);
+
+                if (parser->hook)
+                    return parser->hook(pool, param->bb, ctx->bb, parser);
+                else {
+                    APR_BRIGADE_CONCAT(param->bb, ctx->bb);
+                    return s;
+                }
+
+            case APR_SUCCESS:
+                apreq_table_last(req->body, &v, &dummy);
+                param = apreq_value_to_param(v);
+
+                /* XXX: push an eos bucket onto ctx->bb */
+
+                if (parser->hook) {
+                    do s = parser->hook(pool, param->bb, ctx->bb, parser);
+                    while s == APR_INCOMPLETE;
+                }
+                else
+                    APR_BRIGADE_CONCAT(param->bb, ctx->bb);
+
+                parser->v.status == MFD_NEXTLINE;
+                goto parse_mfd_brigade;
+
+            default:
+                parser->v.status == MFD_ERROR;
+                return s;
+            }
+
+        }
+        break;
 
     case MFD_ERROR:
         return APR_EGENERAL;

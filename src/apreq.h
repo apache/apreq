@@ -52,9 +52,10 @@ typedef apreq_value_t *(apreq_value_copy_t)(apr_pool_t *p,
 #define apreq_strlen(ptr) (apreq_strtoval(ptr)->size)
 
 APREQ_DECLARE(apreq_value_t *) apreq_make_value(apr_pool_t *p, 
-                                                const char *name, 
-                                                const char *data, 
-                                                const apr_size_t size);
+                                                const char *name,
+                                                const apr_ssize_t nlen,
+                                                const char *val, 
+                                                const apr_ssize_t vlen);
 
 APREQ_DECLARE(apreq_value_t *) apreq_copy_value(apr_pool_t *p, 
                                                 const apreq_value_t *val);
@@ -83,7 +84,7 @@ apr_ssize_t apreq_index(const char* hay, apr_size_t haylen,
 /* url-escapes non-alphanumeric characters */
 apr_size_t apreq_quote(char *dest, const char *src, const apr_size_t slen);
 apr_size_t apreq_encode(char *dest, const char *src, const apr_size_t slen);
-apr_ssize_t apreq_decode(char *dest, const char *src, apr_size_t slen);
+apr_ssize_t apreq_decode(char *dest, const char *src, apr_ssize_t slen);
 
 APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p, 
                                    const char *src, const apr_size_t slen);

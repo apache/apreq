@@ -4,23 +4,28 @@
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 #define MAX(a,b) ( (a) > (b) ? (a) : (b) )
 
-APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t *p, 
-                                               const char *name,
-                                               const char *d, 
-                                               apr_size_t size)
+APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t  *p, 
+                                               const char  *name,
+                                               const apr_ssize_t nlen,
+                                               const char  *val, 
+                                               const apr_ssize_t vlen)
 {
-    apreq_value_t *v = apr_palloc(p, size + sizeof *v);
-    if (d == NULL || v == NULL)
+    apreq_value_t *v = apr_palloc(p, vlen + nlen + 1 + sizeof *v);
+    if (v == NULL)
         return NULL;
 
-    memcpy(v->data, d, size);
-    v->size = size;
+    v->size = vlen;
+    memcpy(v->data, val, vlen);
+    v->data[vlen] = 0;
+
+    v->name = v->data + vlen + 1;
+    memcpy((char *)v->name, name, nlen);
+    ((char *)v->name)[nlen] = 0;
     v->status = APR_SUCCESS;
-    v->name = name;
-    v->data[size] = 0;
 
     return v;
 }
+
 
 APREQ_DECLARE(apreq_value_t *)apreq_copy_value(apr_pool_t *p, 
                                                const apreq_value_t *val)
@@ -210,7 +215,7 @@ static APR_INLINE char x2c(const char *what)
 }
 
 APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s, 
-                                        const apr_size_t slen)
+                                       const apr_ssize_t slen)
 {
     register int badesc = 0;
     char *start = d;

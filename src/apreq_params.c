@@ -63,6 +63,31 @@
 #define UPGRADE(s) apreq_value_to_param(apreq_char_to_value(s))
 
 
+APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
+                                                const char *name, 
+                                                const apr_ssize_t nlen, 
+                                                const char *val, 
+                                                const apr_ssize_t vlen)
+{
+    apreq_param_t *param = apr_palloc(p, nlen + vlen + 1 + sizeof *param);
+    apreq_value_t *v = &param->v;
+    param->charset = APREQ_CHARSET;
+    param->language = NULL;
+    param->info = NULL;
+    param->bb = NULL;
+
+    v->size = vlen;
+    memcpy(v->data, val, vlen);
+    v->data[vlen] = 0;
+    v->name = v->data + vlen + 1;
+    memcpy((char *)v->name, name, nlen);
+    ((char *)v->name)[nlen] = 0;
+    v->status = APR_SUCCESS;
+
+    return param;
+}
+
+
 APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 {
 
@@ -78,7 +103,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 
     req->status = APR_EINIT;
     req->ctx    = ctx;
-    req->args   = apreq_table_make(p, APREQ_NELTS);
+    req->args   = apreq_make_table(p, APREQ_NELTS);
     req->body   = NULL;
 
     /* XXX get/set race condition here wrt apreq_env_request.
@@ -106,15 +131,16 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *ctx)
 
 APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req)
 {
-    if (req->body == NULL)
-        if (req->status == APR_SUCCESS)
+    if (req->body == NULL) {
+        if (req->status == APR_SUCCESS) {
+            req->body = apreq_table_make(req->pool, APREQ_DEFAULT_NELTS);
             return apreq_env_parse(req);
+        }
         else
             return req->status;
-
-    else if (req->status == APR_EAGAIN)
+    }
+    else if (req->status == APR_EAGAIN || req->status == APR_INCOMPLETE)
         return apreq_env_parse(req);
-
     else
         return req->status;
 }
@@ -141,10 +167,10 @@ APREQ_DECLARE(apr_array_header_t *) apreq_params(apr_pool_t *pool,
 APREQ_DECLARE(apr_status_t) apreq_split_params(apr_pool_t *pool,
                                                apreq_table_t *t,
                                                const char *data, 
-                                               apr_size_t dlen)
+                                               apr_ssize_t dlen)
 {
     const char *start = data, *end = data + dlen;
-    apr_size_t nlen = 0;
+    apr_ssize_t nlen = 0;
     apr_status_t status = APR_SUCCESS;
 
     for (; data < end; ++data) {

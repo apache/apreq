@@ -71,8 +71,10 @@ extern "C" {
  *
  */
 
+#define APREQ_CHARSET  UTF_8;
+
 typedef struct apreq_param_t {
-    enum { ASCII, UTF_8, UTF_16, IS0_LATIN_1 } charset;
+    enum { ASCII, UTF_8, UTF_16, ISO_LATIN_1 } charset;
     char                *language;
     apreq_table_t       *info;
 
@@ -86,6 +88,11 @@ typedef struct apreq_param_t {
 #define apreq_param_name(p)  ((p)->v.name)
 #define apreq_param_value(p) ((p)->v.data)
 
+APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
+                                                const char *name, 
+                                                const apr_ssize_t nlen, 
+                                                const char *val, 
+                                                const apr_ssize_t vlen);
 
 
 typedef struct apreq_request_t {

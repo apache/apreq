@@ -15,24 +15,25 @@ extern "C" {
 
 typedef struct apreq_parser_t apreq_parser_t;
 
-#define APREQ_PARSER(f) apr_status_t (f)(apr_pool_t *p, apr_bucket_brigade *bb, 
-                                         apreq_parser_t *parser)
+#define APREQ_PARSER(f) apr_status_t(f)(apr_pool_t *p, apr_bucket_brigade *bb,\
+                                        apreq_parser_t *parser)
+#define APREQ_HOOK(f) apr_status_t(f)(apr_pool_t *p, apr_bucket_brigade *out, \
+                                      apr_bucket_brigade *in, \ 
+                                      apreq_parser_t *parser)
 
 #define APREQ_CTX_MAXSIZE  128
 
 struct apreq_parser_t {
     APREQ_PARSER   (*parser);
+    APREQ_HOOK     (*hook);
     void            *out;
-    apreq_parser_t  *ext;
     apreq_value_t    v; /* maintains (internal) parser state */
 };
 
 
-#define apreq_value_to_parser(ptr) apreq_attr_to_type(apreq_parser_t, \
-                                                      v, ptr)
+#define apreq_value_to_parser(ptr) apreq_attr_to_type(apreq_parser_t,v,ptr)
 #define apreq_ctx_to_parser(ptr) apreq_value_to_parser(apreq_strtoval(ptr))
 
-#define apreq_parser_hook(p)     ((p)->next)
 #define apreq_parser_enctype(p)  ((p)->v.name)
 #define apreq_parser_data(p)     ((p)->v.data)
 

@@ -48,6 +48,7 @@ APREQ_DECLARE(void *) apreq_env_jar(void *ctx, void *j);
 #define apreq_env_jar(c,j) APREQ_ENV.jar(c,j)
 #define apreq_env_request(c,r) APREQ_ENV.jar(c,r)
 #define apreq_env_pool(c) APREQ_ENV.pool(c)
+#define apreq_env_content_type(c) APREQ_ENV.in(c, "Content-Type");
 #define apreq_env_cookie(c) APREQ_ENV.in(c, "Cookie")
 #define apreq_env_cookie2(c) APREQ_ENV.in(c, "Cookie2")
 #define apreq_env_set_cookie(c,s) APREQ_ENV.out(c,"Set-Cookie",s)
