@@ -13,7 +13,7 @@ use Cwd;
 cwd =~ m{^(.+httpd-apreq-2)} or die "Can't find base cvs directory";
 my $base_dir = $1;
 my $src_dir = "$base_dir/src";
-
+my $xs_dir = "$base_dir/glue/perl/xsbuilder";
 sub slurp($$)
 {
     open my $file, $_[1] or die $!;
@@ -59,17 +59,15 @@ sub c_macro
 }
 
 
-
-package Apache::Request::ParseSource;
+package My::ParseSource;
 use base qw/ExtUtils::XSBuilder::ParseSource/;
-
 __PACKAGE__->$_ for shift || ();
 
 sub package {'Apache::Request'}
 
 # ParseSource.pm v 0.23 bug: line 214 should read
 # my @dirs = @{$self->include_dirs};
-sub include_dirs {["$base_dir/src"]}
+sub include_dirs {["$base_dir/src",]}# "$base_dir/glue/perl/xsinclude"]}
 
 sub preprocess
 {
@@ -84,12 +82,14 @@ sub preprocess
         ::c_macro("APR_DECLARE")->();
     }
 }
+
 sub parse {
     my $self = shift;
+    our $verbose = $ExtUtils::XSBuilder::ParseSource::verbose;
 
     $self -> find_includes ;
     my $c = $self -> {c} = {} ;
-    print "Initialize parser\n" if ($__SUPER__::verbose) ;
+    print "Initialize parser\n" if ($verbose) ;
 
     $::RD_HINT++;
 
@@ -101,7 +101,7 @@ sub parse {
     $self -> extent_parser ($parser) ;
 
     foreach my $inc (@{$self->{includes}}) {
-        print "scan $inc ...\n" if ($__SUPER__::verbose) ;
+        print "scan $inc ...\n" if ($verbose) ;
         $self->scan ($inc) ;
     }
 
@@ -109,15 +109,16 @@ sub parse {
 
 
 
-package Apache::Request::WrapXS;
+package My::WrapXS;
 use base qw/ExtUtils::XSBuilder::WrapXS/;
 our $VERSION = '0.1';
 __PACKAGE__ -> $_ for @ARGV;
 
-sub parsesource_objects {[Apache::Request::ParseSource->new]}
-sub new_typemap {Apache::Request::TypeMap->new(shift)}
-sub h_filename_prefix {'apreq_'}
-sub my_xs_prefix {'apreq_'}
+sub parsesource_objects {[My::ParseSource->new]}
+sub new_typemap {My::TypeMap->new(shift)}
+sub h_filename_prefix {'apreq_xs_'}
+sub my_xs_prefix {'apreq_xs_'}
+sub xs_include_dir { $xs_dir }
 
 sub makefilepl_text {
     my($self, $class, $deps,$typemap) = @_;
@@ -147,7 +148,7 @@ ExtUtils::MakeMaker::WriteMakefile(
     'NAME'    => '$class',
     'VERSION' => '0.01',
     'TYPEMAPS' => [qw(@$mp2_typemaps $typemap)],
-    'INC'      => "-I.. -I../.. -I../../.. -I$src_dir -I$apache_includes",
+    'INC'      => "-I.. -I../.. -I../../.. -I$src_dir -I$xs_dir -I$apache_includes",
     'LIBS'     => "-L$src_dir/.libs -L$apr_libs -lapreq -lapr-0 -laprutil-0",
 } ;
 $txt .= "'depend'  => $deps,\n" if ($deps) ;
@@ -160,92 +161,30 @@ $txt .= qq{
 }
 
 
-package Apache::Request::TypeMap;
+package My::TypeMap;
 use base 'ExtUtils::XSBuilder::TypeMap';
 
-
-# XXX This needs serious work
+# XXX this needs serious work
 sub typemap_code
 {
     {
-        'T_MAGICHASH_SV' => 
-         {
-             OUTPUT => 'if ($var -> _perlsv) $arg = $var -> _perlsv; else $arg = &sv_undef;',
-
-             c2perl => '(ptr->_perlsv?ptr->_perlsv:&sv_undef)',
-
-             INPUT =>  <<'EOT',
-do {
-    MAGIC *mg;
-    if (mg = mg_find (SvRV($arg), '~'))
-        $var = *(($type *)(mg -> mg_ptr));
-    else
-        croak (\"$var is not of type $type\");
-} while(0)
-EOT
-
-             perl2c => <<'EOT',
-(SvOK(sv) ?                                                        \\
-            ((SvROK(sv) && SvMAGICAL(SvRV(sv))) ||                 \\
-             (Perl_croak(aTHX_ "$croak ($expect)"),0) ?            \\
-                 *(($ctype **)(mg_find(SvRV(sv),'~')->mg_ptr)) :   \\
-                  ($ctype *)NULL)                                  \\
-          : ($ctype *)NULL)
-EOT
-
-             create => <<'EOT',
-do {                                                               \\
-    sv = (SV *)newHV ();                                           \\
-    p = alloc;                                                     \\
-    memset (p, 0, sizeof($ctype));                                 \\
-    sv_magic ((SV *)sv, NULL, '~', (char *)&p, sizeof (p));        \\
-    rv = p -> _perlsv = newRV_noinc ((SV *)sv);                    \\
-    sv_bless (rv, gv_stashpv ("$class", 0));                       \\
-} while (0)
-EOT
-            destroy => '    free(ptr)',
-         },
-
-
-        'T_PTROBJ' => 
-            {
-            'c2perl' => '    sv_setref_pv(sv_newmortal(), "$class", (void*)ptr)',
-
-            'perl2c' =>
-q[(SvOK(sv)?((SvROK(sv) && (SvTYPE(SvRV(sv)) == SVt_PVMG)) \\\\
-|| (Perl_croak(aTHX_ "$croak ($expect)"),0) ? \\\\
-($ctype *)SvIV((SV*)SvRV(sv)) : ($ctype *)NULL):($ctype *)NULL)
-],
-
-            'create' => 
-q[   rv = newSViv(0) ; \\\\
-    sv = newSVrv (rv, "$class") ; \\\\
-    SvUPGRADE(sv, SVt_PVIV) ; \\\\
-    SvGROW(sv, sizeof (*p)) ;  \\\\
-    p = ($ctype *)SvPVX(sv) ;\\\\
-    memset(p, 0, sizeof (*p)) ;\\\\
-    SvIVX(sv) = (IV)p ;\\\\
-    SvIOK_on(sv) ;\\\\
-    SvPOK_on(sv) ;
-],
-
-            },
-        'T_AVREF' => 
-            {
-            'OUTPUT' => '        $arg = SvREFCNT_inc (epxs_AVREF_2obj($var));',
-            'INPUT'  => '        $var = epxs_sv2_AVREF($arg)',
-            },
-        'T_HVREF' => 
-            {
-            'OUTPUT' => '        $arg = SvREFCNT_inc (epxs_HVREF_2obj($var));',
-            'INPUT'  => '        $var = epxs_sv2_HVREF($arg)',
-            },
-        'T_SVPTR' => 
-            {
-            'OUTPUT' => '        $arg = SvREFCNT_inc (epxs_SVPTR_2obj($var));',
-            'INPUT'  => '        $var = epxs_sv2_SVPTR($arg)',
-            },
-        }
+        T_APREQ_COOKIE  => {
+                            OUTPUT => '$arg = apreq_xs_cookie2sv($var)',
+                            INPUT  => '$var = apreq_xs_sv2cookie($arg)',
+                           },
+        T_APREQ_PARAM   => {
+                            OUTPUT => '$arg = apreq_xs_param2sv($var)',
+                            INPUT  => '$var = apreq_xs_sv2param($arg)',
+                           },
+        T_APREQ_REQUEST => {
+                            OUTPUT => '$arg = apreq_xs_request2sv($var)',
+                            INPUT  => '$var = apreq_xs_sv2request($arg)',
+                           },
+        T_APREQ_JAR     => {
+                            OUTPUT => '$arg = apreq_xs_jar2sv($var)',
+                            INPUT  => '$var = apreq_xs_sv2jar($arg)',
+                           },
+    }
 }
 
 # force DATA into main package
