@@ -309,7 +309,7 @@ ModPerl::MM::WriteMakefile(
     'NAME'      => '$class',
     'VERSION'   => '$version',
     'TYPEMAPS'  => [qw(@$mp2_typemaps $typemap)],
-    'INC'       => "-I.. -I../.. -I../../.. -I$src_dir -I$xs_dir $apache_includes",
+    'INC'       => "-I$base_dir/glue/perl/xs -I$src_dir -I$xs_dir $apache_includes",
     'LIBS'      => "$apreq_libs $apr_libs",
 } ;
 $txt .= "'depend'  => $deps,\n" if ($deps) ;
