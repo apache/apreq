@@ -312,33 +312,33 @@ ApacheRequest_new(class, r, ...)
           case 'd':
             if (strcasecmp(key, "disable_uploads") == 0) {
                 RETVAL->disable_uploads = (int)SvIV(ST(i+1));
+                break;
             }
-            break;
 
           case 'h':
             if (strcasecmp(key, "hook_data") == 0) {
                 XsUploadHookSet(data, ST(i+1));
+                break;
             }
-            break;
 
           case 'p':
             if (strcasecmp(key, "post_max") == 0) {
                 RETVAL->post_max = (int)SvIV(ST(i+1));
+                break;
             }
-            break;
 
           case 't':
             if (strcasecmp(key, "temp_dir") == 0) {
                 RETVAL->temp_dir = (char *)SvPV(ST(i+1), PL_na);
+                break;
             }
-            break;
 
           case 'u':
             if (strcasecmp(key, "upload_hook") == 0) {
                 XsUploadHookSet(sub, ST(i+1));
                 RETVAL->upload_hook = upload_hook;
+                break;
             }
-            break;
 
           default:
             croak("[libapreq] unknown attribute: `%s'", key);
