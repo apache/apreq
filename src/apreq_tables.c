@@ -1254,7 +1254,7 @@ APREQ_DECLARE(int) apreq_table_vdo(apr_table_do_callback_fn_t *comp,
             idx = t->root[TABLE_HASH(*argp)];
             if ( search(o,&idx,argp) == 0 )
                 while (idx >= 0) {
-                    rv = (*comp) (rec, idx[o].key, v2c(idx[o].val));
+                    rv = (*comp) (rec, idx[o].val->name, v2c(idx[o].val));
                     idx = idx[o].tree[NEXT];
                 }
         }
@@ -1262,7 +1262,7 @@ APREQ_DECLARE(int) apreq_table_vdo(apr_table_do_callback_fn_t *comp,
             for (idx = 0; rv && (idx < t->a.nelts); ++idx)
                 /* if (idx[o].key) */
                 if (! DEAD(idx) )
-                    rv = (*comp) (rec, idx[o].key, v2c(idx[o].val));
+                    rv = (*comp) (rec, idx[o].val->name, v2c(idx[o].val));
         }
         if (rv == 0) {
             vdorv = 0;
