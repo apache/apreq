@@ -220,7 +220,11 @@ static apr_status_t url_decode(char *d, apr_size_t *dlen,
 	    else {
                 *dlen = d - start;
                 *slen = s - src;
-                if (s + 5 < end || (s + 2 < end && s[1] != 'u' && s[1] != 'U')) {
+                if (s + 5 < end 
+                    || (s + 2 < end && !apr_isxdigit(s[2]))
+                    || (s + 1 < end && !apr_isxdigit(s[1])
+                        && s[1] != 'u' && s[1] != 'U'))
+                {
                     *d = 0;
                     return APREQ_ERROR_BADSEQ;
                 }
