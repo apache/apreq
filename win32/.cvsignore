@@ -1,2 +1,5 @@
 Makefile
 libs
+mod_apreq.def
+libapreq_cgi.def
+
