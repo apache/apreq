@@ -74,6 +74,29 @@ static char rel_data[] = /*offsets: 122, 522, */
 "...Binary data here..." CRLF
 "--f93dcbA3--" CRLF;
 
+static char mix_data[] =
+"--AaB03x" CRLF
+"Content-Disposition: form-data; name=\"submit-name\"" CRLF CRLF
+"Larry" CRLF
+"--AaB03x" CRLF
+"Content-Disposition: form-data; name=\"files\"" CRLF
+"Content-Type: multipart/mixed; boundary=BbC04y" CRLF CRLF
+"--BbC04y" CRLF
+"Content-Disposition: file; filename=\"file1.txt\"" CRLF
+"Content-Type: text/plain" CRLF CRLF
+"... contents of file1.txt ..." CRLF
+"--BbC04y" CRLF
+"Content-Disposition: file; filename=\"file2.gif\"" CRLF
+"Content-Type: image/gif" CRLF
+"Content-Transfer-Encoding: binary" CRLF CRLF
+"...contents of file2.gif..." CRLF
+"--BbC04y--" CRLF
+"--AaB03x" CRLF
+"content-disposition: form-data; name=\"field1\"" CRLF
+"content-type: text/plain;charset=windows-1250" CRLF
+"content-transfer-encoding: quoted-printable" CRLF CRLF
+"Joe owes =80100." CRLF
+"--AaB03x--" CRLF;
 
 
 extern apr_bucket_brigade *bb;
@@ -324,6 +347,65 @@ static void parse_related(CuTest *tc)
     CuAssertStrNEquals(tc, data, val, vlen);
 }
 
+typedef struct {
+    const char *key;
+    const char *val;
+} array_elt;
+
+
+static void parse_mixed(CuTest *tc)
+{
+    const char *val;
+    apr_size_t vlen;
+    apr_status_t rv;
+    apreq_param_t *param;
+    const apr_array_header_t *arr;
+    array_elt *elt;
+    apreq_request_t *req = apreq_request(APREQ_MFD_ENCTYPE
+                     "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"" ,"");
+    apr_bucket_brigade *bb = apr_brigade_create(p, 
+                                   apr_bucket_alloc_create(p));
+    apr_bucket *e = apr_bucket_immortal_create(mix_data,
+                                                   strlen(mix_data),
+                                                   bb->bucket_alloc);
+
+    CuAssertPtrNotNull(tc, req);
+    APR_BRIGADE_INSERT_HEAD(bb, e);
+    APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
+
+    rv = apreq_parse_request(req,bb);
+    CuAssertIntEquals(tc, APR_SUCCESS, rv);
+
+    param = apreq_param(req, "submit-name");
+    CuAssertPtrNotNull(tc, param);
+    CuAssertStrEquals(tc, "Larry", param->v.data);
+
+    val = apr_table_get(req->body,"field1");
+    CuAssertStrEquals(tc, "Joe owes =80100.", val);
+
+    param = apreq_param(req, "files");
+    CuAssertPtrNotNull(tc, param);
+    CuAssertStrEquals(tc, "file1.txt", param->v.data);
+
+    CuAssertPtrNotNull(tc, param->bb);
+    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    CuAssertIntEquals(tc, strlen("... contents of file1.txt ..."), vlen);
+    CuAssertStrNEquals(tc, "... contents of file1.txt ...", val, vlen);
+
+    arr = apr_table_elts(req->body);
+    CuAssertIntEquals(tc, 4, arr->nelts);
+
+    elt = (array_elt *)&arr->elts[2 * arr->elt_size];
+    CuAssertStrEquals(tc, "files", elt->key);
+    CuAssertStrEquals(tc, "file2.gif", elt->val);
+
+    param = apreq_value_to_param(apreq_strtoval(elt->val));
+    CuAssertPtrNotNull(tc, param->bb);
+    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    CuAssertIntEquals(tc, strlen("...contents of file2.gif..."), vlen);
+    CuAssertStrNEquals(tc, "...contents of file2.gif...", val, vlen);
+
+}
 
 
 CuSuite *testparser(void)
@@ -334,6 +416,7 @@ CuSuite *testparser(void)
     SUITE_ADD_TEST(suite, parse_disable_uploads);
     SUITE_ADD_TEST(suite, parse_generic);
     SUITE_ADD_TEST(suite, parse_related);
+    SUITE_ADD_TEST(suite, parse_mixed);
     return suite;
 }
 
