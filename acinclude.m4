@@ -30,7 +30,7 @@ AC_DEFUN(AC_APREQ, [
 
         else
                 APACHE2_INCLUDES=-I`$APACHE2_APXS -q INCLUDEDIR`
-                APACHE2_HTTPD=`$APACHE2_APXS -q BINDIR`/httpd
+                APACHE2_HTTPD=`$APACHE2_APXS -q SBINDIR`/httpd
                 APR_CONFIG=`$APACHE2_APXS -q APR_BINDIR`/apr-config
                 APU_CONFIG=`$APACHE2_APXS -q APU_BINDIR`/apu-config
 
