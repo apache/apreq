@@ -1,4 +1,5 @@
 #include "apache_request.h"
+#include "patchlevel.h"
 
 #ifdef WIN32
 
@@ -525,7 +526,7 @@ ApacheUpload_fh(upload)
     fp = ApacheUpload_fh(upload);
     if (fp == NULL)
         XSRETURN_UNDEF;
-#if PERL_VERSION > 500703
+#if PERL_REVISION == 5 && PERL_VERSION > 7
     fd = PerlLIO_dup(fileno(fp));
     /* XXX: user should check errno on undef returns */
 
@@ -544,7 +545,7 @@ ApacheUpload_fh(upload)
 
     CLEANUP:
     /* XXX: there may be a leak/segfault in here somewhere */
-#if PERL_VERSION > 500703
+#if PERL_REVISION == 5 && PERL_VERSION > 7
     if (ST(0) != &PL_sv_undef) {
 	IO *io = GvIOn((GV*)SvRV(ST(0)));
 	if (upload->req->parsed)
