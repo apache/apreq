@@ -231,8 +231,8 @@ sub mod_pod {
 
 sub write_docs {
     my ($self, $module, $functions) = @_;
-    my $fh = $self->open_class_file($module, '.pod');
     my $podfile = $self->mod_pod($module, 1) or return;
+    my $fh = $self->open_class_file($module, '.pod');
     open my $pod, "<", $podfile or die $!;
     while (<$pod>) {
         print $fh $_;
