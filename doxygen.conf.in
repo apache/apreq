@@ -1,5 +1,5 @@
-PROJECT_NAME           = "@PACKAGE@-@VERSION@"
-PROJECT_NUMBER         = "Shared Library Version @APREQ_DOTTED_VERSION@"
+PROJECT_NAME           = "@PACKAGE@"
+PROJECT_NUMBER         = "@VERSION@"
 
 OUTPUT_DIRECTORY       = docs
 OUTPUT_LANGUAGE        = English
@@ -28,15 +28,15 @@ WARN_IF_DOC_ERROR      = YES
 WARN_FORMAT            = "$file:$line: $text"
 
 INPUT                  = . src env
-FILE_PATTERNS          = *.c *.h CHANGES FAQ STATUS
+FILE_PATTERNS          = *.c *.h *.dox CHANGES STATUS FAQ
 RECURSIVE              = NO
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = apreq_tables* \
                          apreq_config*
-EXAMPLE_PATH           = ./
-EXAMPLE_PATTERNS       = 
-IMAGE_PATH             = ./build/feather.gif
+EXAMPLE_PATH           = .
+EXAMPLE_PATTERNS       = README INSTALL LICENSE NOTICE *.html *.man
+IMAGE_PATH             = 
 SOURCE_BROWSER         = NO
 
 ALPHABETICAL_INDEX     = NO
@@ -52,7 +52,8 @@ HTML_ALIGN_MEMBERS     = YES
 
 GENERATE_LATEX         = NO
 GENERATE_RTF           = NO
-GENERATE_MAN           = NO
+GENERATE_MAN           = YES
+MAN_LINKS              = NO
 GENERATE_XML           = NO
 GENERATE_AUTOGEN_DEF   = NO
 GENERATE_PERLMOD       = NO
