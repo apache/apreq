@@ -27,7 +27,7 @@ WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
 WARN_FORMAT            = "$file:$line: $text"
 
-INPUT                  = . src env
+INPUT                  = . include library module/apache module/apache2
 FILE_PATTERNS          = *.c *.h *.dox CHANGES STATUS
 RECURSIVE              = NO
 EXCLUDE                = 
