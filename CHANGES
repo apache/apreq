@@ -5,6 +5,10 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- C Tests [joes]
+  Replace CuTest-based tests with custom TAP-compliant
+  framework.
+
 - C API [joes]
   Make our "libtool current interface" number depend on apr's 
   major number.  This allows libapreq2 to be installed into a 

@@ -16,7 +16,7 @@
 
 #ifndef APREQ_TEST_INCLUDES
 #define APREQ_TEST_INCLUDES
-
+#include "at.h"
 #include "CuTest.h"
 #include "apr_pools.h"
 #ifndef apr_table_nelts
@@ -41,5 +41,10 @@ CuSuite *testperformance(void);
  * for RV and CONTEXT message. */
 void apr_assert_success(CuTest* tc, const char *context, apr_status_t rv);
 
+AT_DECLARE_TEST(jar_make);
+AT_DECLARE_TEST(jar_get);
+AT_DECLARE_TEST(netscape_cookie);
+AT_DECLARE_TEST(rfc_cookie);
+AT_DECLARE_TEST(ua_version);
 
 #endif /* APR_TEST_INCLUDES */

@@ -17,39 +17,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "test_apreq.h"
 #include "apreq_env.h"
 #include "apr_strings.h"
 
-/* Top-level pool which can be used by tests. */
 apr_pool_t *p;
-
-void apr_assert_success(CuTest* tc, const char* context, apr_status_t rv)
-{
-    if (rv == APR_ENOTIMPL) {
-        CuNotImpl(tc, context);
-    }
-
-    if (rv != APR_SUCCESS) {
-        char buf[STRING_MAX], ebuf[128];
-        sprintf(buf, "%s (%d): %s\n", context, rv,
-                apr_strerror(rv, ebuf, sizeof ebuf));
-        CuFail(tc, buf);
-    }
-}
-
-static const struct testlist {
-    const char *testname;
-    CuSuite *(*func)(void);
-} tests[] = {
-    {"version", testversion},
-    {"cookies", testcookie},
-    {"params", testparam},
-    {"parsers", testparser},
-//    {"performance", testperformance},
-    {"LastTest", NULL}
-};
-
 
 /* rigged environent for unit tests */
 
@@ -165,55 +136,6 @@ static apr_ssize_t test_max_brigade(void *env, apr_ssize_t bytes)
 
 
 
-static APREQ_ENV_MODULE(test, APREQ_MODULE_NAME,
-                       APREQ_MODULE_MAGIC_NUMBER);
-
-
-int main(int argc, char *argv[])
-{
-    CuSuiteList *alltests = NULL;
-    CuString *output = CuStringNew();
-    int i;
-    int partial = 0;
-
-    apr_initialize();
-    atexit(apr_terminate);
-    apreq_env_module(&test_module);
-
-    CuInit(argc, argv);
-
-    apr_pool_create(&p, NULL);
-
-    /* build the list of tests to run */
-    for (i = 1; i < argc; i++) {
-        int j;
-        if (!strcmp(argv[i], "-v")) {
-            continue;
-        }
-        for (j = 0; tests[j].func != NULL; j++) {
-            if (!strcmp(argv[i], tests[j].testname)) {
-                if (!partial) {
-                    alltests = CuSuiteListNew("Partial APREQ Tests");
-                    partial = 1;
-                }
-
-                CuSuiteListAdd(alltests, tests[j].func());
-                break;
-            }
-        }
-    }
-
-    if (!partial) {
-        alltests = CuSuiteListNew("All APREQ Tests");
-        for (i = 0; tests[i].func != NULL; i++) {
-            CuSuiteListAdd(alltests, tests[i].func());
-        }
-    }
-
-    CuSuiteListRunWithSummary(alltests);
-    i = CuSuiteListDetails(alltests, output);
-    printf("%s\n", output->buffer);
-
-    return i > 0 ? 1 : 0;
-}
+APREQ_ENV_MODULE(test, APREQ_MODULE_NAME,
+                 APREQ_MODULE_MAGIC_NUMBER);
 

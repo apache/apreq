@@ -78,13 +78,13 @@ docs/apr.tag:
 	-mkdir docs
 	echo GENERATE_TAGFILE=`pwd`/docs/apr.tag | $(APR_DOX)
 
-test: lib_test env_test $(PERL_TEST)
+test: all lib_test env_test $(PERL_TEST)
 
 env_test:
 	cd env; $(MAKE) test
 
-lib_test: check
-	t/testall -v
+lib_test:
+	cd t; $(MAKE) test
 
 perl_install:
 	cd glue/perl; $(MAKE) install
