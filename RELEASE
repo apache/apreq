@@ -29,12 +29,19 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
 
         /** @page STATUS
 
-        2.XX-dev tagged and rolled for release on <today's date>
+        2.XX-dev released on <today's date>.
 
-   Commit the change and tag the tree (tr/0-9a-zA-Z/_/c in the 
+
+   Also add the release date to the top @section in CHANGES:
+
+        /** @page CHANGES
+
+        @section v2_XX_dev Changes with libapreq2-2.XX-dev (released ...).
+
+   Commit the changes and tag the tree (tr/0-9a-zA-Z/_/c in the 
    version number)
 
-        % cvs commit -m "2.XX-dev to be released" STATUS
+        % cvs commit -m "2.XX-dev released." STATUS
         % cvs tag v2_XX_dev
 
 6. Regenerate the release 
@@ -48,6 +55,18 @@ Instructions for the httpd-apreq-2 Release Manager (RM)
    or pgp:
 
         % pgp -sba libapreq2-2.XX-dev.tar.gz
+
+   Special note for releases on CPAN: you need to have an underscore '_' 
+   character in the version number to prevent the CPAN indexer from replacing 
+   libapreq-1.XX's Apache::(Cookie|Request) with the new ones in this package.  
+   Currently I've been adding the two-digit release candidate number (RC) to 
+   the package name at this point, eg.
+
+        mv libapreq2-2.XX-dev.tar.gz libapreq2-2.XX_RC.tar.gz
+        mv libapreq2-2.XX-dev.tar.gz.asc libapreq2-2.XX_RC.tar.gz.asc
+
+   It isn't pretty, but it does the job.
+
 
 7. Upload (scp) the package and signature to www.apache.org
    for distribution:
