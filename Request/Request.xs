@@ -68,7 +68,8 @@ static SV *upload_bless(ApacheUpload *upload)
 
 static void apreq_add_magic(SV *sv, ApacheRequest *req)
 {
-    sv_magic(SvRV(sv), Nullsv, '~', (char *)req->r, sizeof(request_rec));
+    sv_magic(SvRV(sv), Nullsv, '~', "dummy", -1);
+    SvMAGIC(SvRV(sv))->mg_ptr = (char *)req->r;
 }
 
 static void apreq_close_handle(void *data)
