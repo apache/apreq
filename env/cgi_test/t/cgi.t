@@ -16,7 +16,7 @@ my @big_key_len = (100, 500, 5000, 10000);
 my @big_key_num = (5, 15, 25);
 my @big_keys    = ('a'..'z');
 
-plan tests => 8 + @key_len * @key_num + @big_key_len * @big_key_num;
+plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num;
 
 my $script = WIN32 ? '/cgi-bin/cgi_test.exe' : '/cgi-bin/cgi_test';
 my $line_end = WIN32 ? "\r\n" : "\n";
@@ -115,7 +115,6 @@ ok t_cmp("\tfoo => 0$line_end",
              GET_BODY("$script?test=$test&key=$key", Cookie => $cookie),
              $test);
 }
-exit;
 {
     my $test  = 'bake';
     my $key   = 'apache';
@@ -123,7 +122,6 @@ exit;
     my $cookie = "$key=$value";
     my ($header) = GET_HEAD("$script?test=$test&key=$key", 
                             Cookie => $cookie) =~ /^#Set-Cookie:\s+(.+)/m;
-
     ok t_cmp($cookie, $header, $test);
 }
 {

@@ -144,8 +144,14 @@ APREQ_DECLARE(const char *)apreq_env_header_in(void *env,
 
 APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, const char *name, 
                                                 char *value)
-{    
-    return printf("%s: %s" CRLF, name, value) > 0 ? APR_SUCCESS : APR_EGENERAL;
+{
+    dCTX;
+    apr_file_t *out;
+    int bytes;
+    apr_file_open_stdout(&out, ctx->pool);
+    bytes = apr_file_printf(out, "%s: %s" CRLF, name, value);
+    apreq_log(APREQ_DEBUG 0, ctx, "Setting header: %s => %s", name, value);
+    return bytes > 0 ? APR_SUCCESS : APR_EGENERAL;
 }
 
 
