@@ -21,13 +21,6 @@
 !ERROR
 !ENDIF
 
-!IF "$(APACHE)" == ""
-!MESSAGE No Apache directory was specified.
-!MESSAGE This makefile is not to be run directly.
-!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
-!ERROR
-!ENDIF
-
 !IF "$(CFG)" == ""
 CFG=libapreq2 - Win32 Release
 !MESSAGE No configuration specified. Defaulting to libapreq2 - Win32 Release.
