@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/01 15:51:07 $]   -*-text-*-
+Last modified at [$Date: 2004/07/02 16:18:37 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -62,20 +62,18 @@ TODO:
 
     - CuTest needs va_arg to print comments for a failed unit test.
 
-    - Bump the minimum mp2 version to 1.99_15.
-
     - Flesh out the APR::Error-derived exception objects.  What tables
       should we add to the exception's attributes?  Some early ideas:
 
       -# Apache::Request::Error needs to provide args, body,
-        and upload tables (if Apache::Upload is being used).
-
+         and upload tables (if Apache::Upload is being used).
+         .
       -# Apache::Upload::Error needs to provide nothing, since any
          per-upload errors would be due to exceptions from apr/APR (e.g. 
          can't make tempfile, can't create APR::PerlIO handle).
-
+         .
       -# Apache::Cookie::Jar::Error needs to provide the jar->cookies table.
-
+         .
       -# Apache::Cookie::Error needs to provide no additional attributes,
          for the same reason Apache::Upload::Error doesn't.
 
