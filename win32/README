@@ -1,0 +1,21 @@
+This directory contains the necessary makefiles to build
+libapreq and related things on Win32 using VC++ 6. Run
+   perl Configure.pl
+to generate the top-level Makefile. Available options are:
+
+  --with-apache=C:\Path\to\Apache2 : specify the top-level Apache2 directory
+  --debug                          : build a debug version
+  --help                           : print a help message
+
+With no options specified, an attempt will be made to find a suitable 
+Apache2 directory, and if found, a non-debug version will be built.
+
+Assuming the configuration is successful, a Makefile will
+be generated. This can be used as:
+
+  nmake               - builds the libapreq library
+  nmake test          - runs the supplied tests
+  nmake mod_apreq     - builds mod_apreq
+  nmake libapreq_cgi  - builds libapreq_cgi
+  nmake clean         - clean
+
