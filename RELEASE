@@ -1,4 +1,4 @@
-Instructions for httpd-apreq Release Manager (RM)
+Instructions for the httpd-apreq Release Manager (RM)
 
 1. Prep the package for CPAN by running:
 
@@ -14,13 +14,21 @@ Instructions for httpd-apreq Release Manager (RM)
    'perl Makefile.PL ...' build. Make sure all perl tests pass.
 
 3. Upload a release candidate to httpd.apache.org/~username
-   and post a candidate announcement to apreq-dev@.
+   and post a candidate announcement to apreq-dev@.  The RM
+   or any other apreq committer may call for a formal vote on the 
+   candidate, but a formal vote is not a requirement for the release. 
+   Also, it is strongly recommended that the RM crosspost the 
+   candidate announcement to the modperl@ list, to solicit feedback
+   from a much larger audience.
 
-4. Give the apreq-dev@ participants 48 hours to comment on
-   the candidate.  If there's no problems, proceed to the next
-   step.  Otherwise, try to address the issues, commit fixes to,
-   cvs, and start over.  You can repeat this process on the 
-   modperl@ list, but that choice is up to the RM.
+4. Give the mailing list participants 48-72 hours to comment or
+   call-for-vote on the candidate.  Unless there is a formal vote,
+   the RM may apply any suggested patches to this candidate and 
+   proceed with its release.  However if there is a call-for-vote, 
+   then tally the results after 72 hours of the call.  If there is
+   a "majority consensus" (three +1 and more +1s than -1s) among the 
+   committers, the RM may proceed with the release. Otherwise the 
+   RM must abandon this candidate and start fresh.
 
 5. The candidate is ok. Now return to the original source tree
    and edit ./Changes:
@@ -46,18 +54,25 @@ Instructions for httpd-apreq Release Manager (RM)
 8. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
-    % scp libapreq-1.X.tar.gz libapreq-1.X.tar.gz.asc \
+    % scp libapreq-1.X.tar.gz* \
       <username>@www.apache.org:/www/httpd.apache.org/dist/httpd/libapreq/
 
-   Get another developer to confirm the uploaded signature is ok.
+   Ask another developer to confirm the uploaded signature is ok.
 
     % gpg --verify libapreq-1.X.tar.gz.asc
     % pgp libapreq-1.X.tar.gz.asc
 
+   Check that your public key is among those listed in the
+   /www/httpd.apache.org/dist/httpd/KEYS file.
+
 9. Upload the package to CPAN. Doublecheck that the md5 checksum
    received from PAUSE is correct.
 
-10. Post announcement to modperl@ and apreq-dev@ list:
+10. Update the httpd-areq homepage to list the new release in
+    the News section. For instructions on updating the httpd website, 
+    see httpd-apreq-2/build/WEBSITE.
+
+11. Post a final announcement to the modperl@ and apreq-dev@ lists:
 
         Subject: [ANNOUNCE] libapreq 1.X release
 
