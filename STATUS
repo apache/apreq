@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/05/22 15:25:43 $]   -*-text-*-
+Last modified at [$Date: 2004/06/04 22:02:11 $]   -*-text-*-
 /** @page STATUS
 
      2.03-dev under development
@@ -92,6 +92,9 @@ BUGS:
       but there are too many problems with the current (May 2004)
       ports of the auto* tools for us to accomodate FreeBSD (yet).
 
+    - The current API does not handle failed query_string parsing
+      adequately (apreq_request does log an error message, but 
+      there's no status code in the struct for users to interrogate).
 
 WISH LIST:
 

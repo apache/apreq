@@ -31,11 +31,12 @@
 #define CRLF    "\015\012"
 #endif
 
-APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
-                                                  const char *enctype,
-                                                  APREQ_DECLARE_PARSER(*parser),
-                                                  apreq_hook_t *hook,
-                                                  void *ctx)
+APREQ_DECLARE(apreq_parser_t *)
+    apreq_make_parser(apr_pool_t *pool,
+                      const char *enctype,
+                      apr_status_t (*parser) APREQ_PARSER_ARGS,
+                      apreq_hook_t *hook,
+                      void *ctx)
 {
     apreq_parser_t *p = apr_palloc(pool, sizeof *p);
     p->enctype = apr_pstrdup(pool,enctype);
@@ -45,10 +46,11 @@ APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
     return p;
 }
 
-APREQ_DECLARE(apreq_hook_t *) apreq_make_hook(apr_pool_t *pool,
-                                              APREQ_DECLARE_HOOK(*hook),
-                                              apreq_hook_t *next,
-                                              void *ctx)
+APREQ_DECLARE(apreq_hook_t *)
+    apreq_make_hook(apr_pool_t *pool,
+                    apr_status_t (*hook) APREQ_HOOK_ARGS,
+                    apreq_hook_t *next,
+                    void *ctx)
 {
     apreq_hook_t *h = apr_palloc(pool, sizeof *h);
     h->hook = hook;
@@ -58,20 +60,16 @@ APREQ_DECLARE(apreq_hook_t *) apreq_make_hook(apr_pool_t *pool,
 }
 
 
-APREQ_DECLARE(apr_status_t)apreq_add_hook(apreq_parser_t *p, 
-                                          apreq_hook_t *h)
+APREQ_DECLARE(void) apreq_add_hook(apreq_parser_t *p, 
+                                   apreq_hook_t *h)
 {
     apreq_hook_t *last = h;
-
-    if (p == NULL || h == NULL)
-        return APR_EINIT;
 
     while (last->next)
         last = last->next;
 
     last->next = p->hook;
     p->hook = h;
-    return APR_SUCCESS;
 }
 
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
@@ -839,7 +837,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             if (ctx->info == NULL)
                 ctx->info = apr_table_make(pool, APREQ_NELTS);
 
-            s = apreq_run_parser(ctx->hdr_parser, env, ctx->info, bb);
+            s = APREQ_RUN_PARSER(ctx->hdr_parser, env, ctx->info, bb);
 
             if (s != APR_SUCCESS)
                 return (s == APR_EOF) ? APR_SUCCESS : s;
@@ -984,7 +982,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             case APR_INCOMPLETE:
                 if (parser->hook) {
-                    s = apreq_run_hook(parser->hook, env, param, ctx->bb);
+                    s = APREQ_RUN_HOOK(parser->hook, env, param, ctx->bb);
                     if (s != APR_INCOMPLETE && s != APR_SUCCESS)
                         return s;
                 }
@@ -996,7 +994,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     apr_bucket *eos = 
                         apr_bucket_eos_create(ctx->bb->bucket_alloc);
                     APR_BRIGADE_INSERT_TAIL(ctx->bb, eos);
-                    s = apreq_run_hook(parser->hook, env, param, ctx->bb);
+                    s = APREQ_RUN_HOOK(parser->hook, env, param, ctx->bb);
                     apr_bucket_delete(eos);
                     if (s != APR_SUCCESS)
                         return s;

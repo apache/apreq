@@ -114,7 +114,7 @@
  */
 typedef struct apreq_value_t {
     const char    *name;    /**< value's name */
-    apr_status_t   status;  /**< APR status, usually SUCCESS or INCOMPLETE*/
+    apr_status_t   status;  /**< APR status, usually APR_SUCCESS or APR_INCOMPLETE*/
     apr_size_t     size;    /**< Size of data.*/
     char           data[1]; /**< Actual data bytes.*/
 } apreq_value_t;
@@ -126,9 +126,25 @@ typedef apreq_value_t *(apreq_value_copy_t)(apr_pool_t *p,
 
 
 #define apreq_attr_to_type(T,A,P) ( (T*) ((char*)(P)-offsetof(T,A)) )
-#define apreq_char_to_value(ptr)  apreq_attr_to_type(apreq_value_t, data, ptr)
 
+/**
+ * Converts (char *) to (apreq_value_t *).  The char * is assumed
+ * to point at the data attribute of an apreq_value_t struct.
+ *
+ * @param ptr   points at the data field of an apreq_value_t struct.
+ */
+
+#define apreq_char_to_value(ptr)  apreq_attr_to_type(apreq_value_t, data, ptr)
 #define apreq_strtoval(ptr)  apreq_char_to_value(ptr)
+
+/**
+ * Computes the length of the string, but unlike strlen(),
+ * it permits embedded null characters.
+ *
+ * @param ptr  points at the data field of an apreq_value_t struct.
+ * 
+ */
+
 #define apreq_strlen(ptr) (apreq_strtoval(ptr)->size)
 
 /**
@@ -220,40 +236,56 @@ APREQ_DECLARE(char *) apreq_memmem(char* hay, apr_size_t hlen,
  * @param ndl  Search string
  * @param nlen Length of search string.
  * @param type Match type.
+ * @return Offset of match string, or -1 if mo match is found.
  *
  */
 APREQ_DECLARE(apr_ssize_t) apreq_index(const char* hay, apr_size_t hlen, 
                         const char* ndl, apr_size_t nlen, 
                         const apreq_match_t type);
 /**
- * Places a quoted copy of src into dest.
- * @param dest Location of quoted copy.  Must be large enough to hold the copy.
+ * Places a quoted copy of src into dest.  Embedded quotes are escaped with a
+ * backslash ('\').
+ * @param dest Location of quoted copy.  Must be large enough to hold the copy
+ *             and trailing null byte.
  * @param src  Original string.
  * @param slen Length of original string.
+ * @param dest Destination string.
  * @return length of quoted copy in dest.
  */
+APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src, 
+                                      const apr_size_t slen);
 
-APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src, const apr_size_t slen);
+/**
+ * Same as apreq_quote() except when src begins and ends in quote marks. In
+ * that case it assumes src is quoted correctly, and just copies src to dest.
+ * @param dest Location of quoted copy.  Must be large enough to hold the copy
+ *             and trailing null byte.
+ * @param src  Original string.
+ * @param slen Length of original string.
+ * @param dest Destination string.
+ * @return length of quoted copy in dest.
+ */
+APREQ_DECLARE(apr_size_t) apreq_quote_once(char *dest, const char *src, 
+                                           const apr_size_t slen);
 
 /**
  * Url-encodes a string.
- * @param dest Location of url-encoded result string. Caller must ensure dest is
- *             large enough.
+ * @param dest Location of url-encoded result string. Caller must ensure it
+ *             is large enough to hold the encoded string and trailing '\0'.
  * @param src  Original string.
  * @param slen Length of original string.
  * @return length of url-encoded string in dest.
  */
-
-APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src, const apr_size_t slen);
+APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src, 
+                                       const apr_size_t slen);
 
 /**
  * Url-decodes a string.
- * @param dest Location of url-decoded result string. Caller must ensure dest is
- *             large enough.
+ * @param dest Location of url-encoded result string. Caller must ensure dest is
+ *             large enough to hold the encoded string and trailing null character.
  * @param src  Original string.
  * @param slen Length of original string.
- * @return Length of url-decoded string in dest, or < 0 on 
- *         decoding (bad data) error.
+ * @return Length of url-decoded string in dest, or < 0 on decoding (bad data) error.
  */
 
 APREQ_DECLARE(apr_ssize_t) apreq_decode(char *dest, const char *src, const apr_size_t slen);
@@ -274,10 +306,11 @@ APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p,
  * An \e in-situ url-decoder.
  * @param str  The string to decode
  * @return  Length of decoded string, or < 0 on error.
+ * @remark Equivalent to apreq_decode(str,str,strlen(str)).
  */
 
 APREQ_DECLARE(apr_ssize_t) apreq_unescape(char *str);
-#define apreq_unescape(str) apreq_decode(str,str,strlen(str))
+
 
 /** @enum apreq_expires_t Expiration date format */
 typedef enum {
@@ -340,6 +373,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
  * @param path  The base directory which will contain the temp file.
  *              If param == NULL, the directory will be selected via
  *              tempnam().  See the tempnam manpage for details.
+ * @return APR_SUCCESS on success; error code otherwise.
  */
 
 APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
@@ -356,9 +390,24 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
 
 APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 
+/**
+ * Duplicate a brigade.
+ * @param bb Original brigade.
+ * @return New brigade containing a bucket-by-bucket copy of the original.
+ */
+
 APREQ_DECLARE(apr_bucket_brigade *)
          apreq_brigade_copy(const apr_bucket_brigade *bb);
 
+/**
+ * Search a header string for the value of a particular named attribute.
+ * @param hdr Header string to scan.
+ * @param name Name of attribute to search for.
+ * @param nlen Length of name.
+ * @param val Location of (first) matching value.
+ * @param vlen Length of matching value.
+ * @return APR_SUCCESS if found, otherwise APR_NOTFOUND.
+ */
 APREQ_DECLARE(apr_status_t)
          apreq_header_attribute(const char *hdr,
                                 const char *name, const apr_size_t nlen,

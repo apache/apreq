@@ -74,36 +74,165 @@
  * @{
  */
 
+/**
+ * Analog of Apache's ap_log_rerror().
+ * @param file Filename to list in the log message.
+ * @param line Line number from the file.
+ * @param level Log level.
+ * @param status Status code.
+ * @param env Current environment.
+ * @param fmt Format string for the log message.
+ */
+
 APREQ_DECLARE_NONSTD(void) apreq_log(const char *file, int line,
                                      int level, apr_status_t status,
                                      void *env, const char *fmt, ...);
+/**
+ * Pool associated with the environment.
+ * @param env The current environment
+ * @return The associated pool.
+ */
 
 APREQ_DECLARE(apr_pool_t *) apreq_env_pool(void *env);
+
+/**
+ * Get/set the jar currently associated to the environment.
+ * @param env The current environment.
+ * @param jar New Jar to associate.
+ * @return The previous jar associated to the environment.
+ * jar == NULL gets the current jar, which will remain associated
+ * after the call.
+ */
 APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar);
+
+/**
+ * Get/set the request currently associated to the environment.
+ * @param env The current environment.
+ * @param req New request to associate.
+ * @return The previous request associated to the environment.
+ * req == NULL gets the current request, which will remain associated
+ * after the call.
+ */
 APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
                                                    apreq_request_t *req);
 
+/**
+ * Fetch the query string.
+ * @param env The current environment.
+ * @return The query string.
+ */
 APREQ_DECLARE(const char *) apreq_env_query_string(void *env);
+
+/**
+ * Fetch the header value (joined by ", " if there are multiple headers)
+ * for a given header name.
+ * @param env The current environment.
+ * @param name The header name.
+ * @return The value of the header, NULL if not found.
+ */
 APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name);
 
+
+/**
+ * Fetch the environment's "Content-Type" header.
+ * @param env The current environment.
+ * @return The value of the Content-Type header, NULL if not found.
+ */
 #define apreq_env_content_type(env) apreq_env_header_in(env, "Content-Type")
+
+
+/**
+ * Fetch the environment's "Cookie" header.
+ * @param env The current environment.
+ * @return The value of the "Cookie" header, NULL if not found.
+ */
 #define apreq_env_cookie(env) apreq_env_header_in(env, "Cookie")
+
+/**
+ * Fetch the environment's "Cookie2" header.
+ * @param env The current environment.
+ * @return The value of the "Cookie2" header, NULL if not found.
+ */
 #define apreq_env_cookie2(env) apreq_env_header_in(env, "Cookie2")
 
+/**
+ * Add a header field to the environment's outgoing response headers
+ * @param env The current environment.
+ * @param name The name of the outgoing header.
+ * @param val Value of the outgoing header.
+ * @return APR_SUCCESS on success, error code otherwise.
+ */
 APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env, 
                                                 const char *name,
                                                 char *val);
 
+/**
+ * Add a "Set-Cookie" header to the outgoing response headers.
+ * @param e The current environment.
+ * @param s The cookie string.
+ * @return APR_SUCCESS on success, error code otherwise.
+ */
 #define apreq_env_set_cookie(e,s) apreq_env_header_out(e,"Set-Cookie",s)
+
+/**
+ * Add a "Set-Cookie2" header to the outgoing response headers.
+ * @param e The current environment.
+ * @param s The cookie string.
+ * @return APR_SUCCESS on success, error code otherwise.
+ */
 #define apreq_env_set_cookie2(e,s) apreq_env_header_out(e,"Set-Cookie2",s)
 
+/**
+ * Read data from the environment and into the current active parser.
+ * @param env The current environment.
+ * @param block Read type (APR_READ_BLOCK or APR_READ_NONBLOCK).
+ * @param bytes Maximum number of bytes to read.
+ * @return APR_INCOMPLETE if there's more data to read,
+ *         APR_SUCCESS if everything was read & parsed successfully,
+ *         error code otherwise.
+ */
 APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
                                            apr_read_type_e block,
                                            apr_off_t bytes);
 
+/**
+ * Get/set the current temporary directory.
+ * @param env The current environment.
+ * @param path The full pathname of the new directory.
+ * @return The path of the previous temporary directory.  Note: a call using
+ * path==NULL fetches the current directory without resetting it to NULL.
+ */
+
 APREQ_DECLARE(const char *) apreq_env_temp_dir(void *env, const char *path);
+
+/**
+ * Get/set the current max_body setting.  This is the maximum
+ * amount of bytes that will be read into the environment's parser.
+ * @param env The current environment.
+ * @param bytes The new max_body setting.
+ * @return The previous max_body setting.  Note: a call using
+ * bytes == -1 fetches the current max_body setting without modifying it.
+ *
+ */
+
 APREQ_DECLARE(apr_off_t) apreq_env_max_body(void *env, apr_off_t bytes);
+
+/**
+ * Get/set the current max_brigade setting.  This is the maximum
+ * amount of heap-allocated buckets libapreq2 will use for its brigades.  
+ * If additional buckets are necessary, they will be created from a temporary file.
+ * @param env The current environment.
+ * @param bytes The new max_brigade setting.
+ * @return The previous max_brigade setting.  Note: a call using
+ * bytes == -1 fetches the current max_brigade setting without modifying it.
+ *
+ */
 APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(void *env, apr_ssize_t bytes);
+
+/**
+ * The environment structure, which must be fully defined
+ * for libapreq2 to operate properly in a given environment.
+ */
 
 typedef struct apreq_env_t {
     const char *name;
@@ -121,15 +250,38 @@ typedef struct apreq_env_t {
     apr_ssize_t (*max_brigade)(void *, apr_ssize_t);
 } apreq_env_t;
 
+/**
+ * Convenience macro for defining an environment module by mapping
+ * a function prefix to an associated environment structure.
+ * @param pre Prefix to define new environment.  All attributes of
+ * the apreq_env_t struct are defined with this as their prefix. The
+ * generated struct is named by appending "_module" to the prefix.
+ * @param name Name of this environment.
+ * @param mmn Magic number (i.e. version number) of this environment.
+ */
 #define APREQ_ENV_MODULE(pre, name, mmn) const apreq_env_t pre##_module = { \
   name, mmn, pre##_log, pre##_pool, pre##_jar, pre##_request,               \
   pre##_query_string, pre##_header_in, pre##_header_out, pre##_read,        \
   pre##_temp_dir, pre##_max_body, pre##_max_brigade }
 
 
+/**
+ * Get/set function for the active environment stucture. Usually this
+ * is called only once per process, to define the correct environment.
+ * @param mod  The new active environment.
+ * @return The previous active environment.  Note: a call using
+ * mod == NULL fetches the current environment module without modifying it.
+ */
 APREQ_DECLARE(const apreq_env_t *) apreq_env_module(const apreq_env_t *mod);
 
+/**
+ * The current environment's name.
+ */
 #define apreq_env_name (apreq_env_module(NULL)->name)
+
+/**
+ * The current environment's magic (ie. version) number.
+ */
 #define apreq_env_magic_number (apreq_env_module(NULL)->magic_number)
 
 /** @} */

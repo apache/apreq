@@ -4,6 +4,13 @@
 @section v2_03_dev Changes with libapreq2-2.03-dev
 
 - C API [joes]
+  apreq_run_(hook|parser) are macros, so they are capitalized now.
+  Fixed apreq_params_as_string() and added apreq_params_as_array().
+  Reworked definitions of APREQ_DECLARE_HOOK, APREQ_DECLARE_PARSER 
+  and apreq_(parser|hook)_t, hopefully to be more Win32 friendly.
+  Also updated the documentation.
+
+- C API [joes]
   Compensate for a missing CRLF in empty file upload block, which 
   actually complies with RFC 2046 Section 5.1.1.  Konqueror (version unknown)
   and Mozilla 0.9.7 are known to emit such blocks.

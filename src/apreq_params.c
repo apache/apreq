@@ -129,6 +129,57 @@ APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *pool,
 }
 
 
+static int param_push(void *data, const char *key, const char *val)
+{
+    apr_array_header_t *arr = data;
+    *(apreq_param_t **)apr_array_push(arr) = 
+        apreq_value_to_param(apreq_strtoval(val));
+    return 0;
+}
+
+
+APREQ_DECLARE(apr_array_header_t *) apreq_params_as_array(apr_pool_t *p,
+                                                          apreq_request_t *req,
+                                                          const char *key)
+{
+    apr_status_t s;
+    apr_array_header_t *arr = apr_array_make(p, apr_table_elts(req->args)->nelts,
+                                             sizeof(apreq_param_t *));
+
+    apr_table_do(param_push, arr, req->args, key);
+
+    do s = apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
+    while (s == APR_INCOMPLETE);
+
+    if (req->body)
+        apr_table_do(param_push, arr, req->body, key);
+
+    return arr;
+}
+
+APREQ_DECLARE(const char *) apreq_params_as_string(apr_pool_t *p,
+                                                   apreq_request_t *req,
+                                                   const char *key,
+                                                   apreq_join_t mode)
+{
+    /* Must adjust apreq_param_t pointers to apreq_value_t. */
+#ifdef DEBUG
+    assert(sizeof(apreq_param_t **) == sizeof(apreq_value_t **));
+#endif
+    apr_array_header_t *arr = apreq_params_as_array(p, req, key);
+    apreq_param_t **elt = (apreq_param_t **)arr->elts;
+    apreq_param_t **const end = elt + arr->nelts;
+    if (arr->nelts == 0)
+        return NULL;
+
+    while (elt < end) {
+        *(apreq_value_t **)elt = &(**elt).v;
+        ++elt;
+    }
+    return apreq_join(p, ", ", arr, mode);
+}
+
+
 APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool, 
                                                   const char *word,
                                                   const apr_size_t nlen, 
@@ -242,7 +293,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_request(apreq_request_t *req,
     if (req->body == NULL)
         req->body = apr_table_make(apreq_env_pool(req->env),APREQ_NELTS);
 
-    return apreq_run_parser(req->parser, req->env, req->body, bb);
+    return APREQ_RUN_PARSER(req->parser, req->env, req->body, bb);
 }
 
 

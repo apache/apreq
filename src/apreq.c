@@ -404,30 +404,38 @@ APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src,
     return d - dest;
 }
 
+APREQ_DECLARE(apr_size_t) apreq_quote_once(char *dest, const char *src, 
+                                           const apr_size_t slen) 
+{
+    if (slen > 1 && src[0] == '"' && src[slen-1] == '"') {
+        /* looks like src is already quoted */        
+        memcpy(dest, src, slen);
+        return slen;
+    }
+    else
+        return apreq_quote(dest, src, slen);
+}
+
 APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src, 
                                       const apr_size_t slen) 
 {
     char *d = dest;
     const char *s = src;
+    const char *const last = src + slen - 1;
 
     if (slen == 0) {
         *d = 0;
         return 0;
     }
 
-    if (src[0] == '"' && src[slen-1] == '"') { /* src is already quoted */
-        memcpy(dest, src, slen);
-        return slen;
-    }
-
     *d++ = '"';
 
-    while (s < src + slen) {
+    while (s <= last) {
 
         switch (*s) {
 
         case '\\': 
-            if (s < src + slen - 1) {
+            if (s < last) {
                 *d++ = *s++;
                 break;
             }
@@ -533,12 +541,13 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
 
 
     case QUOTE:
-        d += apreq_quote(d, a[0]->data, a[0]->size);
+
+        d += apreq_quote_once(d, a[0]->data, a[0]->size);
 
         for (j = 1; j < n; ++j) {
             memcpy(d, sep, slen);
             d += slen;
-            d += apreq_quote(d, a[j]->data, a[j]->size);
+            d += apreq_quote_once(d, a[j]->data, a[j]->size);
         }
         break;
 
@@ -578,6 +587,10 @@ APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p,
     return rv->data;
 }
 
+APREQ_DECLARE(apr_ssize_t) apreq_unescape(char *str)
+{
+    return apreq_decode(str,str,strlen(str));
+}
 
 APR_INLINE
 static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v, 
