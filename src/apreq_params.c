@@ -155,18 +155,16 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
 {
     const char *val = apr_table_get(req->args, name);
 
-    if (val)
-        return apreq_value_to_param(apreq_strtoval(val));
-    else if (req->body == NULL)
-        return NULL;
+    if (val == NULL && req->body)
+        val = apr_table_get(req->body, name);
 
-    val = apr_table_get(req->body, name);
     if (val == NULL) {
         apreq_cfg_t *cfg = req->cfg;
 
         if (cfg && cfg->read_ahead) {
-            apreq_env_read(req->env, APR_NONBLOCK_READ, cfg->read_ahead);
-            val = apr_table_get(req->body, name);
+            apreq_env_read(req->env, APR_BLOCK_READ, cfg->read_ahead);
+            if (req->body)
+                val = apr_table_get(req->body, name);
         }
     }
     return val ? apreq_value_to_param(apreq_strtoval(val)) : NULL;

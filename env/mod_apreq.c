@@ -220,7 +220,7 @@ static void apreq_filter_make_context(ap_filter_t *f)
     ctx->spool  = apr_brigade_create(r->pool, alloc);
     ctx->bytes_seen = 0;
     ctx->status = APR_INCOMPLETE;
-    ctx->mode = AP_MODE_SPECULATIVE;
+    ctx->mode = AP_MODE_READBYTES;
 
     apreq_log(APREQ_DEBUG 0, r, 
               "apreq filter context created." );    
@@ -246,7 +246,7 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
     if (f->ctx == NULL)
         apreq_filter_make_context(f);
     ctx = f->ctx;
-
+    apreq_log(APREQ_DEBUG 0, r, "prefetching %ld bytes", bytes);
     return ap_get_brigade(f, NULL, ctx->mode, block, bytes);
 }
 
@@ -385,12 +385,18 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         apr_bucket_brigade *tmp = apr_brigade_create(r->pool, 
                                        apr_bucket_alloc_create(r->pool));
 
+        apreq_log(APREQ_DEBUG 0, r, "%d <= %s", readbytes,
+                  apr_table_get(r->headers_in,"Content-Length"));
         rv = ap_get_brigade(f->next, tmp, mode, block,
-                            readbytes + ctx->bytes_seen);
+                            readbytes);
+
+        if (!APR_BRIGADE_EMPTY(tmp))
+            apreq_log(APREQ_DEBUG 0, r, "NONEMPTY: read = %d", readbytes);
+
         if (rv != APR_SUCCESS)
             return rv;
 
-        if (mode == AP_MODE_SPECULATIVE) {
+        if (mode == AP_MODE_SPECULATIVE) { /* XXX CHOKES */
             apr_off_t len;
             /* throw away buckets we've already seen */
             rv = apr_brigade_partition(tmp, ctx->bytes_seen, &e);
@@ -408,7 +414,13 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         }
         else {
             /* append a copy of the brigade to the spool */
+            apr_off_t len;
+            rv = apr_brigade_length(tmp, 0, &len);
             bb = apreq_copy_brigade(tmp);
+            if (rv != APR_SUCCESS)
+                return rv;
+
+            apreq_log(APREQ_DEBUG 0, r, "GOT HERE: len = %ld", len);
             APR_BRIGADE_CONCAT(ctx->spool, tmp);
         }
 
