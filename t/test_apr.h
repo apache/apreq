@@ -52,104 +52,54 @@
  * <http://www.apache.org/>.
  */
 
-#include "apreq.h"
-#include "apreq_env.h"
-#include "apreq_params.h"
-#include "apreq_parsers.h"
-#include "apreq_cookie.h"
+#ifndef APR_TEST_INCLUDES
+#define APR_TEST_INCLUDES
 
-#include <stdlib.h>
-#include <stdio.h>
+#include "CuTest.h"
+#include "apr_pools.h"
 
-#define dENV struct env_ctx *env = (struct env_ctx *)ctx
-/* the "warehouse" */
+/* Some simple functions to make the test apps easier to write and
+ * a bit more consistent...
+ */
 
-struct env_ctx {
-    apr_pool_t         *pool;
-    apreq_request_t    *req;
-    apreq_jar_t        *jar;
-    apr_bucket_brigade *bb;
-};
+extern apr_pool_t *p;
 
-static const char env_name[] = "CGI";
-#define CRLF "\015\012"
+CuSuite *getsuite(void);
 
-static apr_pool_t *env_pool(void *ctx)
-{
-    dENV;
-    return env->pool;
-}
+CuSuite *teststr(void);
+CuSuite *testtime(void);
+CuSuite *testvsn(void);
+CuSuite *testipsub(void);
+CuSuite *testmmap(void);
+CuSuite *testud(void);
+CuSuite *testtable(void);
+CuSuite *testhash(void);
+CuSuite *testsleep(void);
+CuSuite *testpool(void);
+CuSuite *testfmt(void);
+CuSuite *testfile(void);
+CuSuite *testdir(void);
+CuSuite *testfileinfo(void);
+CuSuite *testrand(void);
+CuSuite *testdso(void);
+CuSuite *testoc(void);
+CuSuite *testdup(void);
+CuSuite *testsockets(void);
+CuSuite *testproc(void);
+CuSuite *testpoll(void);
+CuSuite *testlock(void);
+CuSuite *testsockopt(void);
+CuSuite *testpipe(void);
+CuSuite *testthread(void);
+CuSuite *testgetopt(void);
+CuSuite *testnames(void);
+CuSuite *testuser(void);
+CuSuite *testpath(void);
+CuSuite *testenv(void);
 
-static const char *env_in(void *ctx, const char *name)
-{
-    return getenv(name);
-}
-
-static apr_status_t env_out(void *ctx, const char *name, char *value)
-{    
-    return printf("%s: %s" CRLF, name, value) > 0 ? APR_SUCCESS : APR_EGENERAL;
-}
-
-static const char *env_args(void *ctx)
-{
-    return getenv("QUERY_STRING");
-}
-
-static void *env_jar(void *ctx, void *jar)
-{
-    dENV;
-    if (jar != NULL) {
-        apreq_jar_t *old_jar = env->jar;
-        env->jar = jar;
-        return old_jar;
-    }
-
-    return env->jar;
-}
-
-static void *env_request(void *ctx, void *req)
-{
-    dENV;
-
-    if (req != NULL) {
-        apreq_request_t *old_req = env->req;
-        env->req = req;
-        return old_req;
-    }
-    return env->req;
-}
-
-static apreq_cfg_t *env_cfg(void *ctx)
-{
-    /* XXX: not implemented */
-    return NULL;
-}
+/* Assert that RV is an APR_SUCCESS value; else fail giving strerror
+ * for RV and CONTEXT message. */
+void apr_assert_success(CuTest* tc, const char *context, apr_status_t rv);
 
 
-static int dump_table(void *ctx, const char *key, const char *value)
-{
-    dENV;
-    dAPREQ_LOG;
-    apreq_log(APREQ_DEBUG 0, env, "%s => %s", key, value);
-    return 1;
-}
-
-
-APREQ_LOG(env_log)
-{
-
-}
-
-const struct apreq_env APREQ_ENV =
-{
-    env_name,
-    env_pool,
-    env_in,
-    env_out,
-    env_args,
-    env_jar,
-    env_request,
-    env_cfg,
-    env_log
- };
-
+#endif /* APR_TEST_INCLUDES */

@@ -1,13 +1,17 @@
-lib_LTLIBRARIES = mod_apreq.la libapreq_cgi.la
 INCLUDES = -I@APACHE2_INCLUDES@ -I../src
 
+lib_LIBRARIES = libapreq_cgi.a
+noinst_LTLIBRARIES = mod_apreq.la
+
 mod_apreq_la_SOURCES = mod_apreq.c
-mod_apreq_la_LDFLAGS = -rpath @APACHE2_LIBS@ -dynamic -module
+mod_apreq_la_LDFLAGS = -export-dynamic -module -rpath @APACHE2_MODULES@
 mod_apreq_la_LIBADD = ../src/libapreq.la
-mod_apreq_ls_CPPFLAGS = -DLIBDIR=@APACHE2_MODULES@
 
+libapreq_cgi_a_SOURCES = libapreq_cgi.c
+libapreq_cgi_a_LIBADD = ../src/libapreq.la
 
-libapreq_cgi_la_SOURCES = libapreq_cgi.c
-libapreq_cgi_la_LDFLAGS = -rpath @APACHE2_LIBS@ -version-info 2:0
-libapreq_cgi_la_LIBADD = ../src/libapreq.la
-libapreq_cgi_la_CPPFLAGS = -DLIBDIR=@APACHE2_LIBS@
+libdir = @APACHE2_LIBS@
+includedir = @APACHE2_INCLUDES@
+
+install-exec-local: mod_apreq.la
+	@APACHE2_APXS@ -i -a -n apreq mod_apreq.la

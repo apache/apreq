@@ -1,11 +1,12 @@
 AC_DEFUN(AC_APREQ, [
-	AC_ARG_WITH(apache2,
-		[  --with-apache2  the apache-2 server_root directory],
-		[APACHE2=$withval],
-		[APACHE2="/usr/local/apache2"])
-	APACHE2_INCLUDES="$APACHE2/include"
-        APACHE2_MODULES="$APACHE2/modules"
-        APACHE2_LIBS="$APACHE2/lib"
+	AC_ARG_WITH(apache2-apxs,
+		[  --with-apache2-apxs  path to apache2's apxs],
+		[APACHE2_APXS=$withval],
+		[APACHE2_APXS="/usr/local/apache2/bin/apxs"])
+	APACHE2_INCLUDES="`$APACHE2_APXS -q INCLUDEDIR`"
+        APACHE2_MODULES="`$APACHE2_APXS -q LIBEXECDIR`"
+        APACHE2_LIBS="`$APACHE2_APXS -q LIBDIR`"
+        AC_SUBST(APACHE2_APXS)
 	AC_SUBST(APACHE2_INCLUDES)
         AC_SUBST(APACHE2_MODULES)
         AC_SUBST(APACHE2_LIBS)

@@ -14,17 +14,6 @@ AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
-dnl AC_ARG_ENABLE(maintainer-mode,[  --enable-maintainer-mode  Turn on debugging 
-dnl and compile time warnings],
-dnl   [APR_ADDTO(CFLAGS,-g)
-dnl   if test "$GCC" = "yes"; then
-dnl     APR_ADDTO(CFLAGS,[-Wall -Wmissing-prototypes -Wstrict-prototypes 
-dnl                       -Wmissing-declarations])
-dnl   elif test "$AIX_XLC" = "yes"; then
-dnl     APR_ADDTO(CFLAGS,-qfullpath -qinitauto=FE -qwarn64 -qcheck=all)
-dnl   fi
-dnl ])dnl
-
 AM_MAINTAINER_MODE
 
 dnl Checks for header files.

@@ -136,8 +136,12 @@ APREQ_DECLARE(apr_status_t) apreq_parse(apreq_request_t *req,
 
     if (req->v.status == APR_INCOMPLETE) {
         apreq_parser_t *p = *(apreq_parser_t **)req->v.data;
+        apr_status_t s = apreq_env_read();
+
+        if (bb = NULL) {
+            apreq_env_read(req->env, &bb);
+        }
         req->v.status = p->parser(req->pool, bb, p);
-        apreq_log(APREQ_DEBUG req->v.status, req->env, "parsing request.");
     }
 
     return req->v.status;

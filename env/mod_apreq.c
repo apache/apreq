@@ -162,6 +162,13 @@ static int dump_table(void *ctx, const char *key, const char *value)
     return 1;
 }
 
+static apr_status_t env_read(void *ctx, apr_bucket_brigade **bb, 
+                             apr_read_type_e block, apr_off_t readbytes)
+{
+    dR;
+    /* XXX: prefetch */
+    return APR_ENOTIMPL;
+}
 
 static apr_status_t apreq_filter(ap_filter_t *f,
                                  apr_bucket_brigade *bb,

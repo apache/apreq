@@ -52,104 +52,109 @@
  * <http://www.apache.org/>.
  */
 
-#include "apreq.h"
-#include "apreq_env.h"
-#include "apreq_params.h"
-#include "apreq_parsers.h"
-#include "apreq_cookie.h"
-
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#define dENV struct env_ctx *env = (struct env_ctx *)ctx
-/* the "warehouse" */
+#include "test_apr.h"
 
-struct env_ctx {
-    apr_pool_t         *pool;
-    apreq_request_t    *req;
-    apreq_jar_t        *jar;
-    apr_bucket_brigade *bb;
+/* Top-level pool which can be used by tests. */
+apr_pool_t *p;
+
+void apr_assert_success(CuTest* tc, const char* context, apr_status_t rv)
+{
+    if (rv == APR_ENOTIMPL) {
+        CuNotImpl(tc, context);
+    }
+
+    if (rv != APR_SUCCESS) {
+        char buf[STRING_MAX], ebuf[128];
+        sprintf(buf, "%s (%d): %s\n", context, rv,
+                apr_strerror(rv, ebuf, sizeof ebuf));
+        CuFail(tc, buf);
+    }
+}
+
+static const struct testlist {
+    const char *testname;
+    CuSuite *(*func)(void);
+} tests[] = {
+/*    {"teststr", teststr},
+    {"testtime", testtime},
+    {"testvsn", testvsn},
+    {"testipsub", testipsub},
+    {"testmmap", testmmap},
+    {"testud", testud}, */
+    {"tables", testtable},
+/*    {"testhash", testhash},
+    {"testsleep", testsleep},
+    {"testpool", testpool},
+    {"testfmt", testfmt},
+    {"testfile", testfile},
+    {"testfileinfo", testfileinfo},
+    {"testpipe", testpipe},
+    {"testdup", testdup},
+    {"testdir", testdir},
+    {"testrand", testrand},
+    {"testdso", testdso},
+    {"testoc", testoc},
+    {"testsockets", testsockets},
+    {"testsockopt", testsockopt},
+    {"testproc", testproc},
+    {"testpoll", testpoll},
+    {"testlock", testlock},
+    {"testthread", testthread},
+    {"testargs", testgetopt},
+    {"testnames", testnames},
+    {"testuser", testuser},
+    {"testpath", testpath},
+    {"testenv", testenv}, */
+    {"LastTest", NULL}
 };
 
-static const char env_name[] = "CGI";
-#define CRLF "\015\012"
-
-static apr_pool_t *env_pool(void *ctx)
+int main(int argc, char *argv[])
 {
-    dENV;
-    return env->pool;
-}
+    CuSuiteList *alltests = NULL;
+    CuString *output = CuStringNew();
+    int i;
+    int partial = 0;
 
-static const char *env_in(void *ctx, const char *name)
-{
-    return getenv(name);
-}
+    apr_initialize();
+    atexit(apr_terminate);
 
-static apr_status_t env_out(void *ctx, const char *name, char *value)
-{    
-    return printf("%s: %s" CRLF, name, value) > 0 ? APR_SUCCESS : APR_EGENERAL;
-}
+    CuInit(argc, argv);
 
-static const char *env_args(void *ctx)
-{
-    return getenv("QUERY_STRING");
-}
+    apr_pool_create(&p, NULL);
 
-static void *env_jar(void *ctx, void *jar)
-{
-    dENV;
-    if (jar != NULL) {
-        apreq_jar_t *old_jar = env->jar;
-        env->jar = jar;
-        return old_jar;
+    /* build the list of tests to run */
+    for (i = 1; i < argc; i++) {
+        int j;
+        if (!strcmp(argv[i], "-v")) {
+            continue;
+        }
+        for (j = 0; tests[j].func != NULL; j++) {
+            if (!strcmp(argv[i], tests[j].testname)) {
+                if (!partial) {
+                    alltests = CuSuiteListNew("Partial APR Tests");
+                    partial = 1;
+                }
+
+                CuSuiteListAdd(alltests, tests[j].func());
+                break;
+            }
+        }
     }
 
-    return env->jar;
-}
-
-static void *env_request(void *ctx, void *req)
-{
-    dENV;
-
-    if (req != NULL) {
-        apreq_request_t *old_req = env->req;
-        env->req = req;
-        return old_req;
+    if (!partial) {
+        alltests = CuSuiteListNew("All APR Tests");
+        for (i = 0; tests[i].func != NULL; i++) {
+            CuSuiteListAdd(alltests, tests[i].func());
+        }
     }
-    return env->req;
+
+    CuSuiteListRunWithSummary(alltests);
+    i = CuSuiteListDetails(alltests, output);
+    printf("%s\n", output->buffer);
+
+    return i > 0 ? 1 : 0;
 }
-
-static apreq_cfg_t *env_cfg(void *ctx)
-{
-    /* XXX: not implemented */
-    return NULL;
-}
-
-
-static int dump_table(void *ctx, const char *key, const char *value)
-{
-    dENV;
-    dAPREQ_LOG;
-    apreq_log(APREQ_DEBUG 0, env, "%s => %s", key, value);
-    return 1;
-}
-
-
-APREQ_LOG(env_log)
-{
-
-}
-
-const struct apreq_env APREQ_ENV =
-{
-    env_name,
-    env_pool,
-    env_in,
-    env_out,
-    env_args,
-    env_jar,
-    env_request,
-    env_cfg,
-    env_log
- };
 

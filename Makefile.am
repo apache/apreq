@@ -1,5 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src env
+SUBDIRS = src env t
 EXTRA_DIST = README
 
-test:	check
+test: check
+	t/testall

@@ -1,0 +1,29 @@
+APREQ 2.0 STATUS:                                              -*-text-*-
+Last modified at [$Date: 2003/04/17 19:19:39 $]
+
+     2.0.0  in development
+
+Contributors looking for a mission:
+
+    * just do an egrep on "TODO" or "XXX" and see what's there
+
+
+CURRENT RELEASE NOTES:
+
+
+RELEASE SHOWSTOPPERS:
+
+
+CURRENT VOTES:
+
+
+TODO:
+
+  Write tests.
+  Populate the glue/ directory (perl, tcl, etc.).
+
+
+OPEN ISSUES:
+
+
+BUGS:
