@@ -28,11 +28,9 @@
            The modules' source files are in the env/ directory.
            Two supported modules are now available
 
-                1) mod_apreq - an Apache 2 filter module,
+                1) an Apache 2 filter module - mod_apreq.c,
 
-                2) libapreq_cgi - a static library for creating 
-                                  CGI applications with libapreq2.
-
+                2) the default CGI module included in libapreq2.
 
   Version 2 also includes the perl APIs for libapreq2- Apache::Request 
   and Apache::Cookie.  The corresponding XS modules are generated in
