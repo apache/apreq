@@ -63,13 +63,17 @@ sub cmodules_write_makefile {
     open $fh, ">$makefile" or die "open $makefile: $!";
 
     if (WIN32) {
+        require File::Spec;
         my @goners = map {$name . '.' . $_} qw(exp ilk lib pdb so lo);
+        my $libs = join ' ', 
+            (map {'-l' . File::Spec->catfile($env_dir_libs, $_)}
+              qw(libapreq2.lib));
         print $fh <<EOF;
 APXS=$self->{APXS}
 all: $lib
 
 $lib: $name.c
-        \$(APXS) -L../../../win32/libs -I../../../src -llibapreq2 -llibhttpd $dversion -p -I$self->{cmodules_dir} -c $name.c
+        \$(APXS) -I../../../src $libs -llibhttpd $dversion -p -I$self->{cmodules_dir} -c $name.c
 
 clean:
 	-erase @goners vc60.pdb 
