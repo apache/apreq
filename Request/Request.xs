@@ -184,7 +184,7 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
 	    return -1; /* error */
 
     {
-    	dTARG;
+    	SV *sv;
     	dSP;
 
     	PUSHMARK(SP);
@@ -192,17 +192,17 @@ static int upload_hook(void *ptr, char *buf, int len, ApacheUpload *upload)
         ENTER;
     	SAVETMPS;
 
-    	TARG = sv_newmortal();
-    	sv_setref_pv( TARG, "Apache::Upload", (void*)upload );
-    	PUSHTARG;
+    	sv = sv_newmortal();
+    	sv_setref_pv( sv, "Apache::Upload", (void*)upload );
+    	PUSHs(sv);
 
-    	TARG = sv_2mortal( newSVpvn(buf,len) );
-    	SvTAINT(TARG);
-    	PUSHTARG;
+    	sv = sv_2mortal( newSVpvn(buf,len) );
+    	SvTAINT(sv);
+    	PUSHs(sv);
 
-    	TARG = sv_2mortal( newSViv(len) );
-    	SvTAINT(TARG);
-    	PUSHTARG;
+    	sv = sv_2mortal( newSViv(len) );
+    	SvTAINT(sv);
+    	PUSHs(sv);
 
     	PUSHs(hook->data);
 
