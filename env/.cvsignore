@@ -4,3 +4,8 @@ Makefile
 Makefile.in
 mod_apreq.la
 mod_apreq.lo
+test_cgi
+test_cgi.o
+test_cgi.exe
+libapreq_cgi.o
+libapreq2_cgi.a

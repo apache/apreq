@@ -7,8 +7,9 @@ EXTRA_DIST = t c-modules
 lib_LIBRARIES = lib@APREQ_LIBNAME@_cgi.a
 lib@APREQ_LIBNAME@_cgi_a_SOURCES = libapreq_cgi.c
 #
-#check_PROGRAMS = test_cgi
-#test_cgi_LDADD = lib@APREQ_LIBNAME@_cgi.a
+check_PROGRAMS = test_cgi
+test_cgi_LDADD = lib@APREQ_LIBNAME@_cgi.a
+test_cgi_SOURCES = test_cgi.c
 
 if BUILD_HTTPD
 
@@ -44,13 +45,14 @@ t/TEST : Makefile.am t/TEST.PL
 endif
 
 run_tests : t/TEST
+	-cp -f test_cgi t/cgi-bin
 	@PERL@ t/TEST
 
 test :: all check run_tests
 
 test_clean : cmodules_clean
 	-@PERL@ t/TEST -clean
-	-rm -rf t/htdocs t/logs t/modules t/TEST
+	-rm -rf t/htdocs t/logs t/modules t/TEST t/cgi-bin/test_cgi
 
 cmodules_clean:
 	-cd c-modules && $(MAKE) clean
