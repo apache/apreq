@@ -318,7 +318,7 @@ static void hook_discard(CuTest *tc)
     apr_status_t rv;
     apreq_param_t *dummy;
     apreq_request_t *req = apreq_request(APREQ_XML_ENCTYPE, "");
-    apr_bucket_brigade *bb = apr_brigade_create(p, 
+    apr_bucket_brigade *bb = apr_brigade_create(p,
                                    apr_bucket_alloc_create(p));
     apr_bucket *e = apr_bucket_immortal_create(xml_data,
                                                    strlen(xml_data),

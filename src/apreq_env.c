@@ -53,6 +53,11 @@ APREQ_DECLARE(apr_pool_t *) apreq_env_pool(void *env)
     return apreq_env->pool(env);
 }
 
+APREQ_DECLARE(apr_bucket_alloc_t *) apreq_env_bucket_alloc(void *env)
+{
+    return apreq_env->bucket_alloc(env);
+}
+
 APREQ_DECLARE(apreq_jar_t *) apreq_env_jar(void *env, apreq_jar_t *jar)
 {
     return apreq_env->jar(env,jar);
@@ -145,11 +150,16 @@ static struct {
 
 
 #define APREQ_MODULE_NAME         "CGI"
-#define APREQ_MODULE_MAGIC_NUMBER 20040913
+#define APREQ_MODULE_MAGIC_NUMBER 20041130
 
 static apr_pool_t *cgi_pool(void *env)
 {
     return (apr_pool_t *)env;
+}
+
+static apr_bucket_alloc_t *cgi_bucket_alloc(void *env)
+{
+    return apr_bucket_alloc_create((apr_pool_t *)env);
 }
 
 static const char *cgi_query_string(void *env)

@@ -93,6 +93,14 @@ APREQ_DECLARE_NONSTD(void) apreq_log(const char *file, int line,
 APREQ_DECLARE(apr_pool_t *) apreq_env_pool(void *env);
 
 /**
+ * Bucket allocator associated with the environment.
+ * @param env The current environment
+ * @return The associated bucket allocator.
+ */
+
+APREQ_DECLARE(apr_bucket_alloc_t *) apreq_env_bucket_alloc(void *env);
+
+/**
  * Get/set the jar currently associated to the environment.
  * @param env The current environment.
  * @param jar New Jar to associate.
@@ -238,6 +246,7 @@ typedef struct apreq_env_t {
     apr_uint32_t magic_number;
     void (*log)(const char *,int,int,apr_status_t,void *,const char *,va_list);
     apr_pool_t *(*pool)(void *);
+    apr_bucket_alloc_t *(*bucket_alloc)(void *);
     apreq_jar_t *(*jar)(void *,apreq_jar_t *);
     apreq_request_t *(*request)(void *,apreq_request_t *);
     const char *(*query_string)(void *);
@@ -259,9 +268,9 @@ typedef struct apreq_env_t {
  * @param mmn Magic number (i.e. version number) of this environment.
  */
 #define APREQ_ENV_MODULE(pre, name, mmn) const apreq_env_t pre##_module = { \
-  name, mmn, pre##_log, pre##_pool, pre##_jar, pre##_request,               \
-  pre##_query_string, pre##_header_in, pre##_header_out, pre##_read,        \
-  pre##_temp_dir, pre##_max_body, pre##_max_brigade }
+  name, mmn, pre##_log, pre##_pool, pre##_bucket_alloc, pre##_jar,          \
+  pre##_request, pre##_query_string, pre##_header_in, pre##_header_out,     \
+  pre##_read, pre##_temp_dir, pre##_max_body, pre##_max_brigade }
 
 
 /**

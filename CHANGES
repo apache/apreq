@@ -5,6 +5,11 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- C API [joes]
+  Add apreq_env_bucket_alloc() to get an allocator directly from the
+  environment instead of creating them from a pool.  This is an
+  ABI change, starting with libapreq2.so.2.0.23.
+
 - Build system [joes]
   Add --with-apache2-httpd option so users can override apxs's
   notion of where the httpd executable is.  XSBuilder's header

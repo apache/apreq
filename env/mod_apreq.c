@@ -169,7 +169,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME               "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER       20041119
+#define APREQ_MODULE_MAGIC_NUMBER       20041130
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -191,6 +191,12 @@ static apr_pool_t *apache2_pool(void *env)
 {
     dR;
     return r->pool;
+}
+
+static apr_bucket_alloc_t *apache2_bucket_alloc(void *env)
+{
+    dR;
+    return r->connection->bucket_alloc;
 }
 
 static const char *apache2_header_in(void *env, const char *name)
@@ -364,7 +370,7 @@ static void apreq_filter_make_context(ap_filter_t *f)
         }
     }
 
-    alloc = apr_bucket_alloc_create(r->pool);
+    alloc = r->connection->bucket_alloc;
     ctx = apr_palloc(r->pool, sizeof *ctx);
 
     f->ctx       = ctx;

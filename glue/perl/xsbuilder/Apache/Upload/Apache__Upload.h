@@ -150,7 +150,7 @@ static XS(apreq_xs_upload_make)
 
     upload = apreq_make_param(p, name, nlen, value, vlen);
 
-    upload->bb = apr_brigade_create(p, apr_bucket_alloc_create(p));
+    upload->bb = apr_brigade_create(p, apreq_env_bucket_alloc(env));
     b = apr_bucket_file_create(f, 0, finfo.size, p, upload->bb->bucket_alloc);
     APR_BRIGADE_INSERT_TAIL(upload->bb, b);
     b = apr_bucket_immortal_create("", 0, upload->bb->bucket_alloc);

@@ -244,7 +244,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
     struct url_ctx *ctx;
 
     if (parser->ctx == NULL) {
-        apr_bucket_alloc_t *bb_alloc = apr_bucket_alloc_create(pool);
+        apr_bucket_alloc_t *bb_alloc = apreq_env_bucket_alloc(env);
         ctx = apr_palloc(pool, sizeof *ctx);
         ctx->bb = apr_brigade_create(pool, bb_alloc);
         parser->ctx = ctx;
@@ -439,7 +439,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
     struct hdr_ctx *ctx;
 
     if (parser->ctx == NULL) {
-        apr_bucket_alloc_t *bb_alloc = apr_bucket_alloc_create(pool);
+        apr_bucket_alloc_t *bb_alloc = apreq_env_bucket_alloc(env);
         ctx = apr_pcalloc(pool, sizeof *ctx);
         ctx->bb = apr_brigade_create(pool, bb_alloc);
         parser->ctx = ctx;
@@ -850,7 +850,7 @@ static struct mfd_ctx *create_multipart_context(void *env,
     char *ct;
     apr_size_t blen;
     apr_pool_t *pool = apreq_env_pool(env);
-    apr_bucket_alloc_t *bucket_alloc = apr_bucket_alloc_create(pool);
+    apr_bucket_alloc_t *bucket_alloc = apreq_env_bucket_alloc(env);
     struct mfd_ctx *ctx = apr_palloc(pool, sizeof *ctx);
 
     ctx->status = MFD_INIT;
@@ -1282,8 +1282,7 @@ APREQ_DECLARE_PARSER(apreq_parse_generic)
         ctx->status = GEN_INCOMPLETE;
         ctx->param = apreq_make_param(pool, 
                                       "_dummy_", strlen("_dummy_"), "", 0);
-        ctx->param->bb = apr_brigade_create(pool, 
-                                            apr_bucket_alloc_create(pool));
+        ctx->param->bb = apr_brigade_create(pool, apreq_env_bucket_alloc(env));
         ctx->param->info = apr_table_make(pool, APREQ_NELTS);
     }
 

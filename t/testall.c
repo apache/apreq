@@ -66,6 +66,11 @@ static apr_pool_t *test_pool(void *env)
     return p;
 }
 
+static apr_bucket_alloc_t *test_bucket_alloc(void *env)
+{
+    return apr_bucket_alloc_create(p);
+}
+
 static const char *test_header_in(void *env, const char *name)
 {
     return env;

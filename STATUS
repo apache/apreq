@@ -49,9 +49,6 @@ TODO:
     - There are too many calls to apreq_env_pool()- lots of these
       can be eliminated by caching the pool in the parser's context.
 
-    - Add apreq_env_bucket_alloc(env) function to get a per-request 
-      bucket allocator, which will help the parsers to conserve memory.
-
     - in glue/perl/t/apreq/cgi.t on Win32, printing to the error log
       hangs if the strings involved are about 10000 in size.
       This doesn't occur in the env/cgi tests - why?
