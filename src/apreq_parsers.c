@@ -95,7 +95,9 @@ APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
         return apreq_make_parser(pool, type, 
                                  apreq_parse_urlencoded, hook, NULL);
 
-    else if (!strncasecmp(type,APREQ_MFD_ENCTYPE,strlen(APREQ_MFD_ENCTYPE)))
+    else if (!strncasecmp(type,APREQ_MFD_ENCTYPE,strlen(APREQ_MFD_ENCTYPE))
+             || strncasecmp(type,  "multipart/related", 
+                            strlen("multipart/related")))
         return apreq_make_parser(pool, type, 
                                  apreq_parse_multipart, hook, NULL);
 
@@ -847,6 +849,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         ctx->bb = apr_brigade_create(pool, bucket_alloc);
         ctx->in = apr_brigade_create(pool, bucket_alloc);
         ctx->eos = apr_bucket_eos_create(bucket_alloc);
+
     }
     else if (ctx->status == MFD_COMPLETE) {
         apreq_log(APREQ_DEBUG APR_SUCCESS, env, 
@@ -961,19 +964,28 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             cd = apr_table_get(ctx->info, "Content-Disposition");
 
-            if (cd == NULL) {
-                ctx->status = MFD_ERROR;
-                return APR_EGENERAL;
+            if (cd != NULL) {
+                s = apreq_header_attribute(cd, "name", 4, &name, &nlen);
+
+                if (s != APR_SUCCESS) {
+                    ctx->status = MFD_ERROR;
+                    return APR_EGENERAL;
+                }
+
+                s = apreq_header_attribute(cd, "filename", 8, &filename, &flen);
             }
-
-            s = apreq_header_attribute(cd, "name", 4, &name, &nlen);
-
-            if (s != APR_SUCCESS) {
-                ctx->status = MFD_ERROR;
-                return APR_EGENERAL;
+            else {
+                cd = apr_table_get(ctx->info, "Content-ID");
+                if (cd == NULL) {
+                    ctx->status = MFD_ERROR;
+                    return APR_EGENERAL;
+                }
+                name = cd;
+                nlen = strlen(name);
+                filename = "";
+                flen = 0;
+                s = APR_SUCCESS;
             }
-
-            s = apreq_header_attribute(cd, "filename", 8, &filename, &flen);
 
             if (s != APR_SUCCESS) {
                 name = apr_pstrmemdup(pool, name, nlen);
@@ -1110,7 +1122,71 @@ APREQ_DECLARE_HOOK(apreq_hook_disable_uploads)
 }
 
 
-/* XML parser */
+/* generic parser */
+
+struct gen_ctx {
+    apreq_param_t               *param;
+    enum {
+        GEN_INCOMPLETE,
+        GEN_COMPLETE,
+        GEN_ERROR
+    }                            status;
+};
+
+
+APREQ_DECLARE_PARSER(apreq_parse_generic)
+{
+    struct gen_ctx *ctx = parser->ctx;
+    apr_pool_t *pool = apreq_env_pool(env);
+    apr_status_t s = APR_SUCCESS;
+    apr_bucket *e = APR_BRIGADE_LAST(bb);
+    unsigned saw_eos = 0;
+
+    if (ctx == NULL) {
+        parser->ctx = ctx = apr_palloc(pool, sizeof *ctx);
+        ctx->status = GEN_INCOMPLETE;
+        ctx->param = apreq_make_param(pool, 
+                                      "_dummy_", strlen("_dummy_"), "", 0);
+        ctx->param->bb = apr_brigade_create(pool, 
+                                            apr_bucket_alloc_create(pool));
+        ctx->param->info = apr_table_make(pool, APREQ_NELTS);
+    }
+
+
+    PARSER_STATUS_CHECK(GEN);
+
+    while (e != APR_BRIGADE_SENTINEL(bb)) {
+        if (APR_BUCKET_IS_EOS(e)) {
+            saw_eos = 1;
+            break;
+        }
+        e = APR_BUCKET_PREV(e);
+    }
+
+    if (parser->hook) {
+        s = APREQ_RUN_HOOK(parser->hook, env, ctx->param, bb);
+        if (s != APR_SUCCESS) {
+            ctx->status = GEN_ERROR;
+            return s;
+        }
+    }
+
+    APREQ_BRIGADE_SETASIDE(bb, pool);
+    s = apreq_brigade_concat(bb, ctx->param->bb, bb);
+
+    if (s != APR_SUCCESS) {
+        ctx->status = GEN_ERROR;
+        return s;
+    }
+
+    if (saw_eos) {
+        ctx->status = GEN_COMPLETE;
+        return APR_SUCCESS;
+    }
+    else
+        return APR_INCOMPLETE;
+}
+
 
 struct xml_ctx {
     apr_xml_doc                 *doc;
@@ -1123,24 +1199,24 @@ struct xml_ctx {
 };
 
 
-APREQ_DECLARE_PARSER(apreq_parse_xml)
+APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser)
 {
     apr_pool_t *pool = apreq_env_pool(env);
-    struct xml_ctx *ctx = parser->ctx;
+    struct xml_ctx *ctx = hook->ctx;
     apr_status_t s = APR_SUCCESS;
-    apr_bucket *e = APR_BRIGADE_FIRST(bb);
+    apr_bucket *e;
 
     if (ctx == NULL) {
-        parser->ctx = ctx = apr_palloc(pool, sizeof *ctx);
+        hook->ctx = ctx = apr_palloc(pool, sizeof *ctx);
         ctx->doc = NULL;
         ctx->xml_parser = apr_xml_parser_create(pool);
         ctx->status = XML_INCOMPLETE;
     }
-    
 
     PARSER_STATUS_CHECK(XML);
 
-    while (e != APR_BRIGADE_SENTINEL(bb))
+    for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
+         e = APR_BUCKET_NEXT(e))
     {
         const char *data;
         apr_size_t dlen;
@@ -1149,7 +1225,6 @@ APREQ_DECLARE_PARSER(apreq_parse_xml)
             s = apr_xml_parser_done(ctx->xml_parser, &ctx->doc);
             if (s == APR_SUCCESS) {
                 ctx->status = XML_COMPLETE;
-                apr_bucket_delete(e);
             }
             else {
                 ctx->status = XML_ERROR;
@@ -1159,7 +1234,6 @@ APREQ_DECLARE_PARSER(apreq_parse_xml)
            return s;
         }
         else if (APR_BUCKET_IS_METADATA(e)) {
-            e = APR_BUCKET_NEXT(e);
             continue;
         }
 
@@ -1174,13 +1248,7 @@ APREQ_DECLARE_PARSER(apreq_parse_xml)
 
         s = apr_xml_parser_feed(ctx->xml_parser, data, dlen);
 
-        if (s == APR_SUCCESS) {
-            apr_bucket *f = e;
-            e = APR_BUCKET_NEXT(e);
-            apr_bucket_delete(f);
-            continue;
-        }
-        else {
+        if (s != APR_SUCCESS) {
             ctx->status = XML_ERROR;
             apreq_log(APREQ_ERROR s, env, "apreq_parse_xml: "
                       "apr_xml_parser_feed failed");
@@ -1190,5 +1258,4 @@ APREQ_DECLARE_PARSER(apreq_parse_xml)
     }
 
     return APR_INCOMPLETE;
-
 }

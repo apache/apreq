@@ -38,13 +38,42 @@ static char form_data[] =
 "--AaB03x--" CRLF;
 
 static char xml_data[] =
-"<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" /* length == 42 */
+"<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
 "<methodCall>"
 "  <methodName>foo.bar</methodName>"
 "  <params>"
 "    <param><value><int>1</int></value></param>"
 "  </params>"
 "</methodCall>";
+
+static char rel_data[] = /*offsets: 122, 522, */
+"--f93dcbA3" CRLF
+"Content-Type: application/xml; charset=UTF-8" CRLF
+"Content-Length: 400" CRLF
+"Content-ID: <980119.X53GGT@example.com>" CRLF CRLF /*122*/
+"<?xml version=\"1.0\"?>" CRLF
+"<uploadDocument>"
+"  <title>My Proposal</title>"
+"  <author>E. X. Ample</author>"
+"  <summary>A proposal for a new project.</summary>"
+"  <notes image=\"cid:980119.X17AXM@example.com\">(see handwritten region)</notes>"
+"  <keywords>project proposal funding</keywords>"
+"  <readonly>false</readonly>"
+"  <filename>image.png</filename>"
+"  <content>cid:980119.X25MNC@example.com</content>"
+"</uploadDocument>" /*400*/ CRLF
+"--f93dcbA3" CRLF /*14*/
+"Content-Type: image/png" CRLF
+"Content-Transfer-Encoding: binary" CRLF
+"Content-ID: <980119.X25MNC@example.com>" CRLF CRLF /*103*/
+"...Binary data here..."  /*22*/ CRLF
+"--f93dcbA3" CRLF /*14*/
+"Content-Type: image/png" CRLF
+"Content-Transfer-Encoding: binary" CRLF
+"Content-ID: <980119.X17AXM@example.com>" CRLF CRLF
+"...Binary data here..." CRLF
+"--f93dcbA3--" CRLF;
+
 
 
 extern apr_bucket_brigade *bb;
@@ -201,13 +230,12 @@ static void parse_disable_uploads(CuTest *tc)
     CuAssertPtrEquals(tc, NULL, val);
 }
 
-static void parse_xml(CuTest *tc)
+static void parse_generic(CuTest *tc)
 {
     const char *val;
     apr_size_t vlen;
     apr_status_t rv;
-    int ns_map = 0;
-    apr_xml_doc *doc;
+    apreq_param_t *dummy;
     apreq_request_t *req = apreq_request(APREQ_XML_ENCTYPE, "");
     apr_bucket_brigade *bb = apr_brigade_create(p, 
                                    apr_bucket_alloc_create(p));
@@ -221,17 +249,82 @@ static void parse_xml(CuTest *tc)
 
     req->body = NULL;
     req->parser = apreq_make_parser(p, APREQ_XML_ENCTYPE, 
-                                    apreq_parse_xml, NULL, NULL);
+                                    apreq_parse_generic, NULL, NULL);
     rv = apreq_parse_request(req,bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    doc = *(apr_xml_doc **)req->parser->ctx;
-    CuAssertPtrNotNull(tc, doc);
-    apr_xml_to_text(p, doc->root, APR_XML_X2T_FULL, 
-                    doc->namespaces, &ns_map, &val, &vlen);
-    CuAssertIntEquals(tc, strlen(xml_data), vlen + 42);
-    CuAssertStrEquals(tc, xml_data + 43, val);
+    dummy = *(apreq_param_t **)req->parser->ctx;
+    CuAssertPtrNotNull(tc, dummy);
+    apr_brigade_pflatten(dummy->bb, (char **)&val, &vlen, p);
 
+    CuAssertIntEquals(tc, strlen(xml_data), vlen);
+    CuAssertStrNEquals(tc, xml_data, val, vlen);
 }
+
+
+static void parse_related(CuTest *tc)
+{
+    char ct[] = "multipart/related; boundary=f93dcbA3; "
+        "type=application/xml; start=\"<980119.X53GGT@example.com>\"";
+    char data[] = "...Binary data here...";
+    int dlen = strlen(data);
+    const char *val;
+    apr_size_t vlen;
+    apr_status_t rv;
+    int ns_map = 0;
+    apr_xml_doc *doc;
+    apreq_hook_t *xml_hook;
+    apreq_param_t *param;
+    apreq_request_t *req = apreq_request(ct, "");
+    apr_bucket_brigade *bb = apr_brigade_create(p, 
+                                   apr_bucket_alloc_create(p));
+    apr_bucket *e = apr_bucket_immortal_create(rel_data,
+                                                   strlen(rel_data),
+                                                   bb->bucket_alloc);
+
+    CuAssertPtrNotNull(tc, req);
+    APR_BRIGADE_INSERT_HEAD(bb, e);
+    APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
+    xml_hook = apreq_make_hook(p, apreq_hook_apr_xml_parser, NULL, NULL);
+
+    req->body = NULL;
+    req->parser = apreq_make_parser(p, ct, 
+                                    apreq_parse_multipart, xml_hook, NULL);
+    rv = apreq_parse_request(req,bb);
+    CuAssertIntEquals(tc, APR_SUCCESS, rv);
+    CuAssertPtrNotNull(tc, req->body);
+
+    param = apreq_param(req, "<980119.X53GGT@example.com>");
+    CuAssertPtrNotNull(tc, param);
+    CuAssertPtrNotNull(tc, param->info);
+    val = apr_table_get(param->info, "Content-Length");
+    CuAssertStrEquals(tc, "400", val);
+    CuAssertPtrNotNull(tc, param->bb);
+    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    CuAssertIntEquals(tc, 400, vlen);
+    CuAssertStrNEquals(tc,rel_data + 122, val, 400);
+
+    doc = *(apr_xml_doc **)xml_hook->ctx;
+    apr_xml_to_text(p, doc->root, APR_XML_X2T_FULL,
+                    doc->namespaces, &ns_map, &val, &vlen);
+    CuAssertIntEquals(tc, 400 - 22, vlen);
+    CuAssertStrNEquals(tc, rel_data + 122 + 23, val, 400 - 23);
+
+    param = apreq_param(req, "<980119.X25MNC@example.com>");
+    CuAssertPtrNotNull(tc, param);
+    CuAssertPtrNotNull(tc, param->bb);
+    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    CuAssertIntEquals(tc, dlen, vlen);
+    CuAssertStrNEquals(tc, data, val, vlen);
+
+    param = apreq_param(req, "<980119.X17AXM@example.com>");
+    CuAssertPtrNotNull(tc, param);
+    CuAssertPtrNotNull(tc, param->bb);
+    apr_brigade_pflatten(param->bb, (char **)&val, &vlen, p);
+    CuAssertIntEquals(tc, dlen, vlen);
+    CuAssertStrNEquals(tc, data, val, vlen);
+}
+
+
 
 CuSuite *testparser(void)
 {
@@ -239,7 +332,8 @@ CuSuite *testparser(void)
     SUITE_ADD_TEST(suite, parse_urlencoded);
     SUITE_ADD_TEST(suite, parse_multipart);
     SUITE_ADD_TEST(suite, parse_disable_uploads);
-    SUITE_ADD_TEST(suite, parse_xml);
+    SUITE_ADD_TEST(suite, parse_generic);
+    SUITE_ADD_TEST(suite, parse_related);
     return suite;
 }
 

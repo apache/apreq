@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/08/30 16:25:56 $]   -*-text-*-
+Last modified at [$Date: 2004/09/10 23:54:08 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.05 in development.
@@ -61,8 +61,6 @@ TODO:
       tests to verify their API.
 
     - Write parser/hook API documentation, and add perl glue for the API.
-
-    - Add XForms logic to the mfd parser.
 
     - symbol exports files:
       -# aix needs .exp files

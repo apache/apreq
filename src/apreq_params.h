@@ -320,25 +320,31 @@ APREQ_DECLARE_PARSER(apreq_parse_headers);
 APREQ_DECLARE_PARSER(apreq_parse_urlencoded);
 
 /**
- * Rfc2388 multipart/form-data parser. It will reject
- * any buckets representing preamble and postamble text
- * (this is normal behavior, not an error condition).
+ * Rfc2388 multipart/form-data (and XForms 1.0 multipart/related)
+ * parser. It will reject any buckets representing preamble and 
+ * postamble text (this is normal behavior, not an error condition).
  * See #APREQ_RUN_PARSER for more info on rejected data.
  */
 APREQ_DECLARE_PARSER(apreq_parse_multipart);
 
-
+/**
+ * Generic parser.  No table entries will be added to
+ * the req->body table by this parser.  The parser creates
+ * a dummy apreq_param_t to pass to any configured hooks.  If
+ * no hooks are configured, the dummy param's bb slot will
+ * contain a copy of the request body.  It can be retrieved
+ * by casting the parser's ctx pointer to (apreq_param_t **).
+ */
+APREQ_DECLARE_PARSER(apreq_parse_generic);
 
 /**
- * application/xml expat-based parser. It will reject
- * metabuckets, and it will parse until EOS appears.
+ * apr_xml_parser hook. It will parse until EOS appears.
  * The parsed document isn't available until parsing has
- * completed successfully.  The parser's ctx pointer may 
- * be cast as (const apr_xml_doc **) to retrieve the 
- * parsed document.  No table entries will be added to 
- * req->body by this parser.
+ * completed successfully.  The hook's ctx pointer may 
+ * be cast as (apr_xml_doc **) to retrieve the 
+ * parsed document.
  */
-APREQ_DECLARE_PARSER(apreq_parse_xml);
+APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser);
 
 /**
  * Construct a parser.
