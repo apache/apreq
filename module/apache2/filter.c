@@ -202,7 +202,15 @@ void apreq_filter_init_context(ap_filter_t *f)
     request_rec *r = f->r;
     struct filter_ctx *ctx = f->ctx;
     apr_bucket_alloc_t *ba = r->connection->bucket_alloc;
-    const char *cl_header = apr_table_get(r->headers_in, "Content-Length");
+    const char *cl_header;
+
+    if (r->method_number == M_GET) {
+        /* Don't parse GET (this protects against subrequest body parsing). */
+        ctx->body_status = APREQ_ERROR_NODATA;
+        return;
+    }
+
+    cl_header = apr_table_get(r->headers_in, "Content-Length");
 
     if (cl_header != NULL) {
         char *dummy;
@@ -211,7 +219,7 @@ void apreq_filter_init_context(ap_filter_t *f)
         if (dummy == NULL || *dummy != 0) {
             ap_log_rerror(APLOG_MARK, APLOG_ERR, APR_EGENERAL, r,
                           "Invalid Content-Length header (%s)", cl_header);
-            ctx->status = APREQ_ERROR_BADHEADER;
+            ctx->body_status = APREQ_ERROR_BADHEADER;
             return;
         }
         else if (content_length > ctx->read_limit) {
@@ -219,7 +227,7 @@ void apreq_filter_init_context(ap_filter_t *f)
                           "Content-Length header (%s) exceeds configured "
                           "max_body limit (%" APR_UINT64_T_FMT ")", 
                           cl_header, ctx->read_limit);
-            ctx->status = APREQ_ERROR_OVERLIMIT;
+            ctx->body_status = APREQ_ERROR_OVERLIMIT;
             return;
         }
     }
@@ -238,12 +246,12 @@ void apreq_filter_init_context(ap_filter_t *f)
                                                 NULL);
             }
             else {
-                ctx->status = APREQ_ERROR_NOPARSER;
+                ctx->body_status = APREQ_ERROR_NOPARSER;
                 return;
             }
         }
         else {
-            ctx->status = APREQ_ERROR_NOHEADER;
+            ctx->body_status = APREQ_ERROR_NOHEADER;
             return;
         }
     }
@@ -258,9 +266,10 @@ void apreq_filter_init_context(ap_filter_t *f)
 
     ctx->hook_queue = NULL;
     ctx->bb    = apr_brigade_create(r->pool, ba);
+    ctx->bbtmp = apr_brigade_create(r->pool, ba);
     ctx->spool = apr_brigade_create(r->pool, ba);
     ctx->body  = apr_table_make(r->pool, APREQ_DEFAULT_NELTS);
-    ctx->status = APR_INCOMPLETE;
+    ctx->body_status = APR_INCOMPLETE;
 }
 
 
@@ -293,7 +302,11 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     struct apache2_handle *handle = 
         (struct apache2_handle *)apreq_handle_apache2(r);
 
-    if (ctx == NULL || ctx->status == APR_EINIT) {
+    /* Don't parse GET (this protects against subrequest body parsing). */
+    if (f->r->method_number == M_GET)
+        return APR_SUCCESS;
+
+    if (ctx == NULL || ctx->body_status == APR_EINIT) {
         if (f == r->input_filters) {
             handle->f = f;
         }
@@ -319,25 +332,87 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     if (handle->f == f) {
         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r, 
                      "disabling stale protocol filter");
-        if (ctx->status == APR_INCOMPLETE)
-            ctx->status = APREQ_ERROR_INTERRUPT;
+        if (ctx->body_status == APR_INCOMPLETE)
+            ctx->body_status = APREQ_ERROR_INTERRUPT;
         handle->f = NULL;
     }
     return APR_SUCCESS;
 }
 
-static APR_INLINE
-unsigned apreq_filter_status_is_error(apr_status_t s)
+
+
+apr_status_t apreq_filter_prefetch(ap_filter_t *f, apr_off_t readbytes)
 {
-    switch (s) {
-    case APR_INCOMPLETE:
-    case APREQ_ERROR_INTERRUPT:
-    case APR_SUCCESS:
-        return 0;
-    default:
-        return 1;
+    struct filter_ctx *ctx = f->ctx;
+    request_rec *r = f->r;
+    apr_status_t rv;
+    apr_off_t len;
+
+    if (ctx->body_status == APR_EINIT)
+        apreq_filter_init_context(f);
+
+    if (ctx->body_status != APR_INCOMPLETE || readbytes == 0)
+        return ctx->body_status;
+
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r,
+                  "prefetching %" APR_OFF_T_FMT " bytes", readbytes);
+
+    rv = ap_get_brigade(f->next, ctx->bb, AP_MODE_READBYTES,
+                       APR_BLOCK_READ, readbytes);
+
+    if (rv != APR_SUCCESS) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, 
+                      "ap_get_brigade failed during prefetch");
+        ctx->filter_error = rv;
+        return ctx->body_status = APREQ_ERROR_GENERAL;
     }
+
+    apreq_brigade_setaside(ctx->bb, r->pool);
+    apreq_brigade_copy(ctx->bbtmp, ctx->bb);
+
+    rv = apreq_brigade_concat(r->pool, ctx->temp_dir, ctx->brigade_limit,
+                              ctx->spool, ctx->bbtmp);
+    if (rv != APR_SUCCESS && rv != APR_EOF) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
+                      "apreq_brigade_concat failed; TempDir problem?");
+        ctx->filter_error = APR_EGENERAL;
+        return ctx->body_status = rv;
+    }
+
+    /* Adding "f" to the protocol filter chain ensures the 
+     * spooled data is preserved across internal redirects.
+     */
+
+    if (f != r->proto_input_filters) {
+        ap_filter_t *in;
+        for (in = r->input_filters; in != r->proto_input_filters; 
+             in = in->next)
+        {
+            if (f == in) {
+                r->proto_input_filters = f;
+                break;
+            }
+        }
+    }
+
+    apr_brigade_length(ctx->bb, 1, &len);
+    ctx->bytes_read += len;
+
+    if (ctx->bytes_read > ctx->read_limit) {
+        ctx->body_status = APREQ_ERROR_OVERLIMIT;
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, ctx->body_status, r, 
+                      "Bytes read (%" APR_UINT64_T_FMT
+                      ") exceeds configured read limit (%" APR_UINT64_T_FMT ")",
+                      ctx->bytes_read, ctx->read_limit);
+        return ctx->body_status;
+    }
+
+    ctx->body_status = apreq_parser_run(ctx->parser, ctx->body, ctx->bb);
+    apr_brigade_cleanup(ctx->bb);
+
+    return ctx->body_status;
 }
+
 
 
 apr_status_t apreq_filter(ap_filter_t *f,
@@ -349,164 +424,71 @@ apr_status_t apreq_filter(ap_filter_t *f,
     request_rec *r = f->r;
     struct filter_ctx *ctx;
     apr_status_t rv;
+    apr_off_t len;
 
     switch (mode) {
     case AP_MODE_READBYTES:
-    case AP_MODE_EXHAUSTIVE:
         /* only the modes above are supported */
         break;
-    case AP_MODE_GETLINE: /* punt- chunks are b0rked in ap_http_filter */
+
+    case AP_MODE_EXHAUSTIVE: /* not worth supporting at this level */
+    case AP_MODE_GETLINE: /* punt- chunked trailers are b0rked in ap_http_filter */
         return ap_get_brigade(f->next, bb, mode, block, readbytes);
+
     default:
         return APR_ENOTIMPL;
     }
-
 
     if (f->ctx == NULL)
         apreq_filter_make_context(f);
 
     ctx = f->ctx;
 
-    if (ctx->status == APR_EINIT)
+    if (ctx->body_status == APR_EINIT)
         apreq_filter_init_context(f);
 
-    if (apreq_filter_status_is_error(ctx->status)) {
+    if (ctx->spool && !APR_BRIGADE_EMPTY(ctx->spool)) {
+        apr_bucket *e;
+        rv = apr_brigade_partition(ctx->spool, readbytes, &e);
+        if (rv != APR_SUCCESS && rv != APR_INCOMPLETE)
+            return rv;
+
+        if (APR_BUCKET_IS_EOS(e))
+            e = APR_BUCKET_NEXT(e);
+
+        apreq_brigade_move(bb, ctx->spool, e);
+        return APR_SUCCESS;
+    }
+    else if (ctx->body_status != APR_INCOMPLETE) {
+        if (ctx->filter_error)
+            return ctx->filter_error;
+
         rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
         ap_remove_input_filter(f);
         return rv;
     }
 
 
-    if (bb != NULL) {
+    rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
+    if (rv != APR_SUCCESS)
+        return rv;
 
-        if (!ctx->saw_eos) {
- 
-            if (ctx->status == APR_INCOMPLETE) {
-                apr_off_t len;
-                rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
-            
-                if (rv != APR_SUCCESS) {
-                    ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, 
-                                 "ap_get_brigade failed");
-                    return rv;
-                }
+    apreq_brigade_copy(ctx->bb, bb);
+    apr_brigade_length(bb, 1, &len);
+    ctx->bytes_read += len;
 
-                apreq_brigade_copy(ctx->bb, bb);
-                apr_brigade_length(bb, 1, &len);
-                ctx->bytes_read += len;
-
-                if (ctx->bytes_read > ctx->read_limit) {
-                    ctx->status = APREQ_ERROR_OVERLIMIT;
-                    ap_log_rerror(APLOG_MARK, APLOG_ERR, ctx->status, r, 
-                                 "Bytes read (%" APR_UINT64_T_FMT
-                                 ") exceeds configured max_body limit (%"
-                                 APR_UINT64_T_FMT ")",
-                                 ctx->bytes_read, ctx->read_limit);
-                }
-            }
-            if (APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(ctx->bb)))
-                ctx->saw_eos = 1;
-        }
-
-        if (!APR_BRIGADE_EMPTY(ctx->spool)) {
-            APR_BRIGADE_CONCAT(ctx->spool, bb);
-            if (mode == AP_MODE_READBYTES) {
-                apr_bucket *e;
-                rv = apr_brigade_partition(ctx->spool, readbytes, &e);
-                if (rv != APR_SUCCESS && rv != APR_INCOMPLETE) {
-                    ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, 
-                                 "partition failed");
-                    return rv;
-                }
-                if (APR_BUCKET_IS_EOS(e))
-                    e = APR_BUCKET_NEXT(e);
-                apreq_brigade_move(bb, ctx->spool, e);
-                apreq_brigade_setaside(ctx->spool, r->pool);
-            }
-        }
-
-        if (ctx->status != APR_INCOMPLETE) {
-
-            if (APR_BRIGADE_EMPTY(ctx->spool)) {
-                ap_filter_t *next = f->next;
-
-                ap_remove_input_filter(f);
-                if (APR_BRIGADE_EMPTY(bb))
-                    return ap_get_brigade(next, bb, mode, block, readbytes);
-            }
-            return APR_SUCCESS;
-        }
+    if (ctx->bytes_read > ctx->read_limit) {
+        ctx->body_status = APREQ_ERROR_OVERLIMIT;
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, ctx->body_status, r, 
+                      "Bytes read (%" APR_UINT64_T_FMT
+                      ") exceeds configured max_body limit (%"
+                      APR_UINT64_T_FMT ")",
+                      ctx->bytes_read, ctx->read_limit);
     }
-    else if (!ctx->saw_eos) {
-        /* bb == NULL, so this is a prefetch read! */
-        apr_off_t total_read = 0;
-
-        /* XXX cache this thing in somewhere */
-        bb = apr_brigade_create(ctx->bb->p, ctx->bb->bucket_alloc);
-
-        while (total_read < readbytes) {
-            apr_off_t len;
-            apr_bucket *last = APR_BRIGADE_LAST(ctx->spool);
-
-            if (APR_BUCKET_IS_EOS(last)) {
-                ctx->saw_eos = 1;
-                break;
-            }
-
-            rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
-            if (rv != APR_SUCCESS) {
-                /*XXX how should we handle this filter-chain error? */
-                return rv;
-            }
-            apreq_brigade_setaside(bb, r->pool);
-            apreq_brigade_copy(ctx->bb, bb);
-
-            apr_brigade_length(bb, 1, &len);
-            total_read += len;
-
-            rv = apreq_brigade_concat(r->pool, ctx->temp_dir, ctx->brigade_limit,
-                                      ctx->spool, bb);
-            if (rv != APR_SUCCESS && rv != APR_EOF) {
-                ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
-                          "apreq_brigade_concat failed; TempDir problem?");
-                /*XXX how should we handle this apreq-based error? */
-                return ctx->status = rv;
-            }
-        }
-
-        ctx->bytes_read += total_read;
-
-        if (ctx->bytes_read > ctx->read_limit) {
-            ctx->status = APREQ_ERROR_OVERLIMIT;
-            ap_log_rerror(APLOG_MARK, APLOG_ERR, ctx->status, r, 
-                         "Bytes read (%" APR_UINT64_T_FMT
-                         ") exceeds configured read limit (%" APR_UINT64_T_FMT ")",
-                         ctx->bytes_read, ctx->read_limit);
-        }
-
-        /* Adding "f" to the protocol filter chain ensures the 
-         * spooled data is preserved across internal redirects.
-         */
-        if (f != r->proto_input_filters) {
-            ap_filter_t *in;
-            for (in = r->input_filters; in != r->proto_input_filters; 
-                 in = in->next)
-            {
-                if (f == in) {
-                    r->proto_input_filters = f;
-                    break;
-                }
-            }
-        }
-    }
-    else
-        return APR_SUCCESS;
-
-    if (ctx->status == APR_INCOMPLETE) {
-        ctx->status = apreq_parser_run(ctx->parser, ctx->body, ctx->bb);
+    else {
+        ctx->body_status = apreq_parser_run(ctx->parser, ctx->body, ctx->bb);
         apr_brigade_cleanup(ctx->bb);
     }
-
     return APR_SUCCESS;
 }
 
@@ -562,14 +544,18 @@ void apreq_filter_make_context(ap_filter_t *f)
 
     if (f == r->input_filters 
         && r->proto_input_filters == f->next
-        && f->next->frec->filter_func.in_func == apreq_filter) 
+        && f->next->frec->filter_func.in_func == apreq_filter
+        && f->r->method_number != M_GET)
     {
 
         ctx = f->next->ctx;
 
-        switch (ctx->status) {
+        switch (ctx->body_status) {
+
         case APREQ_ERROR_INTERRUPT:
-            ctx->status = APR_INCOMPLETE;
+            ctx->body_status = APR_INCOMPLETE;
+            /* fall thru */
+
         case APR_SUCCESS:
 
             if (d != NULL) {
@@ -593,14 +579,13 @@ void apreq_filter_make_context(ap_filter_t *f)
             return;
 
         default:
-            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, ctx->status, r, 
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, ctx->body_status, r, 
                           "cannot steal context: bad filter status");
         }
     }
 
-
     ctx = apr_pcalloc(r->pool, sizeof *ctx);
-    ctx->status = APR_EINIT;
+    ctx->body_status = APR_EINIT;
 
     if (d == NULL) {
         ctx->read_limit    = (apr_uint64_t)-1;
@@ -613,3 +598,4 @@ void apreq_filter_make_context(ap_filter_t *f)
 
     f->ctx = ctx;
 }
+

@@ -29,6 +29,26 @@
 #include "apreq_private_apache2.h"
 #include "apreq_error.h"
 
+
+APR_INLINE
+static ap_filter_t *get_apreq_filter(apreq_handle_t *env)
+{
+    struct apache2_handle *handle = (struct apache2_handle *)env;
+
+    if (handle->f == NULL) {
+        handle->f = ap_add_input_filter(APREQ_FILTER_NAME, NULL, 
+                                        handle->r, 
+                                        handle->r->connection);
+        /* ap_add_input_filter does not guarantee cfg->f == r->input_filters,
+         * so we reposition the new filter there as necessary.
+         */
+        apreq_filter_relocate(handle->f); 
+    }
+
+    return handle->f;
+}
+
+
 static apr_status_t apache2_jar(apreq_handle_t *env, const apr_table_t **t)
 {
     struct apache2_handle *handle = (struct apache2_handle*)env;
@@ -138,20 +158,20 @@ static apr_status_t apache2_body(apreq_handle_t *req, const apr_table_t **t)
 
     ctx = f->ctx;
 
-    switch (ctx->status) {
+    switch (ctx->body_status) {
 
     case APR_EINIT:
         apreq_filter_init_context(f);
-        if (ctx->status != APR_INCOMPLETE)
+        if (ctx->body_status != APR_INCOMPLETE)
             break;
 
     case APR_INCOMPLETE:
-        while (apreq_filter_read(f, APREQ_DEFAULT_READ_BLOCK_SIZE) == APR_INCOMPLETE)
+        while (apreq_filter_prefetch(f, APREQ_DEFAULT_READ_BLOCK_SIZE) == APR_INCOMPLETE)
             ;   /*loop*/
     }
 
     *t = ctx->body;
-    return ctx->status;
+    return ctx->body_status;
 }
 
 static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
@@ -165,14 +185,14 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
 
     ctx = f->ctx;
 
-    switch (ctx->status) {
+    switch (ctx->body_status) {
 
     case APR_EINIT:
 
         apreq_filter_init_context(f);
-        if (ctx->status != APR_INCOMPLETE)
+        if (ctx->body_status != APR_INCOMPLETE)
             return NULL;
-        apreq_filter_read(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
+        apreq_filter_prefetch(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
 
     case APR_INCOMPLETE:
 
@@ -182,7 +202,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
 
         do {
             /* riff on Duff's device */
-            apreq_filter_read(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
+            apreq_filter_prefetch(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
 
     case APR_SUCCESS:
 
@@ -190,7 +210,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
             if (val != NULL)
                 return apreq_value_to_param(val);
 
-        } while (ctx->status == APR_INCOMPLETE);
+        } while (ctx->body_status == APR_INCOMPLETE);
 
         break;
 
@@ -218,7 +238,7 @@ apr_status_t apache2_parser_get(apreq_handle_t *env,
         return APR_EINIT;
     }
     *parser = ctx->parser;
-    return ctx->status;
+    return APR_SUCCESS;
 }
 
 static
@@ -283,7 +303,7 @@ apr_status_t apache2_brigade_limit_set(apreq_handle_t *env,
 
     ctx = f->ctx;
 
-    if (ctx->status == APR_EINIT || ctx->brigade_limit > bytes) {
+    if (ctx->body_status == APR_EINIT || ctx->brigade_limit > bytes) {
         ctx->brigade_limit = bytes;
         return APR_SUCCESS;
     }
@@ -377,7 +397,7 @@ apr_status_t apache2_temp_dir_get(apreq_handle_t *env,
     return APR_SUCCESS;
 }
 
-static APREQ_MODULE(apache2, 20050131);
+static APREQ_MODULE(apache2, 20050315);
 
 APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r)
 {
@@ -385,10 +405,10 @@ APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r)
         ap_get_module_config(r->request_config, &apreq_module);
 
     if (handle != NULL) {
-        if (handle->f == NULL)
-            get_apreq_filter(&handle->env);
+        get_apreq_filter(&handle->env);
         return &handle->env;
     }
+
     handle = apr_palloc(r->pool, sizeof *handle);
     ap_set_module_config(r->request_config, &apreq_module, handle);
 

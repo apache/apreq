@@ -19,19 +19,20 @@ struct apache2_handle {
 /* Tracks the apreq filter state */
 struct filter_ctx {
     apr_bucket_brigade *bb;    /* input brigade that's passed to the parser */
+    apr_bucket_brigade *bbtmp; /* temporary copy of bb, destined for the spool */
     apr_bucket_brigade *spool; /* copied prefetch data for downstream filters */
-    apr_table_t        *body;
     apreq_parser_t     *parser;
     apreq_hook_t       *hook_queue;
-    apr_status_t        status;
-    unsigned            saw_eos;      /* Has EOS bucket appeared in filter? */
-    apr_uint64_t        bytes_read;   /* Total bytes read into this filter. */
-    apr_uint64_t        read_limit;   /* Max bytes the filter may show to parser */
+    apr_table_t        *body;
+    apr_status_t        body_status;
+    apr_status_t        filter_error;
+    apr_uint64_t        bytes_read;     /* Total bytes read into this filter. */
+    apr_uint64_t        read_limit;     /* Max bytes the filter may show to parser */
     apr_size_t          brigade_limit;
     const char         *temp_dir;
 };
 
-
+apr_status_t apreq_filter_prefetch(ap_filter_t *f, apr_off_t readbytes);
 apr_status_t apreq_filter(ap_filter_t *f,
                           apr_bucket_brigade *bb,
                           ap_input_mode_t mode,
@@ -53,45 +54,3 @@ static void apreq_filter_relocate(ap_filter_t *f)
         f->next = top;
     }
 }
-
-APR_INLINE
-static ap_filter_t *get_apreq_filter(apreq_handle_t *env)
-{
-    struct apache2_handle *handle = (struct apache2_handle *)env;
-
-    if (handle->f == NULL) {
-        handle->f = ap_add_input_filter(APREQ_FILTER_NAME, NULL, 
-                                        handle->r, 
-                                        handle->r->connection);
-        /* ap_add_input_filter does not guarantee cfg->f == r->input_filters,
-         * so we reposition the new filter there as necessary.
-         */
-        apreq_filter_relocate(handle->f); 
-    }
-
-    return handle->f;
-}
-
-APR_INLINE
-static apr_status_t apreq_filter_read(ap_filter_t *f, apr_off_t bytes)
-{
-    struct filter_ctx *ctx = f->ctx;
-    apr_status_t s;
-
-    if (ctx->status == APR_EINIT)
-        apreq_filter_init_context(f);
-
-    if (ctx->status != APR_INCOMPLETE || bytes == 0)
-        return ctx->status;
-
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, f->r,
-                  "prefetching %" APR_OFF_T_FMT " bytes", bytes);
-    s = ap_get_brigade(f, NULL, AP_MODE_READBYTES, APR_BLOCK_READ, bytes);
-    if (s != APR_SUCCESS) {
-        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, s, f->r, 
-                      "apreq filter error detected during prefetch");
-        return s;
-    }
-    return ctx->status;
-}
-
