@@ -42,13 +42,14 @@ package My::TestConfig;
 use Apache::TestTrace;
 use Apache::TestConfigC;
 use Config;
+use File::Spec;
 use constant WIN32 => $^O eq 'MSWin32';
 
 use base 'Apache::TestConfig';
 
 sub cmodules_configure {
     my $self = shift;
-    my $dir = "$module_dir/t/c-modules";
+    my $dir = File::Spec->catdir($module_dir, 't', 'c-modules');
     $self->SUPER::cmodules_configure($dir);
 }
 sub cmodules_httpd_conf {
@@ -73,13 +74,13 @@ sub cmodules_write_makefile {
         my @goners = map {$name . '.' . $_} qw(exp ilk lib pdb so lo);
         my $libs = join ' ', 
             (map {'-l' . File::Spec->catfile($mod_apreq2_dir, $_)}
-              qw(libapreq2.lib mod_apreq.lib));
+              qw(libapreq2.lib mod_apreq2.lib));
         print $fh <<EOF;
 APXS=$self->{APXS}
 all: $lib
 
 $lib: $name.c
-        \$(APXS) -I../../../apache2 -I../../../include $libs -llibhttpd $dversion -p -I$self->{cmodules_dir} -c $name.c
+        \$(APXS) -I../../../apache2 -I../../../../include $libs -llibhttpd $dversion -p -I$self->{cmodules_dir} -c $name.c
 
 clean:
 	-erase @goners vc60.pdb 

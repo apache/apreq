@@ -42,13 +42,14 @@ package My::TestConfig;
 use Apache::TestTrace;
 use Apache::TestConfigC;
 use Config;
+use File::Spec;
 use constant WIN32 => $^O eq 'MSWin32';
 
 use base 'Apache::TestConfig';
 
 sub cmodules_configure {
     my $self = shift;
-    my $dir = "$module_dir/apache/t/c-modules";
+    my $dir = File::Spec->catdir($module_dir, 'apache', 't', 'c-modules');
     $self->SUPER::cmodules_configure($dir);
 }
 sub cmodules_httpd_conf {

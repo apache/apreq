@@ -48,7 +48,7 @@ NULL=nul
 !ENDIF
 
 CFG_HOME=$(APREQ_HOME)\win32
-MODULE=$(CFG_HOME)\module
+MODULE=$(APREQ_HOME)\module
 OUTDIR=$(CFG_HOME)\libs
 INTDIR=$(CFG_HOME)\libs
 

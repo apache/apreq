@@ -104,13 +104,13 @@ END
 
 if ($apxs) {
     $test .= << "END";
-        cd \$(APREQ_ENV)
+        cd \$(APREQ_MODULE)
         \$(PERL) t\\TEST.PL -apxs $apxs
         cd \$(APREQ_HOME)
 END
     $clean .= << 'END';
-        cd $(APREQ_ENV)
-        $(PERL) module\t\TEST.PL -clean
+        cd $(APREQ_MODULE)
+        $(PERL) t\TEST.PL -clean
         cd $(APREQ_HOME)
 END
 }
@@ -442,6 +442,7 @@ LIBDIR=$(CFG_HOME)\libs
 PERLGLUE=$(APREQ_HOME)\glue\perl
 APACHE_LIB=$(APACHE)\lib
 TDIR=$(APREQ_HOME)\library\t
+APREQ_MODULE=$(APREQ_HOME)\module
 
 ALL : "$(LIBAPREQ)"
 
