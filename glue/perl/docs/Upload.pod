@@ -11,6 +11,7 @@ Apache::Upload - Methods for dealing with file uploads.
     $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
     $req->body_status(0);
     $req->parse;
+    $req->body->add(foo => "bar"); # dummy param with same name as upload
     $req->body->add($u);
     open(my $fh, __FILE__) or die $!;
     binmode $fh;
@@ -25,6 +26,7 @@ Apache::Upload - Methods for dealing with file uploads.
 
 
 =head1 SYNOPSIS
+
 
 =for example begin
 
@@ -41,16 +43,19 @@ Apache::Upload - Methods for dealing with file uploads.
     read $upload->fh, $fh_data, $size;
     ok $slurp_data eq $fh_data;
 
-    $io = $upload->io;
+    my $io = $upload->io;
     print while <$io>;
 
 =for example end
 
 =for example_testing
     ok $upload->bb->length == $size;
+    $uploads = $req->upload();
+    is (scalar keys %{$uploads}, 1, "found upload");
     is $_STDOUT_, $data;
     is $fh_data, $data;
     is $slurp_data, $data;
+
 
 
 
@@ -82,8 +87,8 @@ section below.
 
 The name of the HTML form element which generated the upload.
 
-=for example_testing
-    is $upload->name, "foo";
+=for testing
+    is $u->name, "foo";
 
 
 
@@ -96,8 +101,8 @@ The (client-side) filename as submitted in the HTML form.  Note:
 some agents will submit the file's full pathname, while others 
 may submit just the basename.
 
-=for example_testing
-    is $upload->filename, __FILE__;
+=for testing
+    is $u->filename, __FILE__;
 
 
 
@@ -136,6 +141,9 @@ Apache::Upload::Brigade.
 
 =for example_testing
     is $_STDOUT_, $data;
+    $io = $upload->io;
+    $io->read($h{io}, $upload->size);
+    is $h{io}, $data, "autovivifying read";
 
 See L<READ|read> and L<READLINE|readline> below for additional notes 
 on their usage.
@@ -158,8 +166,8 @@ Get/set the APR::Brigade which represents the upload's contents.
 
 Returns the size of the upload in bytes.
 
-=for example_testing
-    is $upload->size, -s __FILE__;
+=for testing
+    is $u->size, -s __FILE__;
 
 
 
@@ -255,6 +263,8 @@ The return value is the length of the file.
 
 =for example_testing
     is $size, length $contents;
+    $upload->slurp($h{slurp});
+    is $h{slurp}, $contents, "autovivifying slurp";
     $contents =~ s{\r}{}g;
     is $contents, $data;
 

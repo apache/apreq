@@ -291,6 +291,7 @@ static XS(apreq_xs_upload_slurp)
     }
     if (SvTAINTED(obj))
         SvTAINTED_on(ST(1));
+    SvSETMAGIC(ST(1));
     XSRETURN_IV(len_size);
 }
 
@@ -496,6 +497,7 @@ static XS(apreq_xs_upload_brigade_read)
 
     *buf = 0;
     SvPOK_only(sv);
+    SvSETMAGIC(sv);
     XSRETURN_IV(want);
 }
 

@@ -21,9 +21,8 @@
 
 #define MAX_LEN         (1024 * 1024)
 #define MAX_BRIGADE_LEN (1024 * 256)
-#define MAX_FIELDS      (200)
 #define MAX_READ_AHEAD  (1024 * 64)
-    
+
 APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
                                                 const char *name, 
                                                 const apr_size_t nlen, 
@@ -147,7 +146,7 @@ static int param_push(void *data, const char *key, const char *val)
     apr_array_header_t *arr = data;
     *(apreq_param_t **)apr_array_push(arr) = 
         apreq_value_to_param(apreq_strtoval(val));
-    return 1;
+    return 1;   /* keep going */
 }
 
 
@@ -323,7 +322,7 @@ static int upload_push(void *data, const char *key, const char *val)
     apreq_param_t *p = apreq_value_to_param(apreq_strtoval(val));
     if (p->bb)
         apr_table_addn(t, key, val);
-    return 0;
+    return 1;   /* keep going */
 }
 
 
@@ -354,10 +353,10 @@ static int upload_get(void *data, const char *key, const char *val)
     apreq_param_t **q = data;
     if (p->bb) {
         *q = p;
-        return 1; /* upload found, stop */
+        return 0; /* upload found, stop */
     }
     else
-        return 0; /* keep searching */
+        return 1; /* keep searching */
 }
 
 

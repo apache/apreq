@@ -4,6 +4,12 @@
 
 @section v2_05 Changes with libapreq2-2.05
 
+
+- C, Perl API [joes]
+  Several upload-related bugfixes:
+   1) apreq_upload and apreq_uploads did not search the full body table,
+   2) $upload->slurp and $io->read did not autovivify the resultant string.
+
 - C API [joes]
   Add "flags" attribute to apreq_value_t, planning for charset support.
   This is an ABI change, starting with libapreq2.so.2.0.24.
