@@ -8,8 +8,8 @@ use lib qw(Apache-Test/lib);
 
 use constant HAS_APACHE_TEST => eval {require Apache::Test};
 
-my $Is_Win32 = ($^O eq "MSWin32") || $ENV{WIN32_TEST};
-win32_setup() if $Is_Win32;
+use constant WIN32 => ($^O eq "MSWin32") || $ENV{WIN32_TEST};
+win32_setup() if WIN32;
 
 # enable 'make test|clean'
 if (HAS_APACHE_TEST) {
@@ -56,7 +56,7 @@ $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
 my $lib;
 check_compat();
 
-if ($Is_Win32) {
+if (WIN32) {
   require Cwd;
   my $cwd = Cwd::cwd();
   $cwd =~ s#\\#/#g;
@@ -97,7 +97,7 @@ sub clean_files {
     return [qw( t/TEST )];
 }
 
-if ($Is_Win32 and -e $lib) {
+if (WIN32 and -e $lib) {
   unlink $lib or die "Cannot unlink $lib: $!\n";
 }
 
@@ -151,7 +151,7 @@ sub win32_setup {
       $apache = prompt("Where is your apache.exe located?", $apache);
     }
     
-    die "Can't find apache.exe!" unless -e $apache;
+    die "Can't find Apache.exe!" unless -e $apache;
     
     my $vers = qx{"$apache" -v};
     die qq{"$apache" does not appear to be version 1.3}
