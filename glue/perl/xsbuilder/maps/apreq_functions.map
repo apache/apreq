@@ -59,6 +59,10 @@ MODULE=Apache::Upload PACKAGE=Apache::Upload::Brigade PREFIX=Apache__Upload__Bri
  DEFINE_READ | apreq_xs_upload_brigade_read |
  DEFINE_READLINE | apreq_xs_upload_brigade_readline |
 
+MODULE=Apache::Upload PACKAGE=Apache::Upload::IO  PREFIX=Apache__Upload__IO_
+ DEFINE_read | apreq_xs_upload_brigade_read |
+ DEFINE_readline | apreq_xs_upload_brigade_readline |
+
 ##########  Apache::Cookie:: Functions  ##########
 
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie

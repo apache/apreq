@@ -103,6 +103,10 @@ sub handler {
         read $upload->io, my $io_contents, $upload->size;
         $upload->slurp(my $slurp_data);
         die "io contents != slurp data" unless $io_contents eq $slurp_data;
+        undef $io_contents;
+        $upload->io->read($io_contents, $upload->size);
+        die "io contents != slurp data" unless $io_contents eq $slurp_data;
+
         my $bb = $upload->bb;
         my $e = $bb->first;
         my $bb_contents = "";
@@ -111,7 +115,7 @@ sub handler {
             $bb_contents .= $buf;
             $e = $bb->next($e);
         }
-        die "io contents != brigade contents" 
+        die "io contents != brigade contents"
             unless $io_contents eq $bb_contents;
         $r->print(<$io>);
     }

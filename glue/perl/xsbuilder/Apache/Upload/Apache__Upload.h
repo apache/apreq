@@ -287,17 +287,43 @@ static XS(apreq_xs_upload_type)
     XSRETURN(1);
 }
 
+APR_INLINE
+static SV *apreq_xs_find_bb_obj(pTHX_ SV *in)
+{
+    while (in && SvROK(in)) {
+        SV *sv = SvRV(in);
+        switch (SvTYPE(sv)) {            
+            MAGIC *mg;
+        case SVt_PVIO:
+            if (SvMAGICAL(sv) && (mg = mg_find(sv,PERL_MAGIC_tiedscalar))) {
+               in = mg->mg_obj;
+               break;
+            }
+            Perl_croak(aTHX_ "panic: cannot find tied scalar in pvio magic");
+        case SVt_PVMG:
+            if (SvOBJECT(sv) && SvIOK(sv))
+                return sv;
+        default:
+             Perl_croak(aTHX_ "panic: unsupported SV type: %d", SvTYPE(sv));
+       }
+    }
+    return NULL;
+}
+
+
 static XS(apreq_xs_upload_brigade_copy)
 {
     dXSARGS;
     apr_bucket_brigade *bb, *bb_copy;
     char *class;
+    SV *obj;
 
     if (items != 2 || !SvPOK(ST(0)) || !SvROK(ST(1)))
         Perl_croak(aTHX_ "Usage: Apache::Upload::Brigade->new($bb)");
 
     class = SvPV_nolen(ST(0));
-    bb = (apr_bucket_brigade *)SvIVX(SvRV(ST(1)));
+    obj = apreq_xs_find_bb_obj(aTHX_ ST(1));
+    bb = (apr_bucket_brigade *)SvIVX(obj);
     bb_copy = apr_brigade_create(bb->p,bb->bucket_alloc);
     APREQ_BRIGADE_COPY(bb_copy, bb);
 
@@ -323,7 +349,7 @@ static XS(apreq_xs_upload_brigade_read)
     case 2:
         sv = ST(1);
         if (SvROK(ST(0))) {
-            obj = SvRV(ST(0));
+            obj = apreq_xs_find_bb_obj(aTHX_ ST(0));
             bb = (apr_bucket_brigade *)SvIVX(obj);
             break;
         }
@@ -345,7 +371,7 @@ static XS(apreq_xs_upload_brigade_read)
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
             apreq_xs_croak(aTHX_ newHV(), s, 
-                           "Apache::Request::Upload::Brigade::READ", 
+                           "Apache::Upload::Brigade::READ", 
                            "APR::Error");
         want = dlen;
         end = APR_BUCKET_NEXT(e);
@@ -358,7 +384,7 @@ static XS(apreq_xs_upload_brigade_read)
             s = apr_brigade_length(bb, 1, &len);
             if (s != APR_SUCCESS)
                 apreq_xs_croak(aTHX_ newHV(), s, 
-                               "Apache::Request::Upload::Brigade::READ", 
+                               "Apache::Upload::Brigade::READ", 
                                "APR::Error");
             want = len;
 
@@ -367,7 +393,7 @@ static XS(apreq_xs_upload_brigade_read)
 
         default:
             apreq_xs_croak(aTHX_ newHV(), s, 
-                           "Apache::Request::Upload::Brigade::READ",
+                           "Apache::Upload::Brigade::READ",
                            "APR::Error");
         }
     }
@@ -383,7 +409,7 @@ static XS(apreq_xs_upload_brigade_read)
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
             apreq_xs_croak(aTHX_ newHV(), s, 
-                           "Apache::Request::Upload::Brigade::READ", "APR::Error");
+                           "Apache::Upload::Brigade::READ", "APR::Error");
         memcpy(buf, data, dlen);
         buf += dlen;
         apr_bucket_delete(e);
@@ -405,7 +431,7 @@ static XS(apreq_xs_upload_brigade_readline)
     if (items != 1 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $bb->READLINE");
 
-    obj = SvRV(ST(0));
+    obj = apreq_xs_find_bb_obj(aTHX_ ST(0));
     bb = (apr_bucket_brigade *)SvIVX(obj);
 
     if (APR_BRIGADE_EMPTY(bb))
@@ -425,7 +451,7 @@ static XS(apreq_xs_upload_brigade_readline)
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
             apreq_xs_croak(aTHX_ newHV(), s, 
-                           "Apache::Request::Upload::Brigade::READLINE",
+                           "Apache::Upload::Brigade::READLINE",
                            "APR::Error");
 
         eol = memchr(data, '\012', dlen); /* look for LF (linefeed) */

@@ -39,7 +39,4 @@ package Apache::Upload::Brigade;
 push our(@ISA), "APR::Brigade";
 
 package Apache::Upload::IO;
-sub AUTOLOAD {
-    s/.*:://, tr/a-z/A-Z/ for our $AUTOLOAD;
-    tied(*{shift()})->$AUTOLOAD(@_);
-}
+push our(@ISA), ();
