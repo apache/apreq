@@ -23,8 +23,8 @@
 </apreq_param_t>
 
 <apreq_request_t MODULE=Apache::Request>
-   args
-   body
+!   args
+!   body
 !   parser
 !   cfg
 !  env
@@ -43,22 +43,22 @@
 </apreq_cookie_t>
 
 <apreq_jar_t MODULE=Apache::Cookie>
-  cookies
-  pool
-  env
+! cookies
+!  pool
+!  env
 </apreq_jar_t>
 
 
 
-!<apreq_hook_t MODULE=Apache::Request>
-  hook
-  next
-  ctx
+<apreq_hook_t MODULE=Apache::Request>
+!  hook
+!  next
+!  ctx
 </apreq_hook_t>
 
-!<apreq_parser_t MODULE=Apache::Request>
-  parser
-  content_type
-  hook
+<apreq_parser_t MODULE=Apache::Request>
+!  parser
+!  content_type
+!  hook
 > ctx
 </apreq_parser_t>

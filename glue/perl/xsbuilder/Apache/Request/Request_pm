@@ -1,12 +1,19 @@
-# local customizations for Apache::Request
-package Apache::Request::Value;
+use strict;
+use warnings FATAL => 'all';
 
-
+package Apache::Request::Table;
+use base 'APR::Table';
+sub value_class { undef }
 
 package Apache::Request;
-sub new
-{
-    my $req = Apache::Request::request(shift);
-    # parse @_ to configure $req
+push our(@ISA), __PACKAGE__ -> env;
+
+sub table_class { 'Apache::Request::Table' }
+
+sub new {
+    my $class = shift;
+    my $env = shift;
+    my $req = $class->make($env);
+    $req->config(@_);
     return $req;
 }

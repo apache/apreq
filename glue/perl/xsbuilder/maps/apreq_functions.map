@@ -1,45 +1,45 @@
 ##########  APREQ Functions  ##########
+
+MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=apreq_
+ DEFINE_get          | apreq_xs_table_table_get |
+ DEFINE_FETCH        | apreq_xs_table_table_get |
+
+! apreq_make_param
+! apreq_decode_param
+! apreq_encode_param
+
+MODULE=Apache::Cookie PACKAGE=Apache::Cookie
+ SV *:DEFINE_jar        | apreq_xs_jar | const char *:class, void *:env, const char *:hdr=NULL
+ SV *:DEFINE_as_string  | apreq_xs_cookie_as_string | SV *:c
+ SV *:DEFINE_make       | apreq_xs_make_cookie(aTHX_ class, env, name, val) | const char *:class, void *:env, SV *:name, SV *:val
+      DEFINE_expires    | apreq_xs_cookie_expires   |
+      DEFINE_set_attr   | apreq_xs_cookie_set_attr  |
+      DEFINE_env        | apreq_xs_env              |
+ apr_status_t:DEFINE_bake | apreq_cookie_bake (apreq_xs_sv2cookie(c), apreq_xs_cookie_perl2env(c)) | SV *:c
+ apr_status_t:DEFINE_bake2| apreq_cookie_bake2(apreq_xs_sv2cookie(c), apreq_xs_cookie_perl2env(c)) | SV *:c
+
+MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar
+ DEFINE_get        | apreq_xs_jar_table_get |
+ DEFINE_cookies    | apreq_xs_jar_cookies   |
+
+MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table
+ DEFINE_get        | apreq_xs_table_table_get |
+ DEFINE_FETCH      | apreq_xs_table_table_get |
+
+
 MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
- apreq_request
+ apreq_request | apreq_xs_request | const char *:class, void *:env, const char *:qs=NULL
  apreq_parse_request
- apreq_param
  apreq_params
-
-MODULE=Apache::Request  PACKAGE=Apache::Request::Value PREFIX=apreq_
- apreq_make_value
- apreq_copy_value
- apreq_merge_values
-
-MODULE=Apache::Request PACKAGE=Apache::Request::Parser PREFIX=apreq_
- apreq_parser
- apreq_make_parser
-
-MODULE=Apache::Request PACKAGE=Apache::Request::Param PREFIX=apreq_
- apreq_make_param
- apreq_decode_param
- apreq_encode_param
-
-MODULE=Apache::Cookie PACKAGE=Apache::Cookie PREFIX=apreq_
- apreq_make_cookie
- apreq_cookie_as_string
- apreq_serialize_cookie
- apreq_bake_cookie
- apreq_bake2_cookie
- apreq_cookie_expires
-
-MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar PREFIX=apreq_
- apreq_jar
- apreq_cookie
- apreq_add_cookie
-
+ DEFINE_param | apreq_xs_param |
 
 MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
  apreq_log
- apreq_join
+# apreq_join
  apreq_index
  apreq_encode
- apreq_decode
- apreq_expires
+# apreq_decode
+# apreq_expires
 
 
 

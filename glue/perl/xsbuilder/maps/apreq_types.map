@@ -1,4 +1,7 @@
 ##########  APREQ types  ##########
+const apr_size_t | UV
+apr_size_t | UV
+struct SV  | SV
 
 #data structure stuff
 struct apr_pool_t           | APR::Pool

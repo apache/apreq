@@ -2,13 +2,21 @@ use strict;
 use warnings FATAL => 'all';
 
 package Apache::Cookie::Jar;
+push our(@ISA), __PACKAGE__ -> env;
+
+sub value_class { 'Apache::Cookie' }
+sub table_class { 'Apache::Cookie::Table' }
+
+package Apache::Cookie::Table;
 use base 'APR::Table';
 sub value_class { 'Apache::Cookie' }
+
 
 package Apache::Cookie;
 push our(@ISA), __PACKAGE__ -> env;
 
 use overload '"' => sub {${$_[0]}};
+
 sub status { ${$_[0]} + 0 }
 
 sub new {
