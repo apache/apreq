@@ -56,6 +56,8 @@
  * University of Illinois, Urbana-Champaign.
  */
 
+#include <errno.h>
+#include <string.h>
 #include "apache_request.h"
 #include "apache_multipart_buffer.h"
 int fill_buffer(multipart_buffer *self); /* needed for mozilla hack */
@@ -491,7 +493,9 @@ FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
     }
 
     if ( tries == 0  || (fp = ap_pfdopen(r->pool, fd, "w+" "b") ) == NULL ) {
-	ap_log_rerror(REQ_ERROR, "[libapreq] could not create/open temp file");
+	ap_log_rerror(REQ_ERROR, 
+                      "[libapreq] could not create/open temp file: %s",
+                      strerror(errno));
 	if ( fd >= 0 ) { remove(name); free(name); }
 	return NULL;
     }
