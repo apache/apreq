@@ -26,6 +26,10 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
+#ifdef WIN32
+#define snprintf _snprintf
+#endif
+
 typedef struct at_t at_t;
 typedef struct at_report_t at_report_t;
 
