@@ -4,6 +4,7 @@ use warnings;
 use Getopt::Long;
 require File::Spec;
 require Win32;
+use File::Basename;
 my ($apache, $debug, $help, $no_perl);
 my $result = GetOptions( 'with-apache=s' => \$apache,
 			 'debug' => \$debug,
@@ -34,7 +35,7 @@ unless ($no_perl) {
     }
 }
 
-open my $make, '>Makefile' or die qq{Cannot open Makefile: $!};
+open(my $make, '>Makefile') or die qq{Cannot open Makefile: $!};
 print $make <<"END";
 # Microsoft Developer Studio Generated NMAKE File.
 
@@ -52,10 +53,23 @@ if ($doxygen) {
 
 docs: 
 	cd ..
-	"$doxygen" build\\doxygen.conf
+	"$doxygen" build\\doxygen.conf.win32
 	cd win32
 
 END
+
+    my $bin_abspath = Win32::GetShortPathName(dirname(which('doxysearch')));
+    open(my $conf, '../build/doxygen.conf') 
+        or die "Cannot read ../build/doxygen.conf: $!";
+    open(my $win32_conf, '>../build/doxygen.conf.win32')
+        or die "Cannot write to ../build/doxygen.conf.win32: $!";
+    while (<$conf>) {
+        s/^(PERL_PATH\s+=\s+).*/$1"$^X"/;
+        s/^(BIN_ABSPATH\s+=\s+).*/$1$bin_abspath/;
+        print $win32_conf $_;
+    }
+    close $conf;
+    close $win32_conf;
 }
 
 close $make;
@@ -70,6 +84,8 @@ A Makefile has been generated. You can now run
   nmake mod_apreq     - builds mod_apreq
   nmake libapreq_cgi  - builds libapreq_cgi
   nmake clean         - clean
+  nmake perl_glue     - build the perl glue
+  nmake perl_test     - test the perl glue
 END
     if ($doxygen) {
 print << 'END';
@@ -243,7 +259,10 @@ $(LIBAPREQ):
 CLEAN:
 	cd libs
         $(RM_F) *.pch *.exe *.exp *.lib *.pch *.idb *.so *.dll *.obj
-	cd ..
+!IF EXIST("..\glue\perl\Makefile")
+        cd ..\..\glue\perl
+        $(MAKE) /nologo clean
+!ENDIF
 
 TEST: $(LIBAPREQ)
 	$(MAKE) /nologo /f $(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)"
@@ -256,3 +275,11 @@ $(MOD): $(LIBAPREQ)
 $(CGI): $(LIBAPREQ)
 	$(MAKE) /nologo /f $(CGI).mak CFG="$(CGI) - Win32 $(CFG)" APACHE="$(APACHE)"
 
+PERL_GLUE: $(LIBAPREQ) $(MOD)
+	cd ..\glue\perl
+	$(PERL) Makefile.PL
+	$(MAKE)
+
+PERL_TEST: PERL_GLUE
+	cd ..\glue\perl
+	$(MAKE) test
