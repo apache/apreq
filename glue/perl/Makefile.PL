@@ -355,7 +355,7 @@ EOF
     if (my $newxs = $self->{newXS}->{$module}) {
         for my $xs (@$newxs) {
             print $fh qq{   cv = newXS("$xs->[0]", $xs->[1], __FILE__);\n};
-            print $fh qq{   GvSHARED_on(CvGV(cv));\n} if ExtUtils::XSBuilder::WrapXS::XSGvSHARED();
+            print $fh qq{   GvSHARED_on(CvGV(cv));\n} if ExtUtils::XSBuilder::WrapXS::GvSHARED();
         }
     }
 
@@ -404,24 +404,6 @@ $isa
 push \@ISA, 'DynaLoader' ;
 \$VERSION = '$version';
 bootstrap $module \$VERSION ;
-EOF
-
-    $text .= <<'EOF';
-
-if ($ENV{MOD_PERL}) {
-    require mod_perl;
-    my $env = __PACKAGE__->env || '';
-    if ($mod_perl::VERSION > 1.99) {
-        die __PACKAGE__ . ": httpd must load mod_apreq.so first"
-            if $env ne "Apache::RequestRec";
-    }
-    else {
-        die "Unsupported mod_perl version number: $modperl::VERSION";
-    }
-}
-EOF
-
-    $text .= <<"EOF";
 
 $code
 

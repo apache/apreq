@@ -89,10 +89,10 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, const char *name, I32 nlen,
 }
 
 
-#define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
-#define apreq_xs_table2sv(t,class,parent,name,nlen,tainted)          \
-     apreq_xs_table_c2perl(aTHX_ t, name, nlen, class, parent, tainted)
-
+/*#define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
+ *#define apreq_xs_table2sv(t,class,parent,name,nlen,tainted)          \
+ *     apreq_xs_table_c2perl(aTHX_ t, name, nlen, class, parent, tainted)
+ */
 
 #define APREQ_XS_DEFINE_TABLE_MAKE(attr,pkg, plen)                      \
 static XS(apreq_xs_table_##attr##_make)                                 \
@@ -163,18 +163,11 @@ static XS(apreq_xs_table_##attr##_##method)                             \
 }
 
 
-/* TABLE_GET */
-struct apreq_xs_table_key_magic {
-    SV         *obj;
-    const char *val;
-};
-
 
 struct apreq_xs_do_arg {
-    void            *env;
     const char      *pkg;
-    SV              *parent, *sub;
-    unsigned         tainted;
+    SV              *parent,
+                    *sub;
     PerlInterpreter *perl;
 };
 
@@ -186,8 +179,6 @@ static int apreq_xs_table_keys(void *data, const char *key,
 
     dSP;
     SV *sv = newSVpv(key,0);
-    if (d->tainted)
-        SvTAINTED_on(sv);
     XPUSHs(sv_2mortal(sv));
     PUTBACK;
     return 1;

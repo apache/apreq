@@ -106,10 +106,8 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
 #################### APR::Request stuff ####################
 
 MODULE=APR::Request  PACKAGE=APR::Request PREFIX=apreq_
-apreq_jar_get
-apreq_body_get
 apreq_args_get
-
+apreq_jar_get
 #DEFINE_jar | apreq_xs_jar |
 #DEFINE_args | apreq_xs_args |
 #DEFINE_body | apreq_xs_body |
@@ -121,8 +119,23 @@ apreq_handle_apache2_t *:DEFINE_new | apreq_handle_apache2 (r) | const char *:cl
 MODULE=APR::Request::CGI PACKAGE=APR::Request::CGI
 apreq_handle_cgi_t *:DEFINE_new | apreq_handle_cgi (p) | const char *:class, apr_pool_t *:p
 
+
+#################### APR::Request::Cookie stuff ####################
+
 MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie PREFIX=apreq_cookie_
 apreq_cookie_name
+apreq_cookie_bake | apreq_cookie_bake(c, req) | apreq_cookie_t *:c, apreq_handle_t *:req=apreq_xs_get_handle(aTHX_ ST(0))
+apreq_cookie_bake2 | apreq_cookie_bake2(c, req) | apreq_cookie_t *:c, apreq_handle_t *:req=apreq_xs_get_handle(aTHX_ ST(0))
+
+MODULE=APR::Request::Cookie PACKAGE=APR::Request PREFIX=APR__Request_
+DEFINE_jar | apreq_xs_jar |
+
+
+#################### APR::Request::Param stuff ####################
 
 MODULE=APR::Request::Param PACKAGE=APR::Request::Param PREFIX=apreq_param_
 apreq_param_name
+
+MODULE=APR::Request::Param PACKAGE=APR::Request PREFIX=APR__Request_
+DEFINE_args   | apreq_xs_args |
+DEFINE_body   | apreq_xs_body |

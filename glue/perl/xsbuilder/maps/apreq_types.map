@@ -19,7 +19,6 @@ struct apr_table_t          | APR::Table | T_HASHOBJ
 struct apr_bucket_brigade   | APR::Brigade
 
 const apr_table_t * | APR::Request::Table | T_HASHOBJ
-#const struct apr_table_t | APR::Request::Table | T_HASHOBJ
 
 struct apreq_param_t        | APR::Request::Param
 struct apreq_cookie_t       | APR::Request::Cookie

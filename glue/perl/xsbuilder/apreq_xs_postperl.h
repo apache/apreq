@@ -29,6 +29,8 @@
 /* ExtUtils::XSBuilder::ParseSoure trickery... */
 typedef apreq_handle_t apreq_handle_cgi_t;
 typedef apreq_handle_t apreq_handle_apache2_t;
+typedef apr_table_t    apreq_param_table_t;
+typedef apr_table_t    apreq_cookie_table_t;
 
 /**
  * @file apreq_xs_postperl.h
@@ -106,6 +108,14 @@ static SV *apreq_xs_perl_sv2env(pTHX_ SV *sv)
 
     Perl_croak(aTHX_ "Can't find magic environment");
     return NULL; /* not reached */
+}
+
+APR_INLINE
+static apreq_handle_t *apreq_xs_get_handle(pTHX_ SV *sv)
+{
+    MAGIC *mg = mg_find(sv, PERL_MAGIC_ext);
+    IV iv = SvIVX(mg->mg_obj);
+    return INT2PTR(apreq_handle_t *,iv);
 }
 
 /** 
