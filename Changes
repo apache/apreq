@@ -4,6 +4,9 @@ Revision history for libapreq
 
 =item 0.32 - ?
 
+fix win32 build (requires mod_perl later than 1.24_01)
+[Randy Kobes <randy@theoryx5.uwinnipeg.ca>]
+
 Handle cookies with names but no value [David Welton <davidw@prosa.it>]
 
 AIX compile fixes [Jens-Uwe Mager <jum@helios.de>]

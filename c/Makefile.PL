@@ -61,9 +61,14 @@ sub MY::post_initialize {
 } 
 
 sub win32_setup {
-    no_MY();
-    push @mm_args, SKIP => [qw(dynamic_bs dynamic_lib)];
-    WriteMakefile(@mm_args);
+  my $myVERSION = MM->parse_version('../Request/Request.pm');
+  $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
+  my @objs = qw(apache_request.o apache_cookie.o apache_multipart_buffer.o);
+  WriteMakefile('NAME' => 'libapreq',
+		'VERSION' => $myVERSION,
+		'OBJECT' => "@objs",
+		'INC'  => qq{ -I"$ENV{AP_INC}" -I"$ENV{MP_INC}" },
+  	       ); 
 }
 
 sub no_MY {

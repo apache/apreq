@@ -213,14 +213,14 @@ ApacheUpload_fh(upload)
     if (ST(0) != &sv_undef) {
 	IO *io = GvIOn((GV*)SvRV(ST(0))); 
 	int fd = PerlIO_fileno(IoIFP(io));
-	FILE *fp;
+	PerlIO *fp;
 
 	fd = PerlLIO_dup(fd); 
 	if (!(fp = PerlIO_fdopen(fd, "r"))) { 
 	    PerlLIO_close(fd);
 	    croak("fdopen failed!");
 	} 
-	fseek(fp, 0, 0); 
+	PerlIO_seek(fp, 0, 0); 
 	IoIFP(GvIOn((GV*)SvRV(ST(0)))) = fp;
 	ap_register_cleanup(upload->req->r->pool, (void*)SvRV(ST(0)), 
 			    apreq_close_handle, ap_null_cleanup);    
