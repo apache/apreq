@@ -218,7 +218,7 @@ static apr_status_t apreq_xs_upload_hook(APREQ_HOOK_ARGS)
     for (e = APR_BRIGADE_FIRST(bb); e!= APR_BRIGADE_SENTINEL(bb);
          e = APR_BUCKET_NEXT(e))
     {
-        apr_off_t len;
+        apr_size_t len;
         const char *data;
 
         if (APR_BUCKET_IS_EOS(e)) {  /*last call on this upload */           
