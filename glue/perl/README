@@ -15,42 +15,17 @@ To run the test suite:
 
 DEVELOPER NOTES
 
-xsbuilder/  (analogous to modperl-2.0/xs directory)
+APR::Request::* should be a simple translation of the apreq C API:
 
-          apreq_xs_postperl.h - helper functions & macros for XS
-          maps/ - files used to generate xs/ bindings
-          Apache/
-                 Request/
-                         Apache__Request.h - custom XS code for Request.xs
-                         Request_pm - perl code included in Request.pm
-                 Cookie/
-                         Apache__Cookie.h - custom XS for Cookie.xs
-                         Cookie_pm - perl code included in Cookie.pm
-
-current class diagram:
-
-                        apreq_xs_env
-
-                       //          \\
-                                     
-Apache::Cookie->fetch//              \\Apache::Request->new
-                                              
-                   //                  \\
-
-           Apache::Cookie::Jar         Apache::Request
-
-        cookies /                      / upload     \  args, body, params
-
-   Apache::Cookie::Table   Apache::Upload::Table    Apache::Request::Table
-                           
-            / get                  / get
- 
-     Apache::Cookie        Apache::Upload
+apreq_handle_t -> APR::Request instance
+apreq_module_t -> APR::Request derived class.
+apreq_param_t  -> APR::Request::Param
+apreq_cookie_t -> APR::Request::Cookie
+apreq_parser_t -> APR::Request::Parser (todo)
+apreq_hook_t   -> APR::Request::Hook (todo)
 
 
-legend: double lines ("//" or "\\") represent an inheritance relationship.
-        single lines ("/"  or  "\") represent method calls.
+Hopefully the old Apache(2)::Request and Apache(2)::Cookie APIs can be 
+built from those modules, mostly in Perl (instead of XS).
 
-
-missing components: Apache::Request::Parser
 
