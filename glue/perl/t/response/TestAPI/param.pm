@@ -13,7 +13,7 @@ use APR::Request::Apache2;
 
 sub handler {
     my $r = shift;
-    plan $r, tests => 28;
+    plan $r, tests => 30;
     $r->args("foo=1;bar=2;foo=3;quux=4");
 
     my $req = APR::Request::Apache2->new($r);
@@ -46,6 +46,7 @@ sub handler {
 
     ok t_cmp join(" ", $args->get("foo")), "1 3", '$args->get("foo")';
 
+    ok not defined $args->param_class("APR::Request::Param");
     ok t_cmp $_->tainted, 1, "is tainted: $_" for values %$args;
     $_->tainted(0) for values %$args;
     ok t_cmp $_->tainted, 0, "not tainted: $_" for values %$args;
@@ -54,7 +55,7 @@ sub handler {
     eval { $args->param_class("APR::Request::Cookie") };
     ok t_cmp qr/^Usage/, $@, "Bad class name";
 
-    $args->param_class(__PACKAGE__);
+    ok t_cmp $args->param_class(__PACKAGE__), "APR::Request::Param", "class upgrade";
     ok $args->{foo}->isa(__PACKAGE__);
 
     return 0;

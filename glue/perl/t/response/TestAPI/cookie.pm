@@ -12,7 +12,7 @@ use APR::Table;
 
 sub handler {
     my $r = shift;
-    plan $r, tests => 28;
+    plan $r, tests => 30;
     $r->headers_in->{Cookie} = "foo=1;bar=2;foo=3;quux=4";
 
     my $req = APR::Request::Apache2->new($r);
@@ -46,6 +46,7 @@ sub handler {
 
     ok t_cmp join(" ", $jar->get("foo")), "1 3", '$jar->get("foo")';
 
+    ok not defined $jar->cookie_class("APR::Request::Cookie");
     ok t_cmp $_->tainted, 1, "is tainted: $_" for values %$jar;
     $_->tainted(0) for values %$jar;
     ok t_cmp $_->tainted, 0, "not tainted: $_" for values %$jar;
@@ -53,7 +54,7 @@ sub handler {
     eval { $jar->cookie_class("APR::Request::Param") };
     ok t_cmp qr/^Usage/, $@, "Bad class name";
 
-    $jar->cookie_class(__PACKAGE__);
+    ok t_cmp $jar->cookie_class(__PACKAGE__), "APR::Request::Cookie", "class upgrade";
     ok $jar->{foo}->isa(__PACKAGE__);
 
     return 0;

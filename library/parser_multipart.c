@@ -500,15 +500,14 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     return s;
                 }
                 len = off;
-                param = apreq_param_make(pool, NULL, 0, NULL, len);
+                param = apreq_param_make(pool, ctx->param_name, 
+                                         strlen(ctx->param_name), NULL, len);
                 APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
                 param->info = ctx->info;
 
                 *(const apreq_value_t **)&v = &param->v;
-                v->name = ctx->param_name;
                 apr_brigade_flatten(ctx->bb, v->data, &len);
-                v->size = len;
-                v->data[v->size] = 0;
+                v->data[len] = 0;
 
                 if (parser->hook != NULL) {
                     s = apreq_hook_run(parser->hook, param, NULL);
@@ -518,7 +517,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     }
                 }
 
-                apr_table_addn(t, v->name, v->data);
+                apreq_value_table_add(v, t);
                 ctx->status = MFD_NEXTLINE;
                 ctx->param_name = NULL;
                 apr_brigade_cleanup(ctx->bb);
@@ -564,7 +563,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                         return s;
                     }
                 }
-                apr_table_addn(t, param->v.name, param->v.data);
+                apreq_value_table_add(&param->v, t);
                 apreq_brigade_setaside(ctx->bb, pool);
                 s = apreq_brigade_concat(pool, parser->temp_dir, parser->brigade_limit,
                                          param->upload, ctx->bb);

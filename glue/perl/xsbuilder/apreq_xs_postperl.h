@@ -142,7 +142,7 @@ static SV *apreq_xs_param2sv(pTHX_ apreq_param_t *p,
                               const char *class, SV *parent)
 {
     if (class == NULL) {
-        SV *rv = newSVpvn(p->v.data, p->v.size);
+        SV *rv = newSVpvn(p->v.data, apreq_param_vlen(p));
         if (apreq_param_is_tainted(p))
             SvTAINTED_on(rv);
         /*XXX add charset fixups */
@@ -157,7 +157,7 @@ static SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c,
                               const char *class, SV *parent)
 {
     if (class == NULL) {
-        SV *rv = newSVpvn(c->v.data, c->v.size);
+        SV *rv = newSVpvn(c->v.data, apreq_cookie_vlen(c));
         if (apreq_cookie_is_tainted(c))
             SvTAINTED_on(rv);
         /*XXX add charset fixups? */

@@ -27,8 +27,6 @@ static const char query_string[] = "a=1;quux=foo+bar&a=2&plus=%2B;"
 static apr_table_t *args;
 static apr_pool_t *p;
 
-#define strtoval(s) \
-  ((const apreq_value_t *)(s - offsetof(apreq_value_t, data)))
 
 static void request_make(dAT)
 {
@@ -44,14 +42,14 @@ static void request_make(dAT)
 static void request_args_get(dAT)
 {
     const char *val;
-    const apreq_value_t *v;
+    const apreq_param_t *param;
 
     AT_str_eq(apr_table_get(args,"a"), "1");
 
     val = apr_table_get(args,"quux");
     AT_str_eq(val, "foo bar");
-    v = strtoval(val);
-    AT_int_eq(v->size, 7);
+    param = apreq_value_to_param(val);
+    AT_int_eq(apreq_param_vlen(param), 7);
 
     AT_str_eq(apr_table_get(args,"plus"), "+");
     AT_str_eq(apr_table_get(args,"uplus"), "+");
@@ -148,7 +146,7 @@ static void make_param(dAT)
  
     param = apreq_param_make(p, name, nlen, val, vlen);
     AT_str_eq(param->v.name, name);
-    AT_int_eq(param->v.size, vlen);
+    AT_int_eq(apreq_param_vlen(param), vlen);
     AT_str_eq(param->v.data, val);
 
     encode = apreq_param_encode(p, param);
@@ -157,7 +155,7 @@ static void make_param(dAT)
     s = apreq_param_decode(&decode, p, encode, nlen, vlen+2);
     AT_int_eq(s, APR_SUCCESS);
     AT_str_eq(decode->v.name, name);
-    AT_int_eq(decode->v.size, vlen);
+    AT_int_eq(apreq_param_vlen(decode), vlen);
     AT_str_eq(decode->v.data, val);
 }
 

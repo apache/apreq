@@ -21,11 +21,30 @@
 #include "apr_lib.h"
 #include "apr_date.h"
 
+
 #define RFC      1
 #define NETSCAPE 0
 
-#define ADD_COOKIE(j,c) apr_table_addn(j, c->v.name, c->v.data)
+#define ADD_COOKIE(j,c) apreq_value_table_add(&c->v, j)
 
+APREQ_DECLARE(apr_size_t)apreq_cookie_size(const apreq_cookie_t *c)
+{
+    apr_size_t alen = 0;
+
+    if (c->path != NULL)
+        alen += strlen(c->path);
+    if (c->domain != NULL)
+        alen += strlen(c->domain);
+    if (c->port != NULL)
+        alen += strlen(c->port);
+    if (c->comment != NULL)
+        alen += strlen(c->comment);
+    if (c->commentURL != NULL)
+        alen += strlen(c->commentURL);
+
+    return (apr_size_t)alen + c->v.size + sizeof *c;
+
+}
  
 APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
                                          const char *time_str)
@@ -138,14 +157,15 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
         return NULL;
 
     *(const apreq_value_t **)&v = &c->v;
+    v->size = nlen + vlen + 1;
 
-    v->size = vlen;
-
-    memcpy(v->data, value, vlen);
+    if (vlen > 0 && value != NULL)
+        memcpy(v->data, value, vlen);
     v->data[vlen] = 0;
 
     v->name = v->data + vlen + 1;
-    memcpy (v->name, name, nlen);
+    if (name != NULL)
+        memcpy (v->name, name, nlen);
     v->name[nlen] = 0;
 
     /* session cookie is the default */

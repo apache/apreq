@@ -37,8 +37,20 @@ typedef struct apreq_param_t {
     apr_table_t         *info;   /**< header table associated with the param */
     apr_bucket_brigade  *upload; /**< brigade used to spool upload files */
     unsigned             flags;  /**< charsets, taint marks, app-specific bits */
-    const apreq_value_t  v;      /**< underlying name/value/status info */
+    const apreq_value_t  v;      /**< underlying name/value info */
 } apreq_param_t;
+
+static APR_INLINE
+apr_size_t apreq_param_nlen(const apreq_param_t *p) {
+    return p->v.size - (p->v.name - p->v.data);
+}
+
+static APR_INLINE
+apr_size_t apreq_param_vlen(const apreq_param_t *p) {
+    return (p->v.name - p->v.data) - 1;
+}
+
+APREQ_DECLARE(apr_size_t)apreq_param_size(const apreq_param_t *p);
 
 
 /** @return 1 if the taint flag is set, 0 otherwise. */
@@ -72,6 +84,7 @@ apreq_param_t *apreq_value_to_param(const char *val)
 }
 
 
+
 /** creates a param from name/value information */
 APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
                                                 const char *name,
@@ -92,8 +105,8 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
 APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
                                                apr_pool_t *pool,
                                                const char *word,
-                                               const apr_size_t nlen,
-                                               const apr_size_t vlen);
+                                               apr_size_t nlen,
+                                               apr_size_t vlen);
 
 /**
  * Url-encodes the param into a name-value pair.

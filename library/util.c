@@ -23,7 +23,6 @@
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 #define MAX(a,b) ( (a) > (b) ? (a) : (b) )
 
-
 /* used for specifying file sizes */
 
 APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s)
@@ -394,13 +393,16 @@ APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src,
 }
 
 
+#define apreq_value_nlen(v) (v->size - (v->name - v->data))
+#define apreq_value_vlen(v) ((v->name - v->data) - 1)
+
 APREQ_DECLARE(char *) apreq_join(apr_pool_t *p, 
                                  const char *sep, 
                                  const apr_array_header_t *arr,
                                  apreq_join_t mode)
 {
     apr_ssize_t len, slen;
-    apreq_value_t *rv;
+    char *rv;
     const apreq_value_t **a = (const apreq_value_t **)arr->elts;
     char *d;
     const int n = arr->nelts;
@@ -412,7 +414,7 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
         return NULL;
 
     for (j=0, len=0; j < n; ++j)
-        len += a[j]->size + slen;
+        len += apreq_value_vlen(a[j]) + slen;
 
     /* Allocated the required space */
 
@@ -428,32 +430,29 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
         break;
     }
 
-    rv = apr_palloc(p, len + sizeof *rv);
-    rv->name = 0;
-    rv->size = 0;
-    rv->data[0] = 0;
+    rv = apr_palloc(p, len);
 
     if (n == 0)
-        return rv->data;
+        return rv;
 
     /* Pass two --- copy the argument strings into the result space */
 
-    d = rv->data;
+    d = rv;
 
     switch (mode) {
 
     case APREQ_JOIN_ENCODE:
-        d += apreq_encode(d, a[0]->data, a[0]->size);
+        d += apreq_encode(d, a[0]->data, apreq_value_vlen(a[0]));
 
         for (j = 1; j < n; ++j) {
                 memcpy(d, sep, slen);
                 d += slen;
-                d += apreq_encode(d, a[j]->data, a[j]->size);
+                d += apreq_encode(d, a[j]->data, apreq_value_vlen(a[j]));
         }
         break;
 
     case APREQ_JOIN_DECODE:
-        if (apreq_decode(d, &len, a[0]->data, a[0]->size))
+        if (apreq_decode(d, &len, a[0]->data, apreq_value_vlen(a[0])))
             return NULL;
         else
             d += len;
@@ -462,7 +461,7 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
             memcpy(d, sep, slen);
             d += slen;
 
-            if (apreq_decode(d, &len, a[j]->data, a[j]->size))
+            if (apreq_decode(d, &len, a[j]->data, apreq_value_vlen(a[j])))
                 return NULL;
             else
                 d += len;
@@ -472,25 +471,25 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
 
     case APREQ_JOIN_QUOTE:
 
-        d += apreq_quote_once(d, a[0]->data, a[0]->size);
+        d += apreq_quote_once(d, a[0]->data, apreq_value_vlen(a[0]));
 
         for (j = 1; j < n; ++j) {
             memcpy(d, sep, slen);
             d += slen;
-            d += apreq_quote_once(d, a[j]->data, a[j]->size);
+            d += apreq_quote_once(d, a[j]->data, apreq_value_vlen(a[j]));
         }
         break;
 
 
     case APREQ_JOIN_AS_IS:
-        memcpy(d,a[0]->data,a[0]->size);
-        d += a[0]->size;
+        memcpy(d,a[0]->data,apreq_value_vlen(a[0]));
+        d += apreq_value_vlen(a[0]);
 
         for (j = 1; j < n ; ++j) {
             memcpy(d, sep, slen);
             d += slen;
-            memcpy(d, a[j]->data, a[j]->size);
-            d += a[j]->size;
+            memcpy(d, a[j]->data, apreq_value_vlen(a[j]));
+            d += apreq_value_vlen(a[j]);
         }
         break;
 
@@ -499,8 +498,7 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
     }
 
     *d = 0;
-    rv->size = d - rv->data;
-    return rv->data;
+    return rv;
 }
 
 APR_INLINE

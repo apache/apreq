@@ -24,23 +24,32 @@
 #define MAX_BRIGADE_LEN (1024 * 256)
 #define MAX_READ_AHEAD  (1024 * 64)
 
+
 APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p, 
                                                 const char *name,
                                                 const apr_size_t nlen, 
                                                 const char *val,
                                                 const apr_size_t vlen)
 {
-    apreq_param_t *param = apr_palloc(p, nlen + vlen + 1 + sizeof *param);
+    apreq_param_t *param;
     apreq_value_t *v;
+
+    param = apr_palloc(p, nlen + vlen + 1 + sizeof *param);
+
+    if (param == NULL || nlen == 0)
+        return NULL;
+
     param->info = NULL;
     param->upload = NULL;
     param->flags = 0; 
 
     *(const apreq_value_t **)&v = &param->v;
-    v->size = vlen;
+    v->size = vlen + nlen + 1;
+
     if (vlen && val != NULL)
         memcpy(v->data, val, vlen);
     v->data[vlen] = 0;
+
     v->name = v->data + vlen + 1;
     if (nlen && name != NULL)
         memcpy(v->name, name, nlen);
@@ -49,20 +58,42 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
     return param;
 }
 
+static int elt_size(void *data, const char *key, const char *val)
+{
+    apr_size_t *s = data;
+    *s = strlen(key) + strlen(val);
+    return 1; /* keep searching */
+}
+
+APREQ_DECLARE(apr_size_t)apreq_param_size(const apreq_param_t *p)
+{
+    apr_size_t tlen = 0;
+    apr_off_t blen = 0;
+
+    if (p->info != NULL)
+        apr_table_do(elt_size, &tlen, p->info, NULL);
+    if (p->upload != NULL)
+        apr_brigade_length(p->upload, 0, &blen);
+
+    return (apr_size_t)blen + tlen + p->v.size + sizeof *p;
+
+}
+
 
 APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
                                                apr_pool_t *pool,
                                                const char *word,
-                                               const apr_size_t nlen,
-                                               const apr_size_t vlen)
+                                               apr_size_t nlen,
+                                               apr_size_t vlen)
 {
     apr_status_t status;
     apreq_value_t *v;
     apreq_param_t *p;
-    apr_size_t size;
 
-    if (nlen == 0)
+    if (nlen == 0) {
+        *param = NULL;
         return APR_EBADARG;
+    }
 
     p = apr_palloc(pool, nlen + vlen + 1 + sizeof *p);
     p->info = NULL;
@@ -70,7 +101,7 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
     *(const apreq_value_t **)&v = &p->v;
 
     if (vlen > 0) {
-        status = apreq_decode(v->data, &v->size, word + nlen + 1, vlen);
+        status = apreq_decode(v->data, &vlen, word + nlen + 1, vlen);
         if (status != APR_SUCCESS) {
             *param = NULL;
             return status;
@@ -78,33 +109,36 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
     }
     else {
         v->data[0] = 0;
-        v->size    = 0;
     }
-    v->name = v->data + v->size + 1;
+    v->name = v->data + vlen + 1;
+
+    status = apreq_decode(v->name, &nlen, word, nlen);
+    if (status != APR_SUCCESS) {
+        *param = NULL;
+        return status;
+    }
+    v->size = nlen + vlen + 1;
     *param = p;
 
-    return apreq_decode(v->name, &size, word, nlen);
+    return APR_SUCCESS;
 }
 
 
 APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool,
                                          const apreq_param_t *param)
 {
-    apreq_value_t *v;
-    apr_size_t nlen;
+    apr_size_t dlen, nlen, vlen;
+    char *data;
 
-    if (param->v.name == NULL)
-        return NULL;
+    nlen = apreq_param_nlen(param);
+    vlen = apreq_param_vlen(param);
 
-    nlen = strlen(param->v.name);
+    data = apr_palloc(pool, 3 * (nlen + vlen) + 2);
+    dlen = apreq_encode(data, param->v.name, nlen);
+    data[dlen++] = '=';
+    dlen += apreq_encode(data + dlen, param->v.data, vlen);
 
-    v = apr_palloc(pool, 3 * (nlen + param->v.size) + 2 + sizeof *v);
-    v->name = param->v.name;
-    v->size = apreq_encode(v->data, param->v.name, nlen);
-    v->data[v->size++] = '=';
-    v->size += apreq_encode(v->data + v->size, param->v.data, param->v.size);
-
-    return v->data;
+    return data;
 }
 
 APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
@@ -140,7 +174,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
                     return s;
 
                 APREQ_FLAGS_ON(param->flags, APREQ_TAINT);
-                apr_table_addn(t, param->v.name, param->v.data);
+                apreq_value_table_add(&param->v, t);
             }
 
             if (*qs == 0)
@@ -205,7 +239,7 @@ static int upload_push(void *data, const char *key, const char *val)
     apreq_param_t *p = apreq_value_to_param(val);
 
     if (p->upload != NULL)
-        apr_table_addn(t, key, val);
+        apreq_value_table_add(&p->v, t);
     return 1;   /* keep going */
 }
 

@@ -81,6 +81,6 @@ sub value {
 package Apache::Cookie::Jar;
 use APR::Request::Apache2;
 push our @ISA, qw/APR::Request::Apache2/;
-sub cookies { shift->jar(@_) }
+sub cookies { Apache::Cookie->fetch(shift) }
 
 1;

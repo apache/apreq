@@ -7,7 +7,7 @@ static int apreq_xs_table_keys(void *data, const char *key, const char *val)
     dTHXa(d->perl);
     dSP;
     apreq_param_t *p = apreq_value_to_param(val);
-    SV *sv = newSVpv(key, 0);
+    SV *sv = newSVpvn(key, apreq_param_nlen(p));
     if (apreq_param_is_tainted(p))
         SvTAINTED_on(sv);
 
@@ -94,8 +94,7 @@ static XS(apreq_xs_args)
             return;
 
         case G_SCALAR:
-            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj,
-                                      PARAM_CLASS, sizeof(PARAM_CLASS) -1);
+            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, NULL, 0);
             sv_2mortal(ST(0));
             XSRETURN(1);
 
@@ -170,8 +169,7 @@ static XS(apreq_xs_body)
             return;
 
         case G_SCALAR:
-            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj,
-                                      PARAM_CLASS, sizeof(PARAM_CLASS)-1);
+            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, NULL, 0);
             sv_2mortal(ST(0));
             XSRETURN(1);
 
@@ -239,8 +237,7 @@ static XS(apreq_xs_table_FETCH)
         d.parent = parent;
         XSprePUSH;
         PUTBACK;
-        apr_table_do(apreq_xs_table_values, &d, t, 
-                     SvPV_nolen(ST(1)), NULL);
+        apr_table_do(apreq_xs_table_values, &d, t, SvPV_nolen(ST(1)), NULL);
     }
     else
         XSRETURN(0);
@@ -299,7 +296,7 @@ value(obj, p1=NULL, p2=NULL)
     /*nada*/
 
   CODE:
-    RETVAL = newSVpvn(obj->v.data, obj->v.size);
+    RETVAL = newSVpvn(obj->v.data, apreq_param_vlen(obj));
     if (apreq_param_is_tainted(obj))
         SvTAINTED_on(RETVAL);
 
@@ -329,7 +326,7 @@ name(obj)
     APR::Request::Param obj
 
   CODE:
-    RETVAL = newSVpv(obj->v.name, 0);
+    RETVAL = newSVpvn(obj->v.name, apreq_param_nlen(obj));
     if (apreq_param_is_tainted(obj))
         SvTAINTED_on(RETVAL);
 
@@ -385,19 +382,24 @@ SV *
 param_class(t, newclass=NULL)
     APR::Request::Param::Table t
     char *newclass
+
   PREINIT:
     SV *obj = apreq_xs_sv2object(aTHX_ ST(0), TABLE_CLASS, 't');
     MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
     char *curclass = mg->mg_ptr;
 
   CODE:
-    RETVAL = newSVpv(curclass, 0);
-    if (items == 2) {
-        if (!sv_derived_from(ST(1), curclass))
+    RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
+
+    if (newclass != NULL) {
+        if (!sv_derived_from(ST(1), PARAM_CLASS))
             Perl_croak(aTHX_ "Usage: " TABLE_CLASS "::param_class($table, $class): "
-                             "class %s is not derived from %s", newclass, curclass);
-        Safefree(curclass);
+                             "class %s is not derived from " PARAM_CLASS, newclass);
         mg->mg_ptr = savepv(newclass);
+        mg->mg_len = strlen(newclass);
+
+        if (curclass != NULL)
+            Safefree(curclass);
     }
 
   OUTPUT:
@@ -445,8 +447,7 @@ params(handle, pool)
     iv = SvIVX(obj);
     req = INT2PTR(apreq_handle_t *, iv);
     t = apreq_params(req, pool);
-    RETVAL = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, 
-                               PARAM_CLASS, sizeof(PARAM_CLASS)-1);
+    RETVAL = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, NULL, 0);
 
   OUTPUT:
     RETVAL

@@ -79,8 +79,6 @@ struct apreq_parser_t {
 };
 
 
-
-
 /**
  * Parse the incoming brigade into a table.  Parsers normally
  * consume all the buckets of the brigade during parsing. However

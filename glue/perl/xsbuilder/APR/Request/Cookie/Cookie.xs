@@ -92,8 +92,7 @@ static XS(apreq_xs_jar)
             return;
 
         case G_SCALAR:
-            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj,
-                                      COOKIE_CLASS, sizeof(COOKIE_CLASS)-1);
+            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, NULL, 0);
             sv_2mortal(ST(0));
             XSRETURN(1);
 
@@ -159,8 +158,7 @@ static XS(apreq_xs_table_FETCH)
         d.parent = parent;
         XSprePUSH;
         PUTBACK;
-        apr_table_do(apreq_xs_table_values, &d, t, 
-                     SvPV_nolen(ST(1)), NULL);
+        apr_table_do(apreq_xs_table_values, &d, t, SvPV_nolen(ST(1)), NULL);
     }
     else
         XSRETURN(0);
@@ -219,7 +217,7 @@ value(obj, p1=NULL, p2=NULL)
     /*nada*/
 
   CODE:
-    RETVAL = newSVpvn(obj->v.data, obj->v.size);
+    RETVAL = newSVpvn(obj->v.data, apreq_cookie_vlen(obj));
     if (apreq_cookie_is_tainted(obj))
         SvTAINTED_on(RETVAL);
 
@@ -249,7 +247,7 @@ name(obj)
     APR::Request::Cookie obj
 
   CODE:
-    RETVAL = newSVpv(obj->v.name, 0);
+    RETVAL = newSVpvn(obj->v.name, apreq_cookie_nlen(obj));
     if (apreq_cookie_is_tainted(obj))
         SvTAINTED_on(RETVAL);
 
@@ -367,20 +365,26 @@ SV *
 cookie_class(t, newclass=NULL)
     APR::Request::Cookie::Table t
     char *newclass
+
   PREINIT:
     SV *obj = apreq_xs_sv2object(aTHX_ ST(0), TABLE_CLASS, 't');
     MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
     char *curclass = mg->mg_ptr;
 
   CODE:
-    RETVAL = newSVpv(curclass, 0);
-    if (items == 2) {
-        if (!sv_derived_from(ST(1), curclass))
+    RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
+
+    if (newclass != NULL) {
+        if (!sv_derived_from(ST(1), COOKIE_CLASS))
             Perl_croak(aTHX_ "Usage: " TABLE_CLASS "::cookie_class($table, $class): "
-                             "class %s is not derived from %s", newclass, curclass);
-        Safefree(curclass);
+                             "class %s is not derived from " COOKIE_CLASS, newclass);
         mg->mg_ptr = savepv(newclass);
+        mg->mg_len = strlen(newclass);
+
+        if (curclass != NULL)
+            Safefree(curclass);
     }
 
   OUTPUT:
     RETVAL
+
