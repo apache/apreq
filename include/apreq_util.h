@@ -47,7 +47,7 @@
  * @param arr  Array of apreq_value_t entries.
  * @param mode Join type- see apreq_join_t.
  *
- * @return Resulting string or NULL on error
+ * @return Joined string, or NULL on error
  */
 APREQ_DECLARE(char *) apreq_join(apr_pool_t *p, 
                                  const char *sep, 
@@ -63,7 +63,7 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
  * @param nlen Length of search string.
  * @param type Match type.
  *
- * @return Offset of match string, or -1 if mo match is found.
+ * @return Offset of match string, or -1 if no match is found.
  *
  */
 APREQ_DECLARE(apr_ssize_t) apreq_index(const char* hay, apr_size_t hlen, 
@@ -86,6 +86,7 @@ APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src,
                                       const apr_size_t slen);
 
 /**
+ *
  * Same as apreq_quote() except when src begins and ends in quote marks. In
  * that case it assumes src is quoted correctly, and just copies src to dest.
  *
@@ -122,11 +123,13 @@ APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src,
  * @param src  Original string.
  * @param slen Length of original string.
  *
- * @return ::APR_SUCCESS.
+ * @return APR_SUCCESS.
  * @return ::APREQ_ERROR_BADSEQ or ::APREQ_ERROR_BADCHAR on malformed input.
  *
- * @remarks In the non-APR_SUCCESS case, dlen will be set to include
- * the last succesfully decoded value.
+ * @remarks In the non-success case, dlen will be set to include
+ *          the last succesfully decoded value.  This function decodes 
+ *          \%uXXXX into a utf8 (wide) character, following ECMA-262 
+ *          (the Javascript spec) Section B.2.1.
  */
 
 APREQ_DECLARE(apr_status_t) apreq_decode(char *dest, apr_size_t *dlen,
@@ -141,13 +144,15 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *dest, apr_size_t *dlen,
  * @param v     Array of iovecs that represent the source string
  * @param nelts Number of iovecs in the array.
  *
- * @return ::APR_SUCCESS.
- * @return ::APR_INCOMPLETE if the iovec ends in the middle of an %XX escape
+ * @return APR_SUCCESS.
+ * @return ::APR_INCOMPLETE if the iovec ends in the middle of an \%XX escape
  *         sequence.
  * @return ::APREQ_ERROR_BADSEQ or ::APREQ_ERROR_BADCHAR on malformed input.
  *
  * @remarks In the non-APR_SUCCESS case, dlen will be set to include
- *          the last succesfully decoded value.
+ *          the last succesfully decoded value.  This function decodes
+ *          \%uXXXX into a utf8 (wide) character, following ECMA-262 
+ *          (the Javascript spec) Section B.2.1.
  */
 
 APREQ_DECLARE(apr_status_t) apreq_decodev(char *dest, apr_size_t *dlen,
@@ -162,8 +167,8 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *dest, apr_size_t *dlen,
  *
  * @return The url-encoded string.
  *
- * @remarks    Use this function insead of apreq_encode if its
- *             caller might otherwise overflow dest.
+ * @remarks Use this function insead of apreq_encode if its
+ *          caller might otherwise overflow dest.
  */
 static APR_INLINE
 char *apreq_escape(apr_pool_t *p, const char *src, const apr_size_t slen)
@@ -184,13 +189,11 @@ char *apreq_escape(apr_pool_t *p, const char *src, const apr_size_t slen)
  * @param str  The string to decode
  *
  * @return  Length of decoded string, or < 0 on error.
- *
- * @remarks Equivalent to apreq_decode(str,str,strlen(str)).
  */
 static APR_INLINE apr_ssize_t apreq_unescape(char *str)
 {
     apr_size_t len;
-    apr_status_t rv = apreq_decode(str,&len,str,strlen(str));
+    apr_status_t rv = apreq_decode(str, &len, str, strlen(str));
     if (rv == APR_SUCCESS)
         return (apr_ssize_t)len;
     else
@@ -204,8 +207,8 @@ static APR_INLINE apr_ssize_t apreq_unescape(char *str)
  *
  * @return 64-bit integer representation of s.
  *
- * @remarks XXX What happens when s is malformed?  Should this return
- * an unsigned value instead?
+ * @todo What happens when s is malformed?  Should this return
+ *       an unsigned value instead?
  */
 
 APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s);
@@ -217,8 +220,8 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s);
  *
  * @return 64-bit integer representation of s as seconds.
  *
- * @remarks XXX What happens when s is malformed?  Should this return
- * an unsigned value instead?
+ * @todo What happens when s is malformed?  Should this return
+ *       an unsigned value instead?
  */
 
 APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s);
@@ -232,9 +235,9 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s);
  *                the file.
  * @param bb      Bucket brigade.
  *
- * @return ::APR_SUCCESS.
- * @return XXX error code resulting from apr_bucket_read().
- * @return XXX error code resulting from apr_file_writev().
+ * @return APR_SUCCESS.
+ * @return Error status code from either an unsuccessful apr_bucket_read(),
+ *         or a failed apr_file_writev().
  *
  * @remarks       In the future, this function may do something 
  *                intelligent with file buckets.
@@ -254,9 +257,9 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
  *              If param == NULL, the directory will be selected via
  *              tempnam().  See the tempnam manpage for details.
  *
- * @return ::APR_SUCCESS.
- * @return XXX error code resulting from apreq_filepath_merge().
- * @return XXX error code resulting from apr_file_mktemp().
+ * @return APR_SUCCESS.
+ * @return Error status code from unsuccessful apr_filepath_merge(),
+ *         or a failed apr_file_mktemp().
  */
 
 APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
@@ -268,17 +271,22 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
  *
  * @param bb Brigade.
  * @param p  Setaside buckets into this pool.
+ * @return APR_SUCCESS.
+ * @return Error status code from an unsuccessful apr_bucket_setaside().
  */
 
 static APR_INLINE
-void apreq_brigade_setaside(apr_bucket_brigade *bb, apr_pool_t *p)
+apr_status_t apreq_brigade_setaside(apr_bucket_brigade *bb, apr_pool_t *p)
 {
     apr_bucket *e;
     for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
          e = APR_BUCKET_NEXT(e))
     {
-        apr_bucket_setaside(e, p);
+        apr_status_t rv = apr_bucket_setaside(e, p);
+        if (rv != APR_SUCCESS)
+            return rv;
     }
+    return APR_SUCCESS;
 }
 
 
@@ -288,19 +296,26 @@ void apreq_brigade_setaside(apr_bucket_brigade *bb, apr_pool_t *p)
  * @param d (destination) Copied buckets are appended to this brigade.
  * @param s (source) Brigade to copy from.
  *
+ * @return APR_SUCCESS.
+ * @return Error status code from an unsuccessful apr_bucket_copy().
+ *
  * @remarks s == d produces Undefined Behavior.
  */
 
 static APR_INLINE
-void apreq_brigade_copy(apr_bucket_brigade *d, apr_bucket_brigade *s) {
+apr_status_t apreq_brigade_copy(apr_bucket_brigade *d, apr_bucket_brigade *s) {
     apr_bucket *e;
     for (e = APR_BRIGADE_FIRST(s); e != APR_BRIGADE_SENTINEL(s);
          e = APR_BUCKET_NEXT(e))
     {
         apr_bucket *c;
-        apr_bucket_copy(e, &c); /*XXX may fail! */
+        apr_status_t rv = apr_bucket_copy(e, &c);
+        if (rv != APR_SUCCESS)
+            return rv;
+
         APR_BRIGADE_INSERT_TAIL(d, c);
     }
+    return APR_SUCCESS;
 }
 
 /**
@@ -343,9 +358,9 @@ void apreq_brigade_move(apr_bucket_brigade *d, apr_bucket_brigade *s,
  * @param val Location of (first) matching value.
  * @param vlen Length of matching value.
  *
- * @return ::APR_SUCCESS.
- * @return ::APREQ_ERROR_NOATTR if the attribute isn't found.
- * @return ::APREQ_ERROR_BADTOKEN if the header is unparseable.
+ * @return APR_SUCCESS.
+ * @return ::APREQ_ERROR_NOATTR if the attribute is not found.
+ * @return ::APREQ_ERROR_BADSEQ if an unpaired quote mark was detected.
  */
 APREQ_DECLARE(apr_status_t) apreq_header_attribute(const char *hdr,
                                                    const char *name,
@@ -356,8 +371,7 @@ APREQ_DECLARE(apr_status_t) apreq_header_attribute(const char *hdr,
 
 /**
  * Concatenates the brigades, spooling large brigades into
- * a tempfile bucket according to the environment's max_brigade
- * setting- see apreq_env_max_brigade().
+ * a tempfile (APREQ_SPOOL) bucket.
  *
  * @param pool           Pool for creating a tempfile bucket.
  * @param temp_dir       Directory for tempfile creation.
@@ -366,11 +380,11 @@ APREQ_DECLARE(apr_status_t) apreq_header_attribute(const char *hdr,
  * @param out            Resulting brigade.
  * @param in             Brigade to append.
  *
- * @return ::APR_SUCCESS.
- * @return XXX error code resulting from apr_brigade_length().
- * @return XXX error code resulting from apreq_file_mktemp().
- * @return XXX error code resulting from apreq_brigade_fwrite().
- * @return XXX error code resulting from apr_file_seek().
+ * @return APR_SUCCESS.
+ * @return Error status code resulting from either apr_brigade_length(),
+ *         apreq_file_mktemp(), apreq_brigade_fwrite(), or apr_file_seek().
+ *
+ * @todo Flesh out these error codes, making them as explicit as possible.
  */
 APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
                                                  const char *temp_dir,
@@ -380,11 +394,11 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
 
 /**
  * Determines the spool file used by the brigade. Returns NULL if the
- * brigade is not spooled in a file (does not use a APREQ_SPOOL
+ * brigade is not spooled in a file (does not use an APREQ_SPOOL
  * bucket).
  *
  * @param bb the bucket brigade
- * @return the spool file, or NULL
+ * @return the spool file, or NULL.
  */
 APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 

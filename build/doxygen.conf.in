@@ -27,13 +27,13 @@ WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
 WARN_FORMAT            = "$file:$line: $text"
 
-INPUT                  = . include library module/apache module/apache2
-FILE_PATTERNS          = *.c *.h *.dox CHANGES STATUS
+INPUT                  = . include module/apache module/apache2
+FILE_PATTERNS          = *.h *.dox CHANGES STATUS
 RECURSIVE              = NO
+EXTRACT_STATIC         = YES
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
-EXCLUDE_PATTERNS       = apreq_tables* \
-                         apreq_config*
+EXCLUDE_PATTERNS       = apreq_config* apreq_private*
 EXAMPLE_PATH           = .
 EXAMPLE_PATTERNS       = README INSTALL LICENSE NOTICE *.html *.man
 IMAGE_PATH             = 

@@ -142,22 +142,22 @@ apr_status_t apreq_hook_run(struct apreq_hook_t *h, apreq_param_t *param,
 
 
 /**
- * Rfc822 Header parser. It will reject all data
+ * RFC 822 Header parser. It will reject all data
  * after the first CRLF CRLF sequence (an empty line).
- * See #apreq_run_parser for more info on rejected data.
+ * See apreq_parser_run() for more info on rejected data.
  */
 APREQ_DECLARE_PARSER(apreq_parse_headers);
 
 /**
- * Rfc2396 application/x-www-form-urlencoded parser.
+ * RFC 2396 application/x-www-form-urlencoded parser.
  */
 APREQ_DECLARE_PARSER(apreq_parse_urlencoded);
 
 /**
- * Rfc2388 multipart/form-data (and XForms 1.0 multipart/related)
+ * RFC 2388 multipart/form-data (and XForms 1.0 multipart/related)
  * parser. It will reject any buckets representing preamble and 
  * postamble text (this is normal behavior, not an error condition).
- * See #apreq_run_parser for more info on rejected data.
+ * See apreq_parser_run() for more info on rejected data.
  */
 APREQ_DECLARE_PARSER(apreq_parse_multipart);
 
@@ -244,9 +244,8 @@ APREQ_DECLARE(apreq_parser_function_t)apreq_parser(const char *enctype);
  * @param enctype The MIME type.
  * @param pfn     The function to use during parsing. Setting
  *                parser == NULL will remove an existing parser.
- * @remark This is not a thread-safe operation, so applications 
- * should only call this during process startup,
- * or within a request-thread mutex.
+ *
+ * @return APR_SUCCESS or error.
  */
 
 APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,

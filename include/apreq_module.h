@@ -97,8 +97,16 @@ typedef struct apreq_module_t {
 } apreq_module_t;
 
 
+/**
+ * Defines the module-specific status codes which
+ * are commonly considered to be non-fatal.
+ *
+ * @param s status code returned by an apreq_module_t method.
+ *
+ * @return 1 if s is fatal, 0 otherwise.
+ */
 static APR_INLINE
-unsigned char apreq_module_status_is_error(apr_status_t s) {
+unsigned apreq_module_status_is_error(apr_status_t s) {
     switch (s) {
     case APR_SUCCESS:
     case APR_INCOMPLETE:
@@ -115,12 +123,12 @@ unsigned char apreq_module_status_is_error(apr_status_t s) {
 
 /**
  * Expose the parsed "cookie" header associated to this handle. 
- * @param req the apreq request handle
- * @arg t  The resulting table, or which may point to NULL 
- *          when the return value is not APR_SUCCESS. Otherwise 
- *         it must point to a valid table object.
- * @return APR_SUCCESS on success.
- * @return APREQ_ERROR_NODATA if no "Cookie" header data is available.
+ *
+ * @param req The request handle
+ * @param t   The resulting table, which will either be NULL or a 
+ *            valid table object on return.
+ *
+ * @return    APR_SUCCESS or a module-specific error status code.
  */
 static APR_INLINE
 apr_status_t apreq_jar(apreq_handle_t *req, const apr_table_t **t)
@@ -130,12 +138,12 @@ apr_status_t apreq_jar(apreq_handle_t *req, const apr_table_t **t)
 
 /**
  * Expose the parsed "query string" associated to this handle. 
- * @param req the apreq request handle
- * @arg t  The resulting table, or which may point to NULL 
- *          when the return value is not APR_SUCCESS. Otherwise 
- *         it must point to a valid table object.
- * @return APR_SUCCESS on success.
- * @return APREQ_ERROR_NODATA if no query string is available.
+ *
+ * @param req The request handle
+ * @param t   The resulting table, which will either be NULL or a 
+ *            valid table object on return.
+ *
+ * @return    APR_SUCCESS or a module-specific error status code.
  */
 static APR_INLINE
 apr_status_t apreq_args(apreq_handle_t *req, const apr_table_t **t)
@@ -145,13 +153,12 @@ apr_status_t apreq_args(apreq_handle_t *req, const apr_table_t **t)
 
 /**
  * Expose the parsed "request body" associated to this handle. 
- * @param req the apreq request handle
- * @arg t  The resulting table, or which may point to NULL 
- *          when the return value is not APR_SUCCESS. Otherwise 
- *         it must point to a valid table object.
- * @return APR_SUCCESS on success.
- * @return APREQ_ERROR_NODATA if no request content is available.
- * @remark Will parse the request as necessary.
+ *
+ * @param req The request handle
+ * @param t   The resulting table, which will either be NULL or a 
+ *            valid table object on return.
+ *
+ * @return    APR_SUCCESS or a module-specific error status code.
  */
 static APR_INLINE
 apr_status_t apreq_body(apreq_handle_t *req, const apr_table_t **t)
@@ -162,9 +169,11 @@ apr_status_t apreq_body(apreq_handle_t *req, const apr_table_t **t)
 
 /**
  * Fetch the first cookie with the given name. 
- * @param req the apreq request handle
- * @arg name Case-insensitive cookie name.
- * @return Desired cookie, or NULL if none match.
+ *
+ * @param req  The request handle
+ * @param name Case-insensitive cookie name.
+ *
+ * @return     First matching cookie, or NULL if none match.
  */
 static APR_INLINE
 apreq_cookie_t *apreq_jar_get(apreq_handle_t *req, const char *name)
@@ -174,9 +183,11 @@ apreq_cookie_t *apreq_jar_get(apreq_handle_t *req, const char *name)
 
 /**
  * Fetch the first query string param with the given name. 
- * @param req the apreq request handle
- * @arg name Case-insensitive param name.
- * @return Desired param, or NULL if none match.
+ *
+ * @param req  The request handle
+ * @param name Case-insensitive param name.
+ *
+ * @return     First matching param, or NULL if none match.
  */
 static APR_INLINE
 apreq_param_t *apreq_args_get(apreq_handle_t *req, const char *name)
@@ -185,11 +196,12 @@ apreq_param_t *apreq_args_get(apreq_handle_t *req, const char *name)
 }
 
 /**
- * Fetch the first cookie with the given name. 
- * @param req the apreq request handle
- * @arg name Case-insensitive cookie name.
- * @return Desired cookie, or NULL if none match.
- * @remark Will parse the request as necessary.
+ * Fetch the first body param with the given name. 
+ *
+ * @param req  The request handle
+ * @param name Case-insensitive cookie name.
+ *
+ * @return     First matching param, or NULL if none match.
  */
 static APR_INLINE
 apreq_param_t *apreq_body_get(apreq_handle_t *req, const char *name)
@@ -199,11 +211,11 @@ apreq_param_t *apreq_body_get(apreq_handle_t *req, const char *name)
 
 /**
  * Fetch the active body parser.
- * @param req the apreq request handle
- * @arg parser Points to the active parser on return.
- * @return Parser's current status.  Use apreq_body
- * if you need its final status (the return values
- * will be identical once the parser has finished).
+ *
+ * @param req    The request handle
+ * @param parser Points to the active parser on return.
+ *
+ * @return       APR_SUCCESS or module-specific error.
  *
  */
 static APR_INLINE
@@ -216,9 +228,11 @@ apr_status_t apreq_parser_get(apreq_handle_t *req,
 
 /**
  * Set the body parser for this request.
- * @param req the apreq request handle
- * @arg parser New parser to use.
- * @return APR_SUCCESS if the action was succesful, error otherwise.
+ *
+ * @param req    The request handle
+ * @param parser New parser to use.
+ *
+ * @return       APR_SUCCESS or module-specific error.
  */
 static APR_INLINE
 apr_status_t apreq_parser_set(apreq_handle_t *req,
@@ -229,9 +243,11 @@ apr_status_t apreq_parser_set(apreq_handle_t *req,
 
 /**
  * Add a parser hook for this request.
- * @param req the apreq request handle
- * @arg hook Hook to add.
- * @return APR_SUCCESS if the action was succesful, error otherwise.
+ *
+ * @param req  The request handle
+ * @param hook Hook to add.
+ *
+ * @return     APR_SUCCESS or module-specific error.
  */
 static APR_INLINE
 apr_status_t apreq_hook_add(apreq_handle_t *req, apreq_hook_t *hook)
@@ -243,9 +259,11 @@ apr_status_t apreq_hook_add(apreq_handle_t *req, apreq_hook_t *hook)
 /**
  * Fetch the header value (joined by ", " if there are multiple headers)
  * for a given header name.
- * @param req the apreq request handle
+ *
+ * @param req  The request handle.
  * @param name The header name.
- * @return The value of the header, NULL if not found.
+ *
+ * @return     The value of the header, or NULL if not found.
  */
 static APR_INLINE
 const char *apreq_header_in(apreq_handle_t *req, const char *name)
@@ -256,12 +274,13 @@ const char *apreq_header_in(apreq_handle_t *req, const char *name)
 
 /**
  * Add a header field to the environment's outgoing response headers
- * @param req the apreq request handle
+ *
+ * @param req  The request handle
  * @param name The name of the outgoing header.
- * @param val Value of the outgoing header.
- * @return APR_SUCCESS on success, error code otherwise.
+ * @param val  Value of the outgoing header.
+ *
+ * @return     APR_SUCCESS or module-specific error code.
  */
-
 static APR_INLINE
 apr_status_t apreq_header_out(apreq_handle_t *req,
                               const char *name, char *val)
@@ -269,7 +288,15 @@ apr_status_t apreq_header_out(apreq_handle_t *req,
     return req->module->header_out(req, name, val);
 }
 
-
+/**
+ * Set the active brigade limit.
+ *
+ * @param req   The handle.
+ * @param bytes New limit to use.
+ *
+ * @return APR_SUCCESS or module-specific error.
+ *
+ */
 static APR_INLINE
 apr_status_t apreq_brigade_limit_set(apreq_handle_t *req,
                                      apr_size_t bytes)
@@ -277,6 +304,15 @@ apr_status_t apreq_brigade_limit_set(apreq_handle_t *req,
     return req->module->brigade_limit_set(req, bytes);
 }
 
+/**
+ * Get the active brigade limit.
+ *
+ * @param req   The handle.
+ * @param bytes Pointer to resulting (current) limit.
+ *
+ * @return APR_SUCCESS or a module-specific error, 
+ *         which may leave bytes undefined.
+ */
 static APR_INLINE
 apr_status_t apreq_brigade_limit_get(apreq_handle_t *req,
                                      apr_size_t *bytes)
@@ -284,6 +320,15 @@ apr_status_t apreq_brigade_limit_get(apreq_handle_t *req,
     return req->module->brigade_limit_get(req, bytes);
 }
 
+/**
+ * Set the active read limit.
+ *
+ * @param req   The handle.
+ * @param bytes New limit to use.
+ *
+ * @return APR_SUCCESS or a module-specific error.
+ *
+ */
 static APR_INLINE
 apr_status_t apreq_read_limit_set(apreq_handle_t *req,
                                   apr_uint64_t bytes)
@@ -291,6 +336,15 @@ apr_status_t apreq_read_limit_set(apreq_handle_t *req,
     return req->module->read_limit_set(req, bytes);
 }
 
+/**
+ * Get the active read limit.
+ *
+ * @param req   The request handle.
+ * @param bytes Pointer to resulting (current) limit.
+ *
+ * @return APR_SUCCESS or a module-specific error,
+ *         which may leave bytes undefined.
+ */
 static APR_INLINE
 apr_status_t apreq_read_limit_get(apreq_handle_t *req,
                                   apr_uint64_t *bytes)
@@ -298,12 +352,30 @@ apr_status_t apreq_read_limit_get(apreq_handle_t *req,
     return req->module->read_limit_get(req, bytes);
 }
 
+/**
+ * Set the active temp directory.
+ *
+ * @param req  The handle.
+ * @param path New path to use; may be NULL.
+ *
+ * @return APR_SUCCESS or a module-specific error .
+ */
 static APR_INLINE
 apr_status_t apreq_temp_dir_set(apreq_handle_t *req, const char *path)
 {
     return req->module->temp_dir_set(req, path);
 }
 
+/**
+ * Get the active temp directory.
+ *
+ * @param req   The handle.
+ * @param path  Resulting path to temp dir.
+ *
+ * @return APR_SUCCESS implies path is valid, but may also be NULL.
+ *         Any other return value is module-specific, and may leave
+ *         path undefined.
+ */
 static APR_INLINE
 apr_status_t apreq_temp_dir_get(apreq_handle_t *req, const char **path)
 {
@@ -315,9 +387,11 @@ apr_status_t apreq_temp_dir_get(apreq_handle_t *req, const char **path)
 /**
  * Convenience macro for defining a module by mapping
  * a function prefix to an associated apreq_module_t structure.
+ *
  * @param pre Prefix to define new environment.  All attributes of
- * the apreq_env_module_t struct are defined with this as their prefix. The
- * generated struct is named by appending "_module" to the prefix.
+ *            the apreq_env_module_t struct are defined with this as their
+ *            prefix. The generated struct is named by appending "_module" to
+ *            the prefix. 
  * @param mmn Magic number (i.e. version number) of this environment.
  */
 #define APREQ_MODULE(pre, mmn) const apreq_module_t     \
@@ -330,9 +404,17 @@ apr_status_t apreq_temp_dir_get(apreq_handle_t *req, const char **path)
   pre##_temp_dir_get,      pre##_temp_dir_set,          \
   pre##_header_in,         pre##_header_out }
 
+
 /**
  * Create an apreq handle which is suitable for a CGI program. It
  * reads input from stdin and writes output to stdout.
+ *
+ * @param pool Pool associated to this handle.
+ *
+ * @return New handle; can only be NULL if the pool allocation failed.
+ *
+ * @remarks The handle gets cached in the pool's userdata, so subsequent
+ *          calls will retrieve the original cached handle.
  */
 APREQ_DECLARE(apreq_handle_t*) apreq_handle_cgi(apr_pool_t *pool);
 
@@ -340,13 +422,16 @@ APREQ_DECLARE(apreq_handle_t*) apreq_handle_cgi(apr_pool_t *pool);
  * Create a custom apreq handle which knows only some static
  * values. Useful if you want to test the parser code or if you have
  * got data from a custom source (neither Apache 2 nor CGI).
- * @param pool the APR pool
- * @param query_string the query string
- * @param cookie value of the request "Cookie" header
- * @param cookie2 value of the request "Cookie2" header
- * @param parser parser for handling the request body
- * @param read_limit maximum number of bytes to read from the body
- * @param in a bucket brigade containing the request body
+ *
+ * @param pool         allocates the parse data,
+ * @param query_string parsed into args table
+ * @param cookie       value of the request "Cookie" header
+ * @param cookie2      value of the request "Cookie2" header
+ * @param parser       parses the request body
+ * @param read_limit   maximum bytes to read from the body
+ * @param in           brigade containing the request body
+ *
+ * @return new handle; can only be NULL if the pool allocation failed.
  */
 APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
                                                    const char *query_string,
@@ -359,8 +444,10 @@ APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
 /**
  * Add the cookie to the outgoing "Set-Cookie" headers.
  *
- * @param c The cookie.
- * @param req the apreq request handle
+ * @param c   The cookie.
+ * @param req The request handle which set the outgoing header.
+ *
+ * @return APR_SUCCESS or error.
  */
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
                                               apreq_handle_t *req);
@@ -368,41 +455,56 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
 /**
  * Add the cookie to the outgoing "Set-Cookie2" headers.
  *
- * @param c The cookie.
- * @param req the apreq request handle
+ * @param c   cookie
+ * @param req request handle
+ *
+ * @return APR_SUCCESS or error.
  */
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
                                                apreq_handle_t *req);
 
 /**
  * Looks for the presence of a "Cookie2" header to determine whether
- * or not the current User-Agent supports rfc2965.
+ * or not the current User-Agent responsible for this request supports
+ * rfc2965.
+ *
  * @param req the apreq request handle
- * @return APREQ_COOKIE_VERSION_RFC if rfc2965 is supported, 
- *         APREQ_COOKIE_VERSION_NETSCAPE otherwise.
+ *
+ * @return ::APREQ_COOKIE_VERSION_RFC if rfc2965 is supported
+ *         by the user-agent, ::APREQ_COOKIE_VERSION_NETSCAPE otherwise.
  */
 APREQ_DECLARE(unsigned)apreq_ua_cookie_version(apreq_handle_t *req);
 
 /**
  * Find the first query string parameter or body parameter with the
- * specified name.
+ * specified name.  The match is case-insensitive.
  *
- * @param req the apreq request handle
- * @param key the requested parameter name
- * @return the parameter, or NULL if not found
- * @remark Will parse the request as necessary.
+ * @param req request handle.
+ * @param key desired parameter name
+ *
+ * @return The first matching parameter (with args searched first) or NULL.
  */
 APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *req, const char *key);
 
+/**
+ * Find the first cookie with the specified name.
+ * The match is case-insensitive.
+ *
+ * @param req request handle.
+ * @param key desired cookie name
+ *
+ * @return The first matching parameter (with args searched first) or NULL.
+ */
 #define apreq_cookie(req, name) apreq_jar_get(req, name)
 
 /**
  * Returns a table containing key-value pairs for the full request
  * (args + body).
  *
- * @param req the apreq request handle
- * @param p Allocates the returned table.
- * @remark Also parses the request if necessary.
+ * @param req request handle
+ * @param p   allocates the returned table.
+ *
+ * @return table representing all available params; is never NULL.
  */
 APREQ_DECLARE(apr_table_t *) apreq_params(apreq_handle_t *req, apr_pool_t *p);
 
@@ -416,13 +518,13 @@ APREQ_DECLARE(apr_table_t *) apreq_params(apreq_handle_t *req, apr_pool_t *p);
 APREQ_DECLARE(apr_table_t *)apreq_cookies(apreq_handle_t *req, apr_pool_t *p);
 
 /**
- * Force a complete parse.
- * @param req the apreq request handle
- * @return APR_SUCCESS on an error-free parse of the request data.
- *         Any other status code indicates a problem somewhere.
+ * Force a complete parse of everything.
  *
+ * @param req The request handle
+ *
+ * @return APR_SUCCESS on an error-free parse of the request data.
+ *         Any other status code indicates a potential problem somewhere.
  */
-
 static APR_INLINE
 apr_status_t apreq_parse(apreq_handle_t *req)
 {

@@ -432,7 +432,7 @@ apr_status_t apreq_filter(ap_filter_t *f,
         break;
 
     case AP_MODE_EXHAUSTIVE: /* not worth supporting at this level */
-    case AP_MODE_GETLINE: /* punt- chunked trailers are b0rked in ap_http_filter */
+    case AP_MODE_GETLINE: /* chunked trailers are b0rked in ap_http_filter */
         return ap_get_brigade(f->next, bb, mode, block, readbytes);
 
     default:

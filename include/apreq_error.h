@@ -24,42 +24,64 @@
  extern "C" {
 #endif 
 
+/** 
+ * apreq's wrapper around apr_strerror();
+ * recognizes APREQ_ERROR_* status codes.
+ */
 APREQ_DECLARE(char *)
 apreq_strerror(apr_status_t s, char *buf, apr_size_t bufsize);
 
 /**
- * Beginning work on error-codes ...
+ * @file apreq_error.h
+ * @brief Error status codes.
+ * @ingroup libapreq2
  *
- *
+ * Define the APREQ_ error codes.
  */
+
 #ifndef APR_EBADARG
 #define APR_EBADARG                APR_BADARG   /* XXX: don't use APR_BADARG */
 #endif
 
-/* 0's: generic error status codes */
+/** Internal apreq error. */
 #define APREQ_ERROR_GENERAL        APR_OS_START_USERERR
+/** Attempted to perform unsafe action with tainted data. */
 #define APREQ_ERROR_TAINTED        (APREQ_ERROR_GENERAL + 1)
+/** Parsing interrupted. */
+#define APREQ_ERROR_INTERRUPT      (APREQ_ERROR_GENERAL + 2)
 
-/* 10's: malformed input */
+
+/** Invalid input data. */
 #define APREQ_ERROR_BADDATA        (APREQ_ERROR_GENERAL  + 10)
-#define APREQ_ERROR_BADSEQ         (APREQ_ERROR_BADDATA  +  1)
-#define APREQ_ERROR_BADCHAR        (APREQ_ERROR_BADDATA  +  2)
-#define APREQ_ERROR_BADTOKEN       (APREQ_ERROR_BADDATA  +  3)
-#define APREQ_ERROR_NOTOKEN        (APREQ_ERROR_BADDATA  +  4)
-#define APREQ_ERROR_BADATTR        (APREQ_ERROR_BADDATA  +  5)
-#define APREQ_ERROR_BADHEADER      (APREQ_ERROR_BADDATA  +  6)
+/** Invalid character. */
+#define APREQ_ERROR_BADCHAR        (APREQ_ERROR_BADDATA  +  1)
+/** Invalid byte sequence. */
+#define APREQ_ERROR_BADSEQ         (APREQ_ERROR_BADDATA  +  2)
+/** Invalid attribute. */
+#define APREQ_ERROR_BADATTR        (APREQ_ERROR_BADDATA  +  3)
+/** Invalid header. */
+#define APREQ_ERROR_BADHEADER      (APREQ_ERROR_BADDATA  +  4)
 
-/* 20's: missing input */
+
+/** Missing input data. */
 #define APREQ_ERROR_NODATA         (APREQ_ERROR_GENERAL  + 20)
-#define APREQ_ERROR_NOATTR         (APREQ_ERROR_NODATA   +  1)
-#define APREQ_ERROR_NOHEADER       (APREQ_ERROR_NODATA   +  2)
-#define APREQ_ERROR_NOPARSER       (APREQ_ERROR_NODATA   +  3)
-#define APREQ_ERROR_INTERRUPT      (APREQ_ERROR_NODATA   +  4)
+/** Missing required token. */
+#define APREQ_ERROR_NOTOKEN        (APREQ_ERROR_NODATA   +  1)
+/** Missing attribute. */
+#define APREQ_ERROR_NOATTR         (APREQ_ERROR_NODATA   +  2)
+/** Missing header. */
+#define APREQ_ERROR_NOHEADER       (APREQ_ERROR_NODATA   +  3)
+/** Missing parser. */
+#define APREQ_ERROR_NOPARSER       (APREQ_ERROR_NODATA   +  4)
 
-/* 30's: configuration conflicts */
+
+/** Conflicting information. */
 #define APREQ_ERROR_MISMATCH       (APREQ_ERROR_GENERAL  + 30)
+/** Exceeds configured maximum limit. */
 #define APREQ_ERROR_OVERLIMIT      (APREQ_ERROR_MISMATCH +  1)
+/** Below configured minimum limit. */
 #define APREQ_ERROR_UNDERLIMIT     (APREQ_ERROR_MISMATCH +  2)
+/** Setting already configured. */
 #define APREQ_ERROR_NOTEMPTY       (APREQ_ERROR_MISMATCH +  3)
 
 
