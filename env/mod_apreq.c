@@ -758,7 +758,7 @@ static const command_rec apreq_cmds[] =
                   "Maximum amount of data that will be fed into a parser."),
     AP_INIT_TAKE1("APREQ_MaxBrigade", apreq_set_max_brigade, NULL, OR_ALL,
                   "Maximum in-memory bytes a brigade may use."),
-    { .name = NULL }
+    { NULL }
 };
 
 /** @} */

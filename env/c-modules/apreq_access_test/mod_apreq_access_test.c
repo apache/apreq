@@ -53,7 +53,7 @@ static const char *access_config(cmd_parms *cmd, void *dv, const char *arg)
 static const command_rec access_cmds[] =
 {
     AP_INIT_TAKE1("TestAccess", access_config, NULL, OR_LIMIT, "'param'"),
-    { .name = NULL }
+    { NULL }
 };
 
 static void *create_access_config(apr_pool_t *p, char *dummy)
