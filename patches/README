@@ -3,10 +3,12 @@ Experimental Patches:
 apache-1.3+apreq.patch  
 
     patches apache-1.3 source to build libapreq directly into httpd.
-    To apply:
+    To apply (assuming the apache-1.3.XX source is along side of the 
+    apreq-1.X source):
 
         % cd ../../apache-1.3.XX/
         % patch -p0 < ../httpd-apreq/patches/apache-1.3+apreq.patch
+        % cp ../httpd-apreq/c/*.[ch] src/lib/apreq/
 
     Then build and install apache (+modperl) as normal.  If you want to
     use Apache::Request and Apache::Cookie, you'll also need to remove
