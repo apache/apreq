@@ -25,6 +25,13 @@ sub handler {
     my $method = $r->method;
 
     if ($test eq 'param') {
+        my $table = $req->args();
+        $table->add("new_arg" => "new");
+        die "Can't find new_arg" unless $table->{new_arg} eq "new";
+        $table->{new_arg} = "newer";
+        die "Can't find newer arg" unless $table->get("new_arg") eq "newer";
+        delete $table->{new_arg};
+        die "New arg still exists after deletion" if exists $table->{new_arg};
         my $value = $req->param('value');
         $req->print($value);
     }

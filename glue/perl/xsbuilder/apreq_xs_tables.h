@@ -25,6 +25,22 @@
  * don't bother supporting merge, overlap, compress
  */
 
+#define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
+/*
+APR_INLINE
+static apr_table_t * apreq_xs_sv2table(pTHX_ SV *sv)
+{
+    MAGIC *mg = mg_find(SvRV(sv), PERL_MAGIC_tied);
+    if (mg == NULL || !SvROK(mg->mg_obj))
+        Perl_croak(aTHX_ "Can't find tied table");
+
+    return (apr_table_t *) SvIVX(SvRV(mg->mg_obj));
+}
+*/
+#define apreq_xs_table2sv(t,class,parent)                               \
+                  apreq_xs_table_c2perl(aTHX_ t, env, class, parent)
+
+
 #define APREQ_XS_DEFINE_TABLE_MAKE(attr)                        \
 static XS(apreq_xs_table_##attr##_make)                         \
 {                                                               \
@@ -55,14 +71,18 @@ static XS(apreq_xs_table_##attr##_##method)                                     
     void *env;                                                                  \
     apr_table_t *t;                                                             \
     const char *key, *val;                                                      \
+    SV *sv;                                                                     \
     STRLEN klen, vlen;                                                          \
     apreq_##attr##_t *obj;                                                      \
                                                                                 \
     if (items != 3 || !SvROK(ST(0)) || !SvPOK(ST(1)))                           \
         Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val)");             \
                                                                                 \
-    env = apreq_xs_sv2env(ST(0));                                               \
-    t   = apreq_xs_sv2table(ST(0));                                             \
+    sv  = apreq_xs_find_obj(aTHX_ ST(0), #attr);                                \
+    if (sv == NULL)                                                             \
+         Perl_croak(aTHX_ "Cannot find object");                                \
+    env = apreq_xs_sv2env(sv);                                                  \
+    t   = (apr_table_t *) SvIVX(sv);                                            \
     key = SvPV(ST(1), klen);                                                    \
                                                                                 \
     if (SvROK(ST(2))) {                                                         \
@@ -88,8 +108,8 @@ static XS(apreq_xs_table_##attr##_##method)                                     
 
 struct apreq_xs_do_arg {
     void            *env;
-    PerlInterpreter *perl;
     SV              *parent;
+    PerlInterpreter *perl;
 };
 
 static int apreq_xs_table_keys(void *data, const char *key,
@@ -110,11 +130,6 @@ static int apreq_xs_table_keys(void *data, const char *key,
     PUTBACK;
     return 1;
 }
-
-#define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
-
-#define apreq_xs_table2sv(t,class,parent)                               \
-                  apreq_xs_table_c2perl(aTHX_ t, env, class, parent)
 
 #define apreq_xs_do(attr)          (items == 1 ? apreq_xs_table_keys    \
                                    : apreq_xs_##attr##_table_values)
@@ -168,15 +183,17 @@ static XS(apreq_xs_##attr##_get)                                        \
 {                                                                       \
     dXSARGS;                                                            \
     const char *key = NULL;                                             \
-    struct apreq_xs_do_arg d = { NULL, aTHX, NULL };                    \
+    struct apreq_xs_do_arg d = { NULL, NULL, aTHX };                    \
     void *env;                                                          \
-    SV *sv = ST(0);                                                     \
+    SV *sv;                                                             \
                                                                         \
     if (items == 0 || items > 2 || !SvROK(ST(0)))                       \
         Perl_croak(aTHX_ "Usage: $object->get($key)");                  \
                                                                         \
-    env = apreq_xs_##attr##_sv2env(ST(0));                              \
-    d.env = env; d.parent=sv;                                           \
+    sv = apreq_xs_find_obj(aTHX_ ST(0), #attr);                         \
+    env = apreq_xs_##attr##_sv2env(sv);                                 \
+    d.env = env;                                                        \
+    d.parent = sv;                                                      \
     if (items == 2)                                                     \
         key = SvPV_nolen(ST(1));                                        \
                                                                         \

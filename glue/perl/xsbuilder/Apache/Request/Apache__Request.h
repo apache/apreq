@@ -30,7 +30,7 @@
         if (n == 1 && items == 2)                                       \
             break;                                                      \
     default:                                                            \
-        req = apreq_xs_sv2(request, sv);                                \
+        req = (apreq_request_t *)SvIVX(sv);                             \
         s = req->args_status;                                           \
         if (s == APR_SUCCESS && req->parser)                            \
             s = apreq_parse_request(req, NULL);                         \
@@ -56,7 +56,7 @@
         if (n == 1 && items == 2)                                       \
             break;                                                      \
     default:                                                            \
-        req = apreq_xs_sv2(request, sv);                                \
+        req = (apreq_request_t *)SvIVX(sv);                             \
         s = req->args_status;                                           \
         if (s != APR_SUCCESS)                                           \
             apreq_xs_croak(aTHX_ newHV(), s, "Apache::Request::args",   \
@@ -75,7 +75,7 @@
         if (n == 1 && items == 2)                                       \
             break;                                                      \
     default:                                                            \
-        req = apreq_xs_sv2(request, sv);                                \
+        req = (apreq_request_t *)SvIVX(sv);                             \
         if (req->parser == NULL)                                        \
            break;                                                       \
         switch (s = apreq_parse_request(req,NULL)) {                    \
@@ -101,7 +101,7 @@ APREQ_XS_DEFINE_OBJECT(request);
 
 #define S2P(s) (s ? apreq_value_to_param(apreq_strtoval(s)) : NULL)
 #define apreq_xs_request_push(sv,d,key) do {                            \
-    apreq_request_t *req = apreq_xs_sv2(request,sv);                    \
+    apreq_request_t *req = (apreq_request_t *)SvIVX(sv);                \
     apr_status_t s;                                                     \
     apr_table_do(apreq_xs_do(request), d, req->args, key, NULL);        \
     do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);   \
@@ -114,22 +114,22 @@ APREQ_XS_DEFINE_OBJECT(request);
 #define apreq_xs_table_push(sv,d,k) apreq_xs_push(table,sv,d,k)
 
 #define apreq_xs_request_sv2table(sv) apreq_params(apreq_env_pool(env), \
-                                                   apreq_xs_sv2(request,sv))
-#define apreq_xs_args_sv2table(sv) apreq_xs_sv2(request,sv)->args
-#define apreq_xs_body_sv2table(sv) apreq_xs_sv2(request,sv)->body
-#define apreq_xs_table_sv2table(sv) apreq_xs_sv2table(sv)
-#define apreq_xs_request_sv2env(sv) apreq_xs_sv2(request,sv)->env
-#define apreq_xs_args_sv2env(sv) apreq_xs_sv2(request,sv)->env
-#define apreq_xs_body_sv2env(sv) apreq_xs_sv2(request,sv)->env
-#define apreq_xs_table_sv2env(sv) apreq_xs_sv2env(SvRV(sv))
+                                        (apreq_request_t *)SvIVX(sv))
+#define apreq_xs_args_sv2table(sv)  ((apreq_request_t *)SvIVX(sv))->args
+#define apreq_xs_body_sv2table(sv)  ((apreq_request_t *)SvIVX(sv))->body
+#define apreq_xs_table_sv2table(sv) ((apr_table_t *)SvIVX(sv))
+#define apreq_xs_request_sv2env(sv) ((apreq_request_t *)SvIVX(sv))->env
+#define apreq_xs_args_sv2env(sv)    ((apreq_request_t *)SvIVX(sv))->env
+#define apreq_xs_body_sv2env(sv)    ((apreq_request_t *)SvIVX(sv))->env
+#define apreq_xs_table_sv2env(sv)   apreq_xs_sv2env(sv)
 
-#define apreq_xs_request_param(sv,k) apreq_param(apreq_xs_sv2(request,sv),k)
+#define apreq_xs_request_param(sv,k) apreq_param((apreq_request_t *)SvIVX(sv),k)
 #define apreq_xs_args_param(sv,k) \
                      S2P(apr_table_get(apreq_xs_args_sv2table(sv),k))
 #define apreq_xs_body_param(sv,k) \
                      S2P(apr_table_get(apreq_xs_body_sv2table(sv),k))
 #define apreq_xs_table_param(sv,k) \
-                     S2P(apr_table_get(apreq_xs_sv2table(sv),k))
+                     S2P(apr_table_get(apreq_xs_table_sv2table(sv),k))
 
 APREQ_XS_DEFINE_TABLE_GET(request, PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_TABLE_GET(args,    PARAM_TABLE, param, NULL, 1);

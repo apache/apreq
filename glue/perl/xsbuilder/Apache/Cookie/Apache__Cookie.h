@@ -40,7 +40,7 @@ APREQ_XS_DEFINE_OBJECT(jar);
         if (n == 1 && items == 2)                                       \
             break;                                                      \
     default:                                                            \
-        s = apreq_xs_sv2(jar, sv)->status;                              \
+        s = ((apreq_jar_t *)SvIVX(sv))->status;                         \
         if (s != APR_SUCCESS) {                                         \
             apreq_xs_croak(aTHX_ newHV(), s, "Apache::Cookie::Jar::get",\
                            "Apache::Cookie::Error");                    \
@@ -56,16 +56,15 @@ APREQ_XS_DEFINE_OBJECT(jar);
 #define S2C(s)  apreq_value_to_cookie(apreq_strtoval(s))
 #define apreq_xs_jar_push(sv,d,key)   apreq_xs_push(jar,sv,d,key)
 #define apreq_xs_table_push(sv,d,key) apreq_xs_push(table,sv,d,key)
-#define apreq_xs_jar_sv2table(sv) (apreq_xs_sv2(jar, sv)->cookies)
-#define apreq_xs_table_sv2table(sv) apreq_xs_sv2table(sv)
-#define apreq_xs_jar_sv2env(sv) apreq_xs_sv2(jar,sv)->env
-#define apreq_xs_table_sv2env(sv) apreq_xs_sv2env(SvRV(sv))
+#define apreq_xs_jar_sv2table(sv)     ((apreq_jar_t *)SvIVX(sv))->cookies
+#define apreq_xs_table_sv2table(sv)   ((apr_table_t *)SvIVX(sv))
+#define apreq_xs_jar_sv2env(sv)       ((apreq_jar_t *)SvIVX(sv))->env
+#define apreq_xs_table_sv2env(sv)     apreq_xs_sv2env(sv)
 
 #define apreq_xs_jar_cookie(sv,k) \
                 S2C(apr_table_get(apreq_xs_jar_sv2table(sv),k))
 #define apreq_xs_table_cookie(sv,k) \
                 S2C(apr_table_get(apreq_xs_table_sv2table(sv),k))
-
 
 #define TABLE_PKG   "Apache::Cookie::Table"
 #define COOKIE_PKG  "Apache::Cookie"

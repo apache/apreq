@@ -276,7 +276,7 @@ static XS(apreq_xs_##attr##_pool)                               \
                                                                 \
     if (items != 1 || !SvROK(ST(0)))                            \
         Perl_croak(aTHX_ "Usage: $obj->pool()");                \
-    env = apreq_xs_##attr##_sv2env(ST(0));                      \
+    env = apreq_xs_##attr##_sv2env(SvRV(ST(0)));                \
     ST(0) = sv_2mortal(sv_setref_pv(newSV(0), "APR::Pool",      \
                                     apreq_env_pool(env)));      \
     XSRETURN(1);                                                \

@@ -33,7 +33,7 @@
         if (n == 1 && items == 2)                                       \
             break;                                                      \
     default:                                                            \
-        req = apreq_xs_sv2(request, sv);                                \
+        req = (apreq_request_t *)SvIVX(sv);                             \
         if (req->parser == NULL)                                        \
            break;                                                       \
         switch (s = apreq_parse_request(req,NULL)) {                    \
@@ -57,7 +57,7 @@
                                 : apreq_xs_upload_table_values)
 
 #define apreq_xs_upload_push(sv,d,key) do {                             \
-    apreq_request_t *req = apreq_xs_sv2(request,sv);                    \
+    apreq_request_t *req = (apreq_request_t *)SvIVX(sv);                \
     apr_status_t s;                                                     \
     do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);   \
     while (s == APR_INCOMPLETE);                                        \
@@ -67,19 +67,19 @@
 
 #define apreq_xs_upload_table_push(sv,d,k) apreq_xs_push(upload_table,sv,d,k)
 #define apreq_xs_upload_sv2table(sv) apreq_uploads(apreq_env_pool(env), \
-                                                   apreq_xs_sv2(request,sv))
-#define apreq_xs_upload_table_sv2table(sv) apreq_xs_sv2table(sv)
-#define apreq_xs_upload_sv2env(sv) apreq_xs_sv2(request,sv)->env
-#define apreq_xs_upload_table_sv2env(sv) apreq_xs_sv2env(SvRV(sv))
-#define apreq_xs_upload_param(sv,k) apreq_upload(apreq_xs_sv2(request,sv),k)
+                                                (apreq_request_t *)SvIVX(sv))
+#define apreq_xs_upload_table_sv2table(sv) ((apr_table_t *)SvIVX(sv))
+#define apreq_xs_upload_sv2env(sv)         ((apreq_request_t *)SvIVX(sv))->env
+#define apreq_xs_upload_table_sv2env(sv)   apreq_xs_sv2env(sv)
+#define apreq_xs_upload_param(sv,k) apreq_upload((apreq_request_t *)SvIVX(sv),k)
 #define apreq_xs_upload_table_param(sv,k) \
-                     S2P(apr_table_get(apreq_xs_sv2table(sv),k))
+                        S2P(apr_table_get(apreq_xs_upload_table_sv2table(sv),k))
 
 
 /* uploads are represented by the full apreq_param_t in C */
 #define apreq_upload_t apreq_param_t
 #define apreq_xs_param2sv(ptr,class,parent)  apreq_xs_2sv(ptr,class,parent)
-#define apreq_xs_sv2param(sv) ((apreq_upload_t *)SvIVX(SvRV(sv)))
+#define apreq_xs_sv2param(sv) ((apreq_param_t *)SvIVX(SvRV(sv)))
 
 static int apreq_xs_upload_table_keys(void *data, const char *key,
                                       const char *val)
@@ -105,8 +105,10 @@ static int apreq_xs_upload_table_keys(void *data, const char *key,
 
 }
 
+
 #define UPLOAD_TABLE  "Apache::Upload::Table"
 #define UPLOAD_PKG    "Apache::Upload"
+
 APREQ_XS_DEFINE_TABLE_GET(upload, UPLOAD_TABLE, param, UPLOAD_PKG, RETVAL->bb);
 APREQ_XS_DEFINE_TABLE_GET(upload_table, UPLOAD_TABLE, param, UPLOAD_PKG, 1);
 APREQ_XS_DEFINE_ENV(upload);
@@ -143,7 +145,7 @@ static XS(apreq_xs_upload_link)
         apr_off_t len;
 
         s = apr_file_open(&f, name, APR_CREATE | APR_EXCL | APR_WRITE |
-                          APR_READ | APR_BINARY | APR_BUFFERED,
+                          APR_READ | APR_BINARY,
                           APR_OS_DEFAULT,
                           apreq_env_pool(env));
         if (s == APR_SUCCESS) {
