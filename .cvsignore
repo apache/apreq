@@ -3,7 +3,7 @@ docs
 Makefile
 Makefile.in
 aclocal.m4
-autom4te-2.5*.cache
+autom4te*.cache
 depcomp
 config.guess
 config.log
