@@ -220,7 +220,7 @@ ApacheRequest *ApacheRequest_new(request_rec *r)
     return req;
 }
 
-static int urlword_dlm[] = {'&', ';', NULL};
+static int urlword_dlm[] = {'&', ';', 0};
 
 static char *my_urlword(pool *p, const char **line)
 {
