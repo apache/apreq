@@ -13,6 +13,7 @@ SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi
 EUM=ExtUtils::Manifest
 
 bin_SCRIPTS = apreq2-config
+CLEANFILES = $(bin_SCRIPTS)
 
 if BUILD_PERL_GLUE
 PERL_TEST = perl_test
