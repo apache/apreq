@@ -128,6 +128,9 @@ static XS(apreq_xs_upload_make)
     filename = SvPV_nolen(ST(4));
 
     p = apreq_env_pool(env);
+    if (SvTAINTED(ST(4)))
+        Perl_croak(aTHX_ "Apache::Upload::make: "
+                   "cannot open tainted filename: %s", filename);
 
     s = apr_file_open(&f, filename, APR_READ | APR_BINARY, APR_OS_DEFAULT, p);
 
@@ -154,6 +157,8 @@ static XS(apreq_xs_upload_make)
     apr_table_addn(upload->info, "Content-Type", "application/octet-stream");
 
     sv = apreq_xs_2sv(upload, class, obj);
+    if (SvTAINTED(ST(2)) || SvTAINTED(ST(3)))
+        SvTAINTED_on(SvRV(sv));
     ST(0) = sv_2mortal(sv);
     XSRETURN(1);
 
@@ -179,13 +184,17 @@ static XS(apreq_xs_upload_link)
     SV *sv, *obj;
 
     if (items != 2 || !SvROK(ST(0)))
-        Perl_croak(aTHX_ "Usage: $upload->link($name)");
+        Perl_croak(aTHX_ "Usage: $upload->link($filename)");
+
+    if (SvTAINTED(ST(1)))
+        Perl_croak(aTHX_ "$upload->link($filename): Cannot link to tainted $filename: %s", 
+                   SvPV_nolen(ST(1)));
 
     sv = ST(0);
     obj = apreq_xs_find_obj(aTHX_ sv, "upload");
 
     if (!(mg = mg_find(obj, PERL_MAGIC_ext)))
-        Perl_croak(aTHX_ "$upload->link($name): can't find env");
+        Perl_croak(aTHX_ "$upload->link($name): panic: can't find env.");
 
     env = mg->mg_ptr;
     bb = ((apreq_param_t *)SvIVX(obj))->bb;
@@ -274,6 +283,8 @@ static XS(apreq_xs_upload_slurp)
                              "Apache::Upload::Error");
         XSRETURN_UNDEF;
     }
+    if (SvTAINTED(obj))
+        SvTAINTED_on(ST(1));
     XSRETURN_IV(len_size);
 }
 
@@ -334,7 +345,10 @@ static XS(apreq_xs_upload_type)
     else
         len = strlen(ct);
 
-    ST(0) = sv_2mortal(newSVpvn(ct,len));
+    sv = newSVpvn(ct, len);
+    if (SvTAINTED(obj))
+        SvTAINTED_on(sv);
+    ST(0) = sv_2mortal(sv);
     XSRETURN(1);
 }
 
@@ -352,13 +366,13 @@ static SV *apreq_xs_find_bb_obj(pTHX_ SV *in)
             }
             Perl_croak(aTHX_ "panic: cannot find tied scalar in pvio magic");
         case SVt_PVMG:
-            if (SvOBJECT(sv) && SvIOK(sv))
+            if (SvOBJECT(sv) && SvIOKp(sv))
                 return sv;
         default:
              Perl_croak(aTHX_ "panic: unsupported SV type: %d", SvTYPE(sv));
        }
     }
-    return NULL;
+    return in;
 }
 
 
@@ -367,7 +381,7 @@ static XS(apreq_xs_upload_brigade_copy)
     dXSARGS;
     apr_bucket_brigade *bb, *bb_copy;
     char *class;
-    SV *obj;
+    SV *sv, *obj;
 
     if (items != 2 || !SvPOK(ST(0)) || !SvROK(ST(1)))
         Perl_croak(aTHX_ "Usage: Apache::Upload::Brigade->new($bb)");
@@ -378,7 +392,10 @@ static XS(apreq_xs_upload_brigade_copy)
     bb_copy = apr_brigade_create(bb->p,bb->bucket_alloc);
     APREQ_BRIGADE_COPY(bb_copy, bb);
 
-    ST(0) = sv_2mortal(sv_setref_pv(newSV(0), class, bb_copy));
+    sv = sv_setref_pv(newSV(0), class, bb_copy);
+    if (SvTAINTED(obj))
+        SvTAINTED_on(SvRV(sv));
+    ST(0) = sv_2mortal(sv);
     XSRETURN(1);
 }
 
@@ -399,6 +416,7 @@ static XS(apreq_xs_upload_brigade_read)
         want = SvIV(ST(2));
     case 2:
         sv = ST(1);
+        SvUPGRADE(sv, SVt_PV);
         if (SvROK(ST(0))) {
             obj = apreq_xs_find_bb_obj(aTHX_ ST(0));
             bb = (apr_bucket_brigade *)SvIVX(obj);
@@ -408,12 +426,15 @@ static XS(apreq_xs_upload_brigade_read)
         Perl_croak(aTHX_ "Usage: $bb->READ($buf,$len,$off)");
     }
 
-    if (want == 0)
+    if (want == 0) {
+        SvCUR_set(sv, offset);
         XSRETURN_IV(0);
+    }
 
-    if (APR_BRIGADE_EMPTY(bb))
+    if (APR_BRIGADE_EMPTY(bb)) {
+        SvCUR_set(sv, offset);
         XSRETURN_UNDEF;
-
+    }
 
     if (want == -1) {
         const char *data;
@@ -449,10 +470,11 @@ static XS(apreq_xs_upload_brigade_read)
         }
     }
 
-    SvUPGRADE(sv, SVt_PV);
     SvGROW(sv, want + offset + 1);
     buf = SvPVX(sv) + offset;
     SvCUR_set(sv, want + offset);
+    if (SvTAINTED(obj))
+        SvTAINTED_on(sv);
 
     while ((e = APR_BRIGADE_FIRST(bb)) != end) {
         const char *data;
@@ -478,6 +500,7 @@ static XS(apreq_xs_upload_brigade_readline)
     apr_bucket *e;
     SV *sv, *obj;
     apr_status_t s;
+    unsigned tainted;
 
     if (items != 1 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $bb->READLINE");
@@ -488,9 +511,14 @@ static XS(apreq_xs_upload_brigade_readline)
     if (APR_BRIGADE_EMPTY(bb))
         XSRETURN(0);
 
+    tainted = SvTAINTED(obj);
+
     XSprePUSH;
 
     sv = sv_2mortal(newSVpvn("",0));
+    if (tainted)
+        SvTAINTED_on(sv);
+        
     XPUSHs(sv);
 
     while (!APR_BRIGADE_EMPTY(bb)) {
@@ -520,6 +548,8 @@ static XS(apreq_xs_upload_brigade_readline)
                 break;
 
             sv = sv_2mortal(newSVpvn("",0));
+            if (tainted)
+                SvTAINTED_on(sv);
             XPUSHs(sv);
         }
         else {
@@ -579,7 +609,8 @@ static XS(apreq_xs_upload_tempname)
     if (s != APR_SUCCESS)
         goto tempname_error;
 
-    ST(0) = sv_2mortal(newSVpvn(path, strlen(path)));
+    sv = newSVpvn(path, strlen(path));
+    ST(0) = sv_2mortal(sv);
     XSRETURN(1);
 
  tempname_error:

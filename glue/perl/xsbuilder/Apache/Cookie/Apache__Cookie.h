@@ -36,6 +36,7 @@ static XS(apreq_xs_jar)
     void *env;
     const char *data;
     apreq_jar_t *jar;
+    SV *sv;
 
     if (items < 2 || SvROK(ST(0)) || !SvROK(ST(1)))
         Perl_croak(aTHX_ "Usage: $class->jar($env, $data)");
@@ -44,7 +45,9 @@ static XS(apreq_xs_jar)
     data = (items == 3)  ?  SvPV_nolen(ST(2)) :  NULL;
     jar = apreq_jar(env, data);
 
-    ST(0) = sv_2mortal(apreq_xs_2sv(jar, SvPV_nolen(ST(0)),ST(1)));
+    sv = apreq_xs_2sv(jar, SvPV_nolen(ST(0)), SvRV(ST(1)));
+    SvTAINTED_on(SvRV(sv));
+    ST(0) = sv_2mortal(sv);
     XSRETURN(1);
 }
 
@@ -106,16 +109,20 @@ static XS(apreq_xs_cookie_as_string)
 {
     dXSARGS;
     apreq_cookie_t *c;
-    SV *sv;
+    SV *sv, *obj;
 
     if (items != 1)
         Perl_croak(aTHX_ "Usage: $cookie->as_string()");
 
     sv = ST(0);
-    c = apreq_xs_sv2(cookie,sv);
+    obj = apreq_xs_find_obj(aTHX_ sv, "cookie");
+    c = (apreq_cookie_t *)SvIVX(obj);
+
     sv = NEWSV(0, apreq_serialize_cookie(NULL, 0, c));
     SvCUR(sv) = apreq_serialize_cookie(SvPVX(sv), SvLEN(sv), c);
     SvPOK_on(sv);
+    if (SvTAINTED(obj))
+        SvTAINTED_on(sv);
     XSprePUSH;
     XPUSHs(sv_2mortal(sv));
     XSRETURN(1);
@@ -215,6 +222,8 @@ static XS(apreq_xs_encode)
     SvGROW(sv, 3 * slen + 1);
     SvCUR(sv) = apreq_encode(SvPVX(sv), src, slen);
     SvPOK_on(sv);
+    if (SvTAINTED(ST(0)))
+        SvTAINTED_on(sv);
     XSprePUSH;
     XPUSHs(sv);
     XSRETURN(1);
@@ -243,6 +252,8 @@ static XS(apreq_xs_decode)
         XSRETURN_UNDEF;
     SvCUR_set(sv,len);
     SvPOK_on(sv);
+    if (SvTAINTED(ST(0)))
+        SvTAINTED_on(sv);
     XSprePUSH;
     XPUSHs(sv);
     XSRETURN(1);

@@ -64,14 +64,15 @@ static const MGVTBL apreq_xs_table_magic = {0, 0, 0, 0, 0,
  */
 APR_INLINE
 static SV *apreq_xs_table_c2perl(pTHX_ void *obj, const char *name, I32 nlen,
-                                 const char *class, SV *parent)
+                                 const char *class, SV *parent, unsigned tainted)
 {
     SV *sv = (SV *)newHV();
     /*upgrade ensures CUR and LEN are both 0 */
     SV *rv = sv_setref_pv(newSV(0), class, obj);
 
     sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, name, nlen);
-
+    if (tainted)
+        SvTAINTED_on(SvRV(rv));
 
 #if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
 
@@ -89,8 +90,8 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, const char *name, I32 nlen,
 
 
 #define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
-#define apreq_xs_table2sv(t,class,parent,name)          \
-     apreq_xs_table_c2perl(aTHX_ t, name, name ? strlen(name) : 0, class, parent)
+#define apreq_xs_table2sv(t,class,parent,name,tainted)          \
+     apreq_xs_table_c2perl(aTHX_ t, name, name ? strlen(name) : 0, class, parent, tainted)
 
 
 #define APREQ_XS_DEFINE_TABLE_MAKE(attr,pkg)                            \
@@ -98,21 +99,20 @@ static XS(apreq_xs_table_##attr##_make)                                 \
 {                                                                       \
                                                                         \
     dXSARGS;                                                            \
-    SV *sv;                                                             \
-    apreq_##attr##_t *obj;                                              \
+    SV *sv, *parent;                                                    \
     void *env;                                                          \
     const char *class;                                                  \
     apr_table_t *t;                                                     \
                                                                         \
     if (items != 2 || !SvPOK(ST(0)) || !SvROK(ST(1)))                   \
-        Perl_croak(aTHX_ "Usage: $class->make($object)");               \
+        Perl_croak(aTHX_ "Usage: $class->make($env)");                  \
                                                                         \
                                                                         \
     class = SvPV_nolen(ST(0));                                          \
-    obj = apreq_xs_sv2(attr,ST(1));                                     \
-    env = obj->env;                                                     \
+    parent = SvRV(ST(1));                                               \
+    env = (void *)SvIVX(parent);                                        \
     t = apr_table_make(apreq_env_pool(env), APREQ_NELTS);               \
-    sv = apreq_xs_table2sv(t, class, ST(1), pkg);                       \
+    sv = apreq_xs_table2sv(t, class, parent, pkg, SvTAINTED(parent));   \
     XSprePUSH;                                                          \
     PUSHs(sv);                                                          \
     XSRETURN(1);                                                        \
@@ -137,7 +137,7 @@ static XS(apreq_xs_table_##attr##_##method)                             \
         sv  = ST(0);                                                    \
         obj = apreq_xs_find_obj(aTHX_ sv, #attr);                       \
         env = apreq_xs_sv2env(obj);                                     \
-         t   = (apr_table_t *)SvIVX(obj);                               \
+        t   = (apr_table_t *)SvIVX(obj);                                \
                                                                         \
         if (SvROK(ST(items-1))) {                                       \
             RETVAL = (apreq_##attr##_t *)SvIVX(SvRV(ST(items-1)));      \
@@ -171,6 +171,7 @@ struct apreq_xs_do_arg {
     const char      *pkg;
     SV              *parent, *sub;
     PerlInterpreter *perl;
+    unsigned         tainted;
 };
 
 static int apreq_xs_table_keys(void *data, const char *key,
@@ -183,6 +184,8 @@ static int apreq_xs_table_keys(void *data, const char *key,
 
     dSP;
     SV *sv = newSVpv(key,0);
+    if (d->tainted)
+        SvTAINTED_on(sv);
     XPUSHs(sv_2mortal(sv));
     PUTBACK;
     return 1;
@@ -235,9 +238,12 @@ static int apreq_xs_##attr##_table_values(void *data, const char *key,  \
     if (val) {                                                          \
         apreq_##type##_t *RETVAL =                                      \
                           apreq_value_to_##type(apreq_strtoval(val));   \
-        if (COND)                                                       \
-            XPUSHs(sv_2mortal(                                          \
-                   apreq_xs_##type##2sv(RETVAL,d->pkg,d->parent)));     \
+        if (COND) {                                                     \
+            SV *sv = apreq_xs_##type##2sv(RETVAL,d->pkg,d->parent);     \
+            if (d->tainted)                                             \
+                SvTAINTED_on(SvROK(sv)? SvRV(sv) : sv);                 \
+            XPUSHs(sv_2mortal(sv));                                     \
+        }                                                               \
     } else                                                              \
         XPUSHs(&PL_sv_undef);                                           \
                                                                         \
@@ -249,7 +255,7 @@ static XS(apreq_xs_##attr##_get)                                        \
 {                                                                       \
     dXSARGS;                                                            \
     const char *key = NULL;                                             \
-    struct apreq_xs_do_arg d = { NULL, NULL, NULL, NULL, aTHX };        \
+    struct apreq_xs_do_arg d = { NULL, NULL, NULL, NULL, aTHX, 0 };     \
     void *env;                                                          \
     SV *sv, *obj;                                                       \
     MAGIC *mg;                                                          \
@@ -258,11 +264,19 @@ static XS(apreq_xs_##attr##_get)                                        \
                                                                         \
     sv = ST(0);                                                         \
     obj = apreq_xs_find_obj(aTHX_ sv, #attr);                           \
-    env = apreq_xs_##attr##_sv2env(obj);                                \
-    d.env = env;                                                        \
     mg = mg_find(obj, PERL_MAGIC_ext);                                  \
-    d.parent = mg->mg_obj;                                              \
-    d.pkg = mg->mg_len > 0 ? mg->mg_ptr : subclass;                     \
+    if (mg != NULL) {                                                   \
+        d.parent = mg->mg_obj;                                          \
+        d.pkg = mg->mg_len > 0 ? mg->mg_ptr : subclass;                 \
+    }                                                                   \
+    else {                                                              \
+        d.parent = obj;                                                 \
+        d.pkg = subclass;                                               \
+    }                                                                   \
+    env = (void *)SvIVX(d.parent);                                      \
+    d.env = env;                                                        \
+                                                                        \
+    d.tainted = SvTAINTED(obj);                                         \
     if (items == 2)                                                     \
         key = SvPV_nolen(ST(1));                                        \
                                                                         \
@@ -278,17 +292,23 @@ static XS(apreq_xs_##attr##_get)                                        \
     case G_SCALAR:                                                      \
         if (items == 1) {                                               \
             apr_table_t *t = apreq_xs_##attr##_sv2table(obj);           \
-            if (t != NULL)                                              \
-                PUSHs(sv_2mortal(apreq_xs_table2sv(t,class,d.parent,d.pkg))); \
+            if (t != NULL) {                                            \
+                SV *tsv = apreq_xs_table2sv(t, class, d.parent,         \
+                                            d.pkg, d.tainted);          \
+                PUSHs(sv_2mortal(tsv));                                 \
+            }                                                           \
             PUTBACK;                                                    \
             break;                                                      \
         }                                                               \
                                                                         \
         RETVAL = apreq_xs_##attr##_##type(obj, key);                    \
                                                                         \
-        if (RETVAL && (COND))                                           \
-            PUSHs(sv_2mortal(                                           \
-                   apreq_xs_##type##2sv(RETVAL,d.pkg,d.parent)));       \
+        if (RETVAL && (COND)) {                                         \
+            SV *ssv = apreq_xs_##type##2sv(RETVAL, d.pkg, d.parent);    \
+            if (d.tainted)                                              \
+                SvTAINTED_on(ssv);                                      \
+            PUSHs(sv_2mortal(ssv));                                     \
+        }                                                               \
                                                                         \
     default:                                                            \
         PUTBACK;                                                        \
@@ -335,8 +355,9 @@ static XS(apreq_xs_##attr##_FETCH)                              \
         apreq_##type##_t *RETVAL = apreq_value_to_##type(       \
                                           apreq_strtoval(val)); \
         sv = apreq_xs_##type##2sv(RETVAL, pkg, parent);         \
-        XSprePUSH;                                              \
-        XPUSHs(sv_2mortal(sv));                                 \
+        if (SvTAINTED(obj))                                     \
+            SvTAINTED_on(sv);                                   \
+        ST(0) = sv_2mortal(sv);                                 \
         XSRETURN(1);                                            \
     }                                                           \
     else                                                        \
@@ -370,8 +391,9 @@ static XS(apreq_xs_##attr##_NEXTKEY)                            \
     }                                                           \
     idx = SvCUR(obj)++;                                         \
     sv = newSVpv(te[idx].key, 0);                               \
-    XSprePUSH;                                                  \
-    PUSHs(sv_2mortal(sv));                                      \
+    if (SvTAINTED(obj))                                         \
+        SvTAINTED_on(sv);                                       \
+    ST(0) = sv_2mortal(sv);                                     \
     XSRETURN(1);                                                \
 }
 
@@ -385,6 +407,7 @@ static int apreq_xs_##attr##_do_sub(void *data, const char *key,        \
                                     apreq_strtoval(val));               \
     dTHXa(d->perl);                                                     \
     dSP;                                                                \
+    SV *sv;                                                             \
     void *env;                                                          \
     int rv;                                                             \
                                                                         \
@@ -395,8 +418,17 @@ static int apreq_xs_##attr##_do_sub(void *data, const char *key,        \
                                                                         \
     PUSHMARK(SP);                                                       \
     EXTEND(SP,2);                                                       \
-    PUSHs(sv_2mortal(newSVpv(key,0)));                                  \
-    PUSHs(sv_2mortal(apreq_xs_##type##2sv(RETVAL,d->pkg,d->parent)));   \
+                                                                        \
+    sv = newSVpv(key, 0);                                               \
+    if (d->tainted)                                                     \
+        SvTAINTED_on(sv);                                               \
+    PUSHs(sv_2mortal(sv));                                              \
+                                                                        \
+    sv = apreq_xs_##type##2sv(RETVAL, d->pkg, d->parent);               \
+    if (d->tainted)                                                     \
+        SvTAINTED_on(sv);                                               \
+    PUSHs(sv_2mortal(sv));                                              \
+                                                                        \
     PUTBACK;                                                            \
     rv = call_sv(d->sub, G_SCALAR);                                     \
     SPAGAIN;                                                            \
@@ -411,7 +443,7 @@ static int apreq_xs_##attr##_do_sub(void *data, const char *key,        \
 static XS(apreq_xs_##attr##_do)                                         \
 {                                                                       \
     dXSARGS;                                                            \
-    struct apreq_xs_do_arg d = { NULL, NULL, NULL, NULL, aTHX };        \
+    struct apreq_xs_do_arg d = { NULL, NULL, NULL, NULL, aTHX, 0 };     \
     apr_table_t *t;                                                     \
     void *env;                                                          \
     int i, rv;                                                          \
@@ -429,7 +461,7 @@ static XS(apreq_xs_##attr##_do)                                         \
     d.pkg = mg->mg_len > 0 ? mg->mg_ptr : subclass;                     \
     d.env = env;                                                        \
     d.sub = ST(1);                                                      \
-                                                                        \
+    d.tainted = SvTAINTED(obj);                                         \
     if (items == 2) {                                                   \
         rv = apr_table_do(apreq_xs_##attr##_do_sub, &d, t, NULL);       \
         XSRETURN_IV(rv);                                                \

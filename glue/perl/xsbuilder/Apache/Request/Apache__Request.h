@@ -96,6 +96,7 @@ static XS(apreq_xs_request)
     void *env;
     const char *data;
     apreq_request_t *req;
+    SV *sv;
 
     if (items < 2 || SvROK(ST(0)) || !SvROK(ST(1)))
         Perl_croak(aTHX_ "Usage: $class->request($env, $data)");
@@ -105,7 +106,9 @@ static XS(apreq_xs_request)
     req = apreq_request(env, data);
 
     /*FIXME: mg_mg->ptr */
-    ST(0) = sv_2mortal(apreq_xs_2sv(req, SvPV_nolen(ST(0)),ST(1)));
+    sv = apreq_xs_2sv(req, SvPV_nolen(ST(0)),SvRV(ST(1)));
+    SvTAINTED_on(SvRV(sv));
+    ST(0) = sv_2mortal(sv);
     XSRETURN(1);
 }
 
@@ -208,8 +211,10 @@ static apr_status_t eval_upload_hook(pTHX_ apreq_param_t *upload,
     ENTER;
     SAVETMPS;
 
-    PUSHs(sv_2mortal(apreq_xs_2sv(upload, "Apache::Upload", ctx->parent)));
-    PUSHs(sv);
+    sv = apreq_xs_2sv(upload, "Apache::Upload", ctx->parent);
+    SvTAINTED_on(SvRV(sv));
+    PUSHs(sv_2mortal(sv));
+    PUSHs(ctx->bucket_data);
     PUSHs(sv_2mortal(newSViv(len)));
     if (ctx->hook_data)
         PUSHs(ctx->hook_data);
@@ -363,6 +368,7 @@ static XS(apreq_xs_request_config)
             ctx->hook = newSVsv(ST(j+1));
             ctx->bucket_data = newSV(8000);
             ctx->parent = SvREFCNT_inc(obj);
+            SvTAINTED_on(ctx->bucket_data);
 #ifdef USE_ITHREADS
             ctx->perl = aTHX;
 #endif
