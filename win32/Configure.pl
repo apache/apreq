@@ -34,6 +34,10 @@ my $cfg = $debug ? 'Debug' : 'Release';
 
 check_depends();
 
+my @tests = qw(cookie parsers params version);
+my @test_files = map {catfile('t', "$_.t")} @tests;
+generate_tests($apreq_home, \@tests);
+
 my %apr_libs;
 my %map = (apr => 'libapr.lib', apu => 'libaprutil.lib');
 my $devnull = devnull();
@@ -62,6 +66,7 @@ APACHE=$apache
 PERL=$^X
 RM_F=\$(PERL) -MExtUtils::Command -e rm_f
 DOXYGEN_CONF=\$(APREQ_HOME)\\build\\doxygen.conf.win32
+TEST_FILES = @test_files
 
 END
 
@@ -339,6 +344,20 @@ sub check_depends {
                 or warn "system @args failed: $?";
         }
     }
+}
+
+sub generate_tests {
+  my ($top, $test_files) = @_;
+  my $t = catdir $top, 't';
+  foreach my $test(@$test_files) {
+    my $file = catfile $t, $test;
+    open my $fh, '>', "$file.t" || die "Cannot open $file.t: $!";
+    print $fh <<"EOT";
+#!$^X
+exec '$file';
+EOT
+    close $fh;
+  }
 }
 
 sub fetch_apxs {
