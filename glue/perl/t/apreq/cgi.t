@@ -4,13 +4,22 @@ use warnings FATAL => 'all';
 use Apache::Test;
 use Apache::TestUtil qw(t_cmp t_debug t_write_perl_script);
 use Apache::TestConfig;
-use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC GET_HEAD);
+use Apache::TestRequest qw(GET_BODY UPLOAD_BODY 
+                           GET_BODY_ASSERT POST_BODY GET_RC GET_HEAD);
 use constant WIN32 => Apache::TestConfig::WIN32;
 use HTTP::Cookies;
+use Cwd;
+require File::Basename;
 
 my @key_len = (5, 100, 305);
 my @key_num = (5, 15, 26);
 my @keys    = ('a'..'z');
+
+my $cwd = getcwd();
+my %types = (perl => 'application/octet-stream',
+             'perltoc.pod' => 'text/x-pod');
+my @names = sort keys %types;
+my @methods = sort qw/slurp fh tempname link io/;
 
 my $cgi = File::Spec->catfile(Apache::Test::vars('serverroot'),
                               qw(cgi-bin test_cgi.pl));
@@ -26,7 +35,8 @@ my @big_key_len = (100, 500, 5000, 10000);
 my @big_key_num = (5, 15, 25);
 my @big_keys    = ('a'..'z');
 
-plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num;
+plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num +
+  @names * @methods;
 
 my $location = '/cgi-bin';
 my $script = $location . '/test_cgi.pl';
@@ -145,17 +155,65 @@ ok t_cmp($body, "\tfoo => 1$line_end",
     ok t_cmp($header, qq{$key="$value"; Version=1; path="$location"}, $test);
 }
 
+# file upload tests
+
+foreach my $name (@names) {
+    my $url = ( ($name =~ /\.pod$/) ?
+        "getfiles-perl-pod/" : "/getfiles-binary-" ) . $name;
+    my $content = GET_BODY_ASSERT($url);
+    my $path = File::Spec->catfile($cwd, 't', $name);
+    open my $fh, ">", $path or die "Cannot open $path: $!";
+    binmode $fh;
+    print $fh $content;
+    close $fh;
+}
+
+eval {require Digest::MD5;};
+my $has_md5 = $@ ? 0 : 1;
+
+foreach my $file( map {File::Spec->catfile($cwd, 't', $_)} @names) {
+    my $size = -s $file;
+    my $cs = $has_md5 ? cs($file) : 0;
+    my $basename = File::Basename::basename($file);
+
+    for my $method ( @methods) {
+        my $result = UPLOAD_BODY("$script?method=$method;has_md5=$has_md5", 
+                                 filename => $file);
+        $result =~ s{\r}{}g;
+        my $expected = <<END;
+
+type: $types{$basename}
+size: $size
+filename: $basename
+md5: $cs
+END
+        ok t_cmp($result, $expected, "$method test for $basename");
+    }
+    unlink $file if -f $file;
+}
+
+sub cs {
+    my $file = shift;
+    open my $fh, '<', $file or die qq{Cannot open "$file": $!};
+    binmode $fh;
+    my $md5 = Digest::MD5->new->addfile($fh)->hexdigest;
+    close $fh;
+    return $md5;
+}
+
 __DATA__
 use strict;
 use File::Basename;
 use warnings FATAL => 'all';
+use blib;
 use Apache2;
 use APR;
 use APR::Pool;
-use blib;
-use Apache2;
 use Apache::Request;
 use Apache::Cookie;
+use Apache::Upload;
+use File::Spec;
+require File::Basename;
 
 my $p = APR::Pool->new();
 
@@ -167,6 +225,7 @@ my $bar = $req->param("bar");
 
 my $test = $req->param("test");
 my $key  = $req->param("key");
+my $method  = $req->param("method");
 
 if ($foo || $bar) {
     print "Content-Type: text/plain\n\n";
@@ -195,6 +254,64 @@ elsif ($test && $key) {
     }
 }
 
+elsif ($method) {
+    my $temp_dir = File::Spec->tmpdir;
+    my $has_md5  = $req->args('has_md5');
+    require Digest::MD5 if $has_md5;
+    my $upload = $req->upload(($req->upload)[0]);
+    my $type = $upload->type;
+    my $basename = File::Basename::basename($upload->filename);
+    my ($data, $fh);
+
+    if ($method eq 'slurp') {
+        $upload->slurp($data);
+    }
+    elsif ($method eq 'fh') {
+        read $upload->fh, $data, $upload->size;
+    }
+    elsif ($method eq 'tempname') {
+        my $name = $upload->tempname;
+        open $fh, "<", $name or die "Can't open $name: $!";
+        binmode $fh;
+        read $fh, $data, $upload->size;
+        close $fh;
+    }
+    elsif ($method eq 'link') {
+        my $link_file = File::Spec->catfile($temp_dir, "linkfile");
+        unlink $link_file if -f $link_file;
+        $upload->link($link_file) or die "Can't link to $link_file: $!";
+        open $fh, "<", $link_file or die "Can't open $link_file: $!";
+        binmode $fh;
+        read $fh, $data, $upload->size;
+        close $fh;
+        unlink $link_file if -f $link_file;
+    }
+    elsif ($method eq 'io') {
+        read $upload->io, $data, $upload->size;
+    }
+    else  {
+        die "unknown method: $method";
+    }
+    my $temp_file = File::Spec->catfile($temp_dir, "$basename$$");
+    unlink $temp_file if -f $temp_file;
+    open my $wfh, ">", $temp_file or die "Can't open $temp_file: $!";
+    binmode $wfh;
+    print $wfh $data;
+    close $wfh;
+    my $cs = $has_md5 ? cs($temp_file) : 0;
+ 
+    my $size = -s $temp_file;
+    print <<"END";
+
+
+type: $type
+size: $size
+filename: $basename
+md5: $cs
+END
+#    unlink $temp_file if -f $temp_file;
+}
+
 else {
     my $len = 0;
     print "Content-Type: text/plain\n\n";
@@ -214,4 +331,13 @@ sub apreq_log {
     my ($pkg, $file, $line) = caller;
     $file = basename($file);
     print STDERR "$file($line): $msg\n";    
+}
+
+sub cs {
+    my $file = shift;
+    open my $fh, '<', $file or die qq{Cannot open "$file": $!};
+    binmode $fh;
+    my $md5 = Digest::MD5->new->addfile($fh)->hexdigest;
+    close $fh;
+    return $md5;
 }
