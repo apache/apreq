@@ -4,6 +4,9 @@ Revision history for libapreq
 
 =item 1.12 - February 27, 2003
 
+do a better mod_perl version checking, including the test for mod_perl
+2.0. [Stas]
+
 Applied IKEBE Tomohiro's patch for handling %uXXXX strings.
 
 =item 1.11 - February 27, 2003

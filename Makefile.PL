@@ -3,6 +3,20 @@ use strict;
 use FindBin;
 use 5.005;
 
+use File::Path qw(mkpath);
+
+BEGIN {
+    unless (eval {require mod_perl}) {
+        die "Please install mod_perl: 1.25 < version < 1.99\n($@)";
+    }
+    if ($mod_perl::VERSION < 1.2402) {
+        die "Please upgrade mod_perl to 1.24_02 or greater";
+    }
+    elsif ($mod_perl::VERSION > 1.98) {
+        die "mod_perl 1.x ( < 1.99) is required";
+    }
+}
+
 my $Is_Win32 = ($^O eq "MSWin32") || $ENV{WIN32_TEST};
 
 my $conf_data = join '', <DATA>;
@@ -36,22 +50,17 @@ my $lib;
 check_compat();
 
 if ($Is_Win32) {
-  use mod_perl;
-  unless ($mod_perl::VERSION >= 1.2402) {
-    die "Please upgrade mod_perl to 1.24_02 or greater";
-  }
-  use Cwd;
-  my $cwd = cwd;
+  require Cwd;
+  my $cwd = Cwd::cwd();
   $cwd =~ s#\\#/#g;
   my $root = "$cwd/blib/arch/auto";
-  use File::Path qw(mkpath);
   mkpath $root, 1, 0755 unless -d $root;
   mkpath "$root/libapreq", 1, 0755 unless -d "$root/libapreq";
   $lib = "$root/libapreq/libapreq.lib";
   open (FILE, ">>$lib") 
     or die "Cannot touch $lib: $!\n";
   close FILE;  
-  use Apache::MyConfig;
+  require Apache::MyConfig;
   $ENV{APREQ_LIB} = "$root/libapreq";
   $ENV{AP_INC} = $Apache::MyConfig::Setup{APACHE_INC};
   $ENV{MP_INC} = $Apache::MyConfig::Setup{MODPERL_INC};
