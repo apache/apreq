@@ -53,6 +53,15 @@ CURRENT VOTES:
 TODO:
 
 
+    - Consider dropping ExtUtils::XSBuilder as the C API is fairly
+      stable now.  The header parsing + xs generation stuff may be too 
+      difficult for the community to maintain over ordinary .xs files.
+
+    - Round out the unit tests in library/t.  Ideally each
+      API function should have its own tests, and each possible
+      error status should be both tested & documented.  Also
+      upgrade these tests to use the Apache::Test framework.
+
     - Fix all the "//apreq_log" comments in the cgi tests.
 
     - Let hooks interrupt parsers via APREQ_ERROR_INTERRUPT.  
@@ -81,8 +90,6 @@ TODO:
     - Why must fprintf(stderr, ...), rather than
       apr_file_printf(err, ...), be used on Win32 in
       cgi_log() of src/apreq_env.c?
-
-    - CuTest needs va_arg to print comments for a failed unit test.
 
     - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
       Also add a test to configure that prevents simultaneous use of
