@@ -22,7 +22,7 @@
 #include "ppport.h"
 
 
-#if (PERL_VERSION >= 8)
+#if (PERL_VERSION >= 8) /* MAGIC ITERATOR REQUIRES 5.8 */
 
 /* Requires perl 5.8 or better. 
  * A custom MGVTBL with its "copy" slot filled allows
@@ -83,7 +83,7 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
         SvMAGIC(SvRV(rv))->mg_ptr = env;
     }
 
-#if APREQ_XS_TABLE_CAN_PREFETCH_VALUES
+#if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
 
     sv_magic(sv, NULL, PERL_MAGIC_ext, Nullch, -1);
     SvMAGIC(sv)->mg_virtual = (MGVTBL *)&apreq_xs_table_magic;
