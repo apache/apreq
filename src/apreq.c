@@ -41,6 +41,7 @@ APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t  *p,
     memcpy((char *)v->name, name, nlen);
     ((char *)v->name)[nlen] = 0;
 
+    v->flags = 0;
     return v;
 }
 
