@@ -476,7 +476,7 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *env,
             /* riff on Duff's device */
             cgi_read(env, APREQ_DEFAULT_READ_BLOCK_SIZE);
 
-    default:
+    case APR_SUCCESS:
 
             val = apr_table_get(handle->body, name);
             if (val != NULL)
@@ -484,6 +484,15 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *env,
 
         } while (handle->body_status == APR_INCOMPLETE);
 
+        break;
+
+    default:
+
+        if (handle->body != NULL) {
+            val = apr_table_get(handle->body, name);
+            if (val != NULL)
+                return apreq_value_to_param(val);
+        }
     }
 
     return NULL;
