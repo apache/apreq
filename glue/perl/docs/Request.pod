@@ -420,13 +420,14 @@ C<(args_status, body_status)>.
 
 
 
+
 =head2 parse
 
     $req->parse()
 
 Forces the request to be parsed immediately.  In void context,
-this will throw an Apache::Request::Error, otherwise it will
-return the parser's final I<APR> status code.
+this will throw an Apache::Request::Error should the parser fail. 
+Otherwise it will return the parser's final I<APR> status code.
 
 However C<parse> should be avoided in most normal situations.  
 For example, in a mod_perl content handler it is more efficient
@@ -443,7 +444,7 @@ to write
 
 Calling C<< $r->discard_request_body >> outside the content handler
 is generally a mistake, so use C<< $req->parse >> there, but 
-B<only as a last resort>.  The Apache::Request API is designed 
+B<only as a last resort>.  The Apache::Request API is B<designed> 
 around a lazy-parsing scheme, so calling C<parse> should not
 affect the behavior of any other methods.
 
