@@ -199,6 +199,65 @@ static void table_overlap(CuTest *tc)
     CuAssertStrEquals(tc, "7",val);
 }
 
+static void table_overlay(CuTest *tc)
+{
+    const char *val;
+    t1 = apreq_table_make(p, 1);
+    apreq_table_t *t2 = apreq_table_make(p, 1);
+    apr_status_t s;
+    apreq_table_add(t1, V("a", "0"));
+    apreq_table_add(t1, V("g", "7"));
+
+    apreq_table_add(t2, V("a", "1"));
+    apreq_table_add(t2, V("b", "2"));
+    apreq_table_add(t2, V("c", "3"));
+    apreq_table_add(t2, V("b", "2.0"));
+    apreq_table_add(t2, V("d", "4"));
+    apreq_table_add(t2, V("e", "5"));
+    apreq_table_add(t2, V("b", "2."));
+    apreq_table_add(t2, V("f", "6"));
+    t1 = apreq_table_overlay(p, t1, t2);
+
+    CuAssertIntEquals(tc, 10, apreq_table_nelts(t1));
+
+    val = apreq_table_get(t1, "a");
+    CuAssertStrEquals(tc, "0",val);
+    val = apreq_table_get(t1, "b");
+    CuAssertStrEquals(tc, "2",val);
+    val = apreq_table_get(t1, "c");
+    CuAssertStrEquals(tc, "3",val);
+    val = apreq_table_get(t1, "d");
+    CuAssertStrEquals(tc, "4",val);
+    val = apreq_table_get(t1, "e");
+    CuAssertStrEquals(tc, "5",val);
+    val = apreq_table_get(t1, "f");
+    CuAssertStrEquals(tc, "6",val);
+    val = apreq_table_get(t1, "g");
+    CuAssertStrEquals(tc, "7",val);
+}
+
+static void table_iterators(CuTest *tc)
+{
+    const char *val;
+    apreq_table_iter_t ti;
+    ti.t = t1;
+    apreq_table_first(&ti);
+    CuAssertStrEquals(tc,"0", ti.v->data);
+    apreq_table_next(&ti);
+    CuAssertStrEquals(tc,"7", ti.v->data);
+    apreq_table_next(&ti);
+    CuAssertStrEquals(tc,"1", ti.v->data);
+    apreq_table_next(&ti); 
+    CuAssertStrEquals(tc,"2", ti.v->data);
+    apreq_table_last(&ti);
+    CuAssertStrEquals(tc,"6", ti.v->data);
+    apreq_table_prev(&ti);
+    CuAssertStrEquals(tc,"2.", ti.v->data);
+    apreq_table_prev(&ti);
+    CuAssertStrEquals(tc,"5", ti.v->data);
+
+}
+
 CuSuite *testtable(void)
 {
     CuSuite *suite = CuSuiteNew("Table");
@@ -212,6 +271,8 @@ CuSuite *testtable(void)
     SUITE_ADD_TEST(suite, table_clear);
     SUITE_ADD_TEST(suite, table_unset);
     SUITE_ADD_TEST(suite, table_overlap);
+    SUITE_ADD_TEST(suite, table_overlay);
+    SUITE_ADD_TEST(suite, table_iterators);
 
     return suite;
 }

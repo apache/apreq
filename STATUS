@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/04/18 02:29:11 $]
+Last modified at [$Date: 2003/04/19 16:06:03 $]
 
      2.0.0  in development
 
@@ -44,9 +44,11 @@ CURRENT VOTES:
 
 TODO:
 
-    * Write core unit tests in t/.
-    * Populate the glue/ directory (perl, tcl, etc.).
+    * more core unit tests in t/.
+        tables.c needs tests for "balanced" tables
 
+    * Populate the glue/ directory (perl, tcl, etc.).
+    
 
 OPEN ISSUES:
 

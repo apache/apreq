@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
         for (j = 0; tests[j].func != NULL; j++) {
             if (!strcmp(argv[i], tests[j].testname)) {
                 if (!partial) {
-                    alltests = CuSuiteListNew("Partial APR Tests");
+                    alltests = CuSuiteListNew("Partial APREQ Tests");
                     partial = 1;
                 }
 
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     }
 
     if (!partial) {
-        alltests = CuSuiteListNew("All APR Tests");
+        alltests = CuSuiteListNew("All APREQ Tests");
         for (i = 0; tests[i].func != NULL; i++) {
             CuSuiteListAdd(alltests, tests[i].func());
         }
