@@ -1,8 +1,5 @@
-# Version control files and dirs.
-\bRCS\b
-\bCVS\b
-,v$
-\.cvsignore$
+# subversion dirs
+\.svn\b
 
 # Makemaker generated files and dirs.
 ^MANIFEST\.
