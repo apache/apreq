@@ -6,7 +6,7 @@ use 5.005;
 use File::Path qw(mkpath);
 use lib qw(Apache-Test/lib);
 
-use constant MIN_A_T_VERSION => 2.13;
+use constant MIN_A_T_VERSION => 1.13;
 
 use constant HAS_APACHE_TEST => eval {
     require Apache::Test &&
@@ -51,6 +51,7 @@ else {
 test : pure_all
 	@echo \*** This test suite requires Apache::Test available
 	@echo \*** available from CPAN
+
 EOF
     };
 }
@@ -66,55 +67,62 @@ my $lib;
 check_compat();
 
 if (WIN32) {
-  require Cwd;
-  my $cwd = Cwd::cwd();
-  $cwd =~ s#\\#/#g;
-  my $root = "$cwd/blib/arch/auto";
-  mkpath $root, 1, 0755 unless -d $root;
-  mkpath "$root/libapreq", 1, 0755 unless -d "$root/libapreq";
-  $lib = "$root/libapreq/libapreq.lib";
-  open (FILE, ">>$lib") 
-    or die "Cannot touch $lib: $!\n";
-  close FILE;  
-  require Apache::MyConfig;
-  $ENV{APREQ_LIB} = "$root/libapreq";
-  $ENV{AP_INC} = $Apache::MyConfig::Setup{APACHE_INC};
-  $ENV{MP_INC} = $Apache::MyConfig::Setup{MODPERL_INC};
-  $ENV{AP_LIB} = $Apache::MyConfig::Setup{APACHE_LIB};
-  $ENV{MP_LIB} = $Apache::MyConfig::Setup{MODPERL_LIB};
-  unless (-f "$ENV{MP_LIB}/mod_perl.so") {
-    die "Cannot find mod_perl.so in $ENV{MP_LIB}. " .
-        "Please build mod_perl first";
-  }
-  unless (-f "$ENV{AP_LIB}/ApacheCore.lib") {
-    die "Cannot find ApacheCore.lib in $ENV{AP_LIB}. " .
-        "Please build apache first.";
-  }
+    require Cwd;
+    my $cwd = Cwd::cwd();
+    $cwd =~ s#\\#/#g;
+
+    my $root = "$cwd/blib/arch/auto";
+    mkpath $root, 1, 0755 unless -d $root;
+    mkpath "$root/libapreq", 1, 0755 unless -d "$root/libapreq";
+    $lib = "$root/libapreq/libapreq.lib";
+
+    open (FILE, ">>$lib")
+        or die "Cannot touch $lib: $!\n";
+    close FILE;
+
+    require Apache::MyConfig;
+    $ENV{APREQ_LIB} = "$root/libapreq";
+    $ENV{AP_INC} = $Apache::MyConfig::Setup{APACHE_INC};
+    $ENV{MP_INC} = $Apache::MyConfig::Setup{MODPERL_INC};
+    $ENV{AP_LIB} = $Apache::MyConfig::Setup{APACHE_LIB};
+    $ENV{MP_LIB} = $Apache::MyConfig::Setup{MODPERL_LIB};
+
+    unless (-f "$ENV{MP_LIB}/mod_perl.so") {
+        die "Cannot find mod_perl.so in $ENV{MP_LIB}. " .
+            "Please build mod_perl first";
+    }
+
+    unless (-f "$ENV{AP_LIB}/ApacheCore.lib") {
+        die "Cannot find ApacheCore.lib in $ENV{AP_LIB}. " .
+            "Please build apache first.";
+    }
 }
 
 WriteMakefile(
-	      'NAME'	 => 'libapreq',
-	      'VERSION' => $myVERSION,
-	      'DIR' => [qw(c Request Cookie)], 
-              PREREQ_PM => \%require,
-              clean     => {
-                            FILES => "@{ clean_files() }",
-                           },
-	      );
+    NAME      => 'libapreq',
+    VERSION   => $myVERSION,
+    DIR       => [qw(c Request Cookie)],
+    PREREQ_PM => \%require,
+    clean     => {
+        FILES => "@{ clean_files() }",
+    },
+);
 
 sub clean_files {
     return [qw( t/TEST )];
 }
 
 if (WIN32 and -e $lib) {
-  unlink $lib or die "Cannot unlink $lib: $!\n";
+    unlink $lib or die "Cannot unlink $lib: $!\n";
 }
 
 sub check_compat {
     eval { require Apache::Request };
     return if $@;
+
     my $v = $Apache::Request::VERSION;
     return if $v >= 0.2000;
+
     print "libapreq is not compatible with  Apache::Request version $v\n";
     my $ans = prompt("Continue?", "n");
     if ($ans =~ /^n/i) {
@@ -124,28 +132,29 @@ sub check_compat {
 }
 
 sub MY::pasthru {
-     my $self = shift;
+    my $self = shift;
     chomp(my $str = $self->MM::pasthru);
-    join $/, "$str\\", 
-     "\t".'DEFINE="$(DEFINE)"',
-    "";
+    join $/, "$str\\", "\t".'DEFINE="$(DEFINE)"', "";
 }
-sub MY::postamble { 
-    return <<'EOF'; 
+
+sub MY::postamble {
+    return <<'EOF';
 
 cvs_tag :
-	cvs tag v$(VERSION_SYM) . 
+	cvs tag v$(VERSION_SYM) .
 	@echo update the VERSION in Apache/Request.pm now 
 
 EOF
 }
 
 sub win32_setup {
-    eval{require Win32;};
+    eval{ require Win32 };
     die "The libwin32 package is needed" if $@;
+
     require File::Spec;
     my $apache;
     my $exe = 'Apache.exe';
+
   SEARCH: {
         my $candidate;
         for (File::Spec->path) {
@@ -155,10 +164,11 @@ sub win32_setup {
                 last SEARCH;
             }
         }
+
         my @drives = drives();
         last SEARCH unless (@drives > 0);
         for my $drive (@drives) {
-            for ('Apache', 'Program Files/Apache', 
+            for ('Apache', 'Program Files/Apache',
                  'Program Files/Apache Group/Apache') {
                 $candidate = File::Spec->catfile($drive, $_, $exe);
                 if (-e $candidate and check_win32_apache($candidate)) {
@@ -168,10 +178,12 @@ sub win32_setup {
             }
         }
     }
+
     unless (-e $apache) {
-         $apache = prompt("Please supply the full path to Apache.exe:", 
-                          $apache);
+        $apache = prompt("Please supply the full path to Apache.exe:",
+                         $apache);
     }
+
     if (-d $apache) {
         $apache = File::Spec->catfile($apache, $exe);
     }
@@ -192,8 +204,9 @@ sub check_win32_apache {
 
 sub drives {
     my @drives = ();
-    eval{require Win32API::File;};
+    eval { require Win32API::File };
     return map {"$_:\\"} ('C' .. 'Z') if $@;
+
     my @r = Win32API::File::getLogicalDrives();
     return unless @r > 0;
     for (@r) {
