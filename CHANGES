@@ -5,6 +5,12 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- C API [joes]
+  Make our "libtool current interface" number depend on apr's 
+  major number.  This allows libapreq2 to be installed into a 
+  system-wide location while avoiding ABI conflicts arising from
+  our apr-based interfaces.
+
 - C API [Max Kellermann]
   mod_apreq must check the return value of apreq_brigade_concat
   to avoid a RAM-consuming infinite loop.  A bad APREQ_TempDir 

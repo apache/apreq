@@ -34,6 +34,11 @@ CURRENT VOTES:
 
 TODO:
 
+    - Document the new apr-dependency in our soname's major version:
+
+         libapreq2.so.2.x.y  <--- has apr-0's ABI
+         libapreq2.so.3.x.y  <--- has apr-1's ABI
+
     - We need to add some basic charset support.  Long discussion 
       starts here:
               http://article.gmane.org/gmane.comp.apache.apreq/2371

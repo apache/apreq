@@ -8,12 +8,13 @@
 #
 #   get-version.sh all returns a dotted version number
 #   get-version.sh major returns just the major version number
-#   get-version.sh libtool returns a version "libtool -version-info" format
+#   get-version.sh minor returns just the minor version number
+#   get-version.sh patch returns just the match version number
 #
 
 if test $# != 3; then
   echo "USAGE: $0 CMD INCLUDEDIR PREFIX"
-  echo "  where CMD is one of: all, major, libtool"
+  echo "  where CMD is one of: all, major, minor, patch"
   exit 1
 fi
 
@@ -23,14 +24,15 @@ patch_sed="/#define.*$3_PATCH_VERSION/s/^[^0-9]*\([0-9]*\).*$/\1/p"
 major="`sed -n $major_sed $2`"
 minor="`sed -n $minor_sed $2`"
 patch="`sed -n $patch_sed $2`"
-ltmaj="`expr $major + $minor`"
 
 if test "$1" = "all"; then
   echo ${major}.${minor}.${patch}
 elif test "$1" = "major"; then
   echo ${major}
-elif test "$1" = "libtool"; then
-  echo ${ltmaj}:${patch}:${minor}
+elif test "$1" = "minor"; then
+  echo ${minor}
+elif test "$1" = "patch"; then
+  echo ${patch}
 else
   echo "ERROR: unknown version CMD ($1)"
   exit 1
