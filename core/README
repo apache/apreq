@@ -1,0 +1,2 @@
+No httpd header dependencies in core/; those go in env/apache.
+Only APR is used here.
