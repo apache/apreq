@@ -20,7 +20,7 @@ my $cwd = WIN32 ?
 
 $cwd =~ m{^(.+)/glue/perl$} or die "Can't find base directory";
 my $base_dir = $1;
-my $src_dir = "$base_dir/src";
+my $src_dir = "$base_dir/include";
 my $xs_dir = "$base_dir/glue/perl/xsbuilder";
 
 sub slurp($$)
@@ -114,9 +114,9 @@ sub preprocess
     # ExtUtils::XSBuilder::C::grammar
 
     for ($_[1]) {
-        ::c_macro("APREQ_DECLARE", "apreq.h")->();
-        ::c_macro("APREQ_DECLARE_HOOK", "apreq_parsers.h")->();
-        ::c_macro("APREQ_DECLARE_PARSER", "apreq_parsers.h")->();
+        ::c_macro("APREQ_DECLARE", "apreq_util.h")->();
+        ::c_macro("APREQ_DECLARE_HOOK", "apreq_parser.h")->();
+        ::c_macro("APREQ_DECLARE_PARSER", "apreq_parser.h")->();
         ::c_macro("APR_DECLARE")->();
         ::c_macro("XS")-> ();
     }

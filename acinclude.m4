@@ -185,7 +185,7 @@ AC_DEFUN([AC_APREQ], [
         fi
 
         get_version="$abs_srcdir/build/get-version.sh"
-        version_hdr="$abs_srcdir/src/apreq_version.h"
+        version_hdr="$abs_srcdir/include/apreq_version.h"
 
         # set version data
 

@@ -1,0 +1,42 @@
+INCLUDES =  -I../include @APR_INCLUDES@ @APU_INCLUDES@
+LIBS = @APR_LTLIBS@ @APU_LTLIBS@
+LDFLAGS = @APR_LDFLAGS@ @APU_LDFLAGS@
+BUILT_SOURCES= @APR_LA@ @APU_LA@
+lib_LTLIBRARIES = libapreq2.la
+libapreq2_la_SOURCES = util.c version.c cookie.c param.c parser.c \
+	               module.c module_custom.c module_cgi.c
+libapreq2_la_LDFLAGS = -version-info @APREQ_LIBTOOL_VERSION@
+
+pkgincludedir = $(includedir)/@APREQ_LIBNAME@
+
+test:
+	cd t; $(MAKE) test
+
+if ENABLE_PROFILE
+
+AM_CFLAGS= -pg -fprofile-arcs -ftest-coverage
+
+clean-local:
+	-rm *.bb *.bbg *.da *.gcov
+
+else
+
+clean-local:
+
+endif
+
+
+
+if BUILD_APR
+
+@APR_LA@:
+	cd `@APR_CONFIG@ --srcdir` && $(MAKE)
+
+endif
+
+if BUILD_APU
+
+@APU_LA@: @APR_LA@
+	cd `@APU_CONFIG@ --srcdir` && $(MAKE)
+
+endif

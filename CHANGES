@@ -5,6 +5,9 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- C API [joes]
+  Reorganize around include/, library/, and module/ dirs.
+
 - C Tests [joes]
   Replace CuTest-based tests with custom TAP-compliant framework.
 

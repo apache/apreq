@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src env glue t
+SUBDIRS = library module glue
 EXTRA_DIST = LICENSE NOTICE README INSTALL CHANGES FAQ.pod MANIFEST.SKIP Makefile.PL buildconf build win32 docs
 APU_SRCDIR=`@APU_CONFIG@ --srcdir`
 APR_SRCDIR=`@APR_CONFIG@ --srcdir`
@@ -78,13 +78,13 @@ docs/apr.tag:
 	-mkdir docs
 	echo GENERATE_TAGFILE=`pwd`/docs/apr.tag | $(APR_DOX)
 
-test: all lib_test env_test $(PERL_TEST)
+test: all library_test module_test $(PERL_TEST)
 
-env_test:
-	cd env; $(MAKE) test
+module_test:
+	cd module; $(MAKE) test
 
-lib_test:
-	cd t; $(MAKE) test
+library_test:
+	cd library; $(MAKE) test
 
 perl_install:
 	cd glue/perl; $(MAKE) install

@@ -27,12 +27,12 @@ AC_PROG_LN_S
 AM_MAINTAINER_MODE
 
 dnl Checks for header files.
-AM_CONFIG_HEADER(src/apreq_config.h)
+AM_CONFIG_HEADER(include/apreq_config.h)
 dnl Checks for typedefs, structures, and compiler characteristics.
 dnl Checks for library functions.
 
 AC_APREQ
-AC_CONFIG_FILES([Makefile src/Makefile env/Makefile glue/Makefile t/Makefile])
-AC_CONFIG_FILES([build/doxygen.conf src/groups.dox])
+AC_CONFIG_FILES([Makefile library/Makefile library/t/Makefile module/Makefile module/apache2/Makefile glue/Makefile])
+AC_CONFIG_FILES([build/doxygen.conf include/groups.dox])
 AC_CONFIG_FILES([apreq2-config], [chmod +x apreq2-config])
 AC_OUTPUT
