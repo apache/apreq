@@ -2,19 +2,25 @@ use ExtUtils::MakeMaker;
 use strict;
 use 5.005;
 
+my $Is_Win32 = ($^O eq "MSWin32") || $ENV{WIN32_TEST};
 
-eval {
+if (not $Is_Win32) {
+  eval {
     require Apache::test;
     local $SIG{ALRM} = sub { die "alarm\n" };
     alarm 60;
     my %params = Apache::test->get_test_params();
     alarm 0;
-
+    
     Apache::test->write_httpd_conf(%params, include => join '', <DATA>);
     *MY::test = sub {Apache::test->MM_test(%params)};
-};
+  };
+  print "\n[timeout] skipping test setup...\n" if $@ eq "alarm\n";
+}
+else {
+  write_win32_conf();
+}
 
-print "\n[timeout] skipping test setup...\n" if $@ eq "alarm\n";
 # prerequisites
 my %require = (
     "Apache::test" => "", # any version will do
@@ -22,7 +28,6 @@ my %require = (
 
 my $myVERSION = MM->parse_version('Request/Request.pm');
 $myVERSION =~ s/(\d\d)(\d\d)$/$1_$2/;
-my $Is_Win32 = ($^O eq "MSWin32") || $ENV{WIN32_TEST}; 
 my $lib;
 check_compat();
 
@@ -105,6 +110,66 @@ cvs_tag :
 
 EOF
 }
+
+sub write_win32_conf {
+  use Cwd;
+  use Config;
+  my $dll;
+  (my $libperl = $Config{libperl}) =~ s!(.*)\.lib!$Config{bin}/$1.dll!;
+  $libperl =~ s!\\!/!g;
+  $libperl = undef unless -e $libperl;
+ SEARCH: {
+    for my $drive ('C'..'G') {
+      for my $p ("program files/apache", "apache") { 
+	last SEARCH if -e ($dll = "$drive:/$p/modules/mod_perl.so");
+      }
+    }
+  }
+  unless (-e $dll) {
+    require ExtUtils::MakeMaker;
+    ExtUtils::MakeMaker->import('prompt');
+    $dll = prompt("Where is your mod_perl.so located ?", $dll);
+  }
+  
+  die "Can't find mod_perl.so!" unless -e $dll;
+
+  (my $mime = $dll) =~ s!modules/mod_perl.so!conf/mime.types!;
+  unless (-e $mime) {
+    require ExtUtils::MakeMaker;
+    ExtUtils::MakeMaker->import('prompt');
+    $dll = prompt("Where is your mime.types located ?", $mime);
+  }
+  die "Can't find mime.types!" unless -e $mime;
+  
+  my $cwd = cwd;
+  open(ORIG, 't/httpd.conf.win32') or die "Cannot open t/httpd.conf.win32: $!";
+  open(CONF, '>t/httpd.conf') or die "Cannot open t/httpd.conf: $!";
+  while (<ORIG>) {
+    s/CWD/$cwd/g;
+    s/MIME/"$mime"/;
+    if ($libperl) {
+      s/(LoadModule perl_module )DLL/LoadFile "$libperl"\n$1"$dll"/;
+    }
+    else {
+      s/DLL/$dll/;
+    }
+    print CONF $_;
+  }
+  close ORIG;
+  print CONF $_ while (<DATA>);
+  close CONF;
+  *MY::test = sub {
+return << 'EOF';
+test:	run_tests
+
+run_tests:
+        $(FULLPERL) -I"blib/lib" -I"blib/arch" t/TEST.win32
+
+EOF
+};
+
+}
+
 __DATA__
 <Perl>
    unshift @INC, "blib/arch";

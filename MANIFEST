@@ -49,4 +49,6 @@ t/response/TestApReq/request.pm
 t/apreq/big_input.t
 t/apreq/request.t
 t/apreq/cookie.t
+t/TEST.win32
+t/httpd.conf.win32
 
