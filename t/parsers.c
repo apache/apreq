@@ -111,7 +111,7 @@ static void parse_urlencoded(CuTest *tc)
 static void parse_multipart(CuTest *tc)
 {
     const char *val;
-    apr_size_t dummy;
+    apr_size_t len;
     apr_table_t *t;
     apr_status_t rv;
     apreq_request_t *req = apreq_request(APREQ_MFD_ENCTYPE
@@ -145,8 +145,9 @@ static void parse_multipart(CuTest *tc)
     CuAssertStrEquals(tc, "file1.txt", val);
     t = apreq_value_to_param(apreq_strtoval(val))->info;
     bb = apreq_value_to_param(apreq_strtoval(val))->bb;
-    apr_brigade_pflatten(bb, (char **)&val, &dummy, p);
-    CuAssertStrEquals(tc,"... contents of file1.txt ...", val);
+    apr_brigade_pflatten(bb, (char **)&val, &len, p);
+    CuAssertIntEquals(tc,strlen("... contents of file1.txt ..."), len);
+    CuAssertStrNEquals(tc,"... contents of file1.txt ...", val, len);
     val = apr_table_get(t, "content-type");
     CuAssertStrEquals(tc, "text/plain", val);
 }
