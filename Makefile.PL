@@ -7,6 +7,10 @@ use File::Path qw(mkpath);
 use lib qw(Apache-Test/lib);
 
 use constant HAS_APACHE_TEST => eval {require Apache::Test};
+
+my $Is_Win32 = ($^O eq "MSWin32") || $ENV{WIN32_TEST};
+win32_setup() if $Is_Win32;
+
 # enable 'make test|clean'
 if (HAS_APACHE_TEST) {
     require Apache::TestMM;
@@ -24,17 +28,14 @@ BEGIN {
     }
 }
 
-my $Is_Win32 = ($^O eq "MSWin32") || $ENV{WIN32_TEST};
-
 my $conf_data = join '', <DATA>;
 $conf_data =~ s|(blib/arch)|$FindBin::Bin/$1|;
 
-if (not $Is_Win32) {
-  eval {
-    require Apache::Test;
-    # accept the configs from command line
-    Apache::TestMM::filter_args();
-    Apache::TestMM::generate_script('t/TEST');
+eval {
+  require Apache::Test;
+  # accept the configs from command line
+  Apache::TestMM::filter_args();
+  Apache::TestMM::generate_script('t/TEST');
 #    local $SIG{ALRM} = sub { die "alarm\n" };
 #    alarm 60;
 #    my %params = Apache::test->get_test_params();
@@ -42,12 +43,8 @@ if (not $Is_Win32) {
 
 #    Apache::test->write_httpd_conf(%params, include => $conf_data);
 #    *MY::test = sub {Apache::test->MM_test(%params)};
-  };
-  print "\nskipping test setup...$@" if $@;
-}
-else {
-  write_win32_conf();
-}
+};
+print "\nskipping test setup...$@" if $@;
 
 # prerequisites
 my %require = (
@@ -134,63 +131,44 @@ cvs_tag :
 EOF
 }
 
-sub write_win32_conf {
-  use Cwd;
-  use Config;
-  my $dll;
-  (my $libperl = $Config{libperl}) =~ s!(.*)\.lib!$Config{bin}/$1.dll!;
-  $libperl =~ s!\\!/!g;
-  $libperl = undef unless -e $libperl;
- SEARCH: {
-    for my $drive ('C'..'G') {
-      for my $p ("program files/apache", "apache") { 
-	last SEARCH if -e ($dll = "$drive:/$p/modules/mod_perl.so");
+sub win32_setup {
+  my $apache;
+  unless ($ENV{APACHE}) {
+  SEARCH: {
+      for my $drive ('C'..'G') {
+	for my $p ('Apache', 'Program Files/Apache', 
+		   'Program Files/Apache Group/Apache') {
+	  if (-e "$drive:/$p/Apache.exe") {
+	    $apache = "$drive:/$p/Apache.exe";
+	  last SEARCH;
+	  }
+	}
       }
     }
+    unless (-e $apache) {
+      require ExtUtils::MakeMaker;
+      ExtUtils::MakeMaker->import('prompt');
+      $apache = prompt("Where is your apache.exe located?", $apache);
+    }
+    
+    die "Can't find apache.exe!" unless -e $apache;
+    
+    my $vers = qx{"$apache" -v};
+    die qq{"$apache" does not appear to be version 1.3}
+      unless $vers =~ m!Apache/1.3!;
+    $ENV{APACHE} = $apache;
   }
-  unless (-e $dll) {
-    require ExtUtils::MakeMaker;
-    ExtUtils::MakeMaker->import('prompt');
-    $dll = prompt("Where is your mod_perl.so located ?", $dll);
-  }
-  
-  die "Can't find mod_perl.so!" unless -e $dll;
-
-  (my $mime = $dll) =~ s!modules/mod_perl.so!conf/mime.types!;
-  unless (-e $mime) {
-    require ExtUtils::MakeMaker;
-    ExtUtils::MakeMaker->import('prompt');
-    $dll = prompt("Where is your mime.types located ?", $mime);
-  }
-  die "Can't find mime.types!" unless -e $mime;
-  
-  my $cwd = cwd;
-  open(ORIG, 't/httpd.conf.win32') or die "Cannot open t/httpd.conf.win32: $!";
-  open(CONF, '>t/httpd.conf') or die "Cannot open t/httpd.conf: $!";
+  my $test = 't/TEST.PL';
+  my $orig = $test . '.orig';
+  rename($test, $orig) unless -e $orig;
+  open(ORIG, $orig) or die "Cannot open $orig: $!";
+  open(NEW, ">$test") or die "Cannot open $test: $!";
   while (<ORIG>) {
-    s/CWD/$cwd/g;
-    s/MIME/"$mime"/;
-    if ($libperl) {
-      s/(LoadModule perl_module )DLL/LoadFile "$libperl"\n$1"$dll"/;
-    }
-    else {
-      s/DLL/$dll/;
-    }
-    print CONF $_;
+    s/(use warnings.*)/$1\n\n\$ENV{APACHE} = "$apache";/;
+    print NEW $_;
   }
   close ORIG;
-  print CONF $conf_data;
-  close CONF;
-  *MY::test = sub {
-return << 'EOF';
-test:	run_tests
-
-run_tests:
-        $(FULLPERL) -I"blib/lib" -I"blib/arch" t/TEST.win32
-
-EOF
-};
-
+  close NEW;
 }
 
 __DATA__
