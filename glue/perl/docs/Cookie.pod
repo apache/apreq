@@ -197,7 +197,7 @@ object which first created the $jar (via C<new>).
 =for example end
 
 =for example_testing
-    ok Apache::Cookie::Jar->env eq "APR::Pool", 'env() isa APR::Pool';
+    ok (Apache::Cookie::Jar->env eq "APR::Pool", 'env() isa APR::Pool');
 
 
 
