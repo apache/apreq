@@ -162,11 +162,18 @@ ApacheRequest_parse(req)
     Apache::Request req
 
 void
-ApacheRequest_parms(req)
+ApacheRequest_parms(req, parms=NULL)
     Apache::Request req
+    Apache::Table parms
 
     CODE:
-    ApacheRequest_parse(req);
+    if (parms) {
+        req->parms = parms->utable;
+        req->parsed = 1;
+    }
+    else {
+        ApacheRequest_parse(req);
+    }
     ST(0) = mod_perl_tie_table(req->parms);
 
 void

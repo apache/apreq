@@ -4,6 +4,8 @@ Revision history for libapreq
 
 =item 0.32 - ?
 
+$r->parms can be set to another Apache::Table instance [dougm]
+
 fix compile errors when PerlIO is used
 [dougm, Randy Kobes <randy@theoryx5.uwinnipeg.ca>]
 
