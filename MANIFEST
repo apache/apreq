@@ -62,6 +62,7 @@ t/apreq/cookie.t
 t/apreq/inherit.t
 t/apreq/request.t
 t/httpd.conf.win32
+t/request-inherit.pl
 t/response/TestApReq/big_input.pm
 t/response/TestApReq/cookie.pm
 t/response/TestApReq/inherit.pm
