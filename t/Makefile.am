@@ -7,7 +7,7 @@ libapreq_tests_a_LIBADD = ../src/libapreq.la
 
 check_PROGRAMS = testall
 testall_LDADD =  libapreq_tests.a
-testall_LDFLAGS = -lapr-0 -laprutil-0 -lgdbm -ldb -ldl -lcrypt -lexpat -lpthread
+testall_LINK = @APACHE2_APXS@ -c -p -o testall
 
 test:	check
 	./testall
