@@ -159,16 +159,16 @@ APREQ_DECLARE(apreq_value_t *) apreq_make_value(apr_pool_t *p,
  * @param p  Pool.
  * @param val Original value to copy.
  */
-APREQ_DECLARE(apreq_value_t *) apreq_copy_value(apr_pool_t *p, 
-                                                const apreq_value_t *val);
+apreq_value_t * apreq_copy_value(apr_pool_t *p, 
+                                 const apreq_value_t *val);
 
 /**
  * Merges an array of values into one.
  * @param p   Pool from which the new value is generated.
  * @param arr Array of apr_value_t *.
  */
-APREQ_DECLARE(apreq_value_t *) apreq_merge_values(apr_pool_t *p, 
-                                            const apr_array_header_t *arr);
+apreq_value_t * apreq_merge_values(apr_pool_t *p, 
+                                   const apr_array_header_t *arr);
 
 /**
  * Fetches the enctype from the environment.

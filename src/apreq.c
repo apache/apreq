@@ -84,8 +84,8 @@ APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t  *p,
 }
 
 
-APREQ_DECLARE(apreq_value_t *)apreq_copy_value(apr_pool_t *p, 
-                                               const apreq_value_t *val)
+apreq_value_t * apreq_copy_value(apr_pool_t *p, 
+                                 const apreq_value_t *val)
 {
     apreq_value_t *v;
     if (val == NULL)
@@ -101,8 +101,8 @@ APREQ_DECLARE(apreq_value_t *)apreq_copy_value(apr_pool_t *p,
     return v;
 }
 
-APREQ_DECLARE(apreq_value_t *)apreq_merge_values(apr_pool_t *p,
-                                           const apr_array_header_t *arr)
+apreq_value_t * apreq_merge_values(apr_pool_t *p,
+                                   const apr_array_header_t *arr)
 {
     apreq_value_t *a = *(apreq_value_t **)(arr->elts);
     apreq_value_t *v = apreq_char_to_value( apreq_join(p, ", ", arr, AS_IS) );
