@@ -2,7 +2,7 @@ Revision history for Perl extension Apache::Request.
 
 =over 4
 
-=item 0.30_02
+=item 0.30_02 - April 30, 1999
 
 always parse the query string (if present), including POST requests
 
