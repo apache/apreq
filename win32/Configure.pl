@@ -248,8 +248,8 @@ NULL=
 NULL=nul
 !ENDIF 
 
-INTDIR=.\libs
-OUTDIR=.\libs
+LIBDIR=.\libs
+PERLGLUE=..\glue\perl
 
 ALL : "$(LIBAPREQ)"
 
@@ -257,17 +257,20 @@ $(LIBAPREQ):
 	$(MAKE) /nologo /f $(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)"
 
 CLEAN:
-	cd libs
+        cd $(LIBDIR)
         $(RM_F) *.pch *.exe *.exp *.lib *.pch *.idb *.so *.dll *.obj
-!IF EXIST("..\glue\perl\Makefile")
-        cd ..\..\glue\perl
+        cd ..
+!IF EXIST("$(PERLGLUE)\Makefile")
+        cd $(PERLGLUE)
         $(MAKE) /nologo clean
+        cd ..\..\win32
 !ENDIF
 
 TEST: $(LIBAPREQ)
 	$(MAKE) /nologo /f $(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)"
         set PATH=%PATH%;$(APACHE)\bin
-	cd $(INTDIR) && $(TESTALL).exe -v
+        cd $(LIBDIR) && $(TESTALL).exe -v
+        cd ..
 
 $(MOD): $(LIBAPREQ)
 	$(MAKE) /nologo /f $(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)"
@@ -275,11 +278,16 @@ $(MOD): $(LIBAPREQ)
 $(CGI): $(LIBAPREQ)
 	$(MAKE) /nologo /f $(CGI).mak CFG="$(CGI) - Win32 $(CFG)" APACHE="$(APACHE)"
 
-PERL_GLUE: $(LIBAPREQ) $(MOD)
-	cd ..\glue\perl
+PERL_GLUE: $(MOD)
+        cd $(PERLGLUE)
 	$(PERL) Makefile.PL
-	$(MAKE)
+        $(MAKE) /nologo
+        cd ..\..\win32
 
-PERL_TEST: PERL_GLUE
-	cd ..\glue\perl
-	$(MAKE) test
+PERL_TEST: $(MOD)
+        cd $(PERLGLUE)
+!IF !EXIST("$(PERLGLUE)\Makefile")
+	$(PERL) Makefile.PL
+!ENDIF
+        $(MAKE) /nologo test
+        cd ..\..\win32
