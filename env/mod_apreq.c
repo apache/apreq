@@ -57,23 +57,23 @@ static void *apreq_merge_dir_config(apr_pool_t *p, void *a_, void *b_)
 }
 
 
-/* The warehouse. */
+/* The "warehouse", stored in r->request_config */
 struct env_config {
-    apreq_jar_t        *jar;
-    apreq_request_t    *req;
-    ap_filter_t        *f;
-    const char         *temp_dir;
-    apr_off_t           max_body;
-    apr_ssize_t         max_brigade;
+    apreq_jar_t        *jar;    /* Active jar for the current request_rec */
+    apreq_request_t    *req;    /* Active request for current request_rec */
+    ap_filter_t        *f;      /* Active apreq filter for this request_rec */
+    const char         *temp_dir; /* Temporary directory for spool files */
+    apr_off_t           max_body; /* Maximum bytes the parser may see */
+    apr_ssize_t         max_brigade; /* Maximum heap space for brigades */
 };
 
-/* Tracks the filter state */
+/* Tracks the apreq filter state */
 struct filter_ctx {
-    apr_bucket_brigade *bb;
-    apr_bucket_brigade *spool;
-    apr_status_t        status;
-    unsigned            saw_eos;
-    apr_off_t           bytes_read;
+    apr_bucket_brigade *bb;    /* input brigade that's passed to the parser */
+    apr_bucket_brigade *spool; /* copied prefetch data for downstream filters */
+    apr_status_t        status;/* APR_SUCCESS, APR_COMPLETE, or parse error */
+    unsigned            saw_eos;      /* Has EOS bucket appeared in filter? */
+    apr_off_t           bytes_read;   /* Total bytes read into this filter. */
 };
 
 static const char filter_name[] = "APREQ";
@@ -84,7 +84,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
  * @ingroup apreq_env
  * @brief mod_apreq - DSO that ties libapreq2 to Apache 2.X.
  *
- * mod_apreq provides an input filter for using libapreq2
+ * mod_apreq provides the "APREQ" input filter for using libapreq2
  * (and allow its parsed data structures to be shared) within
  * the Apache 2.X webserver.  Using it, libapreq2 works properly
  * in every phase of the HTTP request, from translation handlers 
@@ -105,7 +105,23 @@ module AP_MODULE_DECLARE_DATA apreq_module;
  *
  * @endcode
  *
- * <hr>
+ * The mod_apreq filter is named "APREQ", and may be used in Apache's
+ * input filter directives, e.g.
+ * @code
+ *
+ *     AddInputFilter APREQ         # or
+ *     SetInputFilter APREQ
+ *
+ * @endcode
+ *
+ * However, this is not required because libapreq2 will add the filter (only)
+ * if it's necessary.  You just need to ensure that your module instantiates
+ * an apreq_request_t using apreq_request() <em>before the content handler
+ * ultimately reads from the input filter chain</em>.  It is important to
+ * recognize that no matter how the input filters are initially arranged,
+ * the APREQ filter will always reposition itself to be the last input filter
+ * to read the data.  In other words, <code>r->input_filters</code> will
+ * always point to the active APREQ filter for the request.
  *
  * <h2>Server Configuration Directives</h2>
  *
@@ -128,6 +144,13 @@ module AP_MODULE_DECLARE_DATA apreq_module;
  * If left unset, libapreq2 will select a platform-specific location via apr_temp_dir_get().
  * </TD></TR>
  * </TABLE>
+ *
+ * <h2>Implementation Details</h2>
+ * <pre>
+ * XXX apreq as a normal input filter
+ * XXX apreq as a "virtual" content handler.
+ * XXX apreq as a transparent "tee".
+ * </pre>
  * @{
  */
 
@@ -659,7 +682,6 @@ static const char *apreq_set_max_brigade(cmd_parms *cmd, void *data,
     if (err != NULL)
         return err;
 
-
     conf->max_brigade = apreq_atoi64f(arg);
 
     if (conf->max_brigade < 0)
@@ -667,8 +689,6 @@ static const char *apreq_set_max_brigade(cmd_parms *cmd, void *data,
 
     return NULL;
 }
-/**
- */
 
 static const command_rec apreq_cmds[] =
 {
@@ -682,6 +702,7 @@ static const command_rec apreq_cmds[] =
 };
 
 /** @} */
+
 module AP_MODULE_DECLARE_DATA apreq_module =
 {
 	STANDARD20_MODULE_STUFF,
