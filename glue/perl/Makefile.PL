@@ -67,24 +67,16 @@ else {
     $config =~ /^s,\@APR_INCLUDES\@,([^,]+)/m or
         die "Can't find apache include directory";
     $apache_includes .= " $1";
-    $config =~ /^s,\@APU_INCLUDES\@,([^,]+)/m or
-        die "Can't find apache include directory";
-    $apache_includes .= " $1";
 
-    $config =~ m/^s,\@APR_LDFLAGS\@,([^,]+)/m or
-        die "Can't find apr ldflags";
-    $apr_libs = $1;
-    $config =~ m/^s,\@APU_LDFLAGS\@,([^,]+)/m or
-        die "Can't find apu ldflags";
-    $apr_libs .= " $1";
+#    $config =~ m/^s,\@APR_LDFLAGS\@,([^,]+)/m or
+#        die "Can't find apr ldflags";
+#    $apr_libs = $1;
 
-    # need -laprutil befpre -lapr
-    $config =~ m/^s,\@APU_LIBS\@,([^,]+)/m or
-        die "Can't find apu libraries";
-    $apr_libs = $1;
-    $config =~ m/^s,\@APR_LIBS\@,([^,]+)/m or
-        die "Can't find apr libraries";
-    $apr_libs .= " $1";
+#    $config =~ m/^s,\@APR_LIBS\@,([^,]+)/m or
+#        die "Can't find apr libraries";
+#    $apr_libs .= " $1";
+
+    $apr_libs ="";
 
     $config =~ m/^s,\@APREQ_LIBNAME\@,([^,]+)/m or
         die "Can't find apreq libname";
@@ -98,7 +90,7 @@ else {
 
 my $apreq_libs = WIN32 ?
     qq{-L$base_dir/win32/libs -llib$apreq_libname } :
-    qq{-L$lib_dir/.libs -l$apreq_libname};
+    qx{$base_dir/apreq2-config --link-ld --ldflags --libs};
 
 my $mp2_typemaps = Apache::Build->new->typemaps;
 

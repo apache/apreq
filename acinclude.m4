@@ -144,17 +144,17 @@ AC_DEFUN([AC_APREQ], [
         dnl Reset the default installation prefix to be the same as apu's
         ac_default_prefix="`$APU_CONFIG --prefix`"
 
-        APR_INCLUDES="`$APR_CONFIG --includes`"
-        APU_INCLUDES="`$APU_CONFIG --includes`"
+        APR_ADDTO([APR_INCLUDES], "`$APR_CONFIG --includes`")
+        APR_ADDTO([APR_INCLUDES], "`$APU_CONFIG --includes`")
         APR_LA="`$APR_CONFIG --apr-la-file`"
         APU_LA="`$APU_CONFIG --apu-la-file`"
-        APR_LTFLAGS="`$APR_CONFIG --link-libtool`"
-        APU_LTFLAGS="`$APU_CONFIG --link-libtool`"
+        APR_ADDTO([APR_LTFLAGS], "`$APR_CONFIG --link-libtool`")
+        APR_ADDTO([APR_LTFLAGS], "`$APU_CONFIG --link-libtool`")
         dnl perl glue/tests do not use libtool: need ld linker flags
-        APR_LIBS="`$APR_CONFIG --libs`"
-        APU_LIBS="`$APU_CONFIG --libs`"
-        APR_LDFLAGS="`$APR_CONFIG --link-ld --ldflags`"
-        APU_LDFLAGS="`$APU_CONFIG --link-ld --ldflags`"
+        APR_ADDTO([APR_LIBS], "`$APU_CONFIG --libs`")
+        APR_ADDTO([APR_LIBS], "`$APR_CONFIG --libs`")
+        APR_ADDTO([APR_LDFLAGS], "`$APU_CONFIG --link-ld --ldflags`")
+        APR_ADDTO([APR_LDFLAGS], "`$APR_CONFIG --link-ld --ldflags`")
 
         dnl Absolute source/build directory
         abs_srcdir=`(cd $srcdir && pwd)`
@@ -185,6 +185,8 @@ AC_DEFUN([AC_APREQ], [
 
         # set version data
 
+        APREQ_CONFIG="$top_builddir/apreq2-config"
+
         APREQ_MAJOR_VERSION=`$get_version major $version_hdr APREQ`
         APREQ_MINOR_VERSION=`$get_version minor $version_hdr APREQ`
         APREQ_PATCH_VERSION=`$get_version patch $version_hdr APREQ`
@@ -198,16 +200,11 @@ AC_DEFUN([AC_APREQ], [
         APREQ_LIBTOOL_VERSION="$APREQ_LIBTOOL_CURRENT:$APREQ_LIBTOOL_REVISION:$APREQ_LIBTOOL_AGE"
 
         APREQ_LIBNAME="apreq$APREQ_MAJOR_VERSION"
-        APREQ_INCLUDES=""
-        APREQ_LDFLAGS="$apreq_libs"
-        APREQ_EXPORT_LIBS=""
 
         echo "lib$APREQ_LIBNAME Version: $APREQ_DOTTED_VERSION"
 
+        AC_SUBST(APREQ_CONFIG)
         AC_SUBST(APREQ_LIBNAME)
-        AC_SUBST(APREQ_LDFLAGS)
-        AC_SUBST(APREQ_INCLUDES)
-        AC_SUBST(APREQ_EXPORT_LIBS)
         AC_SUBST(APREQ_LIBTOOL_VERSION)
         AC_SUBST(APREQ_MAJOR_VERSION)
         AC_SUBST(APREQ_DOTTED_VERSION)
@@ -222,15 +219,12 @@ AC_DEFUN([AC_APREQ], [
         AC_SUBST(APU_CONFIG)
         AC_SUBST(APR_CONFIG)
         AC_SUBST(APR_INCLUDES)
-        AC_SUBST(APU_INCLUDES)
-        AC_SUBST(APR_LTFLAGS)
-        AC_SUBST(APU_LTFLAGS)
-        AC_SUBST(APR_LIBS)
-        AC_SUBST(APU_LIBS)
         AC_SUBST(APR_LDFLAGS)
-        AC_SUBST(APU_LDFLAGS)
+        AC_SUBST(APR_LTFLAGS)
+        AC_SUBST(APR_LIBS)
         AC_SUBST(APR_LA)
         AC_SUBST(APU_LA)
+
         AC_SUBST(PERL)
         AC_SUBST(PERL_OPTS)
 ])

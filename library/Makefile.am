@@ -1,13 +1,10 @@
-INCLUDES =  -I../include @APR_INCLUDES@ @APU_INCLUDES@
-LDFLAGS = @APU_LTFLAGS@ @APR_LTFLAGS@
-BUILT_SOURCES= @APR_LA@ @APU_LA@
+AM_CPPFLAGS = @APR_INCLUDES@
+BUILT_SOURCES = @APR_LA@ @APU_LA@
 lib_LTLIBRARIES = libapreq2.la
 libapreq2_la_SOURCES = util.c version.c cookie.c param.c parser.c \
                        parser_urlencoded.c parser_header.c parser_multipart.c \
 	               module.c module_custom.c module_cgi.c error.c
-libapreq2_la_LDFLAGS = -version-info @APREQ_LIBTOOL_VERSION@
-
-pkgincludedir = $(includedir)/@APREQ_LIBNAME@
+libapreq2_la_LDFLAGS = -version-info @APREQ_LIBTOOL_VERSION@ @APR_LTFLAGS@ @APR_LIBS@
 
 test: all
 	cd t; $(MAKE) test

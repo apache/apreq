@@ -1,5 +1,11 @@
+#
+#
+# XXX  Trick the cpan client by listing some EU::MM-ish prereqs here? XXX
+#
+#
+
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = library module glue
+SUBDIRS = . include library module glue
 EXTRA_DIST = LICENSE NOTICE README INSTALL CHANGES FAQ.pod MANIFEST.SKIP Makefile.PL buildconf build win32 docs
 APU_SRCDIR=`@APU_CONFIG@ --srcdir`
 APR_SRCDIR=`@APR_CONFIG@ --srcdir`

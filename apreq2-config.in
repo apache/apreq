@@ -28,10 +28,10 @@ bindir="@bindir@"
 libdir="@libdir@"
 includedir="@includedir@/@APREQ_LIBNAME@"
 
-LIBS="@APR_LIBS@ @APU_LIBS@ @APREQ_LIBS@"
-LDFLAGS="@APR_LDFLAGS@ @APU_LDFLAGS@"
-INCLUDES="@APR_INCLUDES@ @APU_INCLUDES@"
-LDFLAGS="@APR_LDFLAGS@ @APU_LDFLAGS@"
+LIBS="@APR_LIBS@"
+LDFLAGS="@APR_LDFLAGS@"
+INCLUDES="@APR_INCLUDES@"
+LDFLAGS="@APR_LDFLAGS@"
 
 APREQ_LIBNAME="@APREQ_LIBNAME@"
 
@@ -101,7 +101,6 @@ else
     location=build
 fi
 
-location=installed
 
 if test "$location" = "installed"; then
     LA_FILE="$libdir/lib${APREQ_LIBNAME}.la"

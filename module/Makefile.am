@@ -1,11 +1,10 @@
-INCLUDES = -I../src @APACHE2_INCLUDES@ @APR_INCLUDES@ @APU_INCLUDES@
+AM_CPPFLAGS = @APR_INCLUDES@
 SUBDIRS = apache2 apache
-LIBS = ../library/lib@APREQ_LIBNAME@.la @APU_LIBS@ @APR_LIBS@
-LDFLAGS = @APU_LTFLAGS@ @APR_LTFLAGS@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
 EXTRA_DIST = t c-modules
 
 noinst_PROGRAMS = test_cgi
+test_cgi_LDFLAGS = @APR_LTFLAGS@ `@APREQ_CONFIG@ --link-libtool --libs`
 
 run_tests : t/TEST
 	-cp -f test_cgi t/cgi-bin

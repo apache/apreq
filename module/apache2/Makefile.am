@@ -1,14 +1,20 @@
-INCLUDES = -I../../include @APACHE2_INCLUDES@ @APR_INCLUDES@ @APU_INCLUDES@
-LIBS = ../../library/lib@APREQ_LIBNAME@.la @APU_LIBS@ @APR_LIBS@
-LDFLAGS = @APU_LTFLAGS@ @APR_LTFLAGS@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
-pkgincludedir = $(includedir)/@APREQ_LIBNAME@
 pkginclude_HEADERS = apreq_module_apache2.h
-mod_apreq2_la_LDFLAGS = -export-dynamic -module -avoid-version -rpath `@APACHE2_APXS@ -q LIBEXECDIR`
+mod_apreq2_la_LDFLAGS = -export-dynamic -module -avoid-version @APR_LTFLAGS@ \
+                        `@APREQ_CONFIG@ --link-libtool --libs`
+mod_apreq2_la_SOURCES = apreq_private_apache2.h handle.c filter.c
+
 
 if MAINTAINER_MODE
-    AM_CPPFLAGS= -DAP_HAVE_DESIGNATED_INITIALIZER
+
+AM_CPPFLAGS = -DAP_HAVE_DESIGNATED_INITIALIZER @APACHE2_INCLUDES@ @APR_INCLUDES@
+
+else
+
+AM_CPPFLAGS = @APACHE2_INCLUDES@ @APR_INCLUDES@
+
 endif
+
 
 if BUILD_HTTPD
 
@@ -26,10 +32,8 @@ all-local: @APACHE2_HTTPD@
 
 else
 
-noinst_LTLIBRARIES = mod_apreq2.la
-mod_apreq2_la_SOURCES = apreq_private_apache2.h handle.c filter.c
-
-install-exec-local: mod_apreq.la
-	@APACHE2_APXS@ -i -a -n apreq mod_apreq2.la
+pkgincludedir = `@APACHE2_APXS@ -q INCLUDEDIR`/@APREQ_LIBNAME@
+pkglibdir = `@APACHE2_APXS@ -q LIBEXECDIR`
+pkglib_LTLIBRARIES = mod_apreq2.la
 
 endif
