@@ -29,7 +29,7 @@
 #include "apreq_private_apache2.h"
 
 
-static apr_status_t apache2_jar(apreq_env_handle_t *env, const apr_table_t **t)
+static apr_status_t apache2_jar(apreq_handle_t *env, const apr_table_t **t)
 {
     struct apache2_handle *handle = (struct apache2_handle*)env;
     request_rec *r = handle->r;
@@ -49,7 +49,7 @@ static apr_status_t apache2_jar(apreq_env_handle_t *env, const apr_table_t **t)
     return handle->jar_status;
 }
 
-static apr_status_t apache2_args(apreq_env_handle_t *env, const apr_table_t **t)
+static apr_status_t apache2_args(apreq_handle_t *env, const apr_table_t **t)
 {
     struct apache2_handle *handle = (struct apache2_handle*)env;
     request_rec *r = handle->r;
@@ -71,7 +71,7 @@ static apr_status_t apache2_args(apreq_env_handle_t *env, const apr_table_t **t)
 
 
 
-static apreq_cookie_t *apache2_jar_get(apreq_env_handle_t *env, const char *name)
+static apreq_cookie_t *apache2_jar_get(apreq_handle_t *env, const char *name)
 {
     struct apache2_handle *handle = (struct apache2_handle *)env;
     const apr_table_t *t;
@@ -92,7 +92,7 @@ static apreq_cookie_t *apache2_jar_get(apreq_env_handle_t *env, const char *name
     return apreq_value_to_cookie(val);
 }
 
-static apreq_param_t *apache2_args_get(apreq_env_handle_t *env, const char *name)
+static apreq_param_t *apache2_args_get(apreq_handle_t *env, const char *name)
 {
     struct apache2_handle *handle = (struct apache2_handle *)env;
     const apr_table_t *t;
@@ -114,13 +114,13 @@ static apreq_param_t *apache2_args_get(apreq_env_handle_t *env, const char *name
 }
 
 
-static const char *apache2_header_in(apreq_env_handle_t *env, const char *name)
+static const char *apache2_header_in(apreq_handle_t *env, const char *name)
 {
     struct apache2_handle *handle = (struct apache2_handle *)env;
     return apr_table_get(handle->r->headers_in, name);
 }
 
-static apr_status_t apache2_header_out(apreq_env_handle_t *env,
+static apr_status_t apache2_header_out(apreq_handle_t *env,
                                        const char *name, char *value)
 {
     struct apache2_handle *handle = (struct apache2_handle *)env;
@@ -128,7 +128,7 @@ static apr_status_t apache2_header_out(apreq_env_handle_t *env,
     return APR_SUCCESS;
 }
 
-static apr_status_t apache2_body(apreq_env_handle_t *env, const apr_table_t **t)
+static apr_status_t apache2_body(apreq_handle_t *env, const apr_table_t **t)
 {
     ap_filter_t *f = get_apreq_filter(env);
     struct filter_ctx *ctx;
@@ -154,7 +154,7 @@ static apr_status_t apache2_body(apreq_env_handle_t *env, const apr_table_t **t)
     return ctx->status;
 }
 
-static apreq_param_t *apache2_body_get(apreq_env_handle_t *env, const char *name)
+static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
 {
     ap_filter_t *f = get_apreq_filter(env);
     struct filter_ctx *ctx;
@@ -198,7 +198,7 @@ static apreq_param_t *apache2_body_get(apreq_env_handle_t *env, const char *name
 }
 
 static
-apr_status_t apache2_parser_get(apreq_env_handle_t *env, 
+apr_status_t apache2_parser_get(apreq_handle_t *env, 
                                   const apreq_parser_t **parser)
 {
     ap_filter_t *f = get_apreq_filter(env);
@@ -213,7 +213,7 @@ apr_status_t apache2_parser_get(apreq_env_handle_t *env,
 }
 
 static
-apr_status_t apache2_parser_set(apreq_env_handle_t *env, 
+apr_status_t apache2_parser_set(apreq_handle_t *env, 
                                 apreq_parser_t *parser)
 {
     ap_filter_t *f = get_apreq_filter(env);
@@ -235,7 +235,7 @@ apr_status_t apache2_parser_set(apreq_env_handle_t *env,
 
 
 static
-apr_status_t apache2_hook_add(apreq_env_handle_t *env,
+apr_status_t apache2_hook_add(apreq_handle_t *env,
                               apreq_hook_t *hook)
 {
     ap_filter_t *f = get_apreq_filter(env);
@@ -263,7 +263,7 @@ apr_status_t apache2_hook_add(apreq_env_handle_t *env,
 }
 
 static
-apr_status_t apache2_brigade_limit_set(apreq_env_handle_t *env,
+apr_status_t apache2_brigade_limit_set(apreq_handle_t *env,
                                        apr_size_t bytes)
 {
     ap_filter_t *f = get_apreq_filter(env);
@@ -283,7 +283,7 @@ apr_status_t apache2_brigade_limit_set(apreq_env_handle_t *env,
 }
 
 static
-apr_status_t apache2_brigade_limit_get(apreq_env_handle_t *env,
+apr_status_t apache2_brigade_limit_get(apreq_handle_t *env,
                                        apr_size_t *bytes)
 {
     ap_filter_t *f = get_apreq_filter(env);
@@ -298,7 +298,7 @@ apr_status_t apache2_brigade_limit_get(apreq_env_handle_t *env,
 }
 
 static
-apr_status_t apache2_read_limit_set(apreq_env_handle_t *env,
+apr_status_t apache2_read_limit_set(apreq_handle_t *env,
                                     apr_uint64_t bytes)
 {
     ap_filter_t *f = get_apreq_filter(env);
@@ -318,7 +318,7 @@ apr_status_t apache2_read_limit_set(apreq_env_handle_t *env,
 }
 
 static
-apr_status_t apache2_read_limit_get(apreq_env_handle_t *env,
+apr_status_t apache2_read_limit_get(apreq_handle_t *env,
                                     apr_uint64_t *bytes)
 {
     ap_filter_t *f = get_apreq_filter(env);
@@ -333,7 +333,7 @@ apr_status_t apache2_read_limit_get(apreq_env_handle_t *env,
 }
 
 static
-apr_status_t apache2_temp_dir_set(apreq_env_handle_t *env,
+apr_status_t apache2_temp_dir_set(apreq_handle_t *env,
                                   const char *path)
 {
     ap_filter_t *f = get_apreq_filter(env);
@@ -354,7 +354,7 @@ apr_status_t apache2_temp_dir_set(apreq_env_handle_t *env,
 }
 
 static
-apr_status_t apache2_temp_dir_get(apreq_env_handle_t *env,
+apr_status_t apache2_temp_dir_get(apreq_handle_t *env,
                                   const char **path)
 {
     ap_filter_t *f = get_apreq_filter(env);
@@ -370,7 +370,7 @@ apr_status_t apache2_temp_dir_get(apreq_env_handle_t *env,
 
 static APREQ_MODULE(apache2, 20050131);
 
-APREQ_DECLARE(apreq_env_handle_t *) apreq_handle_apache2(request_rec *r)
+APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r)
 {
     struct apache2_handle *handle =
         ap_get_module_config(r->request_config, &apreq_module);

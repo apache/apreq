@@ -34,7 +34,7 @@ extern module AP_MODULE_DECLARE_DATA apreq_output_filter_test_module;
 
 static apr_status_t apreq_output_filter_test_init(ap_filter_t *f)
 {
-    apreq_env_handle_t *handle;
+    apreq_handle_t *handle;
     handle = apreq_handle_apache2(f->r);
     return APR_SUCCESS;
 }
@@ -56,7 +56,7 @@ static int dump_table(void *data, const char *key, const char *value)
 static apr_status_t apreq_output_filter_test(ap_filter_t *f, apr_bucket_brigade *bb)
 {
     request_rec *r = f->r;
-    apreq_env_handle_t *handle;
+    apreq_handle_t *handle;
     apr_bucket_brigade *eos;
     struct ctx_t ctx = {r, bb};
     const apr_table_t *t;

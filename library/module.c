@@ -32,7 +32,7 @@ static int has_rfc_cookie(void *ctx, const char *key, const char *val)
 }
 
 APREQ_DECLARE(apreq_cookie_version_t)
-    apreq_ua_cookie_version(apreq_env_handle_t *env)
+    apreq_ua_cookie_version(apreq_handle_t *env)
 {
 
     if (apreq_header_in(env, "Cookie2") == NULL) {
@@ -51,7 +51,7 @@ APREQ_DECLARE(apreq_cookie_version_t)
 
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
-                                              apreq_env_handle_t *env)
+                                              apreq_handle_t *env)
 {
     char s[APREQ_COOKIE_MAX_LENGTH];
     int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
@@ -63,7 +63,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
 }
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
-                                               apreq_env_handle_t *env)
+                                               apreq_handle_t *env)
 {
     char s[APREQ_COOKIE_MAX_LENGTH];
     int len = apreq_cookie_serialize(c, s, APREQ_COOKIE_MAX_LENGTH);
@@ -78,7 +78,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
 }
 
 
-APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_env_handle_t *env, 
+APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *env, 
                                           const char *name)
 {
     apreq_param_t *param = apreq_args_get(env, name);
@@ -90,7 +90,7 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_env_handle_t *env,
 
 
 APREQ_DECLARE(apr_table_t *)apreq_params(apr_pool_t *pool,
-                                         apreq_env_handle_t *env)
+                                         apreq_handle_t *env)
 {
     const apr_table_t *args, *body;
 

@@ -32,7 +32,7 @@ static int dump_table(void *count, const char *key, const char *value)
 int main(int argc, char const * const * argv)
 {
     apr_pool_t *pool;
-    apreq_env_handle_t *req;
+    apreq_handle_t *req;
     const apreq_param_t *foo, *bar, *test, *key;
     apr_file_t *out;
 

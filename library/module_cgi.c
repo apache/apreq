@@ -40,7 +40,7 @@
 
 
 struct cgi_handle {
-    struct apreq_env_handle_t    env;
+    struct apreq_handle_t    env;
 
     apr_pool_t                  *pool;
     apr_bucket_alloc_t          *bucket_alloc;
@@ -90,7 +90,7 @@ static const TRANS priorities[] = {
     {NULL,      -1},
 };
  
-static const char *cgi_header_in(apreq_env_handle_t *env,
+static const char *cgi_header_in(apreq_handle_t *env,
                                  const char *name)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -119,7 +119,7 @@ static const char *cgi_header_in(apreq_env_handle_t *env,
 
 
 static void cgi_log_error(const char *file, int line, int level,
-                          apr_status_t status, apreq_env_handle_t *env,
+                          apr_status_t status, apreq_handle_t *env,
                           const char *fmt, ...)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -169,7 +169,7 @@ static void cgi_log_error(const char *file, int line, int level,
 
 }
 
-static apr_status_t cgi_header_out(apreq_env_handle_t *env, const char *name,
+static apr_status_t cgi_header_out(apreq_handle_t *env, const char *name,
                                    char *value)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -186,7 +186,7 @@ static apr_status_t cgi_header_out(apreq_env_handle_t *env, const char *name,
 
 
 APR_INLINE
-static const char *cgi_query_string(apreq_env_handle_t *env)
+static const char *cgi_query_string(apreq_handle_t *env)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
     char *value = NULL, qs[] = "QUERY_STRING";
@@ -195,7 +195,7 @@ static const char *cgi_query_string(apreq_env_handle_t *env)
 }
 
 
-static void init_body(apreq_env_handle_t *env)
+static void init_body(apreq_handle_t *env)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
     const char *cl_header = cgi_header_in(env, "Content-Length");
@@ -274,7 +274,7 @@ static void init_body(apreq_env_handle_t *env)
 
 }
 
-static apr_status_t cgi_read(apreq_env_handle_t *env,
+static apr_status_t cgi_read(apreq_handle_t *env,
                              apr_off_t bytes)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -349,7 +349,7 @@ static apr_status_t cgi_read(apreq_env_handle_t *env,
 
 
 
-static apr_status_t cgi_jar(apreq_env_handle_t *env,
+static apr_status_t cgi_jar(apreq_handle_t *env,
                             const apr_table_t **t)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -369,7 +369,7 @@ static apr_status_t cgi_jar(apreq_env_handle_t *env,
     return handle->jar_status;
 }
 
-static apr_status_t cgi_args(apreq_env_handle_t *env,
+static apr_status_t cgi_args(apreq_handle_t *env,
                              const apr_table_t **t)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -392,7 +392,7 @@ static apr_status_t cgi_args(apreq_env_handle_t *env,
 
 
 
-static apreq_cookie_t *cgi_jar_get(apreq_env_handle_t *env,
+static apreq_cookie_t *cgi_jar_get(apreq_handle_t *env,
                                    const char *name)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -414,7 +414,7 @@ static apreq_cookie_t *cgi_jar_get(apreq_env_handle_t *env,
     return apreq_value_to_cookie(val);
 }
 
-static apreq_param_t *cgi_args_get(apreq_env_handle_t *env,
+static apreq_param_t *cgi_args_get(apreq_handle_t *env,
                                    const char *name)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -438,7 +438,7 @@ static apreq_param_t *cgi_args_get(apreq_env_handle_t *env,
 
 
 
-static apr_status_t cgi_body(apreq_env_handle_t *env,
+static apr_status_t cgi_body(apreq_handle_t *env,
                              const apr_table_t **t)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -459,7 +459,7 @@ static apr_status_t cgi_body(apreq_env_handle_t *env,
     return handle->body_status;
 }
 
-static apreq_param_t *cgi_body_get(apreq_env_handle_t *env, 
+static apreq_param_t *cgi_body_get(apreq_handle_t *env, 
                                    const char *name)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -497,7 +497,7 @@ static apreq_param_t *cgi_body_get(apreq_env_handle_t *env,
     return NULL;
 }
 
-static apr_status_t cgi_parser_get(apreq_env_handle_t *env, 
+static apr_status_t cgi_parser_get(apreq_handle_t *env, 
                                    const apreq_parser_t **parser)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -506,7 +506,7 @@ static apr_status_t cgi_parser_get(apreq_env_handle_t *env,
     return APR_SUCCESS;
 }
 
-static apr_status_t cgi_parser_set(apreq_env_handle_t *env, 
+static apr_status_t cgi_parser_set(apreq_handle_t *env, 
                                    apreq_parser_t *parser)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -534,7 +534,7 @@ static apr_status_t cgi_parser_set(apreq_env_handle_t *env,
 }
 
 
-static apr_status_t cgi_hook_add(apreq_env_handle_t *env,
+static apr_status_t cgi_hook_add(apreq_handle_t *env,
                                      apreq_hook_t *hook)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -555,7 +555,7 @@ static apr_status_t cgi_hook_add(apreq_env_handle_t *env,
 
 }
 
-static apr_status_t cgi_brigade_limit_set(apreq_env_handle_t *env,
+static apr_status_t cgi_brigade_limit_set(apreq_handle_t *env,
                                           apr_size_t bytes)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -571,7 +571,7 @@ static apr_status_t cgi_brigade_limit_set(apreq_env_handle_t *env,
     return APREQ_ERROR_CONFLICT;
 }
 
-static apr_status_t cgi_brigade_limit_get(apreq_env_handle_t *env,
+static apr_status_t cgi_brigade_limit_get(apreq_handle_t *env,
                                           apr_size_t *bytes)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -582,7 +582,7 @@ static apr_status_t cgi_brigade_limit_get(apreq_env_handle_t *env,
     return APR_SUCCESS;
 }
 
-static apr_status_t cgi_read_limit_set(apreq_env_handle_t *env,
+static apr_status_t cgi_read_limit_set(apreq_handle_t *env,
                                        apr_uint64_t bytes)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -596,7 +596,7 @@ static apr_status_t cgi_read_limit_set(apreq_env_handle_t *env,
 }
 
 
-static apr_status_t cgi_read_limit_get(apreq_env_handle_t *env,
+static apr_status_t cgi_read_limit_get(apreq_handle_t *env,
                                        apr_uint64_t *bytes)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -605,7 +605,7 @@ static apr_status_t cgi_read_limit_get(apreq_env_handle_t *env,
 }
 
 
-static apr_status_t cgi_temp_dir_set(apreq_env_handle_t *env,
+static apr_status_t cgi_temp_dir_set(apreq_handle_t *env,
                                      const char *path)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -624,7 +624,7 @@ static apr_status_t cgi_temp_dir_set(apreq_env_handle_t *env,
 }
 
 
-static apr_status_t cgi_temp_dir_get(apreq_env_handle_t *env,
+static apr_status_t cgi_temp_dir_get(apreq_handle_t *env,
                                      const char **path)
 {
     struct cgi_handle *handle = (struct cgi_handle *)env;
@@ -646,7 +646,7 @@ static apr_status_t cgi_cleanup(void *data)
 
 static APREQ_MODULE(cgi, 20050130);
 
-APREQ_DECLARE(apreq_env_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
+APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
 {
     apr_bucket_alloc_t *ba;
     struct cgi_handle *handle;

@@ -20,7 +20,7 @@
 #define READ_BYTES (64 * 1024)
 
 struct custom_handle {
-    struct apreq_env_handle_t    env;
+    struct apreq_handle_t    env;
     const char                  *cookie_header, *cookie2_header;
 
     apr_table_t                 *jar, *args, *body;
@@ -36,7 +36,7 @@ struct custom_handle {
 };
 
 
-static apr_status_t custom_parse_brigade(apreq_env_handle_t *env, apr_uint64_t bytes)
+static apr_status_t custom_parse_brigade(apreq_handle_t *env, apr_uint64_t bytes)
 {       
     struct custom_handle *handle = (struct custom_handle*)env;
     apr_status_t s;
@@ -94,21 +94,21 @@ static apr_status_t custom_parse_brigade(apreq_env_handle_t *env, apr_uint64_t b
 
 
 
-static apr_status_t custom_jar(apreq_env_handle_t *env, const apr_table_t **t)
+static apr_status_t custom_jar(apreq_handle_t *env, const apr_table_t **t)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
     *t = handle->jar;
     return handle->jar_status;
 }
 
-static apr_status_t custom_args(apreq_env_handle_t *env, const apr_table_t **t)
+static apr_status_t custom_args(apreq_handle_t *env, const apr_table_t **t)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
     *t = handle->args;
     return handle->args_status;
 }
 
-static apr_status_t custom_body(apreq_env_handle_t *env, const apr_table_t **t)
+static apr_status_t custom_body(apreq_handle_t *env, const apr_table_t **t)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
     while (handle->body_status == APR_INCOMPLETE)
@@ -119,7 +119,7 @@ static apr_status_t custom_body(apreq_env_handle_t *env, const apr_table_t **t)
 
 
 
-static apreq_cookie_t *custom_jar_get(apreq_env_handle_t *env, const char *name)
+static apreq_cookie_t *custom_jar_get(apreq_handle_t *env, const char *name)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
     const char *val;
@@ -135,7 +135,7 @@ static apreq_cookie_t *custom_jar_get(apreq_env_handle_t *env, const char *name)
     return apreq_value_to_cookie(val);
 }
 
-static apreq_param_t *custom_args_get(apreq_env_handle_t *env, const char *name)
+static apreq_param_t *custom_args_get(apreq_handle_t *env, const char *name)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
     const char *val;
@@ -151,7 +151,7 @@ static apreq_param_t *custom_args_get(apreq_env_handle_t *env, const char *name)
     return apreq_value_to_param(val);
 }
 
-static apreq_param_t *custom_body_get(apreq_env_handle_t *env, const char *name)
+static apreq_param_t *custom_body_get(apreq_handle_t *env, const char *name)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
     const char *val;
@@ -176,7 +176,7 @@ static apreq_param_t *custom_body_get(apreq_env_handle_t *env, const char *name)
 
 
 
-static apr_status_t custom_parser_get(apreq_env_handle_t *env,
+static apr_status_t custom_parser_get(apreq_handle_t *env,
                                       const apreq_parser_t **parser)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
@@ -185,7 +185,7 @@ static apr_status_t custom_parser_get(apreq_env_handle_t *env,
     return APR_SUCCESS;
 }
 
-static apr_status_t custom_parser_set(apreq_env_handle_t *env,
+static apr_status_t custom_parser_set(apreq_handle_t *env,
                                       apreq_parser_t *parser)
 {
     (void)env;
@@ -193,7 +193,7 @@ static apr_status_t custom_parser_set(apreq_env_handle_t *env,
     return APR_ENOTIMPL;
 }
 
-static apr_status_t custom_hook_add(apreq_env_handle_t *env,
+static apr_status_t custom_hook_add(apreq_handle_t *env,
                                     apreq_hook_t *hook)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
@@ -201,7 +201,7 @@ static apr_status_t custom_hook_add(apreq_env_handle_t *env,
     return APR_SUCCESS;
 }
 
-static apr_status_t custom_brigade_limit_get(apreq_env_handle_t *env,
+static apr_status_t custom_brigade_limit_get(apreq_handle_t *env,
                                              apr_size_t *bytes)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
@@ -209,7 +209,7 @@ static apr_status_t custom_brigade_limit_get(apreq_env_handle_t *env,
     return APR_SUCCESS;
 }
 
-static apr_status_t custom_brigade_limit_set(apreq_env_handle_t *env,
+static apr_status_t custom_brigade_limit_set(apreq_handle_t *env,
                                              apr_size_t bytes)
 {
     (void)env;
@@ -217,7 +217,7 @@ static apr_status_t custom_brigade_limit_set(apreq_env_handle_t *env,
     return APR_ENOTIMPL;
 }
 
-static apr_status_t custom_read_limit_get(apreq_env_handle_t *env,
+static apr_status_t custom_read_limit_get(apreq_handle_t *env,
                                           apr_uint64_t *bytes)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
@@ -225,7 +225,7 @@ static apr_status_t custom_read_limit_get(apreq_env_handle_t *env,
     return APR_SUCCESS;
 }
 
-static apr_status_t custom_read_limit_set(apreq_env_handle_t *env,
+static apr_status_t custom_read_limit_set(apreq_handle_t *env,
                                           apr_uint64_t bytes)
 {
     (void)env;
@@ -233,7 +233,7 @@ static apr_status_t custom_read_limit_set(apreq_env_handle_t *env,
     return APR_ENOTIMPL;
 }
 
-static apr_status_t custom_temp_dir_get(apreq_env_handle_t *env,
+static apr_status_t custom_temp_dir_get(apreq_handle_t *env,
                                         const char **path)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
@@ -242,7 +242,7 @@ static apr_status_t custom_temp_dir_get(apreq_env_handle_t *env,
     return APR_SUCCESS;
 }
 
-static apr_status_t custom_temp_dir_set(apreq_env_handle_t *env,
+static apr_status_t custom_temp_dir_set(apreq_handle_t *env,
                                         const char *path)
 {
     (void)env;
@@ -253,7 +253,7 @@ static apr_status_t custom_temp_dir_set(apreq_env_handle_t *env,
 
 
 
-static const char *custom_header_in(apreq_env_handle_t *env,
+static const char *custom_header_in(apreq_handle_t *env,
                                     const char *name)
 {
     struct custom_handle *handle = (struct custom_handle*)env;
@@ -268,7 +268,7 @@ static const char *custom_header_in(apreq_env_handle_t *env,
         return NULL;
 }
 
-static apr_status_t custom_header_out(apreq_env_handle_t *env, const char *name,
+static apr_status_t custom_header_out(apreq_handle_t *env, const char *name,
                                       char *value)
 {
     (void)env;
@@ -281,7 +281,7 @@ static apr_status_t custom_header_out(apreq_env_handle_t *env, const char *name,
 
 static APREQ_MODULE(custom, 20050130);
 
-APREQ_DECLARE(apreq_env_handle_t*) apreq_handle_custom(apr_pool_t *pool,
+APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
                                                        const char *query_string,
                                                        const char *cookie,
                                                        const char *cookie2,

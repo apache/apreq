@@ -43,7 +43,7 @@ static int dump_table(void *ctx, const char *key, const char *value)
 
 static int apreq_cookie_test_handler(request_rec *r)
 {
-    apreq_env_handle_t *req;
+    apreq_handle_t *req;
     apr_status_t s;
     const char *test, *key;
     apreq_cookie_t *cookie;

@@ -39,7 +39,7 @@ static int dump_table(void *count, const char *key, const char *value)
 
 static int apreq_big_request_test_handler(request_rec *r)
 {
-    apreq_env_handle_t *env;
+    apreq_handle_t *env;
     apr_table_t *params;
     int count = 0;
 

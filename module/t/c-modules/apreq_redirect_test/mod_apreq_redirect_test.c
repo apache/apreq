@@ -33,7 +33,7 @@
 
 static int apreq_redirect_test_handler(request_rec *r)
 {
-    apreq_env_handle_t *req;
+    apreq_handle_t *req;
     const apreq_param_t *loc;
 
     if (strcmp(r->handler, "apreq_redirect_test") != 0)

@@ -111,7 +111,7 @@ static void rfc_cookie(dAT)
 
 static void ua_version(dAT)
 {
-    apreq_env_handle_t *ns, *rfc;
+    apreq_handle_t *ns, *rfc;
 
     ns  = apreq_handle_custom(p, NULL, NULL, NULL, NULL, 0, NULL);
     AT_int_eq(apreq_ua_cookie_version(ns), APREQ_COOKIE_VERSION_NETSCAPE);

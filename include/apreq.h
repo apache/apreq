@@ -30,9 +30,9 @@
  * may have variable size, because the module may append its own data
  * structures after it.
  */
-typedef struct apreq_env_handle_t {
-    const struct apreq_env_module_t *module;
-} apreq_env_handle_t;
+typedef struct apreq_handle_t {
+    const struct apreq_module_t *module;
+} apreq_handle_t;
 
 /**
  * This must be fully defined for libapreq2 to operate properly 
@@ -42,143 +42,143 @@ typedef struct apreq_env_handle_t {
  */
 
 
-typedef struct apreq_env_module_t {
+typedef struct apreq_module_t {
     const char *name;
     apr_uint32_t magic_number;
 
-    apr_status_t (*jar)(apreq_env_handle_t *, const apr_table_t **);
-    apr_status_t (*args)(apreq_env_handle_t *, const apr_table_t **);
-    apr_status_t (*body)(apreq_env_handle_t *, const apr_table_t **);
+    apr_status_t (*jar)(apreq_handle_t *, const apr_table_t **);
+    apr_status_t (*args)(apreq_handle_t *, const apr_table_t **);
+    apr_status_t (*body)(apreq_handle_t *, const apr_table_t **);
 
-    apreq_cookie_t *(*jar_get)(apreq_env_handle_t *, const char *);
-    apreq_param_t *(*args_get)(apreq_env_handle_t *, const char *);
-    apreq_param_t *(*body_get)(apreq_env_handle_t *, const char *);
+    apreq_cookie_t *(*jar_get)(apreq_handle_t *, const char *);
+    apreq_param_t *(*args_get)(apreq_handle_t *, const char *);
+    apreq_param_t *(*body_get)(apreq_handle_t *, const char *);
 
-    apr_status_t (*parser_get)(apreq_env_handle_t *, const apreq_parser_t **);
-    apr_status_t (*parser_set)(apreq_env_handle_t *, apreq_parser_t *);
-    apr_status_t (*hook_add)(apreq_env_handle_t *, apreq_hook_t *);
+    apr_status_t (*parser_get)(apreq_handle_t *, const apreq_parser_t **);
+    apr_status_t (*parser_set)(apreq_handle_t *, apreq_parser_t *);
+    apr_status_t (*hook_add)(apreq_handle_t *, apreq_hook_t *);
 
-    apr_status_t (*brigade_limit_get)(apreq_env_handle_t *, apr_size_t *);
-    apr_status_t (*brigade_limit_set)(apreq_env_handle_t *, apr_size_t);
+    apr_status_t (*brigade_limit_get)(apreq_handle_t *, apr_size_t *);
+    apr_status_t (*brigade_limit_set)(apreq_handle_t *, apr_size_t);
 
-    apr_status_t (*read_limit_get)(apreq_env_handle_t *, apr_uint64_t *);
-    apr_status_t (*read_limit_set)(apreq_env_handle_t *, apr_uint64_t);
+    apr_status_t (*read_limit_get)(apreq_handle_t *, apr_uint64_t *);
+    apr_status_t (*read_limit_set)(apreq_handle_t *, apr_uint64_t);
 
-    apr_status_t (*temp_dir_get)(apreq_env_handle_t *, const char **);
-    apr_status_t (*temp_dir_set)(apreq_env_handle_t *, const char *);
+    apr_status_t (*temp_dir_get)(apreq_handle_t *, const char **);
+    apr_status_t (*temp_dir_set)(apreq_handle_t *, const char *);
 
-    const char *(*header_in)(apreq_env_handle_t *,const char *);
-    apr_status_t (*header_out)(apreq_env_handle_t *, const char *,char *);
+    const char *(*header_in)(apreq_handle_t *,const char *);
+    apr_status_t (*header_out)(apreq_handle_t *, const char *,char *);
 
-} apreq_env_module_t;
+} apreq_module_t;
 
 
 
 static APR_INLINE
-apr_status_t apreq_jar(apreq_env_handle_t *env, const apr_table_t **t)
+apr_status_t apreq_jar(apreq_handle_t *env, const apr_table_t **t)
 {
     return env->module->jar(env,t);
 }
 
 static APR_INLINE
-apr_status_t apreq_args(apreq_env_handle_t *env, const apr_table_t **t)
+apr_status_t apreq_args(apreq_handle_t *env, const apr_table_t **t)
 {
     return env->module->args(env,t);
 }
 
 static APR_INLINE
-apr_status_t apreq_body(apreq_env_handle_t *env, const apr_table_t **t)
+apr_status_t apreq_body(apreq_handle_t *env, const apr_table_t **t)
 {
     return env->module->body(env,t);
 }
 
 static APR_INLINE
-apreq_cookie_t *apreq_jar_get(apreq_env_handle_t *env, const char *name)
+apreq_cookie_t *apreq_jar_get(apreq_handle_t *env, const char *name)
 {
     return env->module->jar_get(env, name);
 }
 
 static APR_INLINE
-apreq_param_t *apreq_args_get(apreq_env_handle_t *env, const char *name)
+apreq_param_t *apreq_args_get(apreq_handle_t *env, const char *name)
 {
     return env->module->args_get(env, name);
 }
 
 static APR_INLINE
-apreq_param_t *apreq_body_get(apreq_env_handle_t *env, const char *name)
+apreq_param_t *apreq_body_get(apreq_handle_t *env, const char *name)
 {
     return env->module->body_get(env, name);
 }
 
 static APR_INLINE
-apr_status_t apreq_parser_get(apreq_env_handle_t *env,
+apr_status_t apreq_parser_get(apreq_handle_t *env,
                               const apreq_parser_t **parser)
 {
     return env->module->parser_get(env, parser);
 }
 
 static APR_INLINE
-apr_status_t apreq_parser_set(apreq_env_handle_t *env,
+apr_status_t apreq_parser_set(apreq_handle_t *env,
                               apreq_parser_t *parser)
 {
     return env->module->parser_set(env, parser);
 }
 
 static APR_INLINE
-apr_status_t apreq_hook_add(apreq_env_handle_t *env, apreq_hook_t *hook)
+apr_status_t apreq_hook_add(apreq_handle_t *env, apreq_hook_t *hook)
 {
     return env->module->hook_add(env, hook);
 }
 
 static APR_INLINE
-const char *apreq_header_in(apreq_env_handle_t *env, const char *name)
+const char *apreq_header_in(apreq_handle_t *env, const char *name)
 {
     return env->module->header_in(env, name);
 }
 
 static APR_INLINE
-apr_status_t apreq_header_out(apreq_env_handle_t *env,
+apr_status_t apreq_header_out(apreq_handle_t *env,
                               const char *name, char *val)
 {
     return env->module->header_out(env, name, val);
 }
 
 static APR_INLINE
-apr_status_t apreq_brigade_limit_set(apreq_env_handle_t *env,
+apr_status_t apreq_brigade_limit_set(apreq_handle_t *env,
                                      apr_size_t bytes)
 {
     return env->module->brigade_limit_set(env, bytes);
 }
 
 static APR_INLINE
-apr_status_t apreq_brigade_limit_get(apreq_env_handle_t *env,
+apr_status_t apreq_brigade_limit_get(apreq_handle_t *env,
                                      apr_size_t *bytes)
 {
     return env->module->brigade_limit_get(env, bytes);
 }
 
 static APR_INLINE
-apr_status_t apreq_read_limit_set(apreq_env_handle_t *env,
+apr_status_t apreq_read_limit_set(apreq_handle_t *env,
                                   apr_uint64_t bytes)
 {
     return env->module->read_limit_set(env, bytes);
 }
 
 static APR_INLINE
-apr_status_t apreq_read_limit_get(apreq_env_handle_t *env,
+apr_status_t apreq_read_limit_get(apreq_handle_t *env,
                                   apr_uint64_t *bytes)
 {
     return env->module->read_limit_get(env, bytes);
 }
 
 static APR_INLINE
-apr_status_t apreq_temp_dir_set(apreq_env_handle_t *env, const char *path)
+apr_status_t apreq_temp_dir_set(apreq_handle_t *env, const char *path)
 {
     return env->module->temp_dir_set(env, path);
 }
 
 static APR_INLINE
-apr_status_t apreq_temp_dir_get(apreq_env_handle_t *env, const char **path)
+apr_status_t apreq_temp_dir_get(apreq_handle_t *env, const char **path)
 {
     return env->module->temp_dir_get(env, path);
 }
@@ -222,7 +222,7 @@ apr_status_t apreq_temp_dir_get(apreq_env_handle_t *env, const char **path)
  * @param name Name of this environment.
  * @param mmn Magic number (i.e. version number) of this environment.
  */
-#define APREQ_MODULE(pre, mmn) const apreq_env_module_t \
+#define APREQ_MODULE(pre, mmn) const apreq_module_t     \
   pre##_module = { #pre, mmn,                           \
   pre##_jar,        pre##_args,       pre##_body,       \
   pre##_jar_get,    pre##_args_get,   pre##_body_get,   \
@@ -236,7 +236,7 @@ apr_status_t apreq_temp_dir_get(apreq_env_handle_t *env, const char **path)
  * Create an apreq handle which is suitable for a CGI program. It
  * reads input from stdin and writes output to stdout.
  */
-APREQ_DECLARE(apreq_env_handle_t*) apreq_handle_cgi(apr_pool_t *pool);
+APREQ_DECLARE(apreq_handle_t*) apreq_handle_cgi(apr_pool_t *pool);
 
 /**
  * Create a custom apreq handle which knows only some static
@@ -249,7 +249,7 @@ APREQ_DECLARE(apreq_env_handle_t*) apreq_handle_cgi(apr_pool_t *pool);
  * @param content_type content type of the request body
  * @param in a bucket brigade containing the request body
  */
-APREQ_DECLARE(apreq_env_handle_t*) apreq_handle_custom(apr_pool_t *pool,
+APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
                                                        const char *query_string,
                                                        const char *cookie,
                                                        const char *cookie2,
@@ -264,7 +264,7 @@ APREQ_DECLARE(apreq_env_handle_t*) apreq_handle_custom(apr_pool_t *pool,
  * @param env Environment.
  */
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
-                                              apreq_env_handle_t *env);
+                                              apreq_handle_t *env);
 
 /**
  * Add the cookie to the outgoing "Set-Cookie2" headers.
@@ -273,7 +273,7 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
  * @param env Environment.
  */
 APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
-                                               apreq_env_handle_t *env);
+                                               apreq_handle_t *env);
 
 /**
  * Looks for the presence of a "Cookie2" header to determine whether
@@ -283,10 +283,10 @@ APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
  *         APREQ_COOKIE_VERSION_NETSCAPE otherwise.
  */
 APREQ_DECLARE(apreq_cookie_version_t)
-    apreq_ua_cookie_version(apreq_env_handle_t *env);
+    apreq_ua_cookie_version(apreq_handle_t *env);
 
 
-APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_env_handle_t *env, 
+APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *env, 
                                           const char *name);
 
 #define apreq_cookie(env, name) apreq_jar_get(env, name)
@@ -299,11 +299,11 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_env_handle_t *env,
  * @remark Also parses the request if necessary.
  */
 APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *p,
-                                          apreq_env_handle_t *env);
+                                          apreq_handle_t *env);
 
 
 APREQ_DECLARE(apr_table_t *)apreq_cookies(apr_pool_t *p,
-                                          apreq_env_handle_t *env);
+                                          apreq_handle_t *env);
 
 /**
  * Force a complete parse.
@@ -314,7 +314,7 @@ APREQ_DECLARE(apr_table_t *)apreq_cookies(apr_pool_t *p,
  */
 
 static APR_INLINE
-apr_status_t apreq_parse_request(apreq_env_handle_t *req)
+apr_status_t apreq_parse_request(apreq_handle_t *req)
 {
     const apr_table_t *dummy;
     apr_status_t jar_status, args_status, body_status;

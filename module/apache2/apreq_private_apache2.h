@@ -9,7 +9,7 @@ struct dir_config {
 
 /* The "warehouse", stored in r->request_config */
 struct apache2_handle {
-    apreq_env_handle_t  env;
+    apreq_handle_t      env;
     request_rec        *r;
     apr_table_t        *jar, *args;
     apr_status_t        jar_status, args_status;
@@ -55,7 +55,7 @@ static void apreq_filter_relocate(ap_filter_t *f)
 }
 
 APR_INLINE
-static ap_filter_t *get_apreq_filter(apreq_env_handle_t *env)
+static ap_filter_t *get_apreq_filter(apreq_handle_t *env)
 {
     struct apache2_handle *handle = (struct apache2_handle *)env;
 
