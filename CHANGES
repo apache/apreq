@@ -2,6 +2,15 @@
 
 @section 2.0.0-dev Changes with libapreq-2.0.0-dev
 
+- June 30, 2003 - Documentation [joes]
+
+Added doxygen links to Apache::Request and Apache::Cookie 
+perl docs.
+
+- June 30, 2003 - C API [joes]
+
+Added apreq_copy_brigade(bb) to apreq.h.
+
 - June 27, 2003 - C API [joes]
 
 The new filter-based design required a complete 

@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/06/27 22:03:52 $]
+Last modified at [$Date: 2003/06/30 22:24:07 $]
 
      2.0.0  in development
 
@@ -10,7 +10,7 @@ Contributors looking for a mission:
 
 CURRENT RELEASE NOTES:
 
-    * This is unreleased alpha software.
+    * This is unreleased software.
 
 
 RELEASE SHOWSTOPPERS:
@@ -28,16 +28,19 @@ CURRENT VOTES:
 
 TODO:
 
+    * Write tests to exercise the filter prefetch code:
+         1) Test AAA handler that checks early POST data,
+         2) Test output filter w/ a streaming content-handler,
+            that needs apreq to read POST data that is beyond 
+            what the content handler has already pulled in.
+
     * Adopt a versioning system for the various components: 
          1) src/,  (libtool-based)
          2) env/,  (module-magic-number ?)   
          3) glue/, (per-language ?)
 
-    * Improve documentation system:
+    * Bring Perl documentation up to speed.
 
-      - doxygen for C API (header comments).
-      - perldoc for Perl glue (pod).
-    
     * Add XForms logic to the mfd parser.
 
     * symbol exports files:
