@@ -737,16 +737,15 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
 }
 
 
+struct cleanup_data {
+    const char *fname;
+    apr_pool_t *pool;
+};
 
-static apr_status_t apreq_file_cleanup(void *f)
+static apr_status_t apreq_file_cleanup(void *d)
 {
-    apr_file_t *file = f;
-    apr_finfo_t finfo;
-
-    apr_file_info_get(&finfo, APR_FINFO_NAME, file);
-
-    apr_file_close(file); /*deregister any other pool cleanups */
-    return apr_file_remove(finfo.fname, finfo.pool);
+    struct cleanup_data *data = d;
+    return apr_file_remove(data->fname, data->pool);
 }
 
 /*
@@ -766,6 +765,7 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
 {
     apr_status_t rc;
     char *tmpl;
+    struct cleanup_data *data;
 
     if (path == NULL) {
         rc = apr_temp_dir_get(&path, pool);
@@ -778,15 +778,23 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
     if (rc != APR_SUCCESS)
         return rc;
     
+    data = apr_palloc(pool, sizeof *data);
+    /* cleanups are LIFO, so this one will run just after 
+       the cleanup set by mktemp */
+    apr_pool_cleanup_register(pool, data, 
+                              apreq_file_cleanup, apreq_file_cleanup);
+
     rc = apr_file_mktemp(fp, tmpl, /* NO APR_DELONCLOSE! see comment above */
                            APR_CREATE | APR_READ | APR_WRITE
                            | APR_EXCL | APR_BINARY, pool);
 
-    /* cleanups are LIFO, so this one will run first, thus removing the 
-       one just set by mktemp */
-    apr_pool_cleanup_register(pool, (void *)(*fp), 
-                              apreq_file_cleanup, apreq_file_cleanup);
-
+    if (rc == APR_SUCCESS) {
+        apr_file_name_get(&data->fname, *fp);
+        data->pool = pool;
+    }
+    else {
+        apr_pool_cleanup_kill(pool, data, apreq_file_cleanup);
+    }
 
     return rc;
 }
