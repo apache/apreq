@@ -36,7 +36,7 @@ my @big_key_num = (5, 15, 25);
 my @big_keys    = ('a'..'z');
 
 plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num +
-  @names * @methods;
+  @names * @methods, have_lwp && have_cgi;
 
 my $location = '/cgi-bin';
 my $script = $location . '/test_cgi.pl';
