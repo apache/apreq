@@ -1,3 +1,7 @@
+o Apache::Test is required early in Makefile.PL, so we can't rely on
+  CPAN.pm's prereq_pm to fetch it if not available. Therefore we need
+  to use Module::Install, which handles this kind of situations gracefully.
+
 o look for 'XXX' in the source, they mark some bits of code that need work
 
 o multipart_buffer_headers punts on headers more than 5k (which could
