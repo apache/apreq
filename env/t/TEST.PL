@@ -18,6 +18,12 @@ use base 'Apache::TestRun';
 $Apache::TestTrace::Level = 'debug';
 main::->new->run(@ARGV);
 
+sub pre_configure {
+    my $self = shift;
+    # Don't load an installed mod_apreq
+    Apache::TestConfig::autoconfig_skip_module_add('mod_apreq.c');
+}
+
 sub configure {
     my $self = shift;
     my $cfg = $self->{test_config};
