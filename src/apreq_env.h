@@ -13,10 +13,6 @@
 #endif
 
 
-#ifdef  __cplusplus
- extern "C" {
-#endif 
-
 #define APREQ_LOG_EMERG     LOG_EMERG     /* system is unusable */
 #define APREQ_LOG_ALERT     LOG_ALERT     /* action must be taken immediately */
 #define APREQ_LOG_CRIT      LOG_CRIT      /* critical conditions */
@@ -49,7 +45,9 @@
 #define APREQ_WARN   APREQ_LOG_MARK, APREQ_LOG_WARNING,
 #define APREQ_ERROR  APREQ_LOG_MARK, APREQ_LOG_ERR,
 
-#define dAPREQ_LOG  /* APREQ_LOG(*apreq_log) = APREQ_ENV.log */
+#ifdef  __cplusplus
+ extern "C" {
+#endif 
 
 extern const char apreq_env[];
 
@@ -67,7 +65,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
                                                    apreq_request_t *req);
 
 
-APREQ_DECLARE(const char *) apreq_env_args(void *env);
+APREQ_DECLARE(const char *) apreq_env_query_string(void *env);
 APREQ_DECLARE(const char *) apreq_env_header_in(void *env, const char *name);
 
 

@@ -59,9 +59,8 @@
 #ifndef APREQ_PARAM_H
 #define APREQ_PARAM_H
 
-#include "apreq_tables.h"
+#include "apreq.h"
 #include "apreq_parsers.h"
-#include "apr_buckets.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,40 +77,50 @@ extern "C" {
 typedef struct apreq_param_t {
     enum { ASCII, UTF_8, UTF_16, ISO_LATIN_1 } charset;
     char                *language;
-    apreq_table_t       *info;
+    apr_table_t         *info;
 
     apr_bucket_brigade  *bb;
 
     apreq_value_t        v;
 } apreq_param_t;
 
-#define apreq_value_to_param(ptr) apreq_attr_to_type(apreq_param_t, \
-                                                      v, ptr)
+#define apreq_value_to_param(ptr) apreq_attr_to_type(apreq_param_t, v, ptr)
 #define apreq_param_name(p)  ((p)->v.name)
 #define apreq_param_value(p) ((p)->v.data)
 
 APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 
                                                 const char *name, 
-                                                const apr_ssize_t nlen, 
+                                                const apr_size_t nlen, 
                                                 const char *val, 
-                                                const apr_ssize_t vlen);
+                                                const apr_size_t vlen);
 
 
 typedef struct apreq_request_t {
-    apreq_table_t      *args;         /* query_string params */
-    apreq_table_t      *body;
+    apr_table_t        *args;         /* query_string */
+    apr_table_t        *body;         /* post data */
     apreq_parser_t     *parser;
     apreq_cfg_t        *cfg;
     void               *env;
 } apreq_request_t;
 
+
 /**
  * Creates an apreq_request_t object.
  * @param env The current request environment.
- * @param args Local query string.
+ * @param qs  The query string.
+ * @remark "qs = NULL" has special behavior.  In this case,
+ * apreq_request(env,NULL) will attempt to fetch a cached object
+ * from the environment via apreq_env_request.  Failing that, it will
+ * replace "qs" with the result of apreq_env_query_string(env), 
+ * parse that, and store the resulting apreq_request_t object back 
+ * within the environment.  This maneuver is designed to both mimimize
+ * parsing work and allow the environent to place the parsed POST data in
+ * req->body (otherwise the caller may need to do this manually).
+ * For details on this, see the environment's documentation for
+ * the apreq_env_read function.
  */
 
-APREQ_DECLARE(apreq_request_t *)apreq_request(void *env, const char *args);
+APREQ_DECLARE(apreq_request_t *)apreq_request(void *env, const char *qs);
 
 
 /**
@@ -137,8 +146,8 @@ APREQ_DECLARE(apreq_param_t *) apreq_param(const apreq_request_t *req,
  */
 
 APR_INLINE
-APREQ_DECLARE(apreq_table_t *) apreq_params(apr_pool_t *p,
-                                            const apreq_request_t *req);
+APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *p,
+                                          const apreq_request_t *req);
 
 
 /**
@@ -153,9 +162,6 @@ APREQ_DECLARE(apreq_table_t *) apreq_params(apr_pool_t *p,
  apreq_join(pool, ", ", apreq_params(req,pool,key), mode)
 
 
-APREQ_DECLARE(apr_status_t)  apreq_split_params(apr_pool_t *pool,
-                                                apreq_table_t *t, 
-                                                const char *data);
 
 APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool, 
                                                   const char *word,
@@ -165,6 +171,9 @@ APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool,
 APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool, 
                                          const apreq_param_t *param);
 
+APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
+                                                     apr_table_t *t, 
+                                                     const char *qs);
 
 APREQ_DECLARE(apr_status_t)apreq_parse_request(apreq_request_t *req, 
                                                apr_bucket_brigade *bb);

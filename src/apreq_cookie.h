@@ -1,14 +1,15 @@
 #ifndef APREQ_COOKIE_H
 #define APREQ_COOKIE_H
 
-#include "apreq_tables.h"
+#include "apreq.h"
+#include "apr_tables.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif 
 
 typedef struct apreq_jar_t {
-    apreq_table_t *cookies;
+    apr_table_t   *cookies;
     apr_pool_t    *pool;
     void          *env;
 } apreq_jar_t;
@@ -31,8 +32,8 @@ typedef struct apreq_cookie_t {
     char           *commentURL;
 
     union {
-        long        max_age; 
-        const char *expires; 
+        apr_int64_t   max_age; 
+        const char   *expires; 
     } time;
 
     apreq_value_t   v;           /* "raw" value (extended struct) */
@@ -45,17 +46,8 @@ typedef struct apreq_cookie_t {
 #define apreq_cookie_name(c)  ((c)->v.name)
 #define apreq_cookie_value(c) ((c)->v.data)
 
-
-/**
- * Returns the number of cookies in the jar.
- *
- * @param jar The cookie jar.
- * @remark    Shouldn't this be called apreq_jar_nelts?
- */
-
-int apreq_jar_items(apreq_jar_t *jar);
-#define apreq_jar_items(j) apreq_table_nelts(j->cookies)
-#define apreq_jar_nelts(j) apreq_table_nelts(j->cookies)
+#define apreq_jar_items(j) apr_table_nelts(j->cookies)
+#define apreq_jar_nelts(j) apr_table_nelts(j->cookies)
 
 /**
  * Fetches a cookie from the jar
@@ -64,9 +56,10 @@ int apreq_jar_items(apreq_jar_t *jar);
  * @param name  The name of the desired cookie.
  */
 
-apreq_cookie_t *apreq_cookie(const apreq_jar_t *jar, const char *name);
+APREQ_DECLARE(apreq_cookie_t *)apreq_cookie(const apreq_jar_t *jar,
+                                            const char *name);
 #define apreq_cookie(j,k) apreq_value_to_cookie(apreq_char_to_value( \
-                              apreq_table_get((j)->cookies,k)))
+                              apr_table_get((j)->cookies,k)))
 
 /**
  * Adds a cookie by pushing it to the bottom of the jar.
@@ -75,26 +68,28 @@ apreq_cookie_t *apreq_cookie(const apreq_jar_t *jar, const char *name);
  * @param c The cookie to add.
  */
 
-apr_status_t apreq_add_cookie(apreq_jar_t *jar, const apreq_cookie_t *c);
-#define apreq_add_cookie(jar,c)  apreq_table_add(jar->cookies, &(c)->v)
+APREQ_DECLARE(void) apreq_add_cookie(apreq_jar_t *jar, 
+                                     const apreq_cookie_t *c);
+#define apreq_add_cookie(j,c) apr_table_addn((j)->cookies,\
+                                            (c)->v.name,(c)->v.data)
 
 /**
  * Parse the incoming "Cookie:" headers into a cookie jar.
  * 
  * @param env The current environment.
- * @param data  String to parse as a HTTP-merged "Cookie" header.
- * @remark "data = NULL" has special semantics.  In this case,
- * apreq_jar_parse will attempt to fetch a cached jar from the
- * environment ctx via apreq_env_jar.  Failing that, it replace
- * data with the result of apreq_env_cookie(ctx), parse that,
- * and store the resulting jar back within the environment.
- * This Orcish maneuver is designed to mimimize parsing work,
+ * @param hdr  String to parse as a HTTP-merged "Cookie" header.
+ * @remark "data = NULL" has special behavior.  In this case,
+ * apreq_jar(env,NULL) will attempt to fetch a cached object from the
+ * environment via apreq_env_jar.  Failing that, it will replace
+ * "hdr" with the result of apreq_env_cookie(env), parse that,
+ * and store the resulting object back within the environment.
+ * This maneuver is designed to mimimize parsing work,
  * since generating the cookie jar is relatively expensive.
  *
  */
 
 
-APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *data);
+APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr);
 
 /**
  * Returns a new cookie, made from the argument list.

@@ -126,7 +126,7 @@ APREQ_DECLARE(apr_table_t *) apreq_table_export(apr_pool_t *p,
  * @param t The APR table to copy
  */
 APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p, 
-                                                 const apr_table_t *t);
+                                                 apr_table_t *t);
 
 /**
  * Delete all of the elements from a table
@@ -263,8 +263,8 @@ APREQ_DECLARE(apr_status_t) apreq_table_merge(apreq_table_t *t,
  * @param val The value to add.
  * @remark This function does not make copies.
  */
-APREQ_DECLARE(apr_status_t) apreq_table_add(apreq_table_t *t, 
-                                            const apreq_value_t *v);
+APREQ_DECLARE(apr_status_t) apreq_table_addv(apreq_table_t *t,
+                                             const apreq_value_t *v);
 
 /**
  * Merge two tables into one new table

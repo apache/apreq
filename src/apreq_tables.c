@@ -542,9 +542,9 @@ APREQ_DECLARE(apr_table_t *)apreq_table_export(apr_pool_t *p,
 }
 
 APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p, 
-                                                 const apr_table_t *s) 
+                                                 apr_table_t *s) 
 {
-    apreq_table_t *t = apreq_table_make(p,APREQ_NELTS);
+    apreq_table_t *t = apreq_table_make(p, APREQ_NELTS);
     const apr_array_header_t *a = apr_table_elts(s);
     const apr_table_entry_t *e = (const apr_table_entry_t *)a->elts;
     const apr_table_entry_t *end = e + a->nelts;
@@ -555,7 +555,7 @@ APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p,
                                             e->val, e->val ? 
                                                     strlen(e->val) :
                                                     0);
-        apreq_table_add(t, v);
+        apreq_table_addv(t, v);
     }
     return t;
 }
@@ -855,8 +855,8 @@ APREQ_DECLARE(apr_status_t) apreq_table_merge(apreq_table_t *t,
 }
 
 
-APREQ_DECLARE(apr_status_t) apreq_table_add(apreq_table_t *t, 
-                                            const apreq_value_t *val)
+APREQ_DECLARE(apr_status_t) apreq_table_addv(apreq_table_t *t, 
+                                             const apreq_value_t *val)
 {
     const char *key = val->name;
     apreq_table_entry_t *elt = table_push(t);

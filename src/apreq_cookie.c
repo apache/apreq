@@ -62,31 +62,26 @@
 #include "apr_lib.h"
 
 
-APREQ_DECLARE(int) (apreq_jar_items)(apreq_jar_t *jar)
-{
-    return apreq_jar_items(jar);
-}
-
 APREQ_DECLARE(apreq_cookie_t *) (apreq_cookie)(const apreq_jar_t *jar, 
                                                const char *name)
 {
     return apreq_cookie(jar,name);
 }
 
-APREQ_DECLARE(apr_status_t) (apreq_add_cookie)(apreq_jar_t *jar, 
+APREQ_DECLARE(void) (apreq_add_cookie)(apreq_jar_t *jar, 
                                        const apreq_cookie_t *c)
 {
-    return apreq_add_cookie(jar,c);
+    apreq_add_cookie(jar,c);
 }
 
 APREQ_DECLARE(void) apreq_cookie_expires(apr_pool_t *p,
                                          apreq_cookie_t *c, 
                                          const char *time_str)
 {
-    if ( c->version == NETSCAPE )
+    if (c->version == NETSCAPE)
         c->time.expires = apreq_expires(p, time_str, NSCOOKIE);
     else
-        c->time.max_age = apreq_atol(time_str);
+        c->time.max_age = apreq_atoi64t(time_str);
 }
 
 static int has_rfc_cookie(void *ctx, const char *key, const char *val)
@@ -106,7 +101,7 @@ APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env)
         if (j == NULL || apreq_jar_nelts(j) == 0) 
             return APREQ_COOKIE_VERSION;
 
-        else if (apreq_table_do(has_rfc_cookie, NULL, j->cookies) == 1)
+        else if (apr_table_do(has_rfc_cookie, NULL, j->cookies) == 1)
             return NETSCAPE;
 
         else
@@ -121,8 +116,6 @@ static apr_status_t apreq_cookie_attr(apr_pool_t *p,
                                       char *attr,
                                       char *val)
 {
-    dAPREQ_LOG;
-
     if ( attr[0] ==  '-' || attr[0] == '$' )
         ++attr;
 
@@ -215,31 +208,36 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(apr_pool_t *p,
     return c;
 }
 
-static APR_INLINE apr_status_t get_pair(const char **data,
-                                        const char **n, apr_size_t *nlen,
-                                        const char **v, apr_size_t *vlen)
+APR_INLINE
+static apr_status_t get_pair(const char **data,
+                             const char **n, apr_size_t *nlen,
+                             const char **v, apr_size_t *vlen)
 {
     const char *d = *data;
     unsigned char in_quotes = 0;
 
     *n = d;
 
-    while( *d != '=' && !apr_isspace(*d) )
+    while (*d != '=' && !apr_isspace(*d)) {
         if (*d++ == 0)  {
             /*error: no '=' sign detected */
             *data = d-1;
             return APR_NOTFOUND;
         }
+    }
+
     *nlen = d - *n;
 
-    do ++d; while ( *d == '=' || apr_isspace(*d) );
+    do ++d;
+    while (*d == '=' || apr_isspace(*d));
 
     *v = d;
 
     for (;;++d) {
         switch (*d) {
 
-        case ';': case ',':
+        case ';':
+        case ',':
             if (in_quotes)
                 break;
             /* else fall through */
@@ -273,8 +271,8 @@ static APR_INLINE apr_status_t get_pair(const char **data,
     return APR_SUCCESS;
 }
 
-APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, 
-                                       const char *data)
+
+APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
 {
     apr_pool_t *p = apreq_env_pool(env);
 
@@ -286,11 +284,9 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env,
     const char *name, *value; 
     apr_size_t nlen, vlen;
 
-    dAPREQ_LOG;
-
     /* initialize jar */
     
-    if (data == NULL) {
+    if (hdr == NULL) {
         /* use the environment's cookie data */
 
         j = apreq_env_jar(env, NULL);
@@ -300,28 +296,28 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env,
         j = apr_palloc(p, sizeof *j);
         j->pool = p;
         j->env = env;
-        j->cookies = apreq_table_make(p, APREQ_NELTS);
+        j->cookies = apr_table_make(p, APREQ_NELTS);
 
-        data = apreq_env_cookie(env);
+        hdr = apreq_env_cookie(env);
 
         /* XXX: potential race condition here 
            between env_jar fetch and env_jar set.  */
 
         apreq_env_jar(env,j);
 
-        if (data == NULL)
+        if (hdr == NULL)
             return j;
     }
     else {
         j = apr_palloc(p, sizeof *j);
         j->pool = p;
         j->env = env;
-        j->cookies = apreq_table_make(p, APREQ_NELTS);
+        j->cookies = apr_table_make(p, APREQ_NELTS);
     }
 
-    origin = data;
+    origin = hdr;
 
-    apreq_log(APREQ_DEBUG 0, env, "parsing cookie data: %s", data);
+    apreq_log(APREQ_DEBUG 0, env, "parsing cookie data: %s", hdr);
 
     /* parse data */
 
@@ -330,49 +326,49 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env,
     c = NULL;
     version = NETSCAPE;
 
-    while (apr_isspace(*data))
-        ++data;
+    while (apr_isspace(*hdr))
+        ++hdr;
 
     /* XXX cheat: assume "$..." => "$Version" => RFC Cookie header */
 
-    if (*data == '$') { 
+    if (*hdr == '$') { 
         version = RFC;
-        while (*data && !apr_isspace(*data))
-            ++data;
+        while (*hdr && !apr_isspace(*hdr))
+            ++hdr;
     }
 
     for (;;) {
         apr_status_t status;
 
-        while (*data == ';' || apr_isspace(*data))
-            ++data;
+        while (*hdr == ';' || apr_isspace(*hdr))
+            ++hdr;
 
-        switch (*data) {
+        switch (*hdr) {
 
         case 0:
             /* this is the normal exit point for apreq_jar */
             return j;
 
         case ',':
-            ++data;
+            ++hdr;
             goto parse_cookie_header;
 
         case '$':
             if (c == NULL) {
                 apreq_log(APREQ_ERROR APR_BADCH, env,
                       "Saw attribute, expecting NAME=VALUE cookie pair: %s",
-                          data);
+                          hdr);
                 return j;
             }
             else if (version == NETSCAPE) {
                 c->v.status = APR_EMISMATCH;
                 apreq_log(APREQ_ERROR c->v.status, env, 
                           "Saw attribute in a Netscape Cookie header: %s", 
-                          data);
+                          hdr);
                 return j;
             }
 
-            status = get_pair(&data, &name, &nlen, &value, &vlen);
+            status = get_pair(&hdr, &name, &nlen, &value, &vlen);
 
             if (status == APR_SUCCESS)
                 apreq_cookie_attr(p, c, apr_pstrmemdup(p, name, nlen),
@@ -380,12 +376,12 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env,
             else {
                 c->v.status = status;
                 apreq_log(APREQ_WARN c->v.status, env,
-                           "Ignoring bad attribute pair: %s", data);
+                           "Ignoring bad attribute pair: %s", hdr);
             }
             break;
 
         default:
-            status = get_pair(&data, &name, &nlen, &value, &vlen);
+            status = get_pair(&hdr, &name, &nlen, &value, &vlen);
 
             if (status == APR_SUCCESS) {
                 c = apreq_make_cookie(p, version, name, nlen, 
@@ -396,7 +392,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env,
             }
             else {
                 apreq_log(APREQ_WARN status, env,
-                          "Skipping bad NAME=VALUE pair: %s", data);
+                          "Skipping bad NAME=VALUE pair: %s", hdr);
             }
         }
     }
@@ -425,7 +421,7 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
     
 #define ADD_ATTR(name) do { strcpy(f,c->name ? "; " #name "=%s" : \
                                     "%.0s"); f+= strlen(f); } while (0)
-#define NONNULL(attr) (attr ? attr : "")
+#define NULL2EMPTY(attr) (attr ? attr : "")
 
 
     if (c->version == NETSCAPE) {
@@ -440,7 +436,7 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
             strcpy(f, "; secure");
 
         return apr_snprintf(buf, len, format, c->v.name, c->v.data,
-            NONNULL(c->path), NONNULL(c->domain), c->time.expires);
+           NULL2EMPTY(c->path), NULL2EMPTY(c->domain), c->time.expires);
     }
 
     /* c->version == RFC */
@@ -456,17 +452,17 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
 
 #undef ADD_ATTR
 
-    strcpy(f, c->time.max_age >= 0 ? "; max-age=%ld" : "");
+    strcpy(f, c->time.max_age >= 0 ? "; max-age=%" APR_INT64_T_FMT : "");
 
     f += strlen(f);
 
     if (c->secure)
         strcpy(f, "; secure");
 
-    return apr_snprintf(buf, len, format, c->v.name, c->v.data,
-                        c->version, NONNULL(c->path), NONNULL(c->domain), 
-                        NONNULL(c->port), NONNULL(c->comment), 
-                        NONNULL(c->commentURL), c->time.max_age);
+    return apr_snprintf(buf, len, format, c->v.name, c->v.data, c->version,
+                        NULL2EMPTY(c->path), NULL2EMPTY(c->domain), 
+                        NULL2EMPTY(c->port), NULL2EMPTY(c->comment), 
+                        NULL2EMPTY(c->commentURL), c->time.max_age);
 }
 
 
@@ -477,7 +473,7 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(apr_pool_t *p,
     char s[APREQ_COOKIE_LENGTH];
     int n = apreq_serialize_cookie(s, APREQ_COOKIE_LENGTH, c);
 
-    if ( n < APREQ_COOKIE_LENGTH )
+    if (n < APREQ_COOKIE_LENGTH)
         return apr_pstrmemdup(p, s, n);
     else
         return NULL;
@@ -487,7 +483,6 @@ APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c,
                                               void *env)
 {
     char *s = apreq_cookie_as_string(apreq_env_pool(env),c);
-    dAPREQ_LOG;
 
     if (s == NULL) {
         apreq_log(APREQ_ERROR APR_ENAMETOOLONG, env, 
@@ -503,7 +498,6 @@ APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c,
                                                void *env)
 {
     char *s = apreq_cookie_as_string(apreq_env_pool(env),c);
-    dAPREQ_LOG;
 
     if ( s == NULL ) {
         apreq_log(APREQ_ERROR APR_ENAMETOOLONG, env,
@@ -522,7 +516,8 @@ APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c,
 
 
 
-/* The functions below belong somewhere else, since they
+
+/* XXX: The functions below belong somewhere else, since they
    generally make use of "common conventions" for cookie values. 
    (whereas the cookie specs regard values as opaque) */
 

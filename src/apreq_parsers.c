@@ -74,17 +74,21 @@
 #define CRLF    "\015\012"
 #endif
 
+#ifndef apr_table_pool
+#define apr_table_pool(t) ((apr_array_header_t *)(t))->pool
+#endif
 
 APREQ_DECLARE(apreq_parser_t *) apreq_make_parser(apr_pool_t *pool,
                                                   const char *type,
                                                   APREQ_DECLARE_PARSER(*parser),
-                                                  apreq_hook_t *hook)
+                                                  apreq_hook_t *hook,
+                                                  void *ctx)
 {
     apreq_parser_t *p = apr_palloc(pool, APREQ_CTX_MAXSIZE + sizeof *p);
-    p->name = apr_pstrdup(pool,type);
+    p->content_type = apr_pstrdup(pool,type);
     p->parser = parser;
     p->hook = hook;
-
+    p->ctx = ctx;
     return p;
 }
 APREQ_DECLARE(apreq_hook_t *) apreq_make_hook(apr_pool_t *pool,
@@ -125,10 +129,12 @@ APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
         return NULL;
 
     if (!strncasecmp(type, APREQ_URL_ENCTYPE,strlen(APREQ_URL_ENCTYPE)))
-        return apreq_make_parser(pool, type, apreq_parse_urlencoded, hook);
+        return apreq_make_parser(pool, type, 
+                                 apreq_parse_urlencoded, hook, NULL);
 
     else if (!strncasecmp(type,APREQ_MFD_ENCTYPE,strlen(APREQ_MFD_ENCTYPE)))
-        return apreq_make_parser(pool, type, apreq_parse_multipart, hook);
+        return apreq_make_parser(pool, type, 
+                                 apreq_parse_multipart, hook, NULL);
 
     else
         return NULL;
@@ -139,12 +145,12 @@ APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
 
 /******************** application/x-www-form-urlencoded ********************/
 
-static apr_status_t split_urlword(apreq_table_t *t,
+static apr_status_t split_urlword(apr_table_t *t,
                                   apr_bucket_brigade *bb, 
                                   const apr_size_t nlen,
                                   const apr_size_t vlen)
 {
-    apr_pool_t *pool = apreq_table_pool(t);
+    apr_pool_t *pool = apr_table_pool(t);
     apreq_param_t *param = apr_palloc(pool, nlen + vlen + 1 + sizeof *param);
     apr_size_t total, off;
     apreq_value_t *v = &param->v;
@@ -222,7 +228,7 @@ static apr_status_t split_urlword(apreq_table_t *t,
 
     v->data[off] = 0;
     v->size = off;
-    apreq_table_add(t, v);
+    apr_table_addn(t, v->name, v->data);
     return v->status = APR_SUCCESS;
 }
 
@@ -232,7 +238,7 @@ struct url_ctx {
 
 APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
 {
-    apr_pool_t *pool = apreq_table_pool(t);
+    apr_pool_t *pool = apr_table_pool(t);
     apr_ssize_t nlen, vlen;
     apr_bucket *e;
     struct url_ctx *ctx;
@@ -306,7 +312,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
 /********************* header parsing utils ********************/
 
 
-static apr_status_t split_header(apr_pool_t *pool, apreq_table_t *t, 
+static apr_status_t split_header(apr_pool_t *pool, apr_table_t *t, 
                                  apr_bucket_brigade *bb,
                                  const apr_size_t nlen, 
                                  const apr_size_t glen,
@@ -392,7 +398,7 @@ static apr_status_t split_header(apr_pool_t *pool, apreq_table_t *t,
 
     v->data[v->size] = 0;
 
-    apreq_table_add(t, v);
+    apr_table_addn(t, v->name, v->data);
     return APR_SUCCESS;
 
 }
@@ -403,7 +409,7 @@ struct hdr_ctx {
 
 APREQ_DECLARE_PARSER(apreq_parse_headers)
 {
-    apr_pool_t *pool = apreq_table_pool(t);
+    apr_pool_t *pool = apr_table_pool(t);
     apr_ssize_t nlen, glen, vlen;
     apr_bucket *e;
     struct hdr_ctx *ctx;
@@ -584,7 +590,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
 
 struct mfd_ctx {
     void                        *hook_data;
-    apreq_table_t               *info;
+    apr_table_t                 *info;
     apr_bucket_brigade          *bb;
     apreq_parser_t              *hdr_parser;
     const apr_strmatch_pattern  *pattern;
@@ -755,7 +761,7 @@ static apr_status_t nextval(const char **line, const char *name,
 
 APREQ_DECLARE_PARSER(apreq_parse_multipart)
 {
-    apr_pool_t *pool = apreq_table_pool(t);
+    apr_pool_t *pool = apr_table_pool(t);
     struct mfd_ctx *ctx = parser->ctx;
 
 #define MFD_INIT     0
@@ -772,7 +778,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
         ctx = apr_pcalloc(pool, sizeof *ctx);
 
-        ct = strchr(parser->name, ';');
+        ct = strchr(parser->content_type, ';');
         if (ct == NULL) {
             return APR_EINIT;
         }
@@ -790,7 +796,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
         ctx->bdry[4 + blen] = 0;
         ctx->pattern = apr_strmatch_precompile(pool,ctx->bdry,1);
-        ctx->hdr_parser = apreq_make_parser(pool,"",apreq_parse_headers,NULL);
+        ctx->hdr_parser = apreq_make_parser(pool,"",apreq_parse_headers,
+                                            NULL,NULL);
         ctx->info = NULL;
 
         if (ctx->bb == NULL)
@@ -838,7 +845,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             apr_size_t nlen, flen;
 
             if (ctx->info == NULL)
-                ctx->info = apreq_make_table(pool, APREQ_NELTS);
+                ctx->info = apr_table_make(pool, APREQ_NELTS);
 
             s = apreq_run_parser(ctx->hdr_parser, cfg, ctx->info, bb);
 
@@ -849,7 +856,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     printf("header parser failed: %d\n", s);
                     return s;
                 }
-            cd = apreq_table_get(ctx->info, "Content-Disposition");
+            cd = apr_table_get(ctx->info, "Content-Disposition");
 
             if (cd == NULL) {
                 ctx->status = MFD_ERROR;
@@ -880,7 +887,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 param->bb = apr_brigade_create(pool, 
                                                apr_bucket_alloc_create(pool));
 
-                apreq_table_add(t, &param->v);
+                apr_table_addn(t, param->v.name, param->v.data);
                 ctx->status = MFD_UPLOAD;
             }
         }
@@ -925,7 +932,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 apr_brigade_flatten(ctx->bb, v->data, &len);
                 v->size = len;
                 v->data[v->size] = 0;
-                apreq_table_add(t, v);
+                apr_table_addn(t, v->name, v->data);
                 ctx->status = MFD_NEXTLINE;
                 goto mfd_parse_brigade;
 
@@ -945,11 +952,14 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                                            ctx->pattern, ctx->bdry);
             apreq_param_t *param;
             const apr_array_header_t *arr;
+            apr_table_entry_t *e;
 
-            arr = apreq_table_elts(t);
-            param = apreq_value_to_param(*(apreq_value_t **)
+            arr = apr_table_elts(t);
+            e = (apr_table_entry_t *)arr->elts;
+            param = apreq_value_to_param(apreq_strtoval(e[arr->nelts-1].val));
+/*            param = apreq_value_to_param(*(apreq_value_t **)
                        (arr->elts + (arr->elt_size * (arr->nelts-1))));
-
+*/
             switch (s) {
 
             case APR_INCOMPLETE:

@@ -63,9 +63,9 @@
 
 APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t  *p, 
                                                const char  *name,
-                                               const apr_ssize_t nlen,
+                                               const apr_size_t nlen,
                                                const char  *val, 
-                                               const apr_ssize_t vlen)
+                                               const apr_size_t vlen)
 {
     apreq_value_t *v = apr_palloc(p, vlen + nlen + 1 + sizeof *v);
     if (v == NULL)
@@ -144,7 +144,7 @@ APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,
 
     when = apr_time_now();
     if ( strcasecmp(time_str,"now") != 0 ) 
-        when += apreq_atol(time_str);
+        when += apreq_atoi64t(time_str);
 
     if ( apr_time_exp_gmt(&tms, when) != APR_SUCCESS )
         return NULL;
@@ -159,7 +159,7 @@ APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,
 
 /* used for specifying file & byte sizes */
 
-APREQ_DECLARE(apr_int64_t) apreq_atoi64(const char *s)
+APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s)
 {
     apr_int64_t n = 0;
     char *p;
@@ -185,13 +185,13 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64(const char *s)
 
 /* converts date offsets (e.g. "+3M") to seconds */
 
-APREQ_DECLARE(long) apreq_atol(const char *s) 
+APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s) 
 {
     apr_int64_t n = 0;
     char *p;
     if (s == NULL)
         return 0;
-    n = (long)apr_strtoi64(s, &p, 0); /* XXX: what about overflow? */
+    n = apr_strtoi64(s, &p, 0); /* XXX: what about overflow? */
 
     if (p == NULL)
         return n;
