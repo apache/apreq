@@ -23,6 +23,7 @@ sub pre_configure {
     my $self = shift;
     # Don't load an installed mod_apreq
     Apache::TestConfig::autoconfig_skip_module_add('mod_apreq.c');
+    $self->SUPER::pre_configure();
 }
 
 sub configure_modperl {
