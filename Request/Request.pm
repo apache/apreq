@@ -1,3 +1,19 @@
+# NOTE TO MAINTAINERS: license boilerplate appears twice in this file
+
+#  Copyright 2000-2004  The Apache Software Foundation
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 package Apache::Request;
 
 use strict;
@@ -16,9 +32,11 @@ use Apache::Table ();
 sub instance {
     my $class = shift;
     my $r = shift;
+    return unless defined $r;
     if (my $apreq = $r->pnotes('apreq')) {
         return $apreq;
     }
+
     my $new_req = $class->new($r, @_);
     $r->pnotes('apreq', $new_req);
     return $new_req;
@@ -400,7 +418,20 @@ libapreq(3), Apache::Table(3)
 
 This interface is based on the original pure Perl version by Lincoln Stein.
 
-=head1 AUTHOR
+=head1 LICENSE
 
-Doug MacEachern, updated for v1.0 by Joe Schaefer, updated for v1.2 by
-Steve Hay.
+   Copyright 2000-2004  The Apache Software Foundation
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+

@@ -2,6 +2,19 @@ Revision history for libapreq-1
 
 =over 4
 
+=item 1.33
+
+Upgrade license to the Apache License Version 2.0. [davidw, joes]
+
+=item 1.32
+
+Fix mfd's Content-Type parser to deal with Opera 7.2's extra attributes.
+For details see
+
+  http://marc.theaimsgroup.com/?l=apreq-dev&m=106606052700407&w=2
+
+Bug first reported by Sven Geisler [joes].
+
 =item 1.31 - ongoing
 
 added a proper implementation of the ithreads support. At the same
