@@ -1,122 +1,145 @@
 #ifndef APREQ_XS_POSTPERL_H
 #define APREQ_XS_POSTPERL_H
 
-#define apreq_table_t apr_table_t
-#define apreq_xs_class (SvROK(ST(0))  ? HvNAME(SvSTASH(ST(0))) : SvPV_nolen(ST(0)))
-#define apreq_xs_value_class ( call_method("value_class", G_SCALAR), \
-                                SvPV_nolen(ST(0)) )
-#define apreq_xs_table_class ( call_method("table_class", G_SCALAR), \
-                                SvPV_nolen(ST(0)) )
-
 
 APR_INLINE
-static XS(apreq_xs_env)
+static SV *apreq_xs_find_obj(SV *in, const char *key)
 {
-    dXSARGS;
-    char *class = NULL;
+    const char altkey[] = { '_', key[0] };
 
-    /* map environment to package */
-
-    if (strcmp(apreq_env, "APACHE2") == 0)
-        class = "Apache::RequestRec";
-
-    /* else if ... add more conditionals here as 
-       additional environments become supported */
-
-    if (class == NULL)
-        XSRETURN(0);
-
-    if (!SvROK(ST(0))) {
-        ST(0) = newSVpv(class, 0);
+    while (in && SvROK(in)) {
+        SV *sv = SvRV(in);
+        switch (SvTYPE(sv)) {            
+            MAGIC *mg;
+            SV **svp;
+        case SVt_PVHV:
+          if (SvMAGICAL(sv) && (mg = mg_find(sv,PERL_MAGIC_tied))) {
+               in = mg->mg_obj;
+               break;
+           }
+           else if ((svp = hv_fetch((HV *)sv, key, 1, FALSE)) ||
+                    (svp = hv_fetch((HV *)sv, altkey, 2, FALSE)))
+            {
+                in = *svp;
+                break;
+            }
+            Perl_croak(aTHX_ "attribute hash has no '%s' key!", key);
+        case SVt_PVMG:
+            if (SvOBJECT(sv) && SvIOK(sv))
+                return sv;
+        default:
+             Perl_croak(aTHX_ "panic: unsupported SV type: %d", SvTYPE(sv));
+       }
     }
-    else {
-        MAGIC *mg;
-        SV *sv = SvRV(ST(0));
-
-        if (SvOBJECT(sv) && (mg = mg_find(sv, PERL_MAGIC_ext))) {
-
-            ST(0) = sv_2mortal(sv_setref_pv(newSV(0), 
-                                            class, mg->mg_ptr));
-        }
-        else
-            ST(0) = &PL_sv_undef;
-    }
-    XSRETURN(1);
+    return NULL;
 }
 
-/* conversion function template based on modperl-2's sv2request_rec */
+/* conversion function templates based on modperl-2's sv2request_rec */
 
-#define APREQ_XS_DEFINE_CONVERT(type)                                   \
-APR_INLINE                                                              \
-static apreq_##type##_t *apreq_xs_##type##_perl2c(pTHX_ SV* in)         \
-{                                                                       \
-    while (in && SvROK(in)) {                                           \
-        SV *sv = SvRV(in);                                              \
-        switch (SvTYPE(sv)) {                                           \
-            SV **svp;                                                   \
-        case SVt_PVHV:                                                  \
-            if ((svp = hv_fetch((HV *)sv, #type, 1, FALSE)) ||          \
-                (svp = hv_fetch((HV *)sv, "_" #type, 2, FALSE)))        \
-            {                                                           \
-                in = *svp;                                              \
-                break;                                                  \
-            }                                                           \
-            Perl_croak(aTHX_  "%s object has no `"                      \
-                             #type "' key!", HvNAME(SvSTASH(sv)));      \
-        case SVt_PVMG:                                                  \
-            if (SvOBJECT(sv) && SvIOK(sv))                              \
-                return (apreq_##type##_t *)SvIVX(sv);                   \
-        default:                                                        \
-             Perl_croak(aTHX_ "panic: unsupported apreq_" #type         \
-                             "_t type \%d",                             \
-                     SvTYPE(sv));                                       \
-       }                                                                \
-    }                                                                   \
-    return NULL;                                                        \
-}                                                                       \
-APR_INLINE                                                              \
-static SV *apreq_xs_##type##_c2perl(pTHX_ apreq_##type##_t *t,          \
-                                    void *env, const char *class)       \
-{                                                                       \
-    SV *rv = sv_setref_pv(newSV(0), class, t);                          \
-    sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, env, 0);                 \
-    return rv;                                                          \
-}                                                                       \
-                                                                        \
-APR_INLINE                                                              \
-static void *apreq_xs_##type##_perl2env(SV *sv)                         \
-{                                                                       \
-    MAGIC *mg = mg_find(SvROK(sv) ? SvRV(sv): sv, PERL_MAGIC_ext);      \
-    return mg ? mg->mg_ptr : NULL;                                      \
+APR_INLINE
+static void *apreq_xs_perl2c(SV* in, const char *name)
+{
+    SV *sv = apreq_xs_find_obj(in, name);
+    if (sv == NULL)
+        return NULL;
+    else 
+        return (void *)SvIVX(sv);
+}
+
+APR_INLINE
+static void *apreq_xs_perl2env(SV *sv, const char *name)
+{
+    MAGIC *mg;
+    sv = apreq_xs_find_obj(sv, name);
+    if (sv != NULL && (mg = mg_find(sv, PERL_MAGIC_ext)))
+        return mg->mg_ptr;
+    return NULL;
+}
+
+APR_INLINE
+static SV *apreq_xs_c2perl(pTHX_ void *obj, void *env, const char *class)
+{
+    SV *rv = sv_setref_pv(newSV(0), class, obj);
+    if (env)
+        sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, env, 0);
+    return rv;
+}
+
+APR_INLINE
+static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env, 
+                                 const char *class)
+{
+    SV *sv = (SV *)newHV();
+    SV *rv = sv_setref_pv(newSV(0), class, obj);
+    if (env)
+        sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, env, 0);
+
+    sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
+    return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
+}
+
+
+#define apreq_xs_2sv(t,class) apreq_xs_c2perl(aTHX_ t, env, class)
+#define apreq_xs_sv2(type,sv)((apreq_##type##_t *)apreq_xs_perl2c(sv, #type))
+#define apreq_xs_sv2env(type,sv) apreq_xs_perl2env(sv,#type)
+
+#define APREQ_XS_DEFINE_ENV(type)                       \
+APR_INLINE                                              \
+static XS(apreq_xs_##type##_env)                        \
+{                                                       \
+    char *class = NULL;                                 \
+    dXSARGS;                                            \
+    /* map environment to package */                    \
+                                                        \
+    if (strcmp(apreq_env, "APACHE2") == 0)              \
+        class = "Apache::RequestRec";                   \
+                                                        \
+    /* else if ... add more conditionals here as        \
+       additional environments become supported */      \
+                                                        \
+    if (class == NULL)                                  \
+        XSRETURN(0);                                    \
+                                                        \
+    if (SvROK(ST(0))) {                                 \
+        void *env = apreq_xs_sv2env(type, ST(0));       \
+                                                        \
+        if (env)                                        \
+            ST(0) = sv_setref_pv(newSV(0), class, env); \
+        else                                            \
+            ST(0) = &PL_sv_undef;                       \
+    }                                                   \
+    else                                                \
+        ST(0) = newSVpv(class, 0);                      \
+                                                        \
+    XSRETURN(1);                                        \
 }
 
 
 /* requires type##2sv macro */
 
-#define APREQ_XS_DEFINE_OBJECT(type)                                    \
+#define APREQ_XS_DEFINE_OBJECT(type,class)                              \
 static XS(apreq_xs_##type)                                              \
 {                                                                       \
     dXSARGS;                                                            \
     void *env;                                                          \
     apr_pool_t *pool;                                                   \
-    const char *class, *data;                                           \
+    const char *data;                                                   \
     apreq_##type##_t *obj;                                              \
                                                                         \
     if (items < 2 || SvROK(ST(0)) || !SvROK(ST(1)))                     \
         Perl_croak(aTHX_ "Usage: $class->" #type "($env, $data)");      \
                                                                         \
-    class = SvPV_nolen(ST(0));                                          \
     env = (void *)SvIVX(SvRV(ST(1)));                                   \
     data = (items == 3)  ?  SvPV_nolen(ST(2)) :  NULL;                  \
     obj = apreq_##type(env, data);                                      \
                                                                         \
-    ST(0) = obj ? sv_2mortal(apreq_xs_##type##2sv(obj,class)) :         \
+    ST(0) = obj ? sv_2mortal(apreq_xs_2sv(obj,class)) :                 \
                   &PL_sv_undef;                                         \
     XSRETURN(1);                                                        \
 }
 
 
-/* requires definition of type##2sv macro */
+/* requires definition of apreq_xs_##type##2sv(t,class) macro */
 
 #define APREQ_XS_DEFINE_MAKE(type)                                      \
 static XS(apreq_xs_make_##type)                                         \
@@ -124,7 +147,7 @@ static XS(apreq_xs_make_##type)                                         \
     dXSARGS;                                                            \
     void *env;                                                          \
     apr_pool_t *pool;                                                   \
-    const char *class, *key, *val;                                      \
+    const char *key, *val, *class;                                      \
     STRLEN klen, vlen;                                                  \
     apreq_##type##_t *t;                                                \
                                                                         \
@@ -138,47 +161,46 @@ static XS(apreq_xs_make_##type)                                         \
     val = SvPV(ST(3), vlen);                                            \
     t = apreq_make_##type(pool, key, klen, val, vlen);                  \
                                                                         \
-    ST(0) = apreq_xs_##type##2sv(t, class);                             \
+    ST(0) = sv_2mortal(apreq_xs_##type##2sv(t,class));                  \
     XSRETURN(1);                                                        \
 }  
 
-struct do_arg {
-    const char      *class;
+struct apreq_xs_do_arg {
     void            *env;
     PerlInterpreter *perl;
 };
 
-/* requires definition of type##2sv macro */
+static int apreq_xs_table_keys(void *data, const char *key,
+                               const char *val)
+{
+    struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
+    void *env = d->env;
+    dTHXa(d->perl);
+    dSP;
+    if (key)
+        XPUSHs(sv_2mortal(newSVpv(key,0)));
+    else
+        XPUSHs(&PL_sv_undef);
 
-#define APREQ_XS_DEFINE_GET(type, subtype)                              \
-static int apreq_xs_##type##_table_keys(void *data, const char *key,    \
-                               const char *val)                         \
-{                                                                       \
-    struct do_arg *d = (struct do_arg *)data;                           \
-    void *env = d->env;                                                 \
-    const char *class = d->class;                                       \
-    dTHXa(d->perl);                                                     \
-    dSP;                                                                \
-    if (key)                                                            \
-        XPUSHs(sv_2mortal(newSVpv(key,0)));                             \
-    else                                                                \
-        XPUSHs(&PL_sv_undef);                                           \
-                                                                        \
-    PUTBACK;                                                            \
-    return 1;                                                           \
-}                                                                       \
+    PUTBACK;
+    return 1;
+}
+
+/* requires definition of type##2sv macro */
+#define apreq_table_t apr_table_t
+#define apreq_xs_table_sv2table(sv) apreq_xs_sv2(table,sv)
+
+#define APREQ_XS_DEFINE_GET(type, subtype, subclass)                    \
 static int apreq_xs_##type##_table_values(void *data, const char *key,  \
-                               const char *val)                         \
+                                          const char *val)              \
 {                                                                       \
-    struct do_arg *d = (struct do_arg *)data;                           \
+    struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;         \
     void *env = d->env;                                                 \
-    const char *class = d->class;                                       \
     dTHXa(d->perl);                                                     \
     dSP;                                                                \
     if (val)                                                            \
         XPUSHs(sv_2mortal(apreq_xs_##subtype##2sv(                      \
-                   apreq_value_to_##subtype(apreq_strtoval(val)),       \
-                   class)));                                            \
+            apreq_value_to_##subtype(apreq_strtoval(val)), subclass))); \
     else                                                                \
         XPUSHs(&PL_sv_undef);                                           \
                                                                         \
@@ -192,17 +214,15 @@ static XS(apreq_xs_##type##_table_get)                                  \
     const char *key = NULL;                                             \
                                                                         \
     if (items == 1 || items == 2) {                                     \
-        SV *sv = ST(0);                                                 \
-        void *env = apreq_xs_##type##_perl2env(sv);                     \
-        const char *class = apreq_xs_value_class;                       \
-        struct do_arg d = { class, env, aTHX };                         \
-        apr_table_t *t  = apreq_xs_##type##_sv2table(sv);               \
+        apr_table_t *t  = apreq_xs_##type##_sv2table(ST(0));            \
+        void *env = apreq_xs_sv2env(type, ST(0));                       \
+        struct apreq_xs_do_arg d = { env, aTHX };                       \
                                                                         \
         if (items == 2)                                                 \
             key = SvPV_nolen(ST(1));                                    \
                                                                         \
         if (t == NULL)                                                  \
-            Perl_croak(aTHX_ "Usage: $table->get($key)");               \
+            Perl_croak(aTHX_ "usage: $table->get($key)");               \
                                                                         \
         switch (GIMME_V) {                                              \
             const char *val;                                            \
@@ -210,17 +230,21 @@ static XS(apreq_xs_##type##_table_get)                                  \
         case G_ARRAY:                                                   \
             XSprePUSH;                                                  \
             PUTBACK;                                                    \
-            apr_table_do(items == 1 ? apreq_xs_##type##_table_keys :    \
-                     apreq_xs_##type##_table_values, &d, t, key, NULL); \
+            apr_table_do(items == 1 ? apreq_xs_table_keys :             \
+                apreq_xs_##type##_table_values, &d, t, key, NULL);      \
             break;                                                      \
                                                                         \
         case G_SCALAR:                                                  \
+            if (items == 1) {                                           \
+               ST(0) = sv_2mortal(apreq_xs_table2sv(t));                \
+               XSRETURN(1);                                             \
+            }                                                           \
+                                                                        \
             val = apr_table_get(t, key);                                \
             if (val == NULL)                                            \
                 XSRETURN_UNDEF;                                         \
             ST(0) = sv_2mortal(apreq_xs_##subtype##2sv(                 \
-                        apreq_value_to_##subtype(                       \
-                            apreq_strtoval(val)), class));              \
+              apreq_value_to_##subtype(apreq_strtoval(val)),subclass)); \
             XSRETURN(1);                                                \
                                                                         \
         default:                                                        \
@@ -231,25 +255,26 @@ static XS(apreq_xs_##type##_table_get)                                  \
 	Perl_croak(aTHX_ "Usage: $table->get($key)");                   \
 }
 
-/* requires sv2##type, type##2env & type##2##subtype macros */
+/* requires type##2env & type##2##subtype macros */
 
-#define APREQ_XS_DEFINE_TABLE(type, subtype)                    \
-static XS(apreq_xs_##type##_##subtype)                          \
-{                                                               \
-    dXSARGS;                                                    \
-    apreq_##type##_t *obj;                                      \
-    void *env;                                                  \
-    SV *sv;                                                     \
-                                                                \
-    if (items != 1)                                             \
-        Perl_croak(aTHX_ "Usage: " #type "->" #subtype "()");   \
-                                                                \
-    sv = ST(0);                                                 \
-    obj = apreq_xs_sv2##type(sv);                               \
-    env = apreq_xs_##type##2env(obj);                           \
-    ST(0) = apreq_xs_table2sv(apreq_xs_##type##2##subtype(obj), \
-                              apreq_xs_table_class);            \
-    XSRETURN(1);                                                \
+#define APREQ_XS_DEFINE_TABLE(type, subtype)                            \
+static XS(apreq_xs_##type##_##subtype)                                  \
+{                                                                       \
+    dXSARGS;                                                            \
+    apreq_##type##_t *obj;                                              \
+    apr_table_t *t;                                                     \
+    void *env;                                                          \
+    SV *sv;                                                             \
+                                                                        \
+    if (items != 1)                                                     \
+        Perl_croak(aTHX_ "Usage: " #type "->" #subtype "()");           \
+                                                                        \
+    sv = ST(0);                                                         \
+    obj = apreq_xs_sv2(type, sv);                                       \
+    env = apreq_xs_sv2env(type, sv);                                    \
+    t   = apreq_xs_##type##2##subtype(obj);                             \
+    ST(0) = sv_2mortal(apreq_xs_table2sv(t));                           \
+    XSRETURN(1);                                                        \
 }
 
 

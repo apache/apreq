@@ -1,10 +1,12 @@
 package TestApReq::cookie;
 
 use strict;
-use warnings FATAL => 'all';
+use warnings;# FATAL => 'all';
 
-use Apache::Test;
-use Apache::TestUtil;
+use Apache::Request ();
+use Apache::RequestIO;
+use Apache::RequestRec;
+use Apache::Connection;
 
 use Apache::Cookie ();
 use Apache::Request ();
@@ -13,10 +15,10 @@ use Apache::Request ();
 sub handler {
     my $r = shift;
     my $apr = Apache::Request->new($r);
-    my %cookies = Apache::Cookie->fetch;
+    my %cookies = Apache::Cookie->fetch($r);
 
-    $r->send_http_header('text/plain');
-
+    $r->content_type('text/plain');
+    warn "apache => $cookies{apache}";
     my $test = $apr->param('test');
     my $key  = $apr->param('key');
 

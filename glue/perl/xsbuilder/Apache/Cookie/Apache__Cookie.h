@@ -1,38 +1,25 @@
-/* jar */
-
-APREQ_XS_DEFINE_CONVERT(jar);
-
-#define apreq_xs_sv2jar(sv) apreq_xs_jar_perl2c(aTHX_ sv)
-#define apreq_xs_jar2sv(j,class) apreq_xs_jar_c2perl(aTHX_ j,j->env,class)
-#define apreq_xs_jar_sv2table(sv) apreq_xs_sv2jar(sv)->cookies
+#define apreq_xs_jar_sv2table(sv) (apreq_xs_sv2(jar, sv)->cookies)
+#define apreq_xs_jar2cookies(j) j->cookies
 #define apreq_xs_jar2env(j) j->env
 
-APREQ_XS_DEFINE_OBJECT(jar);
+#define apreq_xs_table2sv(t) apreq_xs_table_c2perl(aTHX_ t, env, \
+                                                   "Apache::Cookie::Table")
+#define apreq_xs_cookie2sv(c,class) apreq_xs_2sv(c,class)
+
+APREQ_XS_DEFINE_ENV(cookie);
+APREQ_XS_DEFINE_ENV(jar);
+
+/* jar */
+
+APREQ_XS_DEFINE_OBJECT(jar, "Apache::Cookie::Jar");
+APREQ_XS_DEFINE_TABLE(jar, cookies);
+APREQ_XS_DEFINE_GET(jar, cookie, "Apache::Cookie");
 
 /* cookie */
 
-APREQ_XS_DEFINE_CONVERT(cookie);
-
-#define apreq_xs_sv2cookie(sv) apreq_xs_cookie_perl2c(aTHX_ sv)
-#define apreq_xs_cookie2sv(c,class) apreq_xs_cookie_c2perl(aTHX_ c,env,class)
-#define apreq_xs_cookie_sv2env(sv) apreq_xs_cookie_perl2env(sv)
-
 APREQ_XS_DEFINE_MAKE(cookie);
+APREQ_XS_DEFINE_GET(table, cookie, "Apache::Cookie");
 
-APREQ_XS_DEFINE_GET(jar,cookie);
-
-/* table */
-APREQ_XS_DEFINE_CONVERT(table);
-
-#define apreq_xs_table2sv(t,class) apreq_xs_table_c2perl(aTHX_ t,env,class)
-#define apreq_xs_sv2table(sv) apreq_xs_table_perl2c(aTHX_ sv)
-#define apreq_xs_table_sv2table(sv) apreq_xs_sv2table(sv)
-#define apreq_xs_table_sv2env(sv) apreq_xs_table_perl2env(sv)
-
-#define apreq_xs_jar2cookies(j) j->cookies
-APREQ_XS_DEFINE_TABLE(jar,cookies);
-
-APREQ_XS_DEFINE_GET(table,cookie);
 
 static XS(apreq_xs_cookie_as_string)
 {
@@ -44,7 +31,7 @@ static XS(apreq_xs_cookie_as_string)
         Perl_croak(aTHX_ "Usage: $cookie->as_string()");
 
     sv = ST(0);
-    c = apreq_xs_sv2cookie(sv);
+    c = apreq_xs_sv2(cookie,sv);
     sv = NEWSV(0, apreq_serialize_cookie(NULL, 0, c));
     SvCUR(sv) = apreq_serialize_cookie(SvPVX(sv), SvLEN(sv), c);
     SvPOK_on(sv);
@@ -60,10 +47,10 @@ static XS(apreq_xs_cookie_expires)
     if (items == 0)
         XSRETURN_UNDEF;
 
-    c = apreq_xs_sv2cookie(ST(0));
+    c = apreq_xs_sv2(cookie,ST(0));
 
     if (items > 1) {
-        apr_pool_t *p = apreq_env_pool(apreq_xs_cookie_sv2env(ST(0)));
+        apr_pool_t *p = apreq_env_pool(apreq_xs_sv2env(cookie,ST(0)));
         const char *s = SvPV_nolen(ST(1));
         apreq_cookie_expires(p, c, s);
     }
@@ -88,8 +75,8 @@ static XS(apreq_xs_cookie_set_attr)
     if (items == 0)
         XSRETURN_UNDEF;
 
-    c = apreq_value_to_cookie(apreq_xs_sv2cookie(ST(0)));
-    p = apreq_env_pool(apreq_xs_cookie_sv2env(ST(0)));
+    c = apreq_value_to_cookie(apreq_xs_sv2(cookie,ST(0)));
+    p = apreq_env_pool(apreq_xs_sv2env(cookie,ST(0)));
 
     for (j = 1; j + 1 < items; j += 2) {
         status = apreq_cookie_attr(p, c, SvPV_nolen(ST(j)), 

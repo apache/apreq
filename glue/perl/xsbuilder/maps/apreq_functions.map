@@ -4,41 +4,41 @@ MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
  apreq_request | apreq_xs_request | const char *:class, void *:env, const char *:qs=NULL
  apreq_parse_request
  apreq_params
- apreq_param | apreq_xs_param | ...
+ apreq_param | apreq_xs_param |
 
 MODULE=Apache::Request PACKAGE=Apache::Request
- DEFINE_env  | apreq_xs_env   | ...
+ DEFINE_env     | apreq_xs_request_env |
 
-MODULE=Apache::Request PACKAGE=Apache::Request::Table
- DEFINE_get            | apreq_xs_table_table_get | ...
- DEFINE_FETCH          | apreq_xs_table_table_get | ...
- DEFINE_env            | apreq_xs_env             | ...
+MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Table_
+ DEFINE_get     | apreq_xs_table_table_get |
+ DEFINE_FETCH   | apreq_xs_table_table_get |
 
 MODULE=Apache::Cookie PACKAGE=Apache::Cookie
- SV *:DEFINE_jar        | apreq_xs_jar | const char *:class, void *:env, const char *:hdr=NULL
- SV *:DEFINE_as_string  | apreq_xs_cookie_as_string | SV *:c
- SV *:DEFINE_make       | apreq_xs_make_cookie(aTHX_ class, env, name, val) | const char *:class, void *:env, SV *:name, SV *:val
-      DEFINE_expires    | apreq_xs_cookie_expires   |
-      DEFINE_set_attr   | apreq_xs_cookie_set_attr  |
-      DEFINE_env        | apreq_xs_env              |
- apr_status_t:DEFINE_bake | apreq_cookie_bake (apreq_xs_sv2cookie(c), apreq_xs_cookie_perl2env(c)) | SV *:c
- apr_status_t:DEFINE_bake2| apreq_cookie_bake2(apreq_xs_sv2cookie(c), apreq_xs_cookie_perl2env(c)) | SV *:c
+ DEFINE_jar        | apreq_xs_jar | 
+ DEFINE_as_string  | apreq_xs_cookie_as_string |
+ DEFINE_make       | apreq_xs_make_cookie      | 
+ DEFINE_expires    | apreq_xs_cookie_expires   |
+ DEFINE_set_attr   | apreq_xs_cookie_set_attr  |
+ DEFINE_env        | apreq_xs_cookie_env  |
+ const char *:DEFINE_name | apreq_cookie_name(c)  | apreq_cookie_t *:c
+ const char *:DEFINE_value| apreq_cookie_value(c) | apreq_cookie_t *:c
+ apr_status_t:DEFINE_bake | apreq_cookie_bake (apreq_xs_sv2(cookie,c), apreq_xs_sv2env(cookie,c)) | SV *:c
+ apr_status_t:DEFINE_bake2| apreq_cookie_bake2(apreq_xs_sv2(cookie,c), apreq_xs_sv2env(cookie,c)) | SV *:c
 
-MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar
+MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar PREFIX=Apache__Cookie__Jar_
+ DEFINE_env        | apreq_xs_jar_env       |
  DEFINE_get        | apreq_xs_jar_table_get |
  DEFINE_cookies    | apreq_xs_jar_cookies   |
- DEFINE_env        | apreq_xs_env             |
 
-MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table
+MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table PREFIX=Apache__Cookie__Table_
  DEFINE_get        | apreq_xs_table_table_get |
  DEFINE_FETCH      | apreq_xs_table_table_get |
- DEFINE_env        | apreq_xs_env             |
 
 
 MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
  apreq_log
 # apreq_join
- apreq_index
+#apreq_index
  apreq_encode
 # apreq_decode
 # apreq_expires
