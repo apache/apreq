@@ -228,7 +228,7 @@ static void apreq_filter_make_context(ap_filter_t *f)
             else if (content_length > (apr_int64_t)cfg->max_body) {
                 apreq_log(APREQ_ERROR APR_EINIT, r,
                           "Content-Length header (%s) exceeds configured "
-                          "max_body limit (" APR_OFF_T_FMT ")", 
+                          "max_body limit (%" APR_OFF_T_FMT ")", 
                           cl, cfg->max_body);
                 ctx->status = APR_EINIT;
             }
@@ -255,7 +255,7 @@ static apr_status_t apache2_read(void *env,
     if (ctx->status != APR_INCOMPLETE || bytes == 0)
         return ctx->status;
 
-    apreq_log(APREQ_DEBUG 0, r, "prefetching %ld bytes", bytes);
+    apreq_log(APREQ_DEBUG 0, r, "prefetching %" APR_OFF_T_FMT " bytes", bytes);
     s = ap_get_brigade(f, NULL, AP_MODE_READBYTES, block, bytes);
     if (s != APR_SUCCESS)
         return s;
@@ -469,14 +469,14 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 
         apr_bucket_brigade *tmp = apr_brigade_create(r->pool, 
                                       apr_bucket_alloc_create(r->pool));
-        apr_bucket *last = APR_BRIGADE_LAST(ctx->spool);
-        apr_size_t total_read = 0;
+        apr_off_t total_read = 0;
 
         if (req == NULL)
             req = apreq_request(r, NULL);
 
         while (total_read < readbytes) {
             apr_off_t len;
+            apr_bucket *last = APR_BRIGADE_LAST(ctx->spool);
 
             if (APR_BUCKET_IS_EOS(last)) {
                 ctx->saw_eos = 1;
@@ -492,14 +492,14 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             total_read += len;
             apreq_brigade_concat(r, ctx->spool, tmp);
             APR_BRIGADE_CONCAT(ctx->bb, bb);
-            last = APR_BRIGADE_LAST(ctx->spool);
         }
+
         ctx->bytes_read += total_read;
 
         if (cfg->max_body >= 0 && ctx->bytes_read > cfg->max_body) {
             ctx->status = APR_ENOSPC;
-            apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (" APR_OFF_T_FMT
-                      ") exceeds configured max_body limit (" APR_OFF_T_FMT ")",
+            apreq_log(APREQ_ERROR ctx->status, r, "Bytes read (%" APR_OFF_T_FMT
+                      ") exceeds configured max_body limit (%" APR_OFF_T_FMT ")",
                       ctx->bytes_read, cfg->max_body);
         }
     }

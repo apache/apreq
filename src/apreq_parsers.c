@@ -694,7 +694,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(void *env,
     }
 
     f = last->data;
-        
+
     if (last->length > MAX_FILE_BUCKET_LENGTH) {
         apr_bucket_copy(last, &e);
         APR_BRIGADE_INSERT_TAIL(out, e);
@@ -702,16 +702,17 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(void *env,
         e->start = last->length + 1;
         last = e;
     }
-    s = apreq_brigade_fwrite(f->fd, &wlen, in);
-    if (s != APR_SUCCESS)
-        return s;
-    last->length += wlen;
-    last = APR_BRIGADE_LAST(in);
-    if (APR_BUCKET_IS_EOS(last)) {
-        apr_bucket_copy(last, &e);
+
+    e = APR_BRIGADE_LAST(in);
+    if (APR_BUCKET_IS_EOS(e)) {
+        APR_BUCKET_REMOVE(e);
         APR_BRIGADE_INSERT_TAIL(out, e);
     }
-    return apr_brigade_destroy(in);
+
+    s = apreq_brigade_fwrite(f->fd, &wlen, in);
+    if (s == APR_SUCCESS)
+        last->length += wlen;
+    return s;
 }
 
 

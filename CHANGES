@@ -3,6 +3,11 @@
 
 @section v2_03_dev Changes with libapreq2-2.03-dev
 
+- C API [joes]
+  apreq_brigade_concat() wasn't supplying the final EOS bucket
+  to large brigades (>256K), which somtimes caused the prefetch 
+  loop in mod_apreq.c's apreq_filter() to hang.
+
 - Documentation [joes]
   CHANGES file reformatted, removing dates & other clutter 
   as Stas suggests.
@@ -18,8 +23,12 @@
 - C API [joes]
   API modifications: removed struct apreq_cfg_t, adding
   new apreq_env hooks max_body, max_brigade_len, and temp_dir.
-  Also folded apreq_parsers.h into apreq_params.h.  These changes
-  make libapreq2.so.2.0.5 incompatible with earlier versions.
+  Folded apreq_parsers.h into apreq_params.h and modified the arguments 
+  to apreq_run_parser() and apreq_run_hook(). Renamed 
+  apreq_parser_t's content_type as enctype and apreq_copy_brigade()
+  as apreq_brigade_copy().
+  These changes make libapreq2.so.2.0.5 incompatible with earlier 
+  versions.
 
 - Perl API [stas]
   Include ppport.h from blead-perl to support older perls.
