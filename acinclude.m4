@@ -18,6 +18,12 @@ AC_DEFUN([AC_APREQ], [
         AC_ARG_WITH(apache2-httpd,
                 AC_HELP_STRING([--with-apache2-httpd],[path to httpd binary]),
                 [APACHE2_HTTPD=$withval],[APACHE2_HTTPD=""])
+        AC_ARG_WITH(apr-config,
+                AC_HELP_STRING([  --with-apr-config],[path to apr-*-config script]),
+                [APR_CONFIG=$withval],[APR_CONFIG=""])
+        AC_ARG_WITH(apu-config,
+                AC_HELP_STRING([  --with-apu-config],[path to apu-*-config script]),
+                [APU_CONFIG=$withval],[APU_CONFIG=""])
 
         prereq_check="$PERL build/version_check.pl"
 
@@ -30,44 +36,57 @@ AC_DEFUN([AC_APREQ], [
                     AC_MSG_ERROR([invalid Apache2 source directory]))
 
                 APACHE2_INCLUDES=-I$APACHE2_SRC/include
+
+                if test -z "$APR_CONFIG"; then
+                    APR_CONFIG="$APACHE2_SRC/srclib/apr/apr-config"
+                fi
+
+                if test -z "$APU_CONFIG"; then
+                    APU_CONFIG="$APACHE2_SRC/srclib/apr-util/apu-config"
+                fi
+
                 APACHE2_HTTPD=$APACHE2_SRC/httpd
-                AC_ARG_WITH(apr-config,
-                    AC_HELP_STRING([  --with-apr-config],[path to apr-config (requires --with-apache2-src)]),
-                    [APR_CONFIG=$withval],[APR_CONFIG="$APACHE2_SRC/srclib/apr/apr-config"])
-                AC_ARG_WITH(apu-config,
-                    AC_HELP_STRING([  --with-apu-config],[path to apu-config (requires --with-apache2-src)]),
-                    [APU_CONFIG=$withval],[APU_CONFIG="$APACHE2_SRC/srclib/apr-util/apu-config"])
 
         else
                 # have apxs: use it
 
                 APACHE2_INCLUDES=-I`$APACHE2_APXS -q INCLUDEDIR`
-                ${APACHE2_HTTPD:=`$APACHE2_APXS -q SBINDIR`/`$APACHE2_APXS -q progname`}
+
                 APR_MAJOR_VERSION=`$APACHE2_APXS -q APR_VERSION 2>/dev/null | cut -d. -f 1`
                 if test ${APR_MAJOR_VERSION:=0} -eq 0; then
-                    APR_CONFIG=apr-config
-                    APU_CONFIG=apu-config 
+                    apr_config=apr-config
+                    apu_config=apu-config 
                 else
-                    APR_CONFIG=apr-$APR_MAJOR_VERSION-config
-                    APU_CONFIG=apu-$APR_MAJOR_VERSION-config
+                    apr_config=apr-$APR_MAJOR_VERSION-config
+                    apu_config=apu-$APR_MAJOR_VERSION-config
                 fi
-                APR_CONFIG=`$APACHE2_APXS -q APR_BINDIR`/$APR_CONFIG
-                APU_CONFIG=`$APACHE2_APXS -q APU_BINDIR`/$APU_CONFIG
+
+                if test -z "$APR_CONFIG"; then
+                    APR_CONFIG=`$APACHE2_APXS -q APR_BINDIR`/$apr_config
+                fi
+
+                if test -z "$APU_CONFIG"; then
+                    APU_CONFIG=`$APACHE2_APXS -q APU_BINDIR`/$apu_config
+                fi
+
+                if test -z "$APACHE2_HTTPD"; then
+                    APACHE2_HTTPD=`$APACHE2_APXS -q SBINDIR`/`$APACHE2_APXS -q progname`
+                fi
 
                 if test -z "`$prereq_check apache2 $APACHE2_HTTPD`"; then
-                    AC_MSG_ERROR([Bad apache2 binary])
+                    AC_MSG_ERROR([Bad apache2 binary ($APACHE2_HTTPD)])
                 fi
         fi
 
         AC_CHECK_FILE([$APR_CONFIG],,
-            AC_MSG_ERROR([invalid apr-config location- did you forget to configure apr?]))
+            AC_MSG_ERROR([invalid apr-config location ($APR_CONFIG)- did you forget to configure apr?]))
 
         if test -z "`$prereq_check apr $APR_CONFIG`"; then
             AC_MSG_ERROR([Bad libapr version])
         fi
 
         AC_CHECK_FILE([$APU_CONFIG],,
-            AC_MSG_ERROR([invalid apu-config location- did you forget to configure apr-util?]))
+            AC_MSG_ERROR([invalid apu-config location ($APU_CONFIG)- did you forget to configure apr-util?]))
 
         if test -z "`$prereq_check apu $APU_CONFIG`"; then
             AC_MSG_ERROR([Bad libaprutil version])
