@@ -285,7 +285,7 @@ BOOT:
     /* the "fallback" status. */
     sv_setsv(
         get_sv( "APR::Request::Cookie::()", TRUE ),
-        &PL_sv_undef
+        &PL_sv_yes
     );
     newXS("APR::Request::Cookie::()", XS_APR__Request__Cookie_nil, file);
     newXS("APR::Request::Cookie::(\"\"", XS_APR__Request__Cookie_value, file);

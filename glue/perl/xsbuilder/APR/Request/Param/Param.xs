@@ -363,7 +363,7 @@ BOOT:
     /* the "fallback" status. */
     sv_setsv(
         get_sv( "APR::Request::Param::()", TRUE ),
-        &PL_sv_undef
+        &PL_sv_yes
     );
     newXS("APR::Request::Param::()", XS_APR__Request__Param_nil, file);
     newXS("APR::Request::Param::(\"\"", XS_APR__Request__Param_value, file);
