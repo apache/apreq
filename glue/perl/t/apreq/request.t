@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
-plan tests => 3, have_lwp;
+plan tests => 7, have_lwp;
 
 my $location = "/TestApReq__request";
 #print GET_BODY $location;
@@ -19,9 +19,9 @@ my $location = "/TestApReq__request";
              GET_BODY("$location?test=$test&value=$value"),
              "basic param");
 }
-{
+
+for my $test (qw/slurp bb_read fh_read/) {
     # upload a string as a file
-    my $test  = 'upload';
     my $value = 'DataUpload' x 100_000;
     my $result = UPLOAD_BODY("$location?test=$test", content => $value); 
     ok t_cmp($value, $result, "basic upload");

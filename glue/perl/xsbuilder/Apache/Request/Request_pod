@@ -13,11 +13,6 @@ C<Apache::Request> adds methods for parsing B<GET> requests and B<POST>
 requests where I<Content-type> is one of I<application/x-www-form-urlencoded>
 or I<multipart/form-data>.
 
-=head1 VERSION
-
-This is Version @PACKAGE_VERSION@ of C<Apache::Request>, based on
-lib@APREQ_LIBNAME@ Version @APREQ_DOTTED_VERSION@. 
-
 =head1 Apache::Request METHODS
 
 The interface is designed to mimic CGI.pm 's routines for parsing
@@ -72,7 +67,7 @@ file system as the final destination file:
 Extra configuration info passed to an upload hook.
 See the description for the next item, I<UPLOAD_HOOK>.
 
-=item UPLOAD_HOOK [TODO]
+=item UPLOAD_HOOK (requires Apache::Upload) [TODO]
 
 Sets up a callback to run whenever file upload data is read. This
 can be used to provide an upload progress meter during file uploads.
@@ -80,7 +75,7 @@ Apache will automatically continue writing the original data to
 $upload->fh after the hook exits.
 
  my $transparent_hook = sub {
-   my ($upload, $buf, $len, $hook_data) = @_;
+   my ($upload, $bb, $hook_data, $next_hook) = @_;
    warn "$hook_data: got $len bytes for " . $upload->name;
  };
 
@@ -91,7 +86,7 @@ $upload->fh after the hook exits.
 
 =back
 
-=head2 instance
+=head2 instance [DEPRECATED]
 
 The default (and only) behavior of I<Apache::Request> is to intelligently
 cache B<POST> data for the duration of the request.  Thus there is no longer
@@ -99,16 +94,13 @@ the need for a separate C<instance()> method as existed in I<Apache::Request>
 for Apache 1.3 - all B<POST> data is always available from each and every 
 I<Apache::Request> object created during the request's lifetime.
 
-If you need an C<instance()> method to make ease the pains of porting to
-Apache 2.0, you can add this shortcut to your C<startup.pl>:
-
-    use Apache::Request;
-    *Apache::Request::instance = \&Apache::Request::new;
+However an C<instance()> method is aliased to C<new()> in this release
+to ease the pain of porting from 1.X to 2.X.
 
 =head2 param
 
 Get or set (TODO) the request parameters (using case-insensitive keys) by
-mimicing the OO interface of C<CGI::param>.
+mimicing the OO interface of C<CGI::param>.  WIth a single
 
     # similar to CGI.pm
 
@@ -118,23 +110,15 @@ mimicing the OO interface of C<CGI::param>.
 
     # the following differ slightly from CGI.pm
 
-    # assigns multiple values to 'foo'
-    $req->param('foo' => [qw(one two three)]); # TODO
+    # returns ref to APR::Table object representing all (args + body) params
+    my $table = $req->param;
 
-    # returns ref to underlying apache table object
-    my $table = $req->param; # identical to $apr->parms - see below
+=head2 parms, params [DEPRECATED]
 
-=head2 parms, params
-
-Get the full parameter table of the I<Apache::Request> object.
-
-   # returns ref to Apache::Request::Table object provided by $apache_table
-   my $table = $req->parms;
-
-An optional name parameter can be passed to return the parameter
-associated with the given name:
-
-   my $param = $req->parms($name);
+The functionality of these functions is assumed by C<param>,
+so they are no longer necessary.  Aliases to C<param> are
+provided in this release for backwards compatibility,
+however they may be removed from a future release.
 
 =head2 args
 
@@ -189,6 +173,24 @@ Apache::Request object to delegate to.)  For example:
 	}
 
 
+=head1 CHANGES in Apache::Request API from 1.X to 2.X
+
+=over 4
+
+=item You must use the two-argument form of $req->args or $req->body to assign 
+      parameters to the request.  You may no longer use
+
+        $req->param("foo" => "bar"); # invalid in 2.X
+
+=item C<instance> is now identical to C<new>.
+
+=item C<param> includes the functionality of C<parms> and C<params>.
+
+=item The argument list for the upload hook has changed
+
+=back
+
+
 =head1 SEE ALSO
 
 Apache::Cookie(3), Apache::Upload(3), APR::Table(3)
@@ -196,10 +198,6 @@ Apache::Cookie(3), Apache::Upload(3), APR::Table(3)
 =head1 CREDITS
 
 This interface is based on the original pure Perl version by Lincoln Stein.
-
-=head1 AUTHORS
-
-Doug MacEachern, Joe Schaefer, Steve Hay.
 
 =head1 MISSING DOCS
 

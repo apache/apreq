@@ -13,6 +13,70 @@
 **  See the License for the specific language governing permissions and
 **  limitations under the License.
 */
+#include "apr_optional.h"
+
+/* Temporary work-around for missing apr_perlio.h file.
+ * #include "apr_perlio.h" 
+ */
+#ifndef APR_PERLIO_H
+
+#ifdef PERLIO_LAYERS
+#include "perliol.h"
+#else 
+#include "iperlsys.h"
+#endif
+
+#include "apr_portable.h"
+#include "apr_file_io.h"
+#include "apr_errno.h"
+
+#ifndef MP_SOURCE_SCAN
+#include "apr_optional.h"
+#endif
+
+/* 5.6.0 */
+#ifndef IoTYPE_RDONLY
+#define IoTYPE_RDONLY '<'
+#endif
+#ifndef IoTYPE_WRONLY
+#define IoTYPE_WRONLY '>'
+#endif
+
+typedef enum {
+    APR_PERLIO_HOOK_READ,
+    APR_PERLIO_HOOK_WRITE
+} apr_perlio_hook_e;
+
+void apr_perlio_init(pTHX);
+
+/* The following functions can be used from other .so libs, they just
+ * need to load APR::PerlIO perl module first
+ */
+#ifndef MP_SOURCE_SCAN
+
+#ifdef PERLIO_LAYERS
+PerlIO *apr_perlio_apr_file_to_PerlIO(pTHX_ apr_file_t *file, apr_pool_t *pool,
+                                      apr_perlio_hook_e type);
+APR_DECLARE_OPTIONAL_FN(PerlIO *,
+                        apr_perlio_apr_file_to_PerlIO,
+                        (pTHX_ apr_file_t *file, apr_pool_t *pool,
+                         apr_perlio_hook_e type));
+#endif /* PERLIO_LAYERS */
+
+
+SV *apr_perlio_apr_file_to_glob(pTHX_ apr_file_t *file, apr_pool_t *pool,
+                                apr_perlio_hook_e type);
+APR_DECLARE_OPTIONAL_FN(SV *,
+                        apr_perlio_apr_file_to_glob,
+                        (pTHX_ apr_file_t *file, apr_pool_t *pool,
+                         apr_perlio_hook_e type));
+#endif /* MP_SOURCE_SCAN */
+
+#endif /*APR_PERLIO_H*/
+
+
+
+
 
 #define READ_BLOCK_SIZE (1024 * 256)
 #define S2P(s) (s ? apreq_value_to_param(apreq_strtoval(s)) : NULL)
@@ -162,4 +226,95 @@ static XS(apreq_xs_upload_slurp)
     SvPOK_only(ST(1));
     s = apr_brigade_flatten(bb, data, &len_size);
     XSRETURN_IV(s);
+}
+
+static XS(apreq_xs_upload_size)
+{
+    dXSARGS;
+    MAGIC *mg;
+    void *env;
+    apr_bucket_brigade *bb;
+    apr_status_t s;
+    apr_off_t len;
+
+    if (items != 1 || !SvROK(ST(0)))
+        Perl_croak(aTHX_ "Usage: $upload->size()");
+
+    if (!(mg = mg_find(SvRV(ST(0)), PERL_MAGIC_ext)))
+        Perl_croak(aTHX_ "$upload->size(): can't find env");
+
+    env = mg->mg_ptr;
+    bb = apreq_xs_sv2param(ST(0))->bb;
+
+    s = apr_brigade_length(bb, 1, &len);
+
+    if (s != APR_SUCCESS) {
+        apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_size:"
+                  "apr_brigade_length failed");
+        Perl_croak(aTHX_ "$upload->size: can't get brigade length");
+    }
+    XSRETURN_IV((IV)len);
+}
+
+static APR_OPTIONAL_FN_TYPE(apr_perlio_apr_file_to_glob) *f2g;
+
+static XS(apreq_xs_upload_fh)
+{
+    dXSARGS;
+    MAGIC *mg;
+    void *env;
+    apr_bucket_brigade *bb;
+    apr_status_t s;
+    apr_off_t len;
+    apr_file_t *file;
+    SV *sv;
+
+    if (items != 1 || !SvROK(ST(0)))
+        Perl_croak(aTHX_ "Usage: $upload->fh()");
+
+    if (!(mg = mg_find(SvRV(ST(0)), PERL_MAGIC_ext)))
+        Perl_croak(aTHX_ "$upload->fh(): can't find env");
+
+    env = mg->mg_ptr;
+    bb = apreq_xs_sv2param(ST(0))->bb;
+    file = apreq_brigade_spoolfile(bb);
+
+    if (f2g == NULL)
+        f2g = APR_RETRIEVE_OPTIONAL_FN(apr_perlio_apr_file_to_glob);
+    if (f2g == NULL)
+        Perl_croak(aTHX_ "can't locate apr_perlio_apr_file_to_glob");
+
+    if (file == NULL) {
+        apr_bucket *last;
+        const char *tmpdir = apreq_env_temp_dir(env, NULL);
+
+        s = apreq_file_mktemp(&file, apreq_env_pool(env), tmpdir);
+
+        if (s != APR_SUCCESS) {
+            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_fh:"
+                      "apreq_file_mktemp failed");
+            Perl_croak(aTHX_ "$upload->fh: can't make tempfile");
+        }
+
+        s = apreq_brigade_fwrite(file, &len, bb);
+
+        if (s != APR_SUCCESS) {
+            apreq_log(APREQ_ERROR s, env, "apreq_xs_upload_fh:"
+                      "apreq_brigade_fwrite failed");
+            Perl_croak(aTHX_ "$upload->fh: can't write brigade to tempfile");
+        }
+
+        last = apr_bucket_file_create(file, len, 0, bb->p, bb->bucket_alloc);
+        APR_BRIGADE_INSERT_TAIL(bb, last);
+    }
+
+    /* Reset seek pointer before passing apr_file_t to perl. */
+    len = 0;
+    apr_file_seek(file, 0, &len);
+
+    /* Should we pass a dup(2) of the file instead? */
+    sv = f2g(aTHX_ file, bb->p, APR_PERLIO_HOOK_READ);
+//    ST(0) = sv_2mortal(sv);
+    ST(0) = sv;
+    XSRETURN(1);
 }

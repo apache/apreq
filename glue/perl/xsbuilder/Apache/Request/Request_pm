@@ -23,3 +23,10 @@ sub new {
     $req->config(@_);
     return $req;
 }
+
+*instance = *new;
+
+sub param;
+
+*parms = *param;
+*params = *param;
