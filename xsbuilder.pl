@@ -186,7 +186,7 @@ sub parse {
 package My::WrapXS;
 pop @dirs; # drop mod_h directories- WrapXS takes care of those
 use base qw/ExtUtils::XSBuilder::WrapXS/;
-our $VERSION = '0.1';
+our $VERSION = $version;
 __PACKAGE__ -> $_ for @ARGV;
 
 sub parsesource_objects {[My::ParseSource->new]}
@@ -217,6 +217,35 @@ sub write_docs {
     while (<$pod>) {
         print $fh $_;
     }
+}
+sub pm_text {
+    my($self, $module, $isa, $code) = @_;
+
+    return <<EOF;
+$self->{noedit_warning_hash}
+
+package $module;
+require DynaLoader ;
+use strict ;
+use vars qw{\$VERSION \@ISA} ;
+$isa
+push \@ISA, 'DynaLoader' ;
+\$VERSION = '$version';
+bootstrap $module \$VERSION ;
+
+# XXX How do we test for the appropriate modperl version?
+# The modperl package isn't necessarily loaded, but Apache2
+# is.  Perhaps Apache2 should always include a VERSION?
+
+die __PACKAGE__ . ": httpd must load mod_apreq.so first"
+           if __PACKAGE__->env ne "Apache::RequestRec";
+
+$code
+
+1;
+__END__
+EOF
+
 }
 sub makefilepl_text {
     my($self, $class, $deps,$typemap) = @_;
