@@ -283,6 +283,35 @@ static void parse_generic(CuTest *tc)
     CuAssertStrNEquals(tc, xml_data, val, vlen);
 }
 
+static void hook_discard(CuTest *tc)
+{
+    apr_status_t rv;
+    apreq_param_t *dummy;
+    apreq_request_t *req = apreq_request(APREQ_XML_ENCTYPE, "");
+    apr_bucket_brigade *bb = apr_brigade_create(p, 
+                                   apr_bucket_alloc_create(p));
+    apr_bucket *e = apr_bucket_immortal_create(xml_data,
+                                                   strlen(xml_data),
+                                                   bb->bucket_alloc);
+
+    CuAssertPtrNotNull(tc, req);
+    APR_BRIGADE_INSERT_HEAD(bb, e);
+    APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
+
+    req->body = NULL;
+    req->parser = apreq_make_parser(p, APREQ_XML_ENCTYPE, 
+                                    apreq_parse_generic,
+                                    apreq_make_hook(p, apreq_hook_discard_brigade,
+                                                    NULL,NULL), NULL);
+    rv = apreq_parse_request(req,bb);
+    CuAssertIntEquals(tc, APR_SUCCESS, rv);
+    dummy = *(apreq_param_t **)req->parser->ctx;
+    CuAssertPtrNotNull(tc, dummy);
+    CuAssertPtrNotNull(tc, dummy->bb);
+    CuAssertTrue(tc, APR_BRIGADE_EMPTY(dummy->bb));
+
+}
+
 
 static void parse_related(CuTest *tc)
 {
@@ -417,6 +446,7 @@ CuSuite *testparser(void)
     SUITE_ADD_TEST(suite, parse_generic);
     SUITE_ADD_TEST(suite, parse_related);
     SUITE_ADD_TEST(suite, parse_mixed);
+    SUITE_ADD_TEST(suite, hook_discard);
     return suite;
 }
 

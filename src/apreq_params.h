@@ -290,6 +290,7 @@ struct apreq_parser_t {
  * bucket brigade.  The hook may modify the brigade if necessary.
  * Once all hooks have completed, the contents of the brigade will 
  * be added to the parameter's bb attribute.
+ * @return APR_SUCCESS on success. All other values represent errors.
  */
 #define APREQ_RUN_HOOK(h,env,param,bb) (h)->hook(h,env,param,bb)
 
@@ -411,6 +412,12 @@ APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env,
  *
  */
 APREQ_DECLARE_HOOK(apreq_hook_disable_uploads);
+
+/**
+ * Calls apr_brigade_cleanup on the incoming brigade
+ * after passing the brigade to any subsequent hooks.
+ */
+APREQ_DECLARE_HOOK(apreq_hook_discard_brigade);
 
 #ifdef __cplusplus
 }

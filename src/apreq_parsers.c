@@ -1135,7 +1135,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             case APR_INCOMPLETE:
                 if (parser->hook) {
                     s = APREQ_RUN_HOOK(parser->hook, env, param, ctx->bb);
-                    if (s != APR_INCOMPLETE && s != APR_SUCCESS) {
+                    if (s != APR_SUCCESS) {
                         ctx->status = MFD_ERROR;
                         return s;
                     }
@@ -1204,6 +1204,15 @@ APREQ_DECLARE_HOOK(apreq_hook_disable_uploads)
     apreq_log(APREQ_ERROR APR_EGENERAL, env, 
               "Uploads are disabled for this request.");
     return APR_EGENERAL;
+}
+
+APREQ_DECLARE_HOOK(apreq_hook_discard_brigade)
+{
+    apr_status_t s = APR_SUCCESS;
+    if (hook->next)
+        s = APREQ_RUN_HOOK(hook->next, env, param, bb);
+    apr_brigade_cleanup(bb);
+    return s;
 }
 
 
@@ -1310,6 +1319,8 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser)
             s = apr_xml_parser_done(ctx->xml_parser, &ctx->doc);
             if (s == APR_SUCCESS) {
                 ctx->status = XML_COMPLETE;
+                if (hook->next)
+                    s = APREQ_RUN_HOOK(hook->next, env, param, bb);
             }
             else {
                 ctx->status = XML_ERROR;
@@ -1342,5 +1353,9 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser)
 
     }
 
-    return APR_INCOMPLETE;
+    if (hook->next)
+        return APREQ_RUN_HOOK(hook->next, env, param, bb);
+
+    return APR_SUCCESS;
 }
+
