@@ -278,7 +278,7 @@ static void parse_disable_uploads(dAT)
 
 
     rv = apreq_parser_run(parser, body, bb);
-    AT_int_eq(rv, APR_EGENERAL);
+    AT_int_eq(rv, APREQ_ERROR_GENERAL);
     AT_int_eq(apr_table_elts(body)->nelts, 1);
 
     val = apr_table_get(body,"field1");

@@ -14,6 +14,7 @@
 **  limitations under the License.
 */
 
+#include "apreq_error.h"
 #include "apreq_parser.h"
 #include "apreq_util.h"
 #include "apr_strings.h"
@@ -23,7 +24,7 @@
 
 #define PARSER_STATUS_CHECK(PREFIX)   do {         \
     if (ctx->status == PREFIX##_ERROR)             \
-        return APR_EGENERAL;                       \
+        return APREQ_ERROR_GENERAL;                \
     else if (ctx->status == PREFIX##_COMPLETE)     \
         return APR_SUCCESS;                        \
     else if (bb == NULL)                           \
@@ -97,7 +98,7 @@ static apr_status_t apreq_parser_initialize(apr_pool_t *pool)
     apr_status_t status;
 
     if (default_parser_pool != NULL)
-        return APR_EGENERAL;
+        return APREQ_ERROR_GENERAL;
 
     status = apr_pool_create(&default_parser_pool, pool);
     if (status != APR_SUCCESS)
@@ -182,7 +183,7 @@ APREQ_DECLARE(apreq_parser_function_t)apreq_parser(const char *enctype)
 
 APREQ_DECLARE_HOOK(apreq_hook_disable_uploads)
 {
-    return (bb == NULL) ? APR_SUCCESS : APR_EGENERAL;
+    return (bb == NULL) ? APR_SUCCESS : APREQ_ERROR_GENERAL;
 }
 
 APREQ_DECLARE_HOOK(apreq_hook_discard_brigade)

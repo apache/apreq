@@ -254,7 +254,7 @@ APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
 
 
 /**
- * Returns APR_EGENERAL.  Effectively disables mfd parser
+ * Returns APREQ_ERROR_GENERAL.  Effectively disables mfd parser
  * if a file-upload field is present.
  *
  */

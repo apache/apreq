@@ -362,7 +362,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
     }
 
     /* NOT REACHED */
-    return APR_EGENERAL;
+    return APREQ_ERROR_GENERAL;
 }
 
 

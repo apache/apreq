@@ -20,7 +20,7 @@
 
 #define PARSER_STATUS_CHECK(PREFIX)   do {         \
     if (ctx->status == PREFIX##_ERROR)             \
-        return APR_EGENERAL;                       \
+        return APREQ_ERROR_GENERAL;                \
     else if (ctx->status == PREFIX##_COMPLETE)     \
         return APR_SUCCESS;                        \
     else if (bb == NULL)                           \

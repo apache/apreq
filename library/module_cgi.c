@@ -65,15 +65,6 @@ struct cgi_handle {
 
 #define CRLF "\015\012"
 
-#define APREQ_ENV_STATUS(rc_run, k) do {                                \
-         apr_status_t rc = rc_run;                                      \
-         if (rc != APR_SUCCESS) {                                       \
-             apreq_log(APREQ_DEBUG APR_EGENERAL, env,                   \
-                       "Lookup of %s failed: status=%d", k, rc);        \
-         }                                                              \
-     } while (0)
-
-
 typedef struct {
     const char *t_name;
     int      t_val;
@@ -182,7 +173,7 @@ static apr_status_t cgi_header_out(apreq_handle_t *env, const char *name,
                   "Setting header: %s => %s", name, value);
     bytes = apr_file_printf(out, "%s: %s" CRLF, name, value);
     apr_file_flush(out);
-    return bytes > 0 ? APR_SUCCESS : APR_EGENERAL;
+    return bytes > 0 ? APR_SUCCESS : APREQ_ERROR_GENERAL;
 }
 
 

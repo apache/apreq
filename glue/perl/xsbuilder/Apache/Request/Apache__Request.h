@@ -233,7 +233,7 @@ static apr_status_t eval_upload_hook(pTHX_ apreq_param_t *upload,
 
     if (SvTRUE(ERRSV)) {
         Perl_warn(aTHX_ "Upload hook failed: %s", SvPV_nolen(ERRSV));
-        return APR_EGENERAL;
+        return APREQ_ERROR_GENERAL;
     }
     return APR_SUCCESS;
 }

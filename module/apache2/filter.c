@@ -93,7 +93,7 @@
  * <TR class="odd"><TD>APREQ_ReadLimit</TD><TD>directory</TD><TD>-1 (Unlimited)</TD><TD>
  * Maximum number of bytes mod_apreq will send off to libapreq for parsing.  
  * mod_apreq will log this event and remove itself from the filter chain.
- * The APR_EGENERAL error will be reported to libapreq2 users via the return 
+ * The APREQ_ERROR_GENERAL error will be reported to libapreq2 users via the return 
  * value of apreq_env_read().
  * </TD></TR>
  * <TR><TD>APREQ_BrigadeLimit</TD><TD>directory</TD><TD> #APREQ_MAX_BRIGADE_LEN </TD><TD>

@@ -433,12 +433,12 @@ apr_status_t apreq_parse(apreq_handle_t *req)
     args_status = apreq_args(req, &dummy);
     body_status = apreq_body(req, &dummy);
 
-    /* XXX: punt to APR_EGENERAL; need to improve this
+    /* XXX: punt to APREQ_ERROR_GENERAL; need to improve this
      * for valid requests where certain data/headers are 
      * unavailable.
      */
     if (jar_status || args_status || body_status)
-        return APR_EGENERAL;
+        return APREQ_ERROR_GENERAL;
 
     return APR_SUCCESS;
 }

@@ -28,7 +28,7 @@
 
 #define PARSER_STATUS_CHECK(PREFIX)   do {         \
     if (ctx->status == PREFIX##_ERROR)             \
-        return APR_EGENERAL;                       \
+        return APREQ_ERROR_GENERAL;                \
     else if (ctx->status == PREFIX##_COMPLETE)     \
         return APR_SUCCESS;                        \
     else if (bb == NULL)                           \
@@ -95,7 +95,7 @@ static apr_status_t brigade_start_string(apr_bucket_brigade *bb,
         bytes_to_check = MIN(slen,blen);
 
         if (strncmp(buf,start_string,bytes_to_check) != 0)
-            return APR_EGENERAL;
+            return APREQ_ERROR_GENERAL;
 
         slen -= bytes_to_check;
         start_string += bytes_to_check;
@@ -258,7 +258,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                                        parser->brigade_limit,
                                        parser->temp_dir);
         if (ctx == NULL)
-            return APR_EGENERAL;
+            return APREQ_ERROR_GENERAL;
 
 
         ctx->mix_parser = apreq_parser_make(pool, ba, "", 
@@ -384,7 +384,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     s = apreq_header_attribute(cd, "name", 4, &name, &nlen);
                     if (s != APR_SUCCESS) {
                         ctx->status = MFD_ERROR;
-                        return APR_EGENERAL;
+                        return APREQ_ERROR_GENERAL;
                     }
 
                     s = apreq_header_attribute(cd, "filename", 
@@ -401,7 +401,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                                                                parser->temp_dir);
                             if (mix_ctx == NULL) {
                                 ctx->status = MFD_ERROR;
-                                return APR_EGENERAL;
+                                return APREQ_ERROR_GENERAL;
                             }
                                 
                             mix_ctx->param_name = apr_pstrmemdup(pool,
@@ -457,7 +457,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 cd = apr_table_get(ctx->info, "Content-ID");
                 if (cd == NULL) {
                     ctx->status = MFD_ERROR;
-                    return APR_EGENERAL;
+                    return APREQ_ERROR_GENERAL;
                 }
                 name = cd;
                 nlen = strlen(name);
@@ -602,7 +602,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         break; /* not reached */
 
     default:
-        return APR_EGENERAL;
+        return APREQ_ERROR_GENERAL;
     }
 
     return APR_INCOMPLETE;
