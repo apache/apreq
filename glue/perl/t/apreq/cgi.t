@@ -202,8 +202,9 @@ else {
     for ($req->param) {
         my $param = $req->param($_);
         next unless $param;
-        apreq_log("$_ => $param");
-        $len += length($_) + length($param);
+        my $length = length($param);
+        apreq_log("$_ has a value of length $length");
+        $len += length($_) + $length;
     }
     print $len;
 }

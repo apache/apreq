@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/10 22:13:28 $]   -*-text-*-
+Last modified at [$Date: 2004/07/11 01:36:06 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -49,6 +49,10 @@ CURRENT VOTES:
             -1:
 
 TODO:
+
+    - in glue/perl/t/apreq/cgi.t on Win32, printing to the error log
+      hangs if the strings involved are about 10000 in size.
+      This doesn't occur in the env/cgi tests - why?
 
     - Why must fprintf(stderr, ...), rather than
       apr_file_printf(err, ...), be used on Win32 in
