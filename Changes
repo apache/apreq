@@ -1,0 +1,52 @@
+Revision history for Perl extension Apache::Request.
+
+=over 4
+
+=item 0.20_02-dev
+
+added ApacheRequest_script_name (r->uri minus r->path_info)
+
+added eg/c/testapreq/Makefile.apxs
+
+C sources *.[ch] moved to its own c/ directory (e.g. for easy cvs import)
+
+fixed bug in ApacheRequest_parse_urlencoded (possible core dump on GET request)
+
+allow `;' URI attribute delimiter as per HTML 4.0 spec
+
+allow sub-classing via _r/r key mechanism
+
+don't use $VERSION variable name in Makefile.PL
+param() now uses set() instead of add() 
+[Andreas J. Koenig <andreas.koenig@anima.de>]
+
+=item 0.20_01 - January 6, 1999
+
+Apache::libapreq for compiler + linker flags
+
+added documentation
+
+now build and install libapreq.a and header files
+
+move cookie functions to new apache_cookie.c and Apache::Cookie modules
+
+new Apache::Upload class
+
+added param() method
+
+we are now a subclass of Apache (requires 1.16_02+)
+
+adhere to Apache code style guide
+
+add logic to parse GET requests [Larry Foard <larry@cp.net>]
+
+fix apache_request.h not to use mod_perl.h and deal w/ g++
+[Larry Foard <larry@cp.net>]
+
+=item 0.01 - October 23, 1998
+
+original version [Doug MacEachern <dougm@cp.net>]
+basic framework for parsing HTTP cookies and POST data of types:
+application/x-www-form-urlencoded, multipart/form-data
+
+=back

@@ -1,0 +1,13 @@
+To install the Perl and C libraries, simply run:
+
+ perl Makefile.PL && make install
+
+The libapreq.a and header files will be installed in the Perl
+architecture dependent library.  See the Apache::libapreq module for
+routines that can be called by your application Makefile to find the
+include and linker arguments.
+
+To build libapreq without the Makefile.PL, run:
+
+ (cd c && make -f Makefile.noperl)
+

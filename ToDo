@@ -1,0 +1,13 @@
+o win32 port
+
+o better Makefile.noperl
+
+o Perl's FILE* typemap leaks!
+
+o libapreq.so
+
+o mmap upload files
+
+o investigate USE_MY_TMPNAME more
+
+o ApacheHTML?
