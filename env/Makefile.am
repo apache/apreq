@@ -1,5 +1,6 @@
 INCLUDES = -I../src @APACHE2_INCLUDES@ @APR_INCLUDES@ @APU_INCLUDES@
 LIBS = ../src/lib@APREQ_LIBNAME@.la @APR_LTLIBS@ @APU_LTLIBS@
+LDFLAGS = @APR_LDFLAGS@ @APU_LDFLAGS@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
 EXTRA_DIST = t c-modules
 mod_apreq_la_LDFLAGS = -export-dynamic -module -avoid-version -rpath `@APACHE2_APXS@ -q LIBEXECDIR`

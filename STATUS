@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/07/13 21:09:18 $]   -*-text-*-
+Last modified at [$Date: 2004/07/16 17:12:36 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -57,6 +57,19 @@ TODO:
     - Why must fprintf(stderr, ...), rather than
       apr_file_printf(err, ...), be used on Win32 in
       cgi_log() of src/apreq_env.c?
+
+    - The current tests don't cover these functions, 
+      so add CuTest tests for them:
+      -  apreq_make_value()
+      -  apreq_copy_value()
+      -  apreq_merge_values()
+      -  apreq_enctype()
+      -  apreq_memmem()
+      -  apreq_quote()
+      -  apreq_quote_once()
+      -  apreq_escape()
+      -  apreq_ua_cookie_version()
+      -  apreq_encode_param()
 
     - CuTest needs va_arg to print comments for a failed unit test.
 

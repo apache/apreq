@@ -58,6 +58,14 @@ else {
         die "Can't find apache include directory";
     $apache_includes .= " $1";
 
+    $config =~ m/^s,\@APR_LDFLAGS\@,([^,]+)/m or
+        die "Can't find apr ldflags";
+    $apr_libs = $1;
+    $config =~ m/^s,\@APU_LDFLAGS\@,([^,]+)/m or
+        die "Can't find apu ldflags";
+    $apr_libs .= " $1";
+
+    # need -laprutil befpre -lapr
     $config =~ m/^s,\@APU_LDLIBS\@,([^,]+)/m or
         die "Can't find apu libraries";
     $apr_libs = $1;
