@@ -157,7 +157,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME               "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER       20040802
+#define APREQ_MODULE_MAGIC_NUMBER       20040808
 
 static void apache2_log(const char *file, int line, int level, 
                         apr_status_t status, void *env, const char *fmt,
@@ -291,9 +291,72 @@ APR_INLINE
 static void apreq_filter_make_context(ap_filter_t *f)
 {
     request_rec *r = f->r;
-    apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(r->pool);
-    struct filter_ctx *ctx = apr_palloc(r->pool, sizeof *ctx);
     struct env_config *cfg = get_cfg(r);
+    apreq_request_t *req = cfg->req;
+    struct filter_ctx *ctx;
+    apr_bucket_alloc_t *alloc;
+
+    if (f == r->input_filters 
+        && r->proto_input_filters == f->next
+        && strcasecmp(f->next->frec->name, filter_name) == 0) 
+    {
+        /* Try to steal the context and parse data of the 
+           upstream apreq filter. */
+        ctx = f->next->ctx;
+
+        switch (ctx->status) {
+        case APR_SUCCESS:
+        case APR_INCOMPLETE:
+            break;
+        default:
+            /* bad filter state, don't steal anything */
+            apreq_log(APREQ_DEBUG ctx->status, r, "cannot steal context: bad filter status");
+            goto make_new_context;
+        }
+
+        if (ctx->r != r) {
+            /* r is a new request (subrequest or internal redirect) */
+            apreq_request_t *old_req;
+
+            if (req != NULL) {
+                if (req->parser != NULL) {
+                    /* new parser on this request: cannot steal context */
+                    apreq_log(APREQ_DEBUG ctx->status, r, "cannot steal context: new parser detected");
+                    goto make_new_context;
+                }
+            }
+            else {
+                req = apreq_request(r, NULL);
+            }
+
+            /* steal the parser output */
+            apreq_log(APREQ_DEBUG 0, r, "stealing parser output");
+            old_req = apreq_request(ctx->r, NULL);
+            req->parser = old_req->parser;
+            req->body = old_req->body;
+            req->body_status = old_req->body_status;
+            ctx->r = r;
+        }
+
+        /* steal the filter context */
+        apreq_log(APREQ_DEBUG 0, r, "stealing filter context");
+        f->ctx = f->next->ctx;
+        r->proto_input_filters = f;
+        ap_remove_input_filter(f->next);
+        return;
+    }
+
+ make_new_context:
+    if (req != NULL && f == r->input_filters) {
+        if (req->body_status != APR_EINIT) {
+            req->body = NULL;
+            req->parser = NULL;
+            req->body_status = APR_EINIT;
+        }
+    }
+
+    alloc = apr_bucket_alloc_create(r->pool);
+    ctx = apr_palloc(r->pool, sizeof *ctx);
 
     f->ctx       = ctx;
     ctx->r       = r;
@@ -456,9 +519,10 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     /* else this is a protocol filter which may still be active.
      * if it is, we must deregister it now.
      */
-    if (cfg->f == f)
+    if (cfg->f == f) {
+        apreq_log(APREQ_DEBUG 0, r, "disabling stale protocol filter");
         cfg->f = NULL;
-
+    }
     return APR_SUCCESS;
 }
 
@@ -486,64 +550,9 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     cfg = get_cfg(r);
     req = cfg->req;
 
-    if (f->ctx == NULL) {
-        if (f == r->input_filters 
-            && r->proto_input_filters == f->next
-            && strcmp(f->next->frec->name, filter_name) == 0) 
-        {
-            /* Try to steal the context and parse data of the 
-               upstream apreq filter. */
-            ctx = f->next->ctx;
-
-            switch (ctx->status) {
-            case APR_SUCCESS:
-            case APR_INCOMPLETE:
-                break;
-            default:
-                /* bad filter state, don't steal anything */
-                goto make_new_context;
-            }
-
-            if (ctx->r != r) {
-                /* r is a new request (subrequest or internal redirect) */
-                apreq_request_t *old_req;
-
-                if (req != NULL) {
-                    if (req->parser != NULL)
-                        /* new parser on this request: cannot steal context */
-                        goto make_new_context;
-                }
-                else {
-                    req = apreq_request(r, NULL);
-                }
-
-                /* steal the parser output */
-                old_req = apreq_request(ctx->r, NULL);
-                req->parser = old_req->parser;
-                req->body = old_req->body;
-                req->body_status = old_req->body_status;
-                ctx->r = r;
-            }
-
-            /* steal the filter context */
-            f->ctx = f->next->ctx;
-            r->proto_input_filters = f;
-            ap_remove_input_filter(f->next);
-            goto context_initialized;
-        }
-
-    make_new_context:
+    if (f->ctx == NULL)
         apreq_filter_make_context(f);
-        if (req != NULL && f == r->input_filters) {
-            if (req->body_status != APR_EINIT) {
-                req->body = NULL;
-                req->parser = NULL;
-                req->body_status = APR_EINIT;
-            }
-        }
-    }
 
- context_initialized:
     ctx = f->ctx;
 
     if (cfg->f != f)

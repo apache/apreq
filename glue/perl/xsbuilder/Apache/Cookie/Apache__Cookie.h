@@ -46,7 +46,8 @@ static XS(apreq_xs_jar)
     jar = apreq_jar(env, data);
 
     sv = apreq_xs_2sv(jar, SvPV_nolen(ST(0)), SvRV(ST(1)));
-    SvTAINTED_on(SvRV(sv));
+    if (items == 2 || SvTAINTED(ST(2)))
+        SvTAINTED_on(SvRV(sv));
     ST(0) = sv_2mortal(sv);
     XSRETURN(1);
 }

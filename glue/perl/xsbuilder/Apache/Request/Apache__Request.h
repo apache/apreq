@@ -107,7 +107,8 @@ static XS(apreq_xs_request)
 
     /*FIXME: mg_mg->ptr */
     sv = apreq_xs_2sv(req, SvPV_nolen(ST(0)), SvRV(ST(1)));
-    SvTAINTED_on(SvRV(sv));
+    if (items == 2 || SvTAINTED(ST(2)))
+        SvTAINTED_on(SvRV(sv));
     ST(0) = sv_2mortal(sv);
     XSRETURN(1);
 }
@@ -378,6 +379,13 @@ static XS(apreq_xs_request_config)
 #ifdef USE_ITHREADS
             ctx->perl = aTHX;
 #endif
+            if (req->parser == NULL)
+                req->parser = apreq_parser(req->env, NULL);
+            if (req->parser == NULL)
+                Perl_croak(aTHX_ "Apache::Request::config: cannot install "
+                           "UPLOAD_HOOK: no parser available for enctype=%s", 
+                           apreq_enctype(req->env));
+
             upload_hook = apreq_make_hook(pool, apreq_xs_upload_hook,
                                           NULL, ctx);
             apreq_add_hook(req->parser, upload_hook);

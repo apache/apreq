@@ -182,9 +182,7 @@ static int apreq_xs_table_keys(void *data, const char *key,
                                const char *val)
 {
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
-#ifdef USE_ITHREADS
     dTHXa(d->perl);
-#endif
 
     dSP;
     SV *sv = newSVpv(key,0);

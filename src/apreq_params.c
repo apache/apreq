@@ -63,7 +63,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req->env      = env;
         req->args     = apr_table_make(p, APREQ_NELTS);
         req->body     = NULL;
-        req->parser   = apreq_parser(env, NULL);
+        req->parser   = NULL;
 
         /* XXX get/set race condition here wrt apreq_env_request? */
         old_req = apreq_env_request(env, req);
@@ -83,7 +83,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req->env      = env;
         req->args     = apr_table_make(p, APREQ_NELTS);
         req->body     = NULL;
-        req->parser   = apreq_parser(env, NULL);
+        req->parser   = NULL;
 
     }
 

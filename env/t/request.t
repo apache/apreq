@@ -6,7 +6,7 @@ use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC);
 require File::Copy;
 
-my $num_tests = 16;
+my $num_tests = 18;
 $num_tests *= 2 if Apache::Test::have_ssl();
 plan tests => $num_tests, have_lwp;
 my $scheme = "http";
@@ -59,7 +59,6 @@ BODY:
 EOT
 }
 
-
 # internal redirect to plain text files (which are non-apreq requests)
 
 my $index_html = do {local (@ARGV,$/) = "t/htdocs/index.html"; <> };
@@ -102,6 +101,30 @@ BODY:
 \ttest => output filter POST
 EOT
           "output filter POST");
+
+# internal redirect to html files which are filtered as above
+
+$body = GET_BODY("/apreq_redirect_test?test=redirect_index_html_GET&location=/index.html?foo=bar");
+$body =~ s{\r}{}g;
+ok t_cmp($body, $index_html . <<EOT, "redirect /index.html (GET)");
+
+--APREQ OUTPUT FILTER--
+ARGS:
+\tfoo => bar
+EOT
+$body = POST_BODY("/apreq_redirect_test?test=redirect_index_html_POST",
+        content => "quux=$filler;location=/index.html?foo=quux;foo=$filler");
+$body =~ s{\r}{}g;
+ok t_cmp($body, $index_html . <<EOT, "redirect /index.txt (POST)");
+
+--APREQ OUTPUT FILTER--
+ARGS:
+\tfoo => quux
+BODY:
+\tquux => $filler
+\tlocation => /index.html?foo=quux
+\tfoo => $filler
+EOT
 
 if (Apache::Test::have_ssl() and $scheme ne 'https') {    
     $scheme = 'https';
