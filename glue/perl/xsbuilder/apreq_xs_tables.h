@@ -265,14 +265,8 @@ static XS(apreq_xs_##attr##_get)                                        \
     sv = ST(0);                                                         \
     obj = apreq_xs_find_obj(aTHX_ sv, #attr);                           \
     mg = mg_find(obj, PERL_MAGIC_ext);                                  \
-    if (mg != NULL) {                                                   \
-        d.parent = mg->mg_obj;                                          \
-        d.pkg = mg->mg_len > 0 ? mg->mg_ptr : subclass;                 \
-    }                                                                   \
-    else {                                                              \
-        d.parent = obj;                                                 \
-        d.pkg = subclass;                                               \
-    }                                                                   \
+    d.parent = mg->mg_obj;                                              \
+    d.pkg = mg->mg_len > 0 ? mg->mg_ptr : subclass;                     \
     env = (void *)SvIVX(d.parent);                                      \
     d.env = env;                                                        \
                                                                         \
@@ -330,8 +324,8 @@ static XS(apreq_xs_##attr##_FETCH)                              \
     apr_table_entry_t *te;                                      \
     void *env;                                                  \
                                                                 \
-    if (items != 2 || !SvROK(ST(0)) || !SvPOK(ST(1)))           \
-        Perl_croak(aTHX_ "Usage: $table->get($key)");           \
+    if (items != 2 || !SvROK(ST(0)) || !SvOK(ST(1)))            \
+        Perl_croak(aTHX_ "Usage: $table->FETCH($key)");         \
                                                                 \
     sv  = ST(0);                                                \
     obj = apreq_xs_find_obj(aTHX_ sv, #attr);                   \
