@@ -193,7 +193,7 @@ struct apreq_xs_table_key_magic {
 
 struct apreq_xs_do_arg {
     void            *env;
-    SV              *parent;
+    SV              *parent, *sub;
     PerlInterpreter *perl;
 };
 
@@ -266,7 +266,7 @@ static XS(apreq_xs_##attr##_get)                                        \
 {                                                                       \
     dXSARGS;                                                            \
     const char *key = NULL;                                             \
-    struct apreq_xs_do_arg d = { NULL, NULL, aTHX };                    \
+    struct apreq_xs_do_arg d = { NULL, NULL, NULL, aTHX };              \
     void *env;                                                          \
     SV *sv, *obj;                                                       \
                                                                         \
@@ -399,6 +399,73 @@ static XS(apreq_xs_##attr##_NEXTKEY)                            \
     sv = newSVpv(te[idx].key, 0);                               \
     ST(0) = sv_2mortal(sv);                                     \
     XSRETURN(1);                                                \
+}
+
+
+#define APREQ_XS_DEFINE_TABLE_DO(attr,type,subclass)                    \
+static int apreq_xs_##attr##_do_sub(void *data, const char *key,        \
+                                          const char *val)              \
+{                                                                       \
+    struct apreq_xs_do_arg *d = data;                                   \
+    apreq_##type##_t *RETVAL = apreq_value_to_##type(                   \
+                                    apreq_strtoval(val));               \
+    dTHXa(d->perl);                                                     \
+    dSP;                                                                \
+    void *env;                                                          \
+    int rv;                                                             \
+                                                                        \
+    env = d->env;                                                       \
+                                                                        \
+    ENTER;                                                              \
+    SAVETMPS;                                                           \
+                                                                        \
+    PUSHMARK(SP);                                                       \
+    EXTEND(SP,2);                                                       \
+    PUSHs(sv_2mortal(newSVpv(key,0)));                                  \
+    PUSHs(sv_2mortal(apreq_xs_##type##2sv(RETVAL, subclass,             \
+                                           d->parent)));                \
+    PUTBACK;                                                            \
+    rv = call_sv(d->sub, G_SCALAR);                                     \
+    SPAGAIN;                                                            \
+    rv = (1 == rv) ? POPi : 1;                                          \
+    PUTBACK;                                                            \
+    FREETMPS;                                                           \
+    LEAVE;                                                              \
+                                                                        \
+    return rv;                                                          \
+}                                                                       \
+                                                                        \
+static XS(apreq_xs_##attr##_do)                                         \
+{                                                                       \
+    dXSARGS;                                                            \
+    struct apreq_xs_do_arg d = { NULL, NULL, NULL, aTHX };              \
+    apr_table_t *t;                                                     \
+    void *env;                                                          \
+    int i, rv;                                                          \
+    SV *sv, *obj;                                                       \
+                                                                        \
+    if (items < 2 || !SvROK(ST(0)) || !SvROK(ST(1)))                    \
+        Perl_croak(aTHX_ "Usage: $object->do(\\&callback, @keys)");     \
+    sv = ST(0);                                                         \
+    obj = apreq_xs_find_obj(aTHX_ sv, #attr);                           \
+    env = apreq_xs_##attr##_sv2env(obj);                                \
+    t = apreq_xs_##attr##_sv2table(obj);                                \
+    d.env = env;                                                        \
+    d.parent = obj;                                                     \
+    d.sub = ST(1);                                                      \
+                                                                        \
+    if (items == 2) {                                                   \
+        rv = apr_table_do(apreq_xs_##attr##_do_sub, &d, t, NULL);       \
+        XSRETURN_IV(rv);                                                \
+    }                                                                   \
+                                                                        \
+    for (i = 2; i < items; ++i) {                                       \
+        const char *key = SvPV_nolen(ST(i));                            \
+        rv = apr_table_do(apreq_xs_##attr##_do_sub, &d, t, key, NULL);  \
+        if (rv == 0)                                                    \
+            break;                                                      \
+    }                                                                   \
+    XSRETURN_IV(rv);                                                    \
 }
 
 

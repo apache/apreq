@@ -176,6 +176,15 @@ sub handler {
                     $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
             }
 
+            # TABLE DO TESTS
+            {
+                my $do_data = "";
+                $args->do( sub { $do_data .= "@_"; 1 } );
+                die "do() test failed: '$do_data'" unless
+                    $do_data eq "test disable_uploadsfoo bar1foo bar2";
+            }
+
+
             $@->print("ok");
         }
     }
