@@ -335,42 +335,61 @@ static XS(apreq_xs_##attr##_get)                                        \
     const char *key = NULL;                                             \
     struct apreq_xs_do_arg d = { NULL, aTHX };                          \
     void *env;                                                          \
+    SV *sv = ST(0);                                                     \
                                                                         \
     if (items == 0 || items > 2 || !SvROK(ST(0)))                       \
-        Perl_croak(aTHX_ "Usage: $table->get($key)");                   \
+        Perl_croak(aTHX_ "Usage: $object->get($key)");                  \
                                                                         \
     env = apreq_xs_##attr##_sv2env(ST(0));                              \
     d.env = env;                                                        \
     if (items == 2)                                                     \
         key = SvPV_nolen(ST(1));                                        \
                                                                         \
+    XSprePUSH;                                                          \
     switch (GIMME_V) {                                                  \
         apreq_##type##_t *RETVAL;                                       \
                                                                         \
     case G_ARRAY:                                                       \
-        XSprePUSH;                                                      \
         PUTBACK;                                                        \
-        apreq_xs_##attr##_push(ST(0), &d, key);                         \
+        apreq_xs_##attr##_push(sv, &d, key);                            \
         break;                                                          \
                                                                         \
     case G_SCALAR:                                                      \
         if (items == 1) {                                               \
-            apr_table_t *t = apreq_xs_##attr##_sv2table(ST(0));         \
-            if (t == NULL)                                              \
-                XSRETURN_UNDEF;                                         \
-            ST(0) = sv_2mortal(apreq_xs_table2sv(t,class));             \
-            XSRETURN(1);                                                \
+            apr_table_t *t = apreq_xs_##attr##_sv2table(sv);            \
+            if (t != NULL)                                              \
+                XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class)));         \
+            PUTBACK;                                                    \
+            break;                                                      \
         }                                                               \
                                                                         \
-        RETVAL = apreq_xs_##attr##_##type(ST(0), key);                  \
-        if (!RETVAL || !(COND))                                         \
-            XSRETURN_UNDEF;                                             \
-        ST(0) = sv_2mortal(apreq_xs_##type##2sv(RETVAL,subclass));      \
-        XSRETURN(1);                                                    \
+        RETVAL = apreq_xs_##attr##_##type(sv, key);                     \
+        if (RETVAL && (COND))                                           \
+            XPUSHs(sv_2mortal(apreq_xs_##type##2sv(RETVAL,subclass)));  \
                                                                         \
     default:                                                            \
-        XSRETURN(0);                                                    \
+        PUTBACK;                                                        \
     }                                                                   \
+    apreq_xs_##attr##_error_check;                                      \
+}
+
+static APR_INLINE
+void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func, 
+                   const char *class)
+{
+    HV *stash = gv_stashpvn(class, strlen(class), FALSE);
+
+    Perl_require_pv(aTHX_ "APR/Error.pm");
+    if (SvTRUE(ERRSV)) {
+        Perl_croak(aTHX_ "%s", SvPV_nolen(ERRSV));   
+    }
+
+    sv_setsv(ERRSV, sv_2mortal(sv_bless(newRV_noinc((SV*)data), stash)));
+    sv_setiv(*hv_fetch(data, "rc",   2, 1), rc);
+    sv_setpv(*hv_fetch(data, "file", 4, 1), CopFILE(PL_curcop));
+    sv_setiv(*hv_fetch(data, "line", 4, 1), CopLINE(PL_curcop));
+    sv_setpv(*hv_fetch(data, "func", 4, 1), func);
+    Perl_croak(aTHX_ Nullch);
 }
 
 /** @} */

@@ -11,6 +11,10 @@ BEGIN {
     }
 }
 
+
+package Apache::Request::Error;
+push our(@ISA), "APR::Error";
+
 package Apache::Request;
 push our(@ISA), __PACKAGE__ -> env;
 

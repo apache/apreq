@@ -16,6 +16,9 @@ BEGIN {
     }
 }
 
+package Apache::Cookie::Error;
+push our(@ISA), "APR::Error";
+
 package Apache::Cookie;
 
 sub jar {

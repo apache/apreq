@@ -29,6 +29,28 @@ APREQ_XS_DEFINE_ENV(jar);
 APREQ_XS_DEFINE_MAKE(cookie);
 APREQ_XS_DEFINE_OBJECT(jar);
 
+#define apreq_xs_jar_error_check   do {                                 \
+    int n = PL_stack_sp - (PL_stack_base + ax - 1);                     \
+    apr_status_t s;                                                     \
+    switch (GIMME_V) {                                                  \
+    case G_VOID:                                                        \
+        break;                                                          \
+    case G_SCALAR:                                                      \
+        if (n == 1 && items == 2)                                       \
+            break;                                                      \
+    default:                                                            \
+        s = apreq_xs_sv2(jar, sv)->status;                              \
+        if (s != APR_SUCCESS) {                                         \
+            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Cookie::Jar::get",\
+                           "Apache::Cookie::Error");                    \
+        }                                                               \
+    }                                                                   \
+} while (0)
+
+
+#define apreq_xs_table_error_check 
+
+
 /* GET macros */
 #define S2C(s)  apreq_value_to_cookie(apreq_strtoval(s))
 #define apreq_xs_jar_push(sv,d,key)   apreq_xs_push(jar,sv,d,key)
@@ -42,6 +64,7 @@ APREQ_XS_DEFINE_OBJECT(jar);
                 S2C(apr_table_get(apreq_xs_jar_sv2table(sv),k))
 #define apreq_xs_table_cookie(sv,k) \
                 S2C(apr_table_get(apreq_xs_table_sv2table(sv),k))
+
 
 #define TABLE_PKG   "Apache::Cookie::Table"
 #define COOKIE_PKG  "Apache::Cookie"

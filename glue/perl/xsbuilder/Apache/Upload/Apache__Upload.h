@@ -84,6 +84,34 @@ APR_DECLARE_OPTIONAL_FN(SV *,
 
 
 
+#define apreq_xs_upload_error_check   do {                              \
+    int n = PL_stack_sp - (PL_stack_base + ax - 1);                     \
+    apreq_request_t *req;                                               \
+    apr_status_t s;                                                     \
+    switch (GIMME_V) {                                                  \
+    case G_VOID:                                                        \
+        break;                                                          \
+    case G_SCALAR:                                                      \
+        if (n == 1 && items == 2)                                       \
+            break;                                                      \
+    default:                                                            \
+        req = apreq_xs_sv2(request, sv);                                \
+        if (req->parser == NULL)                                        \
+           break;                                                       \
+        switch (s = apreq_parse_request(req,NULL)) {                    \
+        case APR_INCOMPLETE:                                            \
+        case APR_SUCCESS:                                               \
+            break;                                                      \
+        default:                                                        \
+            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Request::upload", \
+                           "Apache::Request::Error");                   \
+        }                                                               \
+    }                                                                   \
+} while (0)
+
+
+#define apreq_xs_upload_table_error_check 
+
 
 #define READ_BLOCK_SIZE (1024 * 256)
 #define S2P(s) (s ? apreq_value_to_param(apreq_strtoval(s)) : NULL)

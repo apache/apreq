@@ -52,6 +52,13 @@ sub handler {
         open my $fh, "<", $upload->tempfile or die $!;
         $r->print(<$fh>);
     }
+    elsif ($test eq 'bad') {
+        eval {my $q = $req->args('query')};
+        if (ref $@ eq "Apache::Request::Error") {
+            $req->upload("HTTPUPLOAD")->slurp(my $data);
+            $req->print($data);
+        }
+    }
 
     return 0;
 }

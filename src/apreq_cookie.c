@@ -267,6 +267,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
         j = apr_palloc(p, sizeof *j);
         j->env = env;
         j->cookies = apr_table_make(p, APREQ_NELTS);
+        j->status = APR_SUCCESS;
 
         hdr = apreq_env_cookie(env);
 

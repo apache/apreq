@@ -15,6 +15,79 @@
 */
 
 #define READ_BLOCK_SIZE (1024 * 256)
+#define PARAM_TABLE   "Apache::Request::Table"
+
+#define apreq_xs_request_error_check do {                               \
+    int n = PL_stack_sp - (PL_stack_base + ax - 1);                     \
+    apreq_request_t *req;                                               \
+    apr_status_t s;                                                     \
+    switch (GIMME_V) {                                                  \
+    case G_VOID:                                                        \
+        break;                                                          \
+    case G_SCALAR:                                                      \
+        if (n == 1 && items == 2)                                       \
+            break;                                                      \
+    default:                                                            \
+        req = apreq_xs_sv2(request, sv);                                \
+        s = req->args_status;                                           \
+        if (s == APR_SUCCESS && req->parser)                            \
+            s = apreq_parse_request(req, NULL);                         \
+        switch (s) {                                                    \
+        case APR_INCOMPLETE:                                            \
+        case APR_SUCCESS:                                               \
+            break;                                                      \
+        default:                                                        \
+            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Request::param",  \
+                           "Apache::Request::Error");                   \
+       }                                                                \
+    }                                                                   \
+} while (0)
+
+#define apreq_xs_args_error_check do {                                  \
+    int n = PL_stack_sp - (PL_stack_base + ax - 1);                     \
+    apreq_request_t *req;                                               \
+    apr_status_t s;                                                     \
+    switch (GIMME_V) {                                                  \
+    case G_VOID:                                                        \
+        break;                                                          \
+    case G_SCALAR:                                                      \
+        if (n == 1 && items == 2)                                       \
+            break;                                                      \
+    default:                                                            \
+        req = apreq_xs_sv2(request, sv);                                \
+        s = req->args_status;                                           \
+        if (s != APR_SUCCESS)                                           \
+            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Request::args",   \
+                           "Apache::Request::Error");                   \
+    }                                                                   \
+} while (0)                                                             \
+
+#define apreq_xs_body_error_check   do {                                \
+    int n = PL_stack_sp - (PL_stack_base + ax - 1);                     \
+    apreq_request_t *req;                                               \
+    apr_status_t s;                                                     \
+    switch (GIMME_V) {                                                  \
+    case G_VOID:                                                        \
+        break;                                                          \
+    case G_SCALAR:                                                      \
+        if (n == 1 && items == 2)                                       \
+            break;                                                      \
+    default:                                                            \
+        req = apreq_xs_sv2(request, sv);                                \
+        if (req->parser == NULL)                                        \
+           break;                                                       \
+        switch (s = apreq_parse_request(req,NULL)) {                    \
+        case APR_INCOMPLETE:                                            \
+        case APR_SUCCESS:                                               \
+            break;                                                      \
+        default:                                                        \
+            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Request::body",   \
+                           "Apache::Request::Error");                   \
+        }                                                               \
+    }                                                                   \
+} while (0)
+
+#define apreq_xs_table_error_check
 
 #define apreq_xs_param2rv(ptr, class) apreq_xs_2sv(ptr,class)
 #define apreq_xs_rv2param(sv) ((apreq_param_t *)SvIVX(SvRV(sv)))
@@ -56,8 +129,6 @@ APREQ_XS_DEFINE_OBJECT(request);
                      S2P(apr_table_get(apreq_xs_body_sv2table(sv),k))
 #define apreq_xs_table_param(sv,k) \
                      S2P(apr_table_get(apreq_xs_sv2table(sv),k))
-
-#define PARAM_TABLE   "Apache::Request::Table"
 
 APREQ_XS_DEFINE_GET(request, PARAM_TABLE, param, NULL, 1);
 APREQ_XS_DEFINE_GET(args,    PARAM_TABLE, param, NULL, 1);

@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/06/29 18:34:48 $]   -*-text-*-
+Last modified at [$Date: 2004/07/01 04:11:24 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -100,10 +100,8 @@ BUGS:
     - Fix build automake/libtool/autoconf build system so it works
       properly on OSX & AIX.
 
-    - The current API does not handle failed query_string parsing
-      adequately (apreq_request does log an error message, but 
-      there's no status code in the struct for users to interrogate).
-
+    - The $jar->cookie, $req->body, and $req->param tables need
+      support for adding and setting entries.
 
 WISH LIST:
 
