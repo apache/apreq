@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/07/15 14:04:40 $]   -*-text-*-
+Last modified at [$Date: 2003/07/17 02:59:33 $]   -*-text-*-
 /** @page STATUS
 
      2.0.0  in development
@@ -14,9 +14,6 @@ CURRENT RELEASE NOTES:
 
 
 RELEASE SHOWSTOPPERS:
-
-    - Missing Perl API components: 
-      -# What should $req->parse do?
 
     - Choose a versioning system:
       -# src/,  (libtool-based, following apr)

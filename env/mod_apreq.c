@@ -245,14 +245,21 @@ APREQ_DECLARE(apr_status_t) apreq_env_read(void *env,
     dR;
     ap_filter_t *f = get_apreq_filter(r);
     struct filter_ctx *ctx;
+    apr_status_t s;
 
     if (f == NULL)
         return APR_NOTFOUND;
     if (f->ctx == NULL)
         apreq_filter_make_context(f);
     ctx = f->ctx;
+    if (ctx->status != APR_INCOMPLETE || bytes == 0)
+        return ctx->status;
+
     apreq_log(APREQ_DEBUG 0, r, "prefetching %ld bytes", bytes);
-    return ap_get_brigade(f, NULL, AP_MODE_READBYTES, block, bytes);
+    s = ap_get_brigade(f, NULL, AP_MODE_READBYTES, block, bytes);
+    if (s != APR_SUCCESS)
+        return s;
+    return ctx->status;
 }
 
 
@@ -274,7 +281,7 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
 
         /* if "f" is still at the top of the filter chain, we're ok. Why?*/
         if (r->input_filters == f)
-            return APR_SUCCESS;
+           return APR_SUCCESS;
 
         /* We may have already prefetched some data.
          * Since "f" is no longer at the top of the filter chain,

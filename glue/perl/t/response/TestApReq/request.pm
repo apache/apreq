@@ -9,7 +9,6 @@ use Apache::Request ();
 use Apache::Connection;
 use APR::Brigade;
 use APR::Bucket;
-use Apache::Filter;
 
 sub handler {
     my $r = shift;
@@ -19,18 +18,6 @@ sub handler {
 
     my $test  = $req->args('test');
     my $method = $r->method;
-
-    if ($method eq "POST") {
-        # ~ $apr->parse ???
-        my $f = $r->input_filters;
-        my $bb = APR::Brigade->new($r->pool,
-                                   $r->connection->bucket_alloc);
-        while ($f->get_brigade($bb,0,0,8000) == 0) {
-            last if $bb->last->is_eos;
-            $bb->destroy;
-        }
-        $bb->destroy;
-    }
 
     if ($test eq 'param') {
         my $value = $req->param('value');

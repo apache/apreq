@@ -2,6 +2,16 @@
 
 @section 2.0.0-dev Changes with libapreq-2.0.0-dev
 
+- July 16, 2003 - Perl API [joes]
+
+Added $req->parse, $req->status, & "preparse" logic 
+to $req->param & $req->upload.
+
+- July 16 ,2003 - C API [joes]
+
+Added "preparse" logic to apreq_params & apreq_uploads
+to bring behavior in line with libapreq-1.x.
+
 - July 15, 2003 - C API [joes]
 
 Dropped param->charset.

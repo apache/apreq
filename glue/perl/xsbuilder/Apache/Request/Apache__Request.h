@@ -52,6 +52,7 @@
  * <http://www.apache.org/>.
  */
 
+#define READ_BLOCK_SIZE (1024 * 256)
 
 #define apreq_xs_param2rv(ptr, class) apreq_xs_2sv(ptr,class)
 #define apreq_xs_rv2param(sv) ((apreq_param_t *)SvIVX(SvRV(sv)))
@@ -66,7 +67,10 @@ APREQ_XS_DEFINE_MAKE(param);
 #define S2P(s) (s ? apreq_value_to_param(apreq_strtoval(s)) : NULL)
 #define apreq_xs_request_push(sv,d,key) do {                            \
     apreq_request_t *req = apreq_xs_sv2(request,sv);                    \
+    apr_status_t s;                                                     \
     apr_table_do(apreq_xs_do(request), d, req->args, key, NULL);        \
+    do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);   \
+    while (s == APR_INCOMPLETE);                                        \
     if (req->body)                                                      \
         apr_table_do(apreq_xs_do(request), d, req->body, key, NULL);    \
 } while (0)
@@ -74,9 +78,12 @@ APREQ_XS_DEFINE_MAKE(param);
 #define apreq_xs_body_push(sv,d,k) apreq_xs_push(body,sv,d,k)
 #define apreq_xs_table_push(sv,d,k) apreq_xs_push(table,sv,d,k)
 #define apreq_xs_upload_push(sv,d,key) do {                             \
-    apr_table_t *t = apreq_xs_body_sv2table(sv);                        \
-    if (t)                                                              \
-        apr_table_do(apreq_xs_do(upload), d, t, key, NULL);             \
+    apreq_request_t *req = apreq_xs_sv2(request,sv);                    \
+    apr_status_t s;                                                     \
+    do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);   \
+    while (s == APR_INCOMPLETE);                                        \
+    if (req->body)                                                      \
+        apr_table_do(apreq_xs_do(upload), d, req->body, key, NULL);     \
 } while (0)
 
 #define apreq_xs_upload_table_push(sv,d,k) apreq_xs_push(upload_table,sv,d,k)
@@ -196,3 +203,17 @@ static XS(apreq_xs_request_config)
     XSRETURN_IV(status);
 }
 
+static XS(apreq_xs_request_parse)
+{
+    dXSARGS;
+    apreq_request_t *req;
+    apr_status_t s;
+    if (items != 1 || !SvROK(ST(0)))
+        Perl_croak(aTHX_ "usage: $req->parse()");
+
+    req = apreq_xs_sv2(request,ST(0));
+
+    do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);
+    while (s == APR_INCOMPLETE);
+    XSRETURN_IV(s);
+}

@@ -828,7 +828,7 @@ static apr_status_t nextval(const char **line, const char *name,
         ++*val;
         in_quotes = 1;
     }
-    for(loc = *val; *loc; ++loc) {
+    for (loc = *val; *loc; ++loc) {
         switch (*loc) {
         case ' ':
         case '\t':

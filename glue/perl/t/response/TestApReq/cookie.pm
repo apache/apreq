@@ -14,13 +14,12 @@ use Apache::Request ();
 
 sub handler {
     my $r = shift;
-    my $apr = Apache::Request->new($r);
+    my $req = Apache::Request->new($r);
     my %cookies = Apache::Cookie->fetch($r);
 
     $r->content_type('text/plain');
-    my $test = $apr->param('test');
-    my $key  = $apr->param('key');
-
+    my $test = $req->param('test');
+    my $key  = $req->param('key');
 
     if ($cookies{$key}) {
         if ($test eq "bake") {

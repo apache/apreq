@@ -12,6 +12,8 @@ MODULE=Apache::Request PACKAGE=Apache::Request
  DEFINE_body    | apreq_xs_body_get |
  DEFINE_upload  | apreq_xs_upload_get |
  DEFINE_config  | apreq_xs_request_config |
+ DEFINE_parse   | apreq_xs_request_parse |
+apr_status_t:DEFINE_status  | apreq_env_read(apreq_xs_sv2(request,sv),APR_BLOCK_READ,0) | SV *:sv
 
 MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Table_
  DEFINE_get     | apreq_xs_table_get |
