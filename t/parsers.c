@@ -75,7 +75,7 @@ static char form_data[] =
 "--AaB03x--" CRLF;
 
 extern apr_bucket_brigade *bb;
-extern apreq_table_t *table;
+extern apr_table_t *table;
 extern apreq_cfg_t *config;
 
 static void parse_urlencoded(CuTest *tc)
@@ -98,12 +98,12 @@ static void parse_urlencoded(CuTest *tc)
 
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
 
-    val = apreq_table_get(req->body,"alpha");
+    val = apr_table_get(req->body,"alpha");
 
     CuAssertStrEquals(tc, "one", val);
-    val = apreq_table_get(req->body,"beta");
+    val = apr_table_get(req->body,"beta");
     CuAssertStrEquals(tc, "two", val);
-    val = apreq_table_get(req->body,"omega");
+    val = apr_table_get(req->body,"omega");
     CuAssertStrEquals(tc, "last", val);
 
 }
@@ -112,7 +112,7 @@ static void parse_multipart(CuTest *tc)
 {
     const char *val;
     apr_size_t dummy;
-    apreq_table_t *t;
+    apr_table_t *t;
     apr_status_t rv;
     apreq_request_t *req = apreq_request(APREQ_MFD_ENCTYPE
                          "; boundary=\"AaB03x\"" ,"");
@@ -133,21 +133,21 @@ static void parse_multipart(CuTest *tc)
 
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
     CuAssertPtrNotNull(tc, req->body);
-    CuAssertIntEquals(tc, 2, apreq_table_nelts(req->body));
+    CuAssertIntEquals(tc, 2, apr_table_nelts(req->body));
     return;
-    val = apreq_table_get(req->body,"field1");
+    val = apr_table_get(req->body,"field1");
     CuAssertStrEquals(tc, "Joe owes =80100.", val);
     t = apreq_value_to_param(apreq_strtoval(val))->info;
-    val = apreq_table_get(t, "content-transfer-encoding");
+    val = apr_table_get(t, "content-transfer-encoding");
     CuAssertStrEquals(tc,"quoted-printable", val);
 
-    val = apreq_table_get(req->body, "pics");
+    val = apr_table_get(req->body, "pics");
     CuAssertStrEquals(tc, "file1.txt", val);
     t = apreq_value_to_param(apreq_strtoval(val))->info;
     bb = apreq_value_to_param(apreq_strtoval(val))->bb;
     apr_brigade_pflatten(bb, (char **)&val, &dummy, p);
     CuAssertStrEquals(tc,"... contents of file1.txt ...", val);
-    val = apreq_table_get(t, "content-type");
+    val = apr_table_get(t, "content-type");
     CuAssertStrEquals(tc, "text/plain", val);
 }
 

@@ -113,15 +113,15 @@ static void table_add(CuTest *tc)
 {
     const char *val;
 
-    apreq_table_add(t1, V("add", "bar"));
-    apreq_table_add(t1, V("add", "foo"));
+    apreq_table_addv(t1, V("add", "bar"));
+    apreq_table_addv(t1, V("add", "foo"));
     val = apreq_table_get(t1, "add");
     CuAssertStrEquals(tc, "bar", val);
 
 
-    apreq_table_add(t1, V("f", "top"));
-    apreq_table_add(t1, V("fo", "child"));
-    apreq_table_add(t1, V("fro", "child-right"));
+    apreq_table_addv(t1, V("f", "top"));
+    apreq_table_addv(t1, V("fo", "child"));
+    apreq_table_addv(t1, V("fro", "child-right"));
 
     /*
      *     f(5)  black                fo(6) black   
@@ -131,14 +131,14 @@ static void table_add(CuTest *tc)
      */
 
 
-    apreq_table_add(t1, V("flo", "child-left"));
-    apreq_table_add(t1, V("flr", "child-left-right"));
-    apreq_table_add(t1, V("frr", "child-right-right"));
-    apreq_table_add(t1, V("frl", "child-right-left"));
-    apreq_table_add(t1, V("flr", "child-left-right"));
-    apreq_table_add(t1, V("fll", "child-left-left"));
-    apreq_table_add(t1, V("foo", "bar"));
-    apreq_table_add(t1, V("b", "bah humbug"));
+    apreq_table_addv(t1, V("flo", "child-left"));
+    apreq_table_addv(t1, V("flr", "child-left-right"));
+    apreq_table_addv(t1, V("frr", "child-right-right"));
+    apreq_table_addv(t1, V("frl", "child-right-left"));
+    apreq_table_addv(t1, V("flr", "child-left-right"));
+    apreq_table_addv(t1, V("fll", "child-left-left"));
+    apreq_table_addv(t1, V("foo", "bar"));
+    apreq_table_addv(t1, V("b", "bah humbug"));
     val = apreq_table_get(t1, "foo");
     CuAssertStrEquals(tc, "bar", val);
     val = apreq_table_get(t1, "flr");
@@ -193,17 +193,17 @@ static void table_overlap(CuTest *tc)
 
     t1 = apreq_table_make(p, 1);
 
-    apreq_table_add(t1, V("a", "0"));
-    apreq_table_add(t1, V("g", "7"));
+    apreq_table_addv(t1, V("a", "0"));
+    apreq_table_addv(t1, V("g", "7"));
 
-    apreq_table_add(t2, V("a", "1"));
-    apreq_table_add(t2, V("b", "2"));
-    apreq_table_add(t2, V("c", "3"));
-    apreq_table_add(t2, V("b", "2.0"));
-    apreq_table_add(t2, V("d", "4"));
-    apreq_table_add(t2, V("e", "5"));
-    apreq_table_add(t2, V("b", "2."));
-    apreq_table_add(t2, V("f", "6"));
+    apreq_table_addv(t2, V("a", "1"));
+    apreq_table_addv(t2, V("b", "2"));
+    apreq_table_addv(t2, V("c", "3"));
+    apreq_table_addv(t2, V("b", "2.0"));
+    apreq_table_addv(t2, V("d", "4"));
+    apreq_table_addv(t2, V("e", "5"));
+    apreq_table_addv(t2, V("b", "2."));
+    apreq_table_addv(t2, V("f", "6"));
 
     /* APR_OVERLAP_TABLES_SET had funky semantics, so we ignore it here */
     s = apreq_table_overlap(t1, t2, APR_OVERLAP_TABLES_MERGE);
@@ -274,17 +274,17 @@ static void table_overlay(CuTest *tc)
 
     t1 = apreq_table_make(p, 1);
 
-    apreq_table_add(t1, V("a", "0"));
-    apreq_table_add(t1, V("g", "7"));
+    apreq_table_addv(t1, V("a", "0"));
+    apreq_table_addv(t1, V("g", "7"));
 
-    apreq_table_add(t2, V("a", "1"));
-    apreq_table_add(t2, V("b", "2"));
-    apreq_table_add(t2, V("c", "3"));
-    apreq_table_add(t2, V("b", "2.0"));
-    apreq_table_add(t2, V("d", "4"));
-    apreq_table_add(t2, V("e", "5"));
-    apreq_table_add(t2, V("b", "2."));
-    apreq_table_add(t2, V("f", "6"));
+    apreq_table_addv(t2, V("a", "1"));
+    apreq_table_addv(t2, V("b", "2"));
+    apreq_table_addv(t2, V("c", "3"));
+    apreq_table_addv(t2, V("b", "2.0"));
+    apreq_table_addv(t2, V("d", "4"));
+    apreq_table_addv(t2, V("e", "5"));
+    apreq_table_addv(t2, V("b", "2."));
+    apreq_table_addv(t2, V("f", "6"));
     t1 = apreq_table_overlay(p, t1, t2);
 
     CuAssertIntEquals(tc, 10, apreq_table_nelts(t1));

@@ -71,22 +71,22 @@ static void jar_table_get(CuTest *tc)
 {
     const char *val;
 
-    val = apreq_table_get(j->cookies,"a");
+    val = apr_table_get(j->cookies,"a");
     CuAssertStrEquals(tc,"1",val);
-    val = apreq_table_get(j->cookies,"b");
+    val = apr_table_get(j->cookies,"b");
     CuAssertStrEquals(tc,"2",val);
 
-    val = apreq_table_get(j->cookies,"foo");
+    val = apr_table_get(j->cookies,"foo");
     CuAssertStrEquals(tc,"bar",val);
-    val = apreq_table_get(j->cookies,"fl");
+    val = apr_table_get(j->cookies,"fl");
     CuAssertStrEquals(tc,"left",val);
-    val = apreq_table_get(j->cookies,"fr");
+    val = apr_table_get(j->cookies,"fr");
     CuAssertStrEquals(tc,"right",val);
-    val = apreq_table_get(j->cookies,"frl");
+    val = apr_table_get(j->cookies,"frl");
     CuAssertStrEquals(tc,"right-left",val);
-    val = apreq_table_get(j->cookies,"flr");
+    val = apr_table_get(j->cookies,"flr");
     CuAssertStrEquals(tc,"left-right",val);
-    val = apreq_table_get(j->cookies,"fll");
+    val = apr_table_get(j->cookies,"fll");
     CuAssertStrEquals(tc,"left-left",val);
 }
 
@@ -119,7 +119,7 @@ static void rfc_cookie(CuTest *tc)
 {
     apreq_cookie_t *c = apreq_make_cookie(p,RFC,"rfc",3,"out",3);
     apreq_cookie_version_t version = RFC;
-    long expires = apreq_atol("+3m");
+    long expires = apreq_atoi64t("+3m");
 
     CuAssertStrEquals(tc,"out",apreq_cookie_value(c));
     CuAssertIntEquals(tc, version,c->version);

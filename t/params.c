@@ -58,33 +58,34 @@
 #include "apreq_params.h"
 #include "apr_strings.h"
 
+
 static apreq_request_t *r = NULL;
 
 static void request_make(CuTest *tc)
 {
     r = apreq_request(NULL,"a=1;quux=foo+bar&plus=%2B;uplus=%U002b;okie=dokie;novalue1;novalue2=");
     CuAssertPtrNotNull(tc, r);
-    CuAssertIntEquals(tc,7, apreq_table_nelts(r->args));
+    CuAssertIntEquals(tc,7, apr_table_nelts(r->args));
 }
 
 static void request_args_get(CuTest *tc)
 {
     const char *val;
 
-    val = apreq_table_get(r->args,"a");
+    val = apr_table_get(r->args,"a");
     CuAssertStrEquals(tc,"1",val);
-    val = apreq_table_get(r->args,"quux");
+    val = apr_table_get(r->args,"quux");
     CuAssertStrEquals(tc,"foo bar",val);
 
-    val = apreq_table_get(r->args,"plus");
+    val = apr_table_get(r->args,"plus");
     CuAssertStrEquals(tc,"+",val);
-    val = apreq_table_get(r->args,"uplus");
+    val = apr_table_get(r->args,"uplus");
     CuAssertStrEquals(tc,"+",val);
-    val = apreq_table_get(r->args,"okie");
+    val = apr_table_get(r->args,"okie");
     CuAssertStrEquals(tc,"dokie",val);
-    val = apreq_table_get(r->args,"novalue1");
+    val = apr_table_get(r->args,"novalue1");
     CuAssertStrEquals(tc,"",val);
-    val = apreq_table_get(r->args,"novalue2");
+    val = apr_table_get(r->args,"novalue2");
     CuAssertStrEquals(tc,"",val);
 
 }

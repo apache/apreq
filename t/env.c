@@ -69,7 +69,7 @@ static const char env_name[] = "CGI";
 #define CRLF "\015\012"
 
 apr_bucket_brigade *bb;
-apreq_table_t *table;
+apr_table_t *table;
 
 APREQ_DECLARE(apr_pool_t *)apreq_env_pool(void *env)
 {
@@ -88,9 +88,9 @@ APREQ_DECLARE(apr_status_t)apreq_env_header_out(void *env,
     return printf("%s: %s" CRLF, name, value) > 0 ? APR_SUCCESS : APR_EGENERAL;
 }
 
-APREQ_DECLARE(const char *)apreq_env_args(void *env)
+APREQ_DECLARE(const char *)apreq_env_query_string(void *env)
 {
-    return NULL;
+    return env;
 }
 
 APREQ_DECLARE(apreq_jar_t *)apreq_env_jar(void *env, apreq_jar_t *jar)

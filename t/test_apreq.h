@@ -57,6 +57,9 @@
 
 #include "CuTest.h"
 #include "apr_pools.h"
+#ifndef apr_table_nelts
+#define apr_table_nelts(t) apr_table_elts(t)->nelts
+#endif
 
 /* Some simple functions to make the test apps easier to write and
  * a bit more consistent...

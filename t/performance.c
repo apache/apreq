@@ -118,7 +118,7 @@ static apreq_table_t *init_apreq(int N)
                                  VV(Connection), VV(Referer), VV(Cookie),
                                  VV(Content-Type), VV(Content-Length) };
     for (j = 0; j < 12; ++j)
-        apreq_table_add(t,v + j);
+        apreq_table_addv(t,v + j);
 
     return t;
 }
@@ -159,6 +159,15 @@ static void perf_init(CuTest *tc)
     apr_time_t apreq_delta,apr_delta;
     int i;
 
+    apr_delta = apr_time_now();
+    for (i=0; i<LOOP;++i) {
+       apr_table_t *s = init_apr(NELTS);
+/*       apr_table_t *t = apr_table_make(p,NELTS);
+//       apr_table_overlap(t,s,APR_OVERLAP_TABLES_MERGE);
+*/      apr_table_compress(s);
+    }
+    apr_delta = apr_time_now() - apr_delta;
+
     apreq_delta = apr_time_now();
     for (i=0; i<LOOP;++i) {
         apreq_table_t *t = init_apreq(NELTS);
@@ -166,13 +175,6 @@ static void perf_init(CuTest *tc)
     }
     apreq_delta = apr_time_now() - apreq_delta;
 
-    apr_delta = apr_time_now();
-    for (i=0; i<LOOP;++i) {
-       apr_table_t *t = apr_table_make(p,NELTS);
-       apr_table_t *s = init_apr(NELTS*2);
-       apr_table_overlap(t,s,APR_OVERLAP_TABLES_MERGE);
-    }
-    apr_delta = apr_time_now() - apr_delta;
 
     TEST_DELTAS(apreq,apr,"apreq should win");
 
