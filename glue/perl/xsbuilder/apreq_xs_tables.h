@@ -171,18 +171,6 @@ struct apreq_xs_do_arg {
     PerlInterpreter *perl;
 };
 
-static int apreq_xs_table_keys(void *data, const char *key,
-                               const char *val)
-{
-    struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
-    dTHXa(d->perl);
-
-    dSP;
-    SV *sv = newSVpv(key,0);
-    XPUSHs(sv_2mortal(sv));
-    PUTBACK;
-    return 1;
-}
 
 #define apreq_xs_do(attr)          (items == 1 ? apreq_xs_table_keys    \
                                    : apreq_xs_##attr##_table_values)

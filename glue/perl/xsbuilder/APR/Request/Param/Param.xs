@@ -29,6 +29,21 @@ SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *handle)
     return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
 }
 
+static int apreq_xs_table_keys(void *data, const char *key, const char *val)
+{
+    struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
+    dTHXa(d->perl);
+    dSP;
+    apreq_param_t *p = apreq_value_to_param(val);
+    SV *sv = newSVpv(key, 0);
+    if (apreq_param_is_tainted(p))
+        SvTAINTED_on(sv);
+
+    XPUSHs(sv_2mortal(sv));
+    PUTBACK;
+    return 1;
+}
+
 static int apreq_xs_table_values(void *data, const char *key, const char *val)
 {
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
@@ -349,6 +364,8 @@ value(obj, p1=NULL, p2=NULL)
 
   CODE:
     RETVAL = newSVpvn(obj->v.data, obj->v.size);
+    if (apreq_param_is_tainted(obj))
+        SvTAINTED_on(RETVAL);
 
   OUTPUT:
     RETVAL
@@ -371,12 +388,14 @@ BOOT:
 
 MODULE = APR::Request::Param   PACKAGE = APR::Request::Param
 
-char *
+SV *
 name(obj)
     APR::Request::Param obj
 
   CODE:
-    RETVAL = obj->v.name;
+    RETVAL = newSVpv(obj->v.name, 0);
+    if (apreq_param_is_tainted(obj))
+        SvTAINTED_on(RETVAL);
 
   OUTPUT:
     RETVAL

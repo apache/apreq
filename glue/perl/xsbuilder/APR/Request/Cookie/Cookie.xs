@@ -29,6 +29,21 @@ SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *handle)
     return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
 }
 
+static int apreq_xs_table_keys(void *data, const char *key, const char *val)
+{
+    struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
+    dTHXa(d->perl);
+    dSP;
+    apreq_cookie_t *c = apreq_value_to_cookie(val);
+    SV *sv = newSVpv(key, 0);
+    if (apreq_cookie_is_tainted(c))
+        SvTAINTED_on(sv);
+   
+    XPUSHs(sv_2mortal(sv));
+    PUTBACK;
+    return 1;
+}
+
 static int apreq_xs_table_values(void *data, const char *key, const char *val)
 {
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
@@ -271,6 +286,8 @@ value(obj, p1=NULL, p2=NULL)
 
   CODE:
     RETVAL = newSVpvn(obj->v.data, obj->v.size);
+    if (apreq_cookie_is_tainted(obj))
+        SvTAINTED_on(RETVAL);
 
   OUTPUT:
     RETVAL
@@ -293,12 +310,14 @@ BOOT:
 
 MODULE = APR::Request::Cookie   PACKAGE = APR::Request::Cookie
 
-char *
+SV *
 name(obj)
     APR::Request::Cookie obj
 
   CODE:
-    RETVAL = obj->v.name;
+    RETVAL = newSVpv(obj->v.name, 0);
+    if (apreq_cookie_is_tainted(obj))
+        SvTAINTED_on(RETVAL);
 
   OUTPUT:
     RETVAL
