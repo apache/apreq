@@ -151,7 +151,6 @@ static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env,
          */
         sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, Nullch, -1);
         SvMAGIC(SvRV(rv))->mg_ptr = env;
-#endif
     }
 
     sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
