@@ -191,10 +191,18 @@ static int apreq_xs_table_keys(void *data, const char *key,
 #define apreq_xs_do(attr)          (items == 1 ? apreq_xs_table_keys    \
                                    : apreq_xs_##attr##_table_values)
 
-#define apreq_xs_push(attr,sv,d,key) do {                               \
-     apr_table_t *t = apreq_xs_##attr##_sv2table(sv);                   \
-     if (t)                                                             \
-         apr_table_do(apreq_xs_do(attr), d, t, key, NULL);              \
+#define apreq_xs_push(attr,sv,d,key) do {                       \
+     apr_table_t *t = apreq_xs_##attr##_sv2table(sv);           \
+     if (t != NULL) {                                           \
+         if (items == 1) {                                      \
+             t = apr_table_copy(apreq_env_pool(env), t);        \
+             apr_table_compress(t, APR_OVERLAP_TABLES_SET);     \
+             apr_table_do(apreq_xs_table_keys, d, t, NULL);     \
+         }                                                      \
+         else                                                   \
+             apr_table_do(apreq_xs_##attr##_table_values, d,    \
+                          t, key, NULL);                        \
+     }                                                          \
 } while (0)
 
 /** 

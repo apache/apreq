@@ -2,39 +2,70 @@
 
 Apache::Request - Methods for dealing with client request data
 
+
 =for testing
+    use POSIX;
     use Apache2;
     use Apache::Request;
     use Apache::Upload;
     use APR::Pool;
-    ok 1;
+    $r = APR::Pool->new;
+    $req = Apache::Request->new($r);
+    $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
+    eval { POSIX::close(0); $req->parse };
+    $req->body->add($u);
+    $req->args->add(foo => 1);
+    $req->args->add(bar => 2);
+    $req->args->add(foo => 3);
+
+
+
 
 =head1 SYNOPSIS
 
+
+=for example begin
+
     use Apache::Request;
-    my $req = Apache::Request->new($r);
+    $req = Apache::Request->new($r);
+    @foo = $req->param("foo");
+    $bar = $req->args("bar");
+
+=for example end
+
+=for example_testing
+    ok $req->isa("Apache::Request");
+    is "@foo", join " ", 1, 3, __FILE__;
+    is $bar, 2;
 
 
 
 
 =head1 DESCRIPTION
 
-C<Apache::Request> adds methods for parsing B<GET> requests and B<POST> 
-requests where I<Content-type> is one of I<application/x-www-form-urlencoded>
-or I<multipart/form-data>.
+The Apache::Request module provides methods for parsing GET and POST parameters
+encoded with either I<application/x-www-form-urlencoded> or I<multipart/form-data>.
+Although Apache::Request provides a few new APIs for accessing the parsed data,
+it remains largely backwards-compatible with the original 1.X API.  See the
+L<PORTING from 1.X> section below for a list of known issues.
+
+This manpage documents the Apache::Request package.  Apache::Request::Table 
+and Apache::Request::Error are also provided by this module, but are 
+documented elsewhere.  Please read the L<SEE ALSO> section below for a list
+of related manpages.
 
 
 
 
-=head1 Apache::Request METHODS
+=head1 Apache::Request
 
-The interface is designed to mimic CGI.pm 's routines for parsing
+The interface is designed to mimic the CGI.pm routines for parsing
 query parameters. The main differences are 
 
 =over 4
 
 =item * C<Apache::Request::new> takes an environment-specific
-        object as (second) argument.  Newer versions of CGI.pm also accept
+        object C<$r> as (second) argument.  Newer versions of CGI.pm also accept
         this syntax within modperl.
 
 =item * The query parameters are stored in APR::Table derived objects, and
@@ -53,18 +84,32 @@ query parameters. The main differences are
 
 Creates a new Apache::Request object.
 
-    my $req = Apache::Request->new($r);
 
-With mod_perl2, the environment object $r must be an C<Apache::RequestRec>
+=for example begin
+
+    my $req = Apache::Request->new($r, POST_MAX => "1M");
+
+
+=for example end
+
+=for example_testing
+    ok ref $req;
+    ok $req->isa("Apache::Request");
+
+
+With mod_perl2, the environment object $r must be an Apache::RequestRec
 object.  In that case, all methods from Apache::RequestRec are inherited.
+In the (default) CGI environment, $r must be an APR::Pool object.
 
 The following args are optional:
 
 =over 4
 
+
 =item * C<POST_MAX>, C<MAX_BODY>
 
 Limit the size of POST data (in bytes).
+
 
 =item * C<DISABLE_UPLOADS>
 
@@ -77,12 +122,17 @@ Sets the directory where upload files are spooled.  On a *nix-like
 that supports I<link(2)>, the TEMP_DIR should be located on the same
 file system as the final destination file:
 
+=for example begin
+
  use Apache::Upload;
  my $req = Apache::Request->new($r, TEMP_DIR => "/home/httpd/tmp");
  my $upload = $req->upload('file');
- $upload->link("/home/user/myfile") || warn "link failed: $!";
+ $upload->link("/home/user/myfile");
+
+=for example end
 
 For more details on C<link>, see the L<Apache::Upload> manpage.
+
 
 =item * C<HOOK_DATA>
 
@@ -90,12 +140,15 @@ Extra configuration info passed as the fourth argument
 to an upload hook.  See the description for the next item, 
 C<UPLOAD_HOOK>.
 
+
 =item * C<UPLOAD_HOOK>
 
 Sets up a callback to run whenever file upload data is read. This
 can be used to provide an upload progress meter during file uploads.
 Apache will automatically continue writing the original data to
 $upload->fh after the hook exits.
+
+=for example begin
 
   my $transparent_hook = sub {
     my ($upload, $data, $data_len, $hook_data) = @_;
@@ -106,6 +159,9 @@ $upload->fh after the hook exits.
                                  HOOK_DATA => "Note",
                                  UPLOAD_HOOK => $transparent_hook,
                                 );
+
+=for example end
+
 
 =back
 
@@ -136,6 +192,8 @@ to ease the pain of porting from 1.X to 2.X.
 Get the request parameters (using case-insensitive keys) by
 mimicing the OO interface of C<CGI::param>.
 
+=for example begin
+
     # similar to CGI.pm
 
     my $foo_value   = $req->param('foo');
@@ -148,9 +206,16 @@ mimicing the OO interface of C<CGI::param>.
     # all (args + body) params
     my $table = $req->param;
 
+=for example end
+
+=for example_testing
+    is $foo_value, 1;
+    is "@foo_values", join " ", 1, 3, __FILE__;
+    is "@param_names", "foo bar";
+
 In list context, or when invoked with no arguments as 
-C<< $req->param() >>, C<param> always induces libapreq2 
-to read and parse all remaining data in the request body.
+C<< $req->param() >>, C<param> induces libapreq2 to read 
+and parse all remaining data in the request body.
 However, C<< scalar $req->param("foo") >> is lazy: libapreq2 
 will only read and parse more data if
 
@@ -158,8 +223,10 @@ will only read and parse more data if
     2) no "foo" param appears in the previously parsed POST data.
 
 In this circumstance libapreq2 will read and parse additional
-blocks of the incoming request body until it has found the
-the "foo" param or parsing is completed.
+blocks of the incoming request body until either 
+
+    1) it has found the the "foo" param, or 
+    2) parsing is completed.
 
 Observe that C<< scalar $req->param("foo") >> will not raise
 an exception if it can locate "foo" in the existing body or
@@ -355,8 +422,8 @@ addressed when porting 1.X apps to the new 2.X API.
 
 =head1 SEE ALSO
 
-L<Apache::Cookie>, L<Apache::Upload>,
-L<Apache::Request::Table>, L<Apache::Request::Error>
+L<Apache::Request::Table>, L<Apache::Request::Error>, L<Apache::Upload>,
+L<Apache::Cookie>, L<APR::Table>.
 
 
 

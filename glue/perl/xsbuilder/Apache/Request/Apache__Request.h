@@ -122,15 +122,25 @@ static XS(apreq_xs_request)
 /* Too many GET macros :-( */
 
 #define S2P(s) (s ? apreq_value_to_param(apreq_strtoval(s)) : NULL)
-#define apreq_xs_request_push(sv,d,key) do {                            \
-    apreq_request_t *req = (apreq_request_t *)SvIVX(sv);                \
-    apr_status_t s;                                                     \
-    apr_table_do(apreq_xs_do(request), d, req->args, key, NULL);        \
-    do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);   \
-    while (s == APR_INCOMPLETE);                                        \
-    if (req->body)                                                      \
-        apr_table_do(apreq_xs_do(request), d, req->body, key, NULL);    \
+
+#define apreq_xs_request_push(sv,d,key) do {                                \
+    apreq_request_t *req = (apreq_request_t *)SvIVX(sv);                    \
+    if (items == 1) {                                                       \
+        apr_table_t *t = apreq_params(apreq_env_pool(req->env), req);       \
+        apr_table_compress(t, APR_OVERLAP_TABLES_SET);                      \
+        apr_table_do(apreq_xs_table_keys, d, t, NULL);                      \
+    }                                                                       \
+    else {                                                                  \
+        apr_status_t s;                                                     \
+        apr_table_do(apreq_xs_do(request), d, req->args, key, NULL);        \
+        do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);   \
+        while (s == APR_INCOMPLETE);                                        \
+        if (req->body)                                                      \
+            apr_table_do(apreq_xs_request_table_values, d,                  \
+                         req->body, key, NULL);                             \
+    }                                                                       \
 } while (0)
+
 #define apreq_xs_request_args_push(sv,d,k) apreq_xs_push(request_args,sv,d,k)
 #define apreq_xs_request_body_push(sv,d,k) apreq_xs_push(request_body,sv,d,k)
 #define apreq_xs_table_push(sv,d,k) apreq_xs_push(table,sv,d,k)

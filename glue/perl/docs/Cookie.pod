@@ -145,11 +145,11 @@ C<cookies> will croak if the parser failed to successfully parse the
 
 =for example_testing
     ok @cookies == 2;
-    ok $_ -> name eq "foo" for $cookie, @cookies;
+    is $_ -> name, "foo" for $cookie, @cookies;
     ok $cookies[0]->value eq $cookie->value;
     ok $cookies[0]->value == 1;
     ok $cookies[1]->value == 3;
-    ok "foo bar foo" eq "@names";
+    is "@names", "foo bar";
 
 
 

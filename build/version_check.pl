@@ -20,6 +20,11 @@ sub a_t_version {
     $Apache::Test::VERSION;
 }
 
+sub tm_version {
+    require Test::More;
+    $Test::More::VERSION;
+}
+
 sub mm_version {
     require ExtUtils::MakeMaker;
     $ExtUtils::MakeMaker::VERSION;
@@ -60,6 +65,7 @@ my %perl_glue = (
                  # mp2 does not contain "_" in its reported version number
               mod_perl  => { version => "1.9915", test => \&mp2_version },
   "ExtUtils::MakeMaker" => { version => "6.15",    test => \&mm_version  },
+           "Test::More" => { version => "0.47",    test => \&tm_version },
                 );
 
 sub print_prereqs ($$) {
