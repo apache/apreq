@@ -105,7 +105,7 @@ system("touch $base_dir/glue/perl/xsbuilder") == 0
     unless Apache::Build::WIN32;
 
 sub package {'Apache::libapreq2'}
-sub unwanted_includes {["apreq_tables.h"]}
+sub unwanted_includes {[qw/apreq_tables.h apreq_config.h/]}
 # ParseSource.pm v 0.23 bug: line 214 should read
 # my @dirs = @{$self->include_dirs};
 # for now, we override it here just to work around the bug
