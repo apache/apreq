@@ -75,7 +75,6 @@ static void table_make(CuTest *tc)
 {
     t1 = apreq_make_table(p, 5);
     CuAssertPtrNotNull(tc, t1);
-    apreq_table_balance(t1,1);
 }
 
 static void table_get(CuTest *tc)
@@ -310,6 +309,7 @@ static void table_keys(CuTest *tc)
 {
     const char *k;
     apr_array_header_t *a = apr_array_make(p,1, sizeof k);
+
     apr_status_t s = apreq_table_keys(t1,a);
     CuAssertIntEquals(tc, APR_SUCCESS, s);
     CuAssertIntEquals(tc, 7, a->nelts);
@@ -329,39 +329,35 @@ static void table_keys(CuTest *tc)
     CuAssertStrEquals(tc, "f", k);
 }
 
+static int push_value(void *d, const char *key, const char *val)
+{
+    apr_array_header_t *a = d;
+    *(const char **)apr_array_push(a) = val;
+    return 1;
+}
+
 static void table_values(CuTest *tc)
 {
-    const apreq_value_t *v;
+    const char *v;
     apr_array_header_t *a = apr_array_make(p,1,sizeof v);
-    apr_status_t s = apreq_table_values(t1,"a",a);
-    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    apreq_table_do(push_value, a, t1, "a", NULL);
+
     CuAssertIntEquals(tc, 2, a->nelts);
-    v = ((const apreq_value_t **)a->elts)[0];
-    CuAssertStrEquals(tc, "a", v->name);
-    CuAssertStrEquals(tc, "0", v->data);
-    v = ((const apreq_value_t **)a->elts)[1];
-    CuAssertStrEquals(tc, "a", v->name);
-    CuAssertStrEquals(tc, "1", v->data);
+    v = ((const char **)a->elts)[0];
+    CuAssertStrEquals(tc, "0", v);
+    v = ((const char **)a->elts)[1];
+    CuAssertStrEquals(tc, "1", v);
 
     a->nelts = 0;
-    s = apreq_table_values(t1,"b",a);
-    CuAssertIntEquals(tc, APR_SUCCESS, s);
+    apreq_table_do(push_value, a, t1, "b", NULL);
+
     CuAssertIntEquals(tc, 3, a->nelts);
-    v = ((const apreq_value_t **)a->elts)[0];
-    CuAssertStrEquals(tc, "b", v->name);
-    CuAssertStrEquals(tc, "2", v->data);
-    v = ((const apreq_value_t **)a->elts)[1];
-    CuAssertStrEquals(tc, "b", v->name);
-    CuAssertStrEquals(tc, "2.0", v->data);
-    v = ((const apreq_value_t **)a->elts)[2];
-    CuAssertStrEquals(tc, "b", v->name);
-    CuAssertStrEquals(tc, "2.", v->data);
-
-    a->nelts = 0;
-    s = apreq_table_values(t1,NULL,a);
-    CuAssertIntEquals(tc, APR_SUCCESS, s);
-    CuAssertIntEquals(tc, 7, a->nelts);
-    
+    v = ((const char **)a->elts)[0];
+    CuAssertStrEquals(tc, "2", v);
+    v = ((const char **)a->elts)[1];
+    CuAssertStrEquals(tc, "2.0", v);
+    v = ((const char **)a->elts)[2];
+    CuAssertStrEquals(tc, "2.", v);
 }
 
 

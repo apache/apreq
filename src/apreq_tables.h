@@ -124,11 +124,9 @@ APREQ_DECLARE(apr_table_t *) apreq_table_export(apr_pool_t *p,
  * Create an APREQ Table from an APR Table.
  * @param p The pool to allocate the APREQ table from
  * @param t The APR table to copy
- * @param f Flags for the APREQ table to use during construction.
  */
 APREQ_DECLARE(apreq_table_t *)apreq_table_import(apr_pool_t *p, 
-                                                 const apr_table_t *t, 
-                                                 const unsigned f);
+                                                 const apr_table_t *t);
 
 /**
  * Delete all of the elements from a table
@@ -144,6 +142,7 @@ APREQ_DECLARE(void) apreq_table_clear(apreq_table_t *t);
 APR_INLINE
 APREQ_DECLARE(int) apreq_table_nelts(const apreq_table_t *t);
 #define apreq_table_is_empty(t) ( apreq_table_nelts(t) == 0 )
+
 
 /**
  * Get/set method for the table's value copier.
@@ -166,21 +165,6 @@ APREQ_DECLARE(apreq_value_copy_t *) apreq_table_copier(apreq_table_t *t,
 APR_INLINE
 APREQ_DECLARE(apreq_value_merge_t *) apreq_table_merger(apreq_table_t *t,
                                            apreq_value_merge_t *m);
-
-/**
- * Change the behavior of the table's internal search trees.
- * @param t  Table.
- * @param on Activate/deactivate additional balancing algorithms.
- * @remark   By default, APREQ Tables use binary search trees to 
- *           improve lookup performance.  This function can instruct
- *           the table to maintain balance within those trees.  
- *           In typical ( < 100 table entries ) situations, the 
- *           additional overhead needed for maintaining tree-balance 
- *           will cause performance to worsen, not improve.  
- *
- *           Handle with care.
- */
-APREQ_DECLARE(void) apreq_table_balance(apreq_table_t *t, const int on);
 
 /**
  * Attempt to merge multivalued entries together, eliminating
@@ -224,21 +208,6 @@ APREQ_DECLARE(const char*) apreq_table_get(const apreq_table_t *t,
                                            const char *key);
 
 /**
- * Get the value associated with a given key from the table,
- * and cache the entry at the root of the tree it was found in.
- * @param t The table to search for the key
- * @param key The key to search for
- * @return The data associated with the key, guaranteed to
- * point at the "data" attribute of an apreq_value_t struct.
- *
- * @remark Caching is incompatible with tree-balance, so this 
- * function may deactivate the tree-balancing algorithm if
- * necessary.
- */
-APREQ_DECLARE(const char *) apreq_table_cache(apreq_table_t *t,
-                                              const char *key);
-
-/**
  * Return the keys (i.e. value names) in an (char *) array,
  * preserving their original order.
  * @param t Table.
@@ -248,18 +217,6 @@ APREQ_DECLARE(const char *) apreq_table_cache(apreq_table_t *t,
 APREQ_DECLARE(apr_status_t) apreq_table_keys(const apreq_table_t *t,
                                              apr_array_header_t *keys);
 
-/**
- * Return the (unique) values in an (apreq_value_t *) array,
- * preserving their original order.
- * @param t Table.
- * @param values array used to sore the result..
- * @remark With key == NULL, all table values are added.  However,
- * only the first value of a multivalued entry is used.
- */
-
-APREQ_DECLARE(apr_status_t) apreq_table_values(const apreq_table_t *t,
-                                               const char *key,
-                                               apr_array_header_t *values);
 /**
  * Add an apreq_value_t to the table. If another value already exists
  * with the same name, this will replace the old value.

@@ -135,6 +135,8 @@ static void *env_jar(void *ctx, void *jar)
     return c->jar;
 }
 
+
+
 static void *env_request(void *ctx, void *req)
 {
     dR;
@@ -143,9 +145,16 @@ static void *env_request(void *ctx, void *req)
     if (req != NULL) {
         apreq_request_t *oldreq = c->req;
 
+        /* XXX: this needs to be subrequest-friendly */
         if (oldreq == NULL) {
             dAPREQ_LOG;
             ap_filter_rec_t *f = ap_get_input_filter_handle(filter_name);
+            if (r->main) {
+                struct env_ctx *n = apreq_note(r->main);
+                oldreq = n->req;
+            }
+
+
             apreq_log(APREQ_DEBUG 0, r, "Adding APREQ filter to input chain");
             /* XXX: SOMEHOW INJECT APREQ INPUT FILTER */
             ap_add_input_filter_handle(f, NULL, r, r->connection);

@@ -82,6 +82,7 @@ static const struct testlist {
     {"cookies", testcookie},
     {"params", testparam},
     {"parsers", testparser},
+    {"performance", testperformance},
     {"LastTest", NULL}
 };
 

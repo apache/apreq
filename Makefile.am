@@ -3,4 +3,4 @@ SUBDIRS = src env t
 EXTRA_DIST = INSTALL
 
 test: check
-	t/testall
+	t/testall -v

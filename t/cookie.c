@@ -95,7 +95,6 @@ static void netscape_cookie(CuTest *tc)
 {
     apreq_cookie_t *c;
     apreq_cookie_version_t version = NETSCAPE;
-    char *expires = apreq_expires(p,"+1y", NSCOOKIE);
 
     c = apreq_cookie(j,"foo");
     CuAssertStrEquals(tc,"bar",apreq_cookie_value(c));
@@ -109,11 +108,10 @@ static void netscape_cookie(CuTest *tc)
     c->path = apr_pstrdup(p, "/quux");
     CuAssertStrEquals(tc, "foo=bar; path=/quux; domain=example.com",
                       apreq_cookie_as_string(p,c));
-
     apreq_cookie_expires(p, c, "+1y");
     CuAssertStrEquals(tc,apr_pstrcat(p,
                          "foo=bar; path=/quux; domain=example.com; expires=", 
-                         expires, NULL), apreq_cookie_as_string(p,c));
+                         apreq_expires(p,"+1y",NSCOOKIE), NULL), apreq_cookie_as_string(p,c));
 }
 
 
@@ -153,6 +151,7 @@ CuSuite *testcookie(void)
     SUITE_ADD_TEST(suite, jar_table_get);
     SUITE_ADD_TEST(suite, netscape_cookie);
     SUITE_ADD_TEST(suite, rfc_cookie);
+
     return suite;
 }
 
