@@ -1,0 +1,12 @@
+# local customizations for Apache::Request
+package Apache::Request::Value;
+
+
+
+package Apache::Request;
+sub new
+{
+    my $req = Apache::Request::request(shift);
+    # parse @_ to configure $req
+    return $req;
+}

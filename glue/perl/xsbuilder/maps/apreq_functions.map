@@ -33,7 +33,7 @@ MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar PREFIX=apreq_
  apreq_add_cookie
 
 
-MODULE=Apache::Request PACKAGE=Apache::Request::Utils PREFIX=apreq_
+MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
  apreq_log
  apreq_join
  apreq_index

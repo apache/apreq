@@ -7,12 +7,12 @@
   disable_uploads
 </apreq_cfg_t>
 
-<apreq_value_t MODULE=Apache::Request>
-   name
-   status
-   size
-!   data[1]
-</apreq_value_t>
+#<apreq_value_t MODULE=Apache::Request>
+#   name
+#   status
+#   size
+#   data[1]
+#</apreq_value_t>
 
 <apreq_param_t MODULE=Apache::Request>
 !  charset
@@ -22,7 +22,7 @@
 !   v
 </apreq_param_t>
 
-<apreq_request_t>
+<apreq_request_t MODULE=Apache::Request>
    args
    body
 !   parser
@@ -30,22 +30,22 @@
 !  env
 </apreq_request_t>
 
-<apreq_cookie_t>
+<apreq_cookie_t MODULE=Apache::Cookie>
 !  version
   path
   domain
   port
 !  secure
-!  comment
-!  commentURL
+  comment
+  commentURL
 !  time
 !  v
 </apreq_cookie_t>
 
 <apreq_jar_t MODULE=Apache::Cookie>
   cookies
-> pool
-> env
+  pool
+  env
 </apreq_jar_t>
 
 
@@ -56,25 +56,9 @@
   ctx
 </apreq_hook_t>
 
-<apreq_parser_t MODULE=Apache::Request>
+!<apreq_parser_t MODULE=Apache::Request>
   parser
   content_type
   hook
 > ctx
 </apreq_parser_t>
-
-
-!<apr_array_header_t>
->  pool
->  elt_size
-   nelts
->  nalloc
-   elts
-</apr_array_header_t>
-
-!<apr_table_entry_t>
-   key
-   val
->  key_checksum
-</apr_table_entry_t>
-
