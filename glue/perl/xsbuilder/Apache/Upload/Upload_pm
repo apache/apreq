@@ -1,9 +1,12 @@
-use APR;
 use APR::Table;
 use APR::Bucket;
 use APR::Brigade;
 use APR::PerlIO;
+use APR::Error;
 use Apache::Request;
+
+package Apache::Upload::Error;
+push our(@ISA), "APR::Error";
 
 package Apache::Upload::Table;
 push our(@ISA), "APR::Table";

@@ -1,6 +1,5 @@
-
-use APR;
 use APR::Table;
+use APR::Error;
 
 package Apache::Cookie::Jar;
 push our(@ISA), __PACKAGE__ -> env;

@@ -1,4 +1,5 @@
 use APR::Table;
+use APR::Error;
 
 package Apache::Request::Table;
 push our(@ISA), "APR::Table";

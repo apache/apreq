@@ -379,7 +379,6 @@ void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func,
 {
     HV *stash = gv_stashpvn(class, strlen(class), FALSE);
 
-    Perl_require_pv(aTHX_ "APR/Error.pm");
     if (SvTRUE(ERRSV)) {
         Perl_croak(aTHX_ "%s", SvPV_nolen(ERRSV));   
     }
