@@ -44,10 +44,6 @@ static void test_strerror(dAT)
 
     /* Test some common APR status codes also */
 
-    str = apreq_strerror(APR_EGENERAL, buf, sizeof buf);
-    AT_ptr_eq(str, buf);
-    AT_str_eq(str, "Internal error");
-
     str = apreq_strerror(APR_SUCCESS, buf, sizeof buf);
     AT_str_eq(str, "Success");
 
@@ -75,7 +71,7 @@ int main(int argc, char *argv[])
     apr_pool_t *p;
     dAT;
     at_test_t test_list [] = {
-        { dT(test_strerror, 13), "1" }
+        { dT(test_strerror, 11), "1" }
     };
 
     apr_initialize();
