@@ -186,6 +186,8 @@ static XS(apreq_xs_##type##_env)                        \
 {                                                       \
     char *class = NULL;                                 \
     dXSARGS;                                            \
+    items = items;  /* -Werror */                       \
+                                                        \
     /* map environment to package */                    \
                                                         \
     if (strcmp(apreq_env_name, "APACHE2") == 0)         \
@@ -221,7 +223,6 @@ static XS(apreq_xs_##type)                                              \
 {                                                                       \
     dXSARGS;                                                            \
     void *env;                                                          \
-    apr_pool_t *pool;                                                   \
     const char *data;                                                   \
     apreq_##type##_t *obj;                                              \
                                                                         \
@@ -277,9 +278,9 @@ static int apreq_xs_table_keys(void *data, const char *key,
                                const char *val)
 {
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
-    void *env = d->env;
     dTHXa(d->perl);
     dSP;
+
     if (key)
         XPUSHs(sv_2mortal(newSVpv(key,0)));
     else
@@ -323,9 +324,10 @@ static int apreq_xs_##attr##_table_values(void *data, const char *key,  \
                                                       const char *val)  \
 {                                                                       \
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;         \
-    void *env = d->env;                                                 \
+    void *env;                                                          \
     dTHXa(d->perl);                                                     \
     dSP;                                                                \
+    env = d->env;                                                       \
     if (val) {                                                          \
         apreq_##type##_t *RETVAL =                                      \
                           apreq_value_to_##type(apreq_strtoval(val));   \
