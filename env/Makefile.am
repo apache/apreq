@@ -28,14 +28,14 @@ run_tests : cmodules
 test :: all run_tests
 
 test_clean : cmodules_clean
-	@PERL@ t/TEST -clean
+	-@PERL@ t/TEST -clean
 	-rm -rf t/conf t/htdocs t/logs t/modules t/TEST
 
 cmodules: test_config
 	cd c-modules && $(MAKE) all
 
 cmodules_clean:
-	cd c-modules && $(MAKE) clean
+	-cd c-modules && $(MAKE) clean
 	-rm c-modules/Makefile c-modules/*/Makefile c-modules/apache_httpd_test.h
 
-clean-local: test_clean cmodules_clean
+clean-local: test_clean
