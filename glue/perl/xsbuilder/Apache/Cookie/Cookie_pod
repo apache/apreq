@@ -1,0 +1,160 @@
+=head1 NAME
+
+Apache::Cookie - HTTP Cookies Class
+
+=head1 SYNOPSIS
+
+    use Apache::Cookie ();
+    my $r = Apache->request;
+    my $cookie = Apache::Cookie->new($r, ...);
+
+=head1 DESCRIPTION
+
+The Apache::Cookie module is a Perl interface to the cookie routines
+in I<libapreq>.  The interface is based on Lincoln Stein's CGI::Cookie
+module.
+
+=head1 METHODS
+
+I<Apache::Cookie> does not export any symbols to the caller's namespace.
+Except for the request object passed to C<Apache::Cookie::new>, the OO
+interface is identical to I<CGI::Cookie>.  Please consult the L<CGI::Cookie>
+documentation for more details.
+
+=over 4
+
+=head2 new [OK]
+
+Just like CGI::Cookie::new, but requires an I<Apache> request object:
+
+        my $cookie = Apache::Cookie->new($r,
+                             -name    =>  'foo', 
+                             -value   =>  'bar', 
+                             -expires =>  '+3M', 
+                             -domain  =>  '.capricorn.com', 
+                             -path    =>  '/cgi-bin/database',
+                             -secure  =>  1 
+                            ); 
+
+=head2 bake
+
+Put cookie in the oven to bake. 
+(Add a I<Set-Cookie> header to the outgoing headers table.) 
+
+    $cookie->bake;
+
+=head2 parse [BIZARRE: should be a class function: sub parse { fetch shift } ]
+
+This method parses the given string if present, otherwise, the incoming 
+I<Cookie> header:
+
+    my $cookies = $cookie->parse; #hash ref
+
+    my %cookies = $cookie->parse;
+
+    my %cookies = $cookie->parse($cookie_string);
+
+=head2 fetch [WRONG: requires explicit $r argument now]
+
+Fetch and parse the incoming I<Cookie> header:
+
+    my $cookies = Apache::Cookie->fetch; #hash ref
+
+    my %cookies = Apache::Cookie->fetch;
+
+=head2 as_string [OK]
+
+Format the cookie object as a string:
+
+ #same as $cookie->bake
+ $r->err_headers_out->add("Set-Cookie" => $cookie->as_string);
+
+=head2 name [OK]
+
+Get or set the name of the cookie:
+
+ my $name = $cookie->name;
+
+ $cookie->name("Foo");
+
+=head2 value [TODO: serialize/marshal raw cookies: "set" is a PITA]
+
+Get or set the values of the cookie:
+
+ my $value = $cookie->value;
+ my @values = $cookie->value;
+
+ $cookie->value("string");
+ $cookie->value(\@array);
+
+=head2 domain [OK]
+
+Get or set the domain for the cookie:
+
+ my $domain = $cookie->domain;
+ $cookie->domain(".cp.net");
+
+=head2 path [OK]
+
+Get or set the path for the cookie:
+
+ my $path = $cookie->path;
+ $cookie->path("/");
+
+=head2 expires [OK]
+
+Get or set the expire time for the cookie:
+
+ my $expires = $cookie->expires;
+ $cookie->expires("+3h");
+
+=head2 secure [OK]
+
+Get or set the secure flag for the cookie:
+
+ my $secure = $cookie->secure;
+ $cookie->secure(1);
+
+=back
+
+=head1 CAVEATS
+
+=over 4 [WRONG- this section is unnecessary now]
+
+The underlying C code for the Apache::Cookie module
+presents some unexpected results for Perl programmers
+when dealing with null bytes ('\0's) inside cookies.
+Native C commonly uses "null-terminated strings" when
+storing scalar string values. This means that C uses
+a '\0' byte to mark the end of the string(EOS). What
+this means for Perl programmers is that if you wish to
+create a cookie with a '\0' byte, the underlying C library
+will simply truncate the value at the '\0' byte.  A cookie
+with the value '\0' will similarly simply be ignored, as
+the C library will not detect any content whatsoever.
+This problem is solved in the libapreq-2.0 library.
+
+=back
+
+=head1 BUGS
+
+=over 4 
+
+=item RFC 2964-5 are not fully implemented. [WRONG- implemented now]
+
+=item C<value> should also accept a hash ref as argument. [TODO]
+
+=back
+
+=head1 SEE ALSO
+
+Apache(3), Apache::Request(3), CGI::Cookie(3)
+
+=head1 AUTHOR
+
+Doug MacEachern, updated for v1.0 by Joe Schaefer
+updated for v1.1 by Issac Goldstand
+
+=head1 MISSING DOCS
+
+Apache::Cookie::Jar, Apache::Cookie::Table
