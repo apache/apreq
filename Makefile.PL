@@ -6,7 +6,9 @@ use 5.005;
 use File::Path qw(mkpath);
 use lib qw(Apache-Test/lib);
 
-use constant HAS_APACHE_TEST => eval {require Apache::Test};
+use constant HAS_APACHE_TEST => eval {
+    require Apache::Test && $Apache::Test::VERSION >= 1.13;
+};
 
 use constant WIN32 => ($^O eq "MSWin32") || $ENV{WIN32_TEST};
 if (WIN32) {

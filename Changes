@@ -4,6 +4,9 @@ Revision history for libapreq-1
 
 =item 1.33
 
+require Apache::Test 1.13 to run perl tests (need() was added at that
+version) [Stas]
+
 Fix `strEQ' redefined warnings in the perl build [Stas]
 
 Upgrade license to the Apache License Version 2.0. [davidw, joes]
