@@ -28,6 +28,7 @@ $apreq_home =~ s!/?win32$!!;
 $apreq_home =~ s!/!\\!g;
 
 my $doxygen = which('doxygen');
+my $doxysearch = which('doxysearch');
 my $cfg = $debug ? 'Debug' : 'Release';
 
 check_depends();
@@ -112,7 +113,7 @@ END
 print $make "\n", $test, "\n";
 print $make "\n", $clean, "\n";
 
-if ($doxygen) {
+if ($doxygen and $doxysearch) {
     print $make <<"END";
 
 docs:   \$(DOXYGEN_CONF)
@@ -122,7 +123,7 @@ docs:   \$(DOXYGEN_CONF)
 
 END
 
-    my $bin_abspath = Win32::GetShortPathName(dirname(which('doxysearch')));
+    my $bin_abspath = Win32::GetShortPathName(dirname($doxysearch));
     open(my $conf, "$apreq_home/build/doxygen.conf") 
         or die "Cannot read $apreq_home/build/doxygen.conf: $!";
     open(my $win32_conf, ">$apreq_home/build/doxygen.conf.win32")
