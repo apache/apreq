@@ -1,4 +1,5 @@
 libapreq - Generic Apache Request Library
+http://httpd.apache.org/apreq/
 
 This package contains modules for manipulating client request data via
 the Apache API with Perl and C.  Functionality includes:
