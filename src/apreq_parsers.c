@@ -833,6 +833,15 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 apr_table_addn(t, param->v.name, param->v.data);
                 ctx->status = MFD_UPLOAD;
             }
+            /* XXX must handle special case of missing CRLF (mainly
+               coming from empty file uploads). See RFC2065 S5.1.1:
+
+                 body-part = MIME-part-header [CRLF *OCTET]
+
+               So the CRLF we already matched may have been part of
+               the boundary string! Both Konqueror (v??) and Mozilla-0.97
+               are known to emit such blocks.
+            */
         }
         goto mfd_parse_brigade;
 

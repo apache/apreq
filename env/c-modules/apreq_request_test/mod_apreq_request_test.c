@@ -42,36 +42,25 @@ static int apreq_request_test_handler(request_rec *r)
     apr_bucket_brigade *bb;
     apreq_request_t *req;
     apr_status_t s;
-    int saw_eos = 0;
 
     if (strcmp(r->handler, "apreq_request_test") != 0)
         return DECLINED;
 
     apreq_log(APREQ_DEBUG 0, r, "initializing request");
     req = apreq_request(r, NULL);
-
-
     bb = apr_brigade_create(r->pool, r->connection->bucket_alloc);
-    
-    do {
-        apr_bucket *e;
-        apreq_log(APREQ_DEBUG 0, r, "pulling content thru input filters");
-        s = ap_get_brigade(r->input_filters, bb, AP_MODE_READBYTES,
-                           APR_BLOCK_READ, HUGE_STRING_LEN);
 
-        for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
-             e = APR_BUCKET_NEXT(e))
-        {
-            if (APR_BUCKET_IS_EOS(e)) {
-                saw_eos = 1;
-                break;
-            }
-        }
+    apreq_log(APREQ_DEBUG 0, r, "start parsing body");    
+    while ((s =ap_get_brigade(r->input_filters, bb, AP_MODE_READBYTES,
+                              APR_BLOCK_READ, HUGE_STRING_LEN)) == APR_SUCCESS)
+    {
+        if (APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(bb))
+            break;
 
         apr_brigade_cleanup(bb);
 
-    } while (!saw_eos);
-    apreq_log(APREQ_DEBUG 0, r, "no more content");
+    }
+    apreq_log(APREQ_DEBUG s, r, "finished parsing body");
 
     ap_set_content_type(r, "text/plain");
     ap_rputs("ARGS:\n",r);

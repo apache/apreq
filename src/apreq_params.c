@@ -103,16 +103,16 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
 {
     const char *val = apr_table_get(req->args, name);
 
-    if (val == NULL && req->body)
+    while (val == NULL) {
+        apr_status_t s = apreq_env_read(req->env, APR_BLOCK_READ,APREQ_READ_AHEAD);
+        if (req->body == NULL)
+            return NULL;
         val = apr_table_get(req->body, name);
-
-    if (val == NULL) {
-        apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-        if (req->body)
-            val = apr_table_get(req->body, name);
+        if (s != APR_INCOMPLETE && val == NULL)
+            return NULL;
     }
 
-    return val ? apreq_value_to_param(apreq_strtoval(val)) : NULL;
+    return apreq_value_to_param(apreq_strtoval(val));
 }
 
 
@@ -285,13 +285,21 @@ static int upload_get(void *data, const char *key, const char *val)
         return 0; /* keep searching */
 }
 
+
 APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
                                             const char *key)
 {
     apreq_param_t *param = NULL;
-    apreq_env_read(req->env, APR_BLOCK_READ, APREQ_READ_AHEAD);
-    if (req->body == NULL)
-        return NULL;
-    apr_table_do(upload_get, &param, req->body, key, NULL);
+    do {
+        apr_status_t s = apreq_env_read(req->env, APR_BLOCK_READ,
+                                        APREQ_READ_AHEAD);
+        if (req->body == NULL)
+            return NULL;
+        apr_table_do(upload_get, &param, req->body, key, NULL);
+
+        if (s != APR_INCOMPLETE)
+            break;
+    } while (param == NULL);
+
     return param;
 }

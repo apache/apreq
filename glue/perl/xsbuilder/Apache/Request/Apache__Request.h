@@ -96,14 +96,15 @@ static int apreq_xs_upload_table_keys(void *data, const char *key,
                                       const char *val)
 {
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
-    apreq_param_t *param = apreq_value_to_param(apreq_strtoval(val));
     dTHXa(d->perl);
     dSP;
-    if (param->bb == NULL)      /* not an upload, so skip it */
-        return 1;
 
-    if (key)
-        XPUSHs(sv_2mortal(newSVpv(key,0)));
+    if (key) {
+        if (val && apreq_value_to_param(apreq_strtoval(val))->bb)
+            XPUSHs(sv_2mortal(newSVpv(key,0)));
+        else    /* not an upload, so skip it */
+            return 1;
+    }
     else
         XPUSHs(&PL_sv_undef);
 
