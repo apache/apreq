@@ -31,6 +31,9 @@ env_test:
 lib_test: check
 	t/testall -v
 
+perl_install:
+	cd glue/perl; make install
+
 perl_test:
 	cd glue/perl; make test
 
