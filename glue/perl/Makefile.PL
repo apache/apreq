@@ -224,14 +224,28 @@ sub MY::postamble {
     my @tests = @docs;
     s/pod$/t/ for @tests;
 
-    return copy_docs(@docs) . test_docs(\@docs,\@tests) . <<EOT;
+    my $string = copy_docs(@docs);
+
+    my $test_docs = test_docs(\@docs, \@tests);
+
+    if ($test_docs) {
+        $string .= $test_docs;
+        $string .= <<EOT;
 doc_test : @tests
 	\$(FULLPERLRUN) "-Mblib" "-MTest::Harness" "-e" "runtests(\@ARGV)" @tests
 
 test :: doc_test
 
 EOT
+    } else {
+        $string .= <<EOT;
+test ::
+	\$(NOECHO) \$(ECHO) pod2test was not found, skipping inlined tests
 
+EOT
+    }
+
+    return $string;
 }
 
 
