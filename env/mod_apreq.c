@@ -252,58 +252,10 @@ static apr_status_t apreq_filter(ap_filter_t *f,
 }
 
 
-
-static int test_handler(request_rec *r)
-{
-    apr_bucket_brigade *bb;
-    apreq_request_t *req;
-    apr_status_t s;
-    int saw_eos = 1;
-    dAPREQ_LOG;
-
-    if (strcmp(r->handler, "httpd-apreq") != 0)
-        return DECLINED;
-
-    apreq_log(APREQ_DEBUG 0, r, "initializing request");
-    req = apreq_request(r, NULL);
-
-
-    bb = apr_brigade_create(r->pool, r->connection->bucket_alloc);
-    
-    do {
-        apr_bucket *e;
-        apreq_log(APREQ_DEBUG 0, r, "pulling content thru input filters");
-        s = ap_get_brigade(r->input_filters, bb, AP_MODE_READBYTES,
-                           APR_BLOCK_READ, HUGE_STRING_LEN);
-
-        APR_BRIGADE_FOREACH(e,bb) {
-            if (APR_BUCKET_IS_EOS(e)) {
-                saw_eos = 1;
-                break;
-            }
-        }
-
-        apr_brigade_cleanup(bb);
-
-    } while (!saw_eos);
-
-    ap_set_content_type(r, "text/plain");
-    ap_rputs("GOT APREQ?\n\n",r);
-
-    ap_rputs("ARGS:\n");
-    apreq_table_do(dump_table, r, req->args, NULL);
-    if (req->body) {
-        ap_rputs("\nBODY:\n");
-        apreq_table_do(dump_table, r, req->body, NULL);
-    }
-    return OK;
-}
-
 static void register_hooks (apr_pool_t *p)
 {
     ap_register_input_filter(filter_name, apreq_filter, NULL, 
                              AP_FTYPE_CONTENT_SET);
-    ap_hook_handler(test_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
 
