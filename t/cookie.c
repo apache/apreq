@@ -73,7 +73,8 @@ static void netscape_cookie(CuTest *tc)
     apreq_cookie_expires(c, "+1y");
     CuAssertStrEquals(tc,apr_pstrcat(p,
                          "foo=bar; path=/quux; domain=example.com; expires=", 
-                         apreq_expires(p,"+1y",NSCOOKIE), NULL), apreq_cookie_as_string(c,p));
+                         apreq_expires(p,"+1y",APREQ_EXPIRES_NSCOOKIE), NULL), 
+                      apreq_cookie_as_string(c,p));
 }
 
 
