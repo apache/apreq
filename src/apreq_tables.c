@@ -241,7 +241,7 @@ static int insert(apreq_table_cmp_t *cmp,
             return -1;
         }
 
-        switch (flags & 3) {
+        switch (flags) {
             int parent;
 
         case TREE_PUSH:

@@ -21,7 +21,7 @@
 #define APREQ_XML_ENCTYPE_LENGTH        15
 
 #define APREQ_EXPIRES_HTTP              1
-#define APREQ_EXPIRES_NSCOOKIE          2
+#define APREQ_EXPIRES_COOKIE            2
 
 #define APREQ_DEFAULT_POST_MAX         -1 /* XXX: unsafe default ??? */
 #define APREQ_DEFAULT_NELTS             8
@@ -89,12 +89,13 @@ apr_off_t apreq_unescape(char *s);
 
 /* returns date string, (time_str is offset from "now") formatted
  * either as an NSCOOKIE or HTTP date */
-char *apreq_expires(apr_pool_t *p, char *time_str, int type);
+char *apreq_expires(apr_pool_t *p, const char *time_str, const int type);
 
 /* file sizes (KMG) to bytes */
-apr_int64_t apreq_atol(const char *s);
+apr_int64_t apreq_atoi64(const char *s);
+
 /* "duration" strings (YMDhms) to seconds */
-apr_int64_t apreq_atod(const char *s);
+long apreq_atol(const char *s);
 
 #ifdef __cplusplus
  }

@@ -76,7 +76,7 @@ apreq_value_t *apreq_value_merge(apr_pool_t *p,
     return rv;
 }
 
-char *apreq_expires(apr_pool_t *p, char *time_str, int type)
+char *apreq_expires(apr_pool_t *p, const char *time_str, const int type)
 {
     apr_time_t when;
     apr_time_exp_t tms;
@@ -88,7 +88,7 @@ char *apreq_expires(apr_pool_t *p, char *time_str, int type)
 
     when = apr_time_now();
     if ( strcasecmp(time_str,"now") != 0 ) 
-        when += apreq_atod(time_str);
+        when += apreq_atol(time_str);
 
     if ( apr_time_exp_gmt(&tms, when) != APR_SUCCESS )
         return NULL;
@@ -103,7 +103,7 @@ char *apreq_expires(apr_pool_t *p, char *time_str, int type)
 
 /* used for specifying file & byte sizes */
 
-apr_int64_t apreq_atol(const char *s) {
+apr_int64_t apreq_atoi64(const char *s) {
     apr_int64_t n = 0;
     char *p;
     if (s == NULL)
@@ -128,7 +128,7 @@ apr_int64_t apreq_atol(const char *s) {
 
 /* converts date offsets (e.g. "+3M") to seconds */
 
-apr_int64_t apreq_atod(const char *s) 
+long apreq_atol(const char *s) 
 {
     apr_int64_t n = 0;
     char *p;
