@@ -2,10 +2,20 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.25 - August 23, 2003
+
+Michael G. Schwern's "play it safe" patch to c/Makefile.PL
+(applied patch submitted by Steve Hay). See 
+
+  http://marc.theaimsgroup.com/?l=perl5-porters&m=105981649201380&w=2
+  http://marc.theaimsgroup.com/?l=apreq-dev&m=106146287323705&w=2
+
+for details. [joes]
+
 =item 1.24 - August 23, 2003
 
 Applied Steve Hay's Request.pm doc patch explaining the tempnam()
-dependence for C<Apache::Request::new()>'s TEMP_DIR option.
+dependence for C<Apache::Request::new()>'s TEMP_DIR option. [joes]
 
 =item 1.23 - July 10, 2003
 

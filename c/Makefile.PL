@@ -34,7 +34,8 @@ $ENV{LD_RUN_PATH} =
 sub MY::dynamic {
     my $self = shift;
     my $string = $self->MM::dynamic;
-    $string =~ s/(Makefile\s+).*/$1/g;
+    $string =~ s{ \$\(INST_DYNAMIC\)}{}g;
+    $string =~ s{ \$\(INST_BOOT\)}{}g;
     $string;
 }
 
