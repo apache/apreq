@@ -32,44 +32,26 @@ CURRENT RELEASE NOTES:
             apreq_param_t *(*args_get)(apreq_env_handle_t *, const char *);
             apreq_param_t *(*body_get)(apreq_env_handle_t *, const char *);
 
-            apr_status_t (*parser_get)(apreq_env_handle_t *, apreq_parser_t **);
+            apr_status_t (*parser_get)(apreq_env_handle_t *, const apreq_parser_t **);
             apr_status_t (*parser_set)(apreq_env_handle_t *, apreq_parser_t *);
             apr_status_t (*hook_add)(apreq_env_handle_t *, apreq_hook_t *);
+
+            apr_status_t (*heap_limit_set)(apreq_env_handle_t *, apr_size_t);
+            apr_status_t (*heap_limit_get)(apreq_env_handle_t *, apr_size_t *);
+
+            apr_status_t (*data_limit_set)(apreq_env_handle_t *, apr_off_t);
+            apr_status_t (*data_limit_get)(apreq_env_handle_t *, apr_off_t *);
+
+            apr_status_t (*temp_dir_set)(apreq_env_handle_t *, const char *);
+            apr_status_t (*temp_dir_get)(apreq_env_handle_t *, const char **);
 
             const char *(*header_in)(apreq_env_handle_t *,const char *);
             apr_status_t (*header_out)(apreq_env_handle_t *, const char *,char *);
         } apreq_env_module_t;
 
 
-        Fates to be determined (ie, things that might need to stay in there somehow):
-
-            void (*log)(const char *,int,int,apr_status_t,apreq_env_handle_t *,
-                 const char *,va_list);
-
-            apr_pool_t *(*pool)(apreq_env_handle_t *);
-            apr_bucket_alloc_t *(*bucket_alloc)(apreq_env_handle_t *);
-
-            const char *(*temp_dir)(apreq_env_handle_t *, const char *);
-            apr_off_t (*max_body)(apreq_env_handle_t *,apr_off_t);
-            apr_ssize_t (*max_brigade)(apreq_env_handle_t *, apr_ssize_t);
-
-        If possible the log calls inside libapreq2 should be replaced by 
-        error codes that either libapreq2 apps or modules can log (or not).
-        The pool and bucket_alloc functions should become simple pointers 
-        in apreq_parser_t; env() doesn't need to provide them.
-
-        The rest are controls (temp_dir, max_body, max_brigade) that
-        users will need to configure, and libapreq2 parsers will need
-        to look at.  However these APIs are missing status codes, for 
-        situations where a user tries to apply bogus settings 
-        (or which change a setting after the parser has done its work).  
-        I'm wondering if that these config shouldn't be moved into the
-        apreq_parser_t struct, in which case the new "parser_set" slot 
-        will accomplish the same effect.
-
-
-       Things to definitely remove (being either unneeded, boneheaded, 
-       or now obsolete):
+        Things to definitely remove (being either unneeded, boneheaded, 
+        or now obsolete):
 
             apreq_jar_t (*jar)(apreq_env_handle_t *, apreq_jar_t *);
             apreq_request_t (*request)(apreq_env_handle_t *, apreq_request_t *);
@@ -77,7 +59,16 @@ CURRENT RELEASE NOTES:
             const char *(*query_string)(apreq_env_handle_t *);
             apr_status_t (*read)(apreq_env_handle_t *,apr_read_type_e,apr_off_t);
 
+            apr_pool_t *(*pool)(apreq_env_handle_t *);
+            apr_bucket_alloc_t *(*bucket_alloc)(apreq_env_handle_t *);
 
+            void (*log)(const char *,int,int,apr_status_t,apreq_env_handle_t *,
+                 const char *,va_list);
+
+        Logs shouldn't be needed anymore. Folks can use (soon to be improved) 
+        hooks for tracing parser activity.  Better error status codes 
+        should allow users to diagnose problems through the API itself, 
+        not by reading the logfile.
 
 
 
@@ -104,12 +95,16 @@ CURRENT VOTES:
 
 TODO:
 
+    - Perl glue, doc sync.
+
+    - Hooks are called on each param now, not just on uploads.
+      This allows them to do more stuff (logging, diagnostics, taint checks).
+
+    - Better error handling.
+
     - We need to add some basic charset support.  Long discussion 
       starts here:
               http://article.gmane.org/gmane.comp.apache.apreq/2371
-
-    - There are too many calls to apreq_env_pool()- lots of these
-      can be eliminated by caching the pool in the parser's context.
 
     - in glue/perl/t/apreq/cgi.t on Win32, printing to the error log
       hangs if the strings involved are about 10000 in size.
@@ -129,12 +124,6 @@ TODO:
       Also add a test to configure that prevents simultaneous use of
       --with-apache2-src and --with-apache2-apxs.
 
-    - Bring Perl documentation up to speed: Table.pod, and Error.pod.
-      These docs either need to be written, or they require Test::Inline 
-      tests to verify their API.
-
-    - Write parser/hook API documentation, and add perl glue for the API.
-
     - symbol exports files:
       -# aix needs .exp files
 
@@ -143,10 +132,6 @@ TODO:
 
     - Rework glue/perl build system to use apreq2-config instead of
       relying on paths like "../../src".
-
-    - Taint checks need to be extended to APR objects, like
-      $upload->bb and $upload->info.  We may need be able to
-      do that with additional typemaps.
 
 
 OPEN ISSUES:
