@@ -8,7 +8,7 @@ use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
 plan tests => 1;
 my $location = "/TestApReq__inherit";
-ok t_cmp(<< 'VALUE', GET_BODY($location), "inheritance");
+ok t_cmp(GET_BODY($location), << 'VALUE', "inheritance");
 method => GET
 VALUE
 
