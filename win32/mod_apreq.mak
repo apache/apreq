@@ -39,10 +39,10 @@ RSC=rc.exe
 
 !IF  "$(CFG)" == "mod_apreq - Win32 Release"
 
-OUTDIR=.\Release
-INTDIR=.\Release
+OUTDIR=.\libs
+INTDIR=.\libs
 # Begin Custom Macros
-OutDir=.\Release
+OutDir=.\libs
 # End Custom Macros
 
 ALL : "$(OUTDIR)\mod_apreq.dll"
@@ -64,7 +64,7 @@ MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_apreq.bsc" 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\mod_apreq.pdb" /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /def:mod_apreq.def /pdb:"$(OUTDIR)\mod_apreq.pdb" /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" 
 LINK32_OBJS= \
 	"$(INTDIR)\mod_apreq.obj" \
 	"$(APACHE)\lib\libapr.lib" \
@@ -79,10 +79,10 @@ LINK32_OBJS= \
 
 !ELSEIF  "$(CFG)" == "mod_apreq - Win32 Debug"
 
-OUTDIR=.\Debug
-INTDIR=.\Debug
+OUTDIR=.\libs
+INTDIR=.\libs
 # Begin Custom Macros
-OutDir=.\Debug
+OutDir=.\libs
 # End Custom Macros
 
 ALL : "$(OUTDIR)\mod_apreq.dll"
@@ -107,7 +107,7 @@ MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_apreq.bsc" 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\mod_apreq.pdb" /debug /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" /pdbtype:sept 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /def:mod_apreq.def /pdb:"$(OUTDIR)\mod_apreq.pdb" /debug /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\mod_apreq.obj" \
 	"$(APACHE)\lib\libapr.lib" \

@@ -39,10 +39,10 @@ RSC=rc.exe
 
 !IF  "$(CFG)" == "libapreq_cgi - Win32 Release"
 
-OUTDIR=.\Release
-INTDIR=.\Release
+OUTDIR=.\libs
+INTDIR=.\libs
 # Begin Custom Macros
-OutDir=.\Release
+OutDir=.\libs
 # End Custom Macros
 
 ALL : "$(OUTDIR)\libapreq_cgi.dll"
@@ -64,7 +64,7 @@ MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapreq_cgi.bsc" 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /pdb:"$(OUTDIR)\libapreq_cgi.pdb" /machine:I386 /out:"$(OUTDIR)\libapreq_cgi.so" /implib:"$(OUTDIR)\libapreq_cgi.lib" 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /def:libapreq_cgi.def /pdb:"$(OUTDIR)\libapreq_cgi.pdb" /machine:I386 /out:"$(OUTDIR)\libapreq_cgi.so" /implib:"$(OUTDIR)\libapreq_cgi.lib" 
 LINK32_OBJS= \
 	"$(INTDIR)\libapreq_cgi.obj" \
 	"$(OUTDIR)\libapreq.lib" \
@@ -78,10 +78,10 @@ LINK32_OBJS= \
 
 !ELSEIF  "$(CFG)" == "libapreq_cgi - Win32 Debug"
 
-OUTDIR=.\Debug
-INTDIR=.\Debug
+OUTDIR=.\libs
+INTDIR=.\libs
 # Begin Custom Macros
-OutDir=.\Debug
+OutDir=.\libs
 # End Custom Macros
 
 ALL : "$(OUTDIR)\libapreq_cgi.dll"
@@ -106,7 +106,7 @@ MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapreq_cgi.bsc" 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\libapreq_cgi.pdb" /debug /machine:I386 /out:"$(OUTDIR)\libapreq_cgi.so" /implib:"$(OUTDIR)\libapreq_cgi.lib" /pdbtype:sept 
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /def:libapreq_cgi.def /pdb:"$(OUTDIR)\libapreq_cgi.pdb" /debug /machine:I386 /out:"$(OUTDIR)\libapreq_cgi.so" /implib:"$(OUTDIR)\libapreq_cgi.lib" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\libapreq_cgi.obj" \
 	"$(OUTDIR)\libapreq.lib" \

@@ -38,10 +38,10 @@ RSC=rc.exe
 
 !IF  "$(CFG)" == "libapreq - Win32 Release"
 
-OUTDIR=.\Release
-INTDIR=.\Release
+OUTDIR=.\libs
+INTDIR=.\libs
 # Begin Custom Macros
-OutDir=.\Release
+OutDir=.\libs
 # End Custom Macros
 
 ALL : "$(OUTDIR)\libapreq.lib"
@@ -64,7 +64,7 @@ CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /I"$(APACHE)\i
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapreq.bsc" 
 LIB32=link.exe -lib
-LIB32_FLAGS=/nologo /out:"$(OUTDIR)\libapreq.lib" 
+LIB32_FLAGS=/nologo /nodefaultlib /out:"$(OUTDIR)\libapreq.lib" 
 LIB32_OBJS= \
 	"$(INTDIR)\apreq.obj" \
 	"$(INTDIR)\apreq_cookie.obj" \
@@ -79,10 +79,10 @@ LIB32_OBJS= \
 
 !ELSEIF  "$(CFG)" == "libapreq - Win32 Debug"
 
-OUTDIR=.\Debug
-INTDIR=.\Debug
+OUTDIR=.\libs
+INTDIR=.\libs
 # Begin Custom Macros
-OutDir=.\Debug
+OutDir=.\libs
 # End Custom Macros
 
 ALL : "$(OUTDIR)\libapreq.lib"
