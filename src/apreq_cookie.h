@@ -96,20 +96,21 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr);
  * The cookie is allocated from the ctx pool.
  *
  * @param ctx   The current context.
- * @param v     The cookie version, currently one of ::NETSCAPE or ::RFC.
- *              Use ::APREQ_COOKIE_VERSION if you'd like to leave
- *              that decision up to libapreq.  Currently libapreq uses
- *              Netscape cookies by default, but this may change in a
- *              future version.
  * @param name  The cookie's name.
  * @param nlen  Length of name.
  * @param value The cookie's value.
  * @param vlen  Length of value.
  */
-APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(apr_pool_t *p, 
-                                  const apreq_cookie_version_t version,
+APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(apr_pool_t *pool, 
                                   const char *name, const apr_size_t nlen, 
                                   const char *value, const apr_size_t vlen);
+
+
+APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apr_pool_t *p,
+                                              apreq_cookie_t *c, 
+                                              char *attr,
+                                              char *val);
+
 
 /**
  * Returns a string that represents the cookie as it would appear 
@@ -153,7 +154,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apr_pool_t *p, apreq_cookie_t *c,
  *
  * @param c The cookie.
  */
-APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c, 
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c, 
                                               void *env);
 
 /* XXX: how about baking whole cookie jars, too ??? */
@@ -163,7 +164,7 @@ APREQ_DECLARE(apr_status_t) apreq_bake_cookie(const apreq_cookie_t *c,
  *
  * @param c The cookie.
  */
-APREQ_DECLARE(apr_status_t) apreq_bake2_cookie(const apreq_cookie_t *c,
+APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
                                                void *env);
 
 APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env);

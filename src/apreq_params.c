@@ -139,7 +139,7 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
     return req;
 }
 
-APR_INLINE
+
 APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req, 
                                           const char *name)
 {
@@ -163,7 +163,7 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
 }
 
 
-APR_INLINE
+
 APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *pool,
                                           const apreq_request_t *req)
 {

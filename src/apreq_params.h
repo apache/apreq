@@ -132,7 +132,6 @@ APREQ_DECLARE(apreq_request_t *)apreq_request(void *env, const char *qs);
  * @remark Also parses the request as necessary.
  */
 
-APR_INLINE
 APREQ_DECLARE(apreq_param_t *) apreq_param(const apreq_request_t *req, 
                                            const char *name); 
 
@@ -145,7 +144,6 @@ APREQ_DECLARE(apreq_param_t *) apreq_param(const apreq_request_t *req,
  * @remark Also parses the request as necessary.
  */
 
-APR_INLINE
 APREQ_DECLARE(apr_table_t *) apreq_params(apr_pool_t *p,
                                           const apreq_request_t *req);
 

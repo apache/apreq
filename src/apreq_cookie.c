@@ -111,10 +111,10 @@ APREQ_DECLARE(apreq_cookie_version_t) apreq_ua_cookie_version(void *env)
         return RFC;
 }
 
-static apr_status_t apreq_cookie_attr(apr_pool_t *p,
-                                      apreq_cookie_t *c, 
-                                      char *attr,
-                                      char *val)
+APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apr_pool_t *p,
+                                              apreq_cookie_t *c, 
+                                              char *attr,
+                                              char *val)
 {
     if ( attr[0] ==  '-' || attr[0] == '$' )
         ++attr;
@@ -176,7 +176,6 @@ static apr_status_t apreq_cookie_attr(apr_pool_t *p,
 }
 
 APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(apr_pool_t *p, 
-                                  const apreq_cookie_version_t version,
                                   const char *name, const apr_size_t nlen,
                                   const char *value, const apr_size_t vlen)
 {
@@ -188,7 +187,7 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(apr_pool_t *p,
     memcpy(v->data, value, vlen);
     v->data[vlen] = 0;
     
-    c->version = version;
+    c->version = APREQ_COOKIE_VERSION;
 
     /* session cookie is the default */
 
@@ -384,8 +383,8 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
             status = get_pair(&hdr, &name, &nlen, &value, &vlen);
 
             if (status == APR_SUCCESS) {
-                c = apreq_make_cookie(p, version, name, nlen, 
-                                      value, vlen);
+                c = apreq_make_cookie(p, name, nlen, value, vlen);
+                c->version = version;
                 apreq_log(APREQ_DEBUG status, env, 
                           "adding cookie: %s => %s", c->v.name, c->v.data);
                 apreq_add_cookie(j, c);

@@ -101,8 +101,6 @@ APREQ_DECLARE(apreq_value_t *) apreq_merge_values(apr_pool_t *p,
 /**
  *
  */
-
-APR_INLINE
 APREQ_DECLARE(const char *)apreq_enctype(void *env);
 
 /**
