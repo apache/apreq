@@ -50,7 +50,7 @@ my %build = (
 my %perl_glue = (
                   perl  => $build{perl},
          "Apache::Test" => { version => "1.04",    test => \&a_t_version,
-                             comment => "bundled with mod_perl 1.99_09"  },
+                             comment => "Win32 requires version 1.06"    },
   "ExtUtils::XSBuilder" => { version => "0.23",    test => \&xsb_version },
               mod_perl  => { version => "1.99_09", test => \&mp2_version },
                 );
