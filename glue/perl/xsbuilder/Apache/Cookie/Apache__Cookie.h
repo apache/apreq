@@ -113,19 +113,21 @@ static XS(apreq_xs_cookie_expires)
     c = apreq_xs_sv2(cookie,ST(0));
 
     if (items > 1) {
-        apr_pool_t *p = apreq_env_pool(apreq_xs_sv2env(ST(0)));
         const char *s = SvPV_nolen(ST(1));
-        apreq_cookie_expires(p, c, s);
+        apreq_cookie_expires(c, s);
     }
 
-    if (c->version == NETSCAPE)
-        ST(0) = c->time.expires ? sv_2mortal(newSVpv(c->time.expires,0)) :
-            &PL_sv_undef;
-    else
-        ST(0) = c->time.max_age >= 0 ? sv_2mortal(newSViv(c->time.max_age)) :
-            &PL_sv_undef;
+    if (c->max_age == -1)
+        XSRETURN_UNDEF;
 
-    XSRETURN(1);
+    if (c->version == NETSCAPE) {
+        char expires[APR_RFC822_DATE_LEN] = {0};
+        apreq_rfc_822_date(expires, c->max_age + apr_time_now());
+        expires[7] = '-';
+        expires[11] = '-';
+        XSRETURN_PV(expires);
+    }
+    XSRETURN_IV(c->max_age);
 }
 
 static XS(apreq_xs_cookie_set_attr)
@@ -142,12 +144,12 @@ static XS(apreq_xs_cookie_set_attr)
     p = apreq_env_pool(apreq_xs_sv2env(ST(0)));
 
     for (j = 1; j + 1 < items; j += 2) {
-        status = apreq_cookie_attr(p, c, SvPV_nolen(ST(j)), 
-                                         SvPV_nolen(ST(j+1)));
+        STRLEN alen, vlen;
+        const char *attr = SvPV(ST(j),alen), *val = SvPV(ST(j+1),vlen);
+        status = apreq_cookie_attr(p, c, attr, alen, val, vlen); 
         if (status != APR_SUCCESS)
             break;
     }
-    ST(0) = sv_2mortal(newSViv(status));
-    XSRETURN(1);
+    XSRETURN_IV(status);
 }
 

@@ -37,13 +37,12 @@
 !  secure
   comment
   commentURL
-!  time
+! max_age
 !  v
 </apreq_cookie_t>
 
 <apreq_jar_t MODULE=Apache::Cookie>
 ! cookies
-!  pool
 !  env
 </apreq_jar_t>
 

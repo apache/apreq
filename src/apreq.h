@@ -316,13 +316,42 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64f(const char *s);
 
 APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s);
 
+/**
+ * Writes brigade to a file.
+ * @param f       File that gets the brigade.
+ * @param wlen    On a successful return, wlen holds the length of
+ *                the brigade, which is the amount of data written to 
+ *                the file.
+ * @param bb      Bucket brigade.
+ * @remark        In the future, this function may do something 
+ *                intelligent with file buckets.
+ */
+
 APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
                                                  apr_off_t *wlen,
                                                  apr_bucket_brigade *bb);
+/**
+ * Makes a temporary file.
+ * @param fp    Points to the temporary apr_file_t on success.
+ * @param pool  Pool to associate with the temp file.  When the
+ *              pool is destroyed, the temp file will be closed
+ *              and deleted.
+ * @param path  The base directory which will contain the temp file.
+ *              If param == NULL, the directory will be selected via
+ *              tempnam().  See the tempnam manpage for details.
+ */
 
 APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
                                               apr_pool_t *pool,
                                               const char *path);
+
+/**
+ * Gets the spoolfile associated to a brigade, if any.
+ * @param bb Brigade, usually associated to a file upload (apreq_param_t).
+ * @return If the last bucket in the brigade is a file bucket,
+ *         this function will return its associated file.  Otherwise,
+ *         this function returns NULL.
+ */
 
 APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 

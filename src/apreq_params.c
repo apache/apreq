@@ -61,14 +61,14 @@
 #include "apreq_env.h"
 #include "apr_strings.h"
 
-#define p2v(param) ( (param) ? &(param)->v : NULL )
-#define UPGRADE(s) apreq_value_to_param(apreq_char_to_value(s))
+
+/** default parser configuration */
 
 static const apreq_cfg_t default_cfg = {
-    1024 * 1024, /* 1MB */
-    8192 * 2, 
-    200, 
-    8192 * 8
+    1024 * 1024, /**< limit on POST data size */
+    8192 * 2,    /**< limit on brigade size */
+    200,         /**< maximum number of form fields */
+    8192 * 8     /**< maximum amount of prefetch data */
 };
     
 
@@ -134,7 +134,6 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req->cfg      = apr_palloc(p, sizeof(apreq_cfg_t));
         req->body     = NULL;
         req->parser   = apreq_parser(env, NULL);
-        req->pool     = p;
 
         *req->cfg = default_cfg;
         /* XXX need to install copy/merge callbacks for apreq_param_t */
@@ -157,7 +156,6 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
         req->cfg      = apr_palloc(p, sizeof(apreq_cfg_t));
         req->body     = NULL;
         req->parser   = apreq_parser(env, NULL);
-        req->pool     = p;
 
         *req->cfg = default_cfg;
         /* XXX need to install copy/merge callbacks for apreq_param_t */ 
@@ -176,7 +174,7 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
     const char *val = apr_table_get(req->args, name);
 
     if (val)
-        return UPGRADE(val);
+        return apreq_value_to_param(apreq_strtoval(val));
     else if (req->body == NULL)
         return NULL;
 
@@ -189,7 +187,7 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(const apreq_request_t *req,
             val = apr_table_get(req->body, name);
         }
     }
-    return val ? UPGRADE(val) : NULL;
+    return val ? apreq_value_to_param(apreq_strtoval(val)) : NULL;
 }
 
 

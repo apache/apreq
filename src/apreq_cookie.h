@@ -77,7 +77,6 @@ extern "C" {
 /** Cookie Jar */
 typedef struct apreq_jar_t {
     apr_table_t   *cookies;     /**< cookie table */
-    apr_pool_t    *pool;        /**< pool cookies were allocated from */
     void          *env;         /**< environment */
 } apreq_jar_t;
 
@@ -86,24 +85,20 @@ typedef enum { NETSCAPE, RFC } apreq_cookie_version_t;
 #define APREQ_COOKIE_VERSION               NETSCAPE
 #define APREQ_COOKIE_LENGTH                4096
 
+/** cookie XXX ... */
 typedef struct apreq_cookie_t {
 
-    apreq_cookie_version_t version;
+    apreq_cookie_version_t version; /**< RFC or Netscape compliant cookie */
 
     char           *path;
-    char           *domain;
+    char           *domain; 
     char           *port;
     unsigned        secure;
 
     char           *comment;
     char           *commentURL;
-
-    union {
-        apr_int64_t   max_age; 
-        const char   *expires; 
-    } time;
-
-    apreq_value_t   v;           /* "raw" value (extended struct) */
+    apr_time_t      max_age;     /**< total duration of cookie: -1 == session */
+    apreq_value_t   v;           /**< "raw" cookie value */
 
 } apreq_cookie_t;
 
@@ -168,11 +163,21 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_make_cookie(apr_pool_t *pool,
                                   const char *name, const apr_size_t nlen, 
                                   const char *value, const apr_size_t vlen);
 
-
-APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apr_pool_t *p,
-                                              apreq_cookie_t *c, 
-                                              char *attr,
-                                              char *val);
+/**
+ * Sets the associated cookie attribute.
+ * @param p    Pool for allocating the new attribute.
+ * @param c    Cookie.
+ * @param attr Name of attribute- leading '-' or '$' characters
+ *             are ignored.
+ * @param alen Length of attr.
+ * @param val  Value of new attribute.
+ * @param vlen Length of new attribute.
+ * @remarks    Ensures cookie version & time are kept in sync.
+ */
+APREQ_DECLARE(apr_status_t) 
+    apreq_cookie_attr(apr_pool_t *p, apreq_cookie_t *c, 
+                      const char *attr, apr_size_t alen,
+                      const char *val, apr_size_t vlen);
 
 
 /**
@@ -207,9 +212,9 @@ APREQ_DECLARE(int) apreq_serialize_cookie(char *buf, apr_size_t len,
  * @param c The cookie.
  * @param time_str If NULL, return the current expiry date. Otherwise
  * replace with this value instead.  The time_str should be in a format
- * that apreq_atod() can understand, namely /[+-]?\d+\s*[YMDhms]/.
+ * that apreq_atoi64t() can understand, namely /[+-]?\d+\s*[YMDhms]/.
  */
-APREQ_DECLARE(void) apreq_cookie_expires(apr_pool_t *p, apreq_cookie_t *c, 
+APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
                                          const char *time_str);
 
 /**

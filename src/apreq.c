@@ -130,8 +130,8 @@ APREQ_DECLARE(const char *)apreq_enctype(void *env)
     }
 }
 
-APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str, 
-                                    const apreq_expires_t type)
+APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,
+                                          const apreq_expires_t type)
 {
     apr_time_t when;
     apr_time_exp_t tms;
@@ -142,7 +142,7 @@ APREQ_DECLARE(char *) apreq_expires(apr_pool_t *p, const char *time_str,
     }
 
     when = apr_time_now();
-    if ( strcasecmp(time_str,"now") != 0 ) 
+    if (strcasecmp(time_str,"now")) 
         when += apreq_atoi64t(time_str);
 
     if ( apr_time_exp_gmt(&tms, when) != APR_SUCCESS )
