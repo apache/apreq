@@ -153,7 +153,7 @@ static XS(apreq_xs_request_config)
     dXSARGS;
     apreq_request_t *req;
     apr_status_t status = APR_SUCCESS;
-    int j = 1;
+    /* int j = 1; */
     if (items == 0)
         XSRETURN_UNDEF;
     if (!SvROK(ST(0)))
