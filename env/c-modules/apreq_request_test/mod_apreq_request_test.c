@@ -17,6 +17,7 @@
 #if CONFIG_FOR_HTTPD_TEST
 
 <Location /apreq_request_test>
+   APREQ_MaxBody 500K
    SetHandler apreq_request_test
 </Location>
 

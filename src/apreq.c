@@ -680,7 +680,7 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
                                               apr_pool_t *pool,
                                               const char *path)
 {
-    apr_status_t rc = APR_SUCCESS;
+    apr_status_t rc;
     char *tmpl;
 
     if (path == NULL) {
@@ -699,7 +699,7 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
                            | APR_EXCL | APR_DELONCLOSE | APR_BINARY, pool);
 }
 
-/* circumvents linker issue (perl's CCFLAGS != apr's CCFLAGS) on linux */
+
 APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb)
 {
     apr_bucket *last = APR_BRIGADE_LAST(bb);

@@ -30,6 +30,33 @@
 
 #define dR  request_rec *r = (request_rec *)env
 
+struct dir_config {
+    const char         *temp_dir;
+    apr_off_t           max_body;
+    apr_ssize_t         max_brigade;
+};
+
+
+static void *apreq_create_dir_config(apr_pool_t *p, char *d)
+{
+    /* dir == OR_ALL */
+    struct dir_config *dc = apr_palloc(p, sizeof *dc);
+    dc->temp_dir = NULL;
+    dc->max_body = -1;
+    dc->max_brigade = APREQ_MAX_BRIGADE_LEN;
+    return dc;
+}
+
+static void *apreq_merge_dir_config(apr_pool_t *p, void *a_, void *b_)
+{
+    struct dir_config *a = a_, *b = b_, *c = apr_palloc(p, sizeof *c);
+    c->temp_dir    = (b->temp_dir != NULL)    ? b->temp_dir    : a->temp_dir;
+    c->max_body    = (b->max_body >= 0)       ? b->max_body    : a->max_body;
+    c->max_brigade = (b->max_brigade >= 0)    ? b->max_brigade : a->max_brigade;
+    return c;
+}
+
+
 /** The warehouse. */
 struct env_config {
     apreq_jar_t        *jar;
@@ -69,7 +96,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
  * Normally the installation process triggered by '% make install'
  * will make the necessary changes to httpd.conf for you.
  * 
- * XXX describe normal operation, effects of apreq_config_t settings, etc. 
+ * XXX describe normal operation, effects of apenv_config_t settings, etc. 
  *
  * @defgroup mod_apreq Apache-2 Filter Module
  * @ingroup MODULES
@@ -79,7 +106,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER 20040613
+#define APREQ_MODULE_MAGIC_NUMBER 20040615
 
 
 static void apache2_log(const char *file, int line, int level, 
@@ -130,10 +157,20 @@ static struct env_config *get_cfg(request_rec *r)
     struct env_config *cfg = 
         ap_get_module_config(r->request_config, &apreq_module);
     if (cfg == NULL) {
+        struct dir_config *d = ap_get_module_config(r->per_dir_config, 
+                                                    &apreq_module);
         cfg = apr_pcalloc(r->pool, sizeof *cfg);
         ap_set_module_config(r->request_config, &apreq_module, cfg);
-        cfg->max_body = -1;
-        cfg->max_brigade = APREQ_MAX_BRIGADE_LEN;
+
+        if (d) {
+            cfg->temp_dir    = d->temp_dir;
+            cfg->max_body    = d->max_body;
+            cfg->max_brigade = d->max_brigade;
+        } 
+        else {
+            cfg->max_body    = -1;
+            cfg->max_brigade = APREQ_MAX_BRIGADE_LEN;
+        }
     }
     return cfg;
 }
@@ -315,6 +352,7 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
     request_rec *r = f->r;
     struct filter_ctx *ctx;
     struct env_config *cfg = get_cfg(r);
+
 
     /* We must be inside config.c:ap_invoke_handler -> 
      * ap_invoke_filter_init (r->input_filters), and
@@ -520,15 +558,79 @@ static void register_hooks (apr_pool_t *p)
                              AP_FTYPE_CONTENT_SET);
 }
 
+
+/* Configuration directives */
+
+
+static const char *apreq_set_temp_dir(cmd_parms *cmd, void *data,
+                                      const char *arg)
+{
+    struct dir_config *conf = data;
+    const char *err = ap_check_cmd_context(cmd, NOT_IN_LIMIT);
+
+    if (err != NULL)
+        return err;
+
+    conf->temp_dir = arg;
+    return NULL;
+}
+
+static const char *apreq_set_max_body(cmd_parms *cmd, void *data,
+                                      const char *arg)
+{
+    struct dir_config *conf = data;
+    const char *err = ap_check_cmd_context(cmd, NOT_IN_LIMIT);
+
+    if (err != NULL)
+        return err;
+
+    conf->max_body = apreq_atoi64f(arg);
+
+    if (conf->max_body < 0)
+        return "ApReqMaxBody requires a non-negative integer.";
+
+    return NULL;
+}
+
+static const char *apreq_set_max_brigade(cmd_parms *cmd, void *data,
+                                          const char *arg)
+{
+    struct dir_config *conf = data;
+    const char *err = ap_check_cmd_context(cmd, NOT_IN_LIMIT);
+
+    if (err != NULL)
+        return err;
+
+
+    conf->max_brigade = apreq_atoi64f(arg);
+
+    if (conf->max_brigade < 0)
+        return "ApReqMaxBody requires a non-negative integer.";
+
+    return NULL;
+}
+
+static const command_rec apreq_cmds[] =
+{
+    AP_INIT_TAKE1("APREQ_TempDir", apreq_set_temp_dir, NULL, OR_ALL,
+                  "Default location of temporary directory"),
+    AP_INIT_TAKE1("APREQ_MaxBody", apreq_set_max_body, NULL, OR_ALL,
+                  "Maximum amount of data that can be fed into libapreq."),
+    AP_INIT_TAKE1("APREQ_MaxBrigade", apreq_set_max_brigade, NULL, OR_ALL,
+                  "Maximum in-memory bytes a stored brigade may use."),
+    {NULL}
+};
+
+
 /** @} */
 
 module AP_MODULE_DECLARE_DATA apreq_module =
 {
 	STANDARD20_MODULE_STUFF,
+	apreq_create_dir_config,
+	apreq_merge_dir_config,
 	NULL,
 	NULL,
-	NULL,
-	NULL,
-	NULL,
+	apreq_cmds,
 	register_hooks,			/* callback for registering hooks */
 };
