@@ -4,6 +4,8 @@ Revision history for libapreq
 
 =item 0.32 - ?
 
+Handle cookies with names but no value [David Welton <davidw@prosa.it>]
+
 AIX compile fixes [Jens-Uwe Mager <jum@helios.de>]
 
 =item 0.31_03 - December 23, 2000

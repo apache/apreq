@@ -169,6 +169,11 @@ ApacheCookieJar *ApacheCookie_parse(request_rec *r, const char *data)
 	else {
 	    c->values = ap_make_array(r->pool, 4, sizeof(char *));
 	}
+
+	if (!*pair) {
+	    ApacheCookieAdd(c, "");
+	}
+
 	while (*pair && (val = ap_getword(r->pool, &pair, '&'))) {
 	    ap_unescape_url((char *)val);
 	    ApacheCookieAdd(c, val);
