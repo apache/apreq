@@ -154,19 +154,6 @@ typedef enum {
 } apreq_match_t;
 
 /**
- * Return a pointer to the match string, or NULL if no match is found.
- * @param hay  Location of bytes to scan.
- * @param hlen Number of bytes available for scanning.
- * @param ndl  Search string
- * @param nlen Length of search string.
- * @param type Match type.
- *
- */
-APREQ_DECLARE(char *) apreq_memmem(char* hay, apr_size_t hlen, 
-                                   const char* ndl, apr_size_t nlen, 
-                                   const apreq_match_t type);
-
-/**
  * Returns offset of match string's location, or -1 if no match is found.
  * @param hay  Location of bytes to scan.
  * @param hlen Number of bytes available for scanning.
@@ -253,8 +240,19 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
  *          overflow dest.
  */
 
-APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p, 
-                                   const char *src, const apr_size_t slen);
+static APR_INLINE
+char *apreq_escape(apr_pool_t *p,
+                   const char *src, const apr_size_t slen)
+{
+    char *rv;
+
+    if (src == NULL)
+        return NULL;
+
+    rv = apr_palloc(p, 3 * slen + 1);
+    apreq_encode(rv, src, slen);
+    return rv;
+}
 
 /**
  * An \e in-situ url-decoder.
@@ -263,7 +261,16 @@ APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p,
  * @remark Equivalent to apreq_decode(str,str,strlen(str)).
  */
 
-APREQ_DECLARE(apr_ssize_t) apreq_unescape(char *str);
+static APR_INLINE
+apr_ssize_t apreq_unescape(char *str)
+{
+    apr_size_t len;
+    apr_status_t rv = apreq_decode(str,&len,str,strlen(str));
+    if (rv == APR_SUCCESS)
+        return (apr_ssize_t)len;
+    else
+        return -1;
+}
 
 
 /** @enum apreq_expires_t Expiration date format */
@@ -343,7 +350,7 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
  */
 
 static APR_INLINE void
-APREQ_BRIGADE_SETASIDE(apr_bucket_brigade *bb, apr_pool_t *p)
+apreq_brigade_setaside(apr_bucket_brigade *bb, apr_pool_t *p)
 {
     apr_bucket *e;
     for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
@@ -361,16 +368,17 @@ APREQ_BRIGADE_SETASIDE(apr_bucket_brigade *bb, apr_pool_t *p)
  * @remark s == d produces Undefined Behavior.
  */
 
-#define APREQ_BRIGADE_COPY(d,s) do {                                \
-    apr_bucket *e;                                                  \
-    for (e = APR_BRIGADE_FIRST(s); e != APR_BRIGADE_SENTINEL(s);    \
-         e = APR_BUCKET_NEXT(e))                                    \
-    {                                                               \
-        apr_bucket *c;                                              \
-        apr_bucket_copy(e, &c);                                     \
-        APR_BRIGADE_INSERT_TAIL(d, c);                              \
-    }                                                               \
-} while (0)
+static APR_INLINE
+void apreq_brigade_copy(apr_bucket_brigade *d, apr_bucket_brigade *s) {
+    apr_bucket *e;
+    for (e = APR_BRIGADE_FIRST(s); e != APR_BRIGADE_SENTINEL(s);
+         e = APR_BUCKET_NEXT(e))
+    {
+        apr_bucket *c;
+        apr_bucket_copy(e, &c);
+        APR_BRIGADE_INSERT_TAIL(d, c);
+    }
+}
 
 
 /**
@@ -405,6 +413,18 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
                                                  apr_size_t brigade_limit,
                                                  apr_bucket_brigade *out, 
                                                  apr_bucket_brigade *in);
+
+
+/**
+ * Initialize libapreq2. Applications (except apache modules using
+ * mod_apreq) have to call this exactly once before they use
+ * libapreq2.
+ *
+ * @param pool a base pool persisting while libapreq2 is used
+ * @remark after you detroyed the pool, you have to call this function again
+ *    with a new pool if you still plan to use libapreq2
+ */
+APREQ_DECLARE(apr_status_t) apreq_initialize(apr_pool_t *pool);
 
 
 #ifdef __cplusplus

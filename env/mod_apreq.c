@@ -156,6 +156,7 @@ static void apreq_filter_make_context(ap_filter_t *f);
  * XXX apreq as a normal input filter
  * XXX apreq as a "virtual" content handler.
  * XXX apreq as a transparent "tee".
+ * XXX apreq parser registration in post_config
  * </pre>
  * @{
  */
@@ -724,7 +725,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                     return rv;
                 }
 
-                APREQ_BRIGADE_COPY(ctx->bb, bb);
+                apreq_brigade_copy(ctx->bb, bb);
                 apr_brigade_length(bb, 1, &len);
                 ctx->bytes_read += len;
 
@@ -754,7 +755,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                 if (APR_BUCKET_IS_EOS(e))
                     e = APR_BUCKET_NEXT(e);
                 ctx->spool = apr_brigade_split(bb, e);
-                APREQ_BRIGADE_SETASIDE(ctx->spool, r->pool);
+                apreq_brigade_setaside(ctx->spool, r->pool);
             }
         }
 
@@ -791,8 +792,8 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                 /*XXX how should we handle this filter-chain error? */
                 return rv;
             }
-            APREQ_BRIGADE_SETASIDE(bb, r->pool);
-            APREQ_BRIGADE_COPY(ctx->bb, bb);
+            apreq_brigade_setaside(bb, r->pool);
+            apreq_brigade_copy(ctx->bb, bb);
 
             apr_brigade_length(bb, 1, &len);
             total_read += len;
@@ -836,7 +837,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         return APR_SUCCESS;
 
     if (ctx->status == APR_INCOMPLETE) {
-        ctx->status = APREQ_RUN_PARSER(ctx->parser, ctx->body, ctx->bb);
+        ctx->status = apreq_run_parser(ctx->parser, ctx->body, ctx->bb);
         apr_brigade_cleanup(ctx->bb);
     }
 
@@ -859,9 +860,26 @@ static apr_status_t apache2_header_out(apreq_env_handle_t *env,
     return APR_SUCCESS;
 }
 
+static int apreq_post_config(apr_pool_t *p, apr_pool_t *plog,
+                             apr_pool_t *ptemp, server_rec *base_server) {
+    apr_status_t status;
+
+    status = apreq_initialize(p);
+    if (status != APR_SUCCESS) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_ERR, status, base_server,
+                     "Failed to initialize libapreq2");
+        return HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    return OK;
+}
+
 static void register_hooks (apr_pool_t *p)
 {
-    apreq_register_parser(NULL,NULL);
+    /* APR_HOOK_FIRST because we want other modules to be able to
+       register parsers in their post_config hook */
+    ap_hook_post_config(apreq_post_config, NULL, NULL, APR_HOOK_FIRST);
+
     ap_register_input_filter(filter_name, apreq_filter, apreq_filter_init,
                              AP_FTYPE_PROTOCOL-1);
 }

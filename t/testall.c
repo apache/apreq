@@ -62,6 +62,7 @@ apr_table_t *table;
 
 int main(int argc, char *argv[])
 {
+    apr_status_t status;
     CuSuiteList *alltests = NULL;
     CuString *output = CuStringNew();
     int i;
@@ -73,6 +74,10 @@ int main(int argc, char *argv[])
     CuInit(argc, argv);
 
     apr_pool_create(&p, NULL);
+
+    status = apreq_initialize(p);
+    if (status != APR_SUCCESS)
+        return 1;
 
     /* build the list of tests to run */
     for (i = 1; i < argc; i++) {

@@ -142,7 +142,7 @@ static void parse_urlencoded(CuTest *tc)
         apr_bucket_immortal_create(url_data,strlen(url_data), 
                                    bb->bucket_alloc));
 
-    rv = APREQ_RUN_PARSER(parser, body, bb);
+    rv = apreq_run_parser(parser, body, bb);
     CuAssertIntEquals(tc, APR_INCOMPLETE, rv);
 
     APR_BRIGADE_INSERT_HEAD(bb,
@@ -151,7 +151,7 @@ static void parse_urlencoded(CuTest *tc)
     APR_BRIGADE_INSERT_TAIL(bb,
            apr_bucket_eos_create(bb->bucket_alloc));
 
-    rv = APREQ_RUN_PARSER(parser, body, bb);
+    rv = apreq_run_parser(parser, body, bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
 
     val = apr_table_get(body,"alpha");
@@ -207,9 +207,9 @@ static void parse_multipart(CuTest *tc)
                 apr_bucket_split(f, i - j);
 
             tail = apr_brigade_split(bb, f);
-            rv = APREQ_RUN_PARSER(parser, body, bb);
+            rv = apreq_run_parser(parser, body, bb);
             CuAssertIntEquals(tc, (j < strlen(form_data)) ? APR_INCOMPLETE : APR_SUCCESS, rv);
-            rv = APREQ_RUN_PARSER(parser, body, tail);
+            rv = apreq_run_parser(parser, body, tail);
             CuAssertIntEquals(tc, APR_SUCCESS, rv);
             CuAssertIntEquals(tc, 2, apr_table_elts(body)->nelts);
 
@@ -266,7 +266,7 @@ static void parse_disable_uploads(CuTest *tc)
                                1000, NULL, hook, NULL);
 
 
-    rv = APREQ_RUN_PARSER(parser, body, bb);
+    rv = apreq_run_parser(parser, body, bb);
     CuAssertIntEquals(tc, APR_EGENERAL, rv);
     CuAssertIntEquals(tc, 1, apr_table_elts(body)->nelts);
 
@@ -303,7 +303,7 @@ static void parse_generic(CuTest *tc)
     parser = apreq_make_parser(p, ba, "application/xml", 
                                apreq_parse_generic, 1000, NULL, NULL, NULL);
 
-    rv = APREQ_RUN_PARSER(parser, body, bb);
+    rv = apreq_run_parser(parser, body, bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
     dummy = *(apreq_param_t **)parser->ctx;
     CuAssertPtrNotNull(tc, dummy);
@@ -336,7 +336,7 @@ static void hook_discard(CuTest *tc)
                                apreq_parse_generic, 1000, NULL, hook, NULL);
 
 
-    rv = APREQ_RUN_PARSER(parser, body, bb);
+    rv = apreq_run_parser(parser, body, bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
     dummy = *(apreq_param_t **)parser->ctx;
     CuAssertPtrNotNull(tc, dummy);
@@ -375,7 +375,7 @@ static void parse_related(CuTest *tc)
     parser = apreq_make_parser(p, ba, ct, apreq_parse_multipart, 
                                1000, NULL, xml_hook, NULL);
 
-    rv = APREQ_RUN_PARSER(parser, body, bb);
+    rv = apreq_run_parser(parser, body, bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
 
     val = apr_table_get(body, "<980119.X53GGT@example.com>");
@@ -447,7 +447,7 @@ static void parse_mixed(CuTest *tc)
     parser = apreq_make_parser(p, ba, ct, apreq_parse_multipart, 
                                1000, NULL, NULL, NULL);
 
-    rv = APREQ_RUN_PARSER(parser, body, bb);
+    rv = apreq_run_parser(parser, body, bb);
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
 
     val = apr_table_get(body, "submit-name");

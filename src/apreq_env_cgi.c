@@ -309,7 +309,7 @@ static apr_status_t cgi_read(apreq_env_handle_t *env,
         }
 
         handle->body_status =
-            APREQ_RUN_PARSER(handle->parser, handle->body, bb);
+            apreq_run_parser(handle->parser, handle->body, bb);
         apr_brigade_destroy(bb);
         break;
 
@@ -337,7 +337,7 @@ static apr_status_t cgi_read(apreq_env_handle_t *env,
         }
 
         handle->body_status =
-            APREQ_RUN_PARSER(handle->parser, handle->body, bb);
+            apreq_run_parser(handle->parser, handle->body, bb);
         apr_brigade_destroy(bb);
         break;
 

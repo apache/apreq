@@ -52,11 +52,33 @@ apreq_param_t *apreq_value_to_param(const char *val)
 }
 
 
-/** accessor macros */
-#define apreq_param_name(p)      ((p)->v.name)
-#define apreq_param_value(p)     ((p)->v.data)
-#define apreq_param_info(p)      ((p)->info)
-#define apreq_param_brigade(p) ((p)->bb ? apreq_copy_brigade((p)->bb) : NULL)
+static APR_INLINE
+const char *apreq_param_name(const apreq_param_t *p) {
+    return p->v.name;
+}
+
+static APR_INLINE
+const char *apreq_param_value(const apreq_param_t *p) {
+    return p->v.data;
+}
+
+static APR_INLINE
+const apr_table_t *apreq_param_info(const apreq_param_t *p) {
+    return p->info;
+}
+
+static APR_INLINE
+apr_bucket_brigade *apreq_param_brigade(const apreq_param_t *p) {
+    apr_bucket_brigade *bb;
+
+    if (p->upload == NULL)
+        return NULL;
+
+    bb = apr_brigade_create(p->upload->p, p->upload->bucket_alloc);
+    apreq_brigade_copy(bb, p->upload);
+
+    return bb;
+}
 
 /** creates a param from name/value information */
 APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p, 

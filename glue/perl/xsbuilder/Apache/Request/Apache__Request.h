@@ -279,7 +279,7 @@ static apr_status_t apreq_xs_upload_hook(APREQ_HOOK_ARGS)
     }
 
     if (hook->next)
-        s = APREQ_RUN_HOOK(hook->next, env, param, bb);
+        s = apreq_run_hook(hook->next, env, param, bb);
 
     return s;
 }

@@ -59,7 +59,7 @@ static apr_status_t custom_parse_brigade(apreq_env_handle_t *env, apr_uint64_t b
         }
 
         handle->body_status = 
-            APREQ_RUN_PARSER(handle->parser, handle->body, handle->in);
+            apreq_run_parser(handle->parser, handle->body, handle->in);
 
         apr_brigade_cleanup(handle->in);
         APR_BRIGADE_CONCAT(handle->in, bb);
@@ -79,7 +79,7 @@ static apr_status_t custom_parse_brigade(apreq_env_handle_t *env, apr_uint64_t b
             break;
         }
         handle->body_status = 
-            APREQ_RUN_PARSER(handle->parser, handle->body, handle->in);
+            apreq_run_parser(handle->parser, handle->body, handle->in);
 
         apr_brigade_cleanup(handle->in);
         APR_BRIGADE_CONCAT(handle->in, bb);

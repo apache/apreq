@@ -90,9 +90,15 @@ apreq_cookie_t *apreq_value_to_cookie(const char *val)
            apreq_attr_to_type(apreq_value_t, data, deconst.out));
 }
 
-#define apreq_cookie_name(c)  ((c)->v.name)
-#define apreq_cookie_value(c) ((c)->v.data)
+static APR_INLINE
+const char *apreq_cookie_name(const apreq_cookie_t *c) {
+    return c->v.name;
+}
 
+static APR_INLINE
+const char *apreq_cookie_value(const apreq_cookie_t *c) {
+    return c->v.data;
+}
 
 APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *pool,
                                                      apr_table_t *jar,

@@ -4,6 +4,22 @@
 
 @section v2_05 Changes with libapreq2-2.05
 
+
+- C API [Max Kellermann]
+  Continue the API improvements:
+
+  - Convert APREQ_RUN_PARSER and APREQ_RUN_HOOK to inline, and downcase them.
+  - Remove apreq_memmem.
+  - Convert apreq_(un)escape to inline.
+  - apreq_escape does not create an apreq_value_t*.
+  - Initialize default_parsers explicitly to NULL.
+  - Convert APREQ_BRIGADE_COPY to inline, and downcase it.
+  - Lowercase APREQ_BRIGADE_SETASIDE, APREQ_BRIGADE_COPY.
+  - Convert apreq_cookie_name and apreq_cookie_value macros to inline.
+  - Convert apreq_param_name, apreq_param_value, apreq_param_info, and
+    apreq_param_brigade to inline.
+  - Add apreq_initialize to allow thread-safe parser registration.
+
 - C API [joes]
   Widespread API refactorization to remove apreq_jar_t and apreq_request_t:
   

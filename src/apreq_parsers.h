@@ -73,7 +73,11 @@ struct apreq_parser_t {
  * @remark  bb == NULL is valid: the parser should return its 
  * public status: APR_INCOMPLETE, APR_SUCCESS, or an error code.
  */
-#define APREQ_RUN_PARSER(psr,t,bb) (psr)->parser(psr,t,bb)
+static APR_INLINE
+apr_status_t apreq_run_parser(struct apreq_parser_t *psr, apr_table_t *t,
+                              apr_bucket_brigade *bb) {
+    return psr->parser(psr, t, bb);
+}
 
 /**
  * Run the hook with the current parameter and the incoming 
@@ -82,13 +86,17 @@ struct apreq_parser_t {
  * be added to the parameter's bb attribute.
  * @return APR_SUCCESS on success. All other values represent errors.
  */
-#define APREQ_RUN_HOOK(h,param,bb) (h)->hook(h,param,bb)
+static APR_INLINE
+apr_status_t apreq_run_hook(struct apreq_hook_t *h, apreq_param_t *param,
+                            apr_bucket_brigade *bb) {
+    return h->hook(h, param, bb);
+}
 
 
 /**
  * Rfc822 Header parser. It will reject all data
  * after the first CRLF CRLF sequence (an empty line).
- * See #APREQ_RUN_PARSER for more info on rejected data.
+ * See #apreq_run_parser for more info on rejected data.
  */
 APREQ_DECLARE_PARSER(apreq_parse_headers);
 
@@ -101,7 +109,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded);
  * Rfc2388 multipart/form-data (and XForms 1.0 multipart/related)
  * parser. It will reject any buckets representing preamble and 
  * postamble text (this is normal behavior, not an error condition).
- * See #APREQ_RUN_PARSER for more info on rejected data.
+ * See #apreq_run_parser for more info on rejected data.
  */
 APREQ_DECLARE_PARSER(apreq_parse_multipart);
 
@@ -199,8 +207,8 @@ APREQ_DECLARE(apreq_parser_function_t)apreq_parser(const char *enctype);
  * or within a request-thread mutex.
  */
 
-APREQ_DECLARE(void) apreq_register_parser(const char *enctype, 
-                                          apreq_parser_function_t parser);
+APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
+                                                  apreq_parser_function_t parser);
 
 
 /**

@@ -130,36 +130,6 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s)
 }
 
 
-/*
-  search for a string in a fixed-length byte string.
-  if partial is true, partial matches are allowed at the end of the buffer.
-  returns NULL if not found, or a pointer to the start of the first match.
-*/
-
-/* XXX: should we drop this and replace it with apreq_index ? */
-APREQ_DECLARE(char *) apreq_memmem(char* hay, apr_size_t hlen, 
-                                   const char* ndl, apr_size_t nlen,
-                                   const apreq_match_t type)
-{
-    apr_size_t len = hlen;
-    char *end = hay + hlen;
-
-    while ( (hay = memchr(hay, ndl[0], len)) ) {
-	len = end - hay;
-
-	/* done if matches up to capacity of buffer */
-	if ( memcmp(hay, ndl, MIN(nlen, len)) == 0 ) {
-            if (type == APREQ_MATCH_FULL && len < nlen)
-                hay = NULL;     /* insufficient room for match */
-	    break;
-        }
-        --len;
-        ++hay;
-    }
-
-    return hay;
-}
-
 APREQ_DECLARE(apr_ssize_t ) apreq_index(const char* hay, apr_size_t hlen, 
                                         const char* ndl, apr_size_t nlen, 
                                         const apreq_match_t type)
@@ -578,30 +548,6 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
     *d = 0;
     rv->size = d - rv->data;
     return rv->data;
-}
-
-APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p,
-                                         const char *src, const apr_size_t slen)
-{
-    apreq_value_t *rv;
-    if (src == NULL)
-        return NULL;
-
-    rv = apr_palloc(p, 3 * slen + sizeof *rv);
-    rv->name = NULL;
-    rv->size = apreq_encode(rv->data, src, slen);
-    return rv->data;
-}
-
-APR_INLINE
-APREQ_DECLARE(apr_ssize_t) apreq_unescape(char *str)
-{
-    apr_size_t len;
-    apr_status_t rv = apreq_decode(str,&len,str,strlen(str));
-    if (rv == APR_SUCCESS)
-        return (apr_ssize_t)len;
-    else
-        return -1;
 }
 
 APR_INLINE

@@ -397,7 +397,7 @@ static XS(apreq_xs_upload_brigade_copy)
     obj = apreq_xs_find_bb_obj(aTHX_ ST(1));
     bb = (apr_bucket_brigade *)SvIVX(obj);
     bb_copy = apr_brigade_create(bb->p,bb->bucket_alloc);
-    APREQ_BRIGADE_COPY(bb_copy, bb);
+    apreq_brigade_copy(bb_copy, bb);
 
     sv = sv_setref_pv(newSV(0), class, bb_copy);
     if (SvTAINTED(obj))

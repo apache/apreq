@@ -47,7 +47,11 @@ int main(int argc, char const * const * argv)
         fprintf(stderr, "apr_pool_create failed\n");
         exit(-1);
     }
-    (void)apreq_register_parser(NULL,NULL);
+
+    if (apreq_initialize(pool) != APR_SUCCESS) {
+        fprintf(stderr, "apreq_initialize failed\n");
+        exit(-1);
+    }
 
     req = apreq_handle_cgi(pool);
 

@@ -206,30 +206,6 @@ static void quote_strings(CuTest *tc)
     }
 }
 
-static void test_memmem(CuTest *tc)
-{
-    char *hay = apr_palloc(p,29);
-    char *partial, *full;
-    apr_size_t hlen = 28;
-    strcpy(hay, "The fear of fear is fearful.");
-
-    partial = apreq_memmem(hay, hlen, "fear of fly", 11, APREQ_MATCH_PARTIAL);
-    if (partial == NULL) CuAssertTrue(tc, 1);
-    partial = apreq_memmem(hay, hlen, "fear ", 5, APREQ_MATCH_PARTIAL);
-    CuAssertStrEquals(tc, "fear of fear is fearful.", partial);
-    partial = apreq_memmem(hay, hlen, "fear is", 7, APREQ_MATCH_PARTIAL);
-    CuAssertStrEquals(tc, "fear is fearful.", partial);
-    partial = apreq_memmem(hay, hlen, hay, hlen, APREQ_MATCH_PARTIAL);
-    CuAssertStrEquals(tc, hay, partial);
-    full = apreq_memmem(hay, hlen, "fear is", 7, APREQ_MATCH_FULL);
-    if (full == NULL) CuAssertTrue(tc, 1);
-    partial = apreq_memmem(hay, hlen, "fear of fly", 11, APREQ_MATCH_FULL);
-    if (partial == NULL) CuAssertTrue(tc, 1);
-    full = apreq_memmem(hay, hlen, hay, hlen, APREQ_MATCH_FULL);
-    CuAssertStrEquals(tc, hay, full);
-}
-
-
 CuSuite *testparam(void)
 {
     CuSuite *suite = CuSuiteNew("Param");
@@ -242,7 +218,6 @@ CuSuite *testparam(void)
     SUITE_ADD_TEST(suite, make_values);
     SUITE_ADD_TEST(suite, quote_strings);
     SUITE_ADD_TEST(suite, make_param);
-    SUITE_ADD_TEST(suite, test_memmem);
     return suite;
 }
 

@@ -21,6 +21,7 @@
 #include "apr_strmatch.h"
 #include "apr_xml.h"
 #include "apr_hash.h"
+#include "apr_thread_rwlock.h"
 
 #ifndef MAX
 #define MAX(A,B)  ( (A) > (B) ? (A) : (B) )
@@ -95,31 +96,68 @@ APREQ_DECLARE(apr_status_t) apreq_parser_add_hook(apreq_parser_t *p,
     return APR_SUCCESS;
 }
 
-static apr_hash_t *default_parsers;
-static apr_pool_t *default_parser_pool;
+static apr_thread_rwlock_t *default_parsers_lock = NULL;
+static apr_hash_t *default_parsers = NULL;
+static apr_pool_t *default_parser_pool = NULL;
 
-static void apreq_parser_initialize(void)
+static apr_status_t apreq_parsers_cleanup(void *data) {
+    default_parsers_lock = NULL;
+    default_parsers = NULL;
+    default_parser_pool = NULL;
+
+    return APR_SUCCESS;
+}
+
+static apr_status_t apreq_parser_initialize(apr_pool_t *pool)
 {
-    if (default_parsers != NULL)
-        return;
-    apr_pool_create(&default_parser_pool, NULL);
+    apr_status_t status;
+
+    if (default_parser_pool != NULL)
+        return APR_EGENERAL;
+
+    status = apr_pool_create(&default_parser_pool, pool);
+    if (status != APR_SUCCESS)
+        return status;
+
+    apr_pool_cleanup_register(default_parser_pool, NULL,
+                              apreq_parsers_cleanup,
+                              apr_pool_cleanup_null);
+
+    status = apr_thread_rwlock_create(&default_parsers_lock,
+                                      default_parser_pool);
+    if (status != APR_SUCCESS)
+        return status;
+
     default_parsers = apr_hash_make(default_parser_pool);
 
     apreq_register_parser("application/x-www-form-urlencoded",
                           apreq_parse_urlencoded);
     apreq_register_parser("multipart/form-data", apreq_parse_multipart);
     apreq_register_parser("multipart/related", apreq_parse_multipart);
+
+    return APR_SUCCESS;
 }
 
-APREQ_DECLARE(void) apreq_register_parser(const char *enctype,
-                                          apreq_parser_function_t parser)
+APREQ_DECLARE(apr_status_t) apreq_initialize(apr_pool_t *pool) {
+    return apreq_parser_initialize(pool);
+}
+
+APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
+                                                  apreq_parser_function_t parser)
 {
+    apr_status_t status;
     apreq_parser_function_t *f = NULL;
 
-    if (enctype == NULL) {
-        apreq_parser_initialize();
-        return;
-    }
+    if (default_parsers == NULL)
+        return APR_EINIT;
+
+    if (enctype == NULL)
+        return APR_EINVAL;
+
+    status = apr_thread_rwlock_wrlock(default_parsers_lock);
+    if (status != APR_SUCCESS)
+        return status;
+
     if (parser != NULL) {
         f = apr_palloc(default_parser_pool, sizeof *f);
         *f = parser;
@@ -127,19 +165,29 @@ APREQ_DECLARE(void) apreq_register_parser(const char *enctype,
     apr_hash_set(default_parsers, apr_pstrdup(default_parser_pool, enctype),
                  APR_HASH_KEY_STRING, f);
 
+    apr_thread_rwlock_unlock(default_parsers_lock);
+
+    return APR_SUCCESS;
 }
 APREQ_DECLARE(apreq_parser_function_t)apreq_parser(const char *enctype)
 {
+    apr_status_t status;
     apreq_parser_function_t *f;
     apr_size_t tlen = 0;
 
     if (enctype == NULL || default_parsers == NULL)
         return NULL;
 
+    status = apr_thread_rwlock_rdlock(default_parsers_lock);
+    if (status != APR_SUCCESS)
+        return NULL;
+
     while(enctype[tlen] && enctype[tlen] != ';')
         ++tlen;
 
     f = apr_hash_get(default_parsers, enctype, tlen);
+
+    apr_thread_rwlock_unlock(default_parsers_lock);
 
     if (f != NULL)
         return *f;
@@ -279,7 +327,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
             else {
                 s = split_urlword(&param, pool, ctx->bb, nlen, vlen);
                 if (parser->hook != NULL && s == APR_SUCCESS)
-                    s = APREQ_RUN_HOOK(parser->hook, param, NULL);
+                    s = apreq_run_hook(parser->hook, param, NULL);
 
                 if (s == APR_SUCCESS) {
                     apr_table_addn(t, param->v.name,  param->v.data);
@@ -324,7 +372,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
                 case ';':
                     s = split_urlword(&param, pool, ctx->bb, nlen, vlen);
                     if (parser->hook != NULL && s == APR_SUCCESS)
-                        s = APREQ_RUN_HOOK(parser->hook, param, NULL);
+                        s = apreq_run_hook(parser->hook, param, NULL);
 
                     if (s != APR_SUCCESS) {
                         ctx->status = URL_ERROR;
@@ -343,7 +391,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
             ; /* not reached */
         }
     }
-    APREQ_BRIGADE_SETASIDE(ctx->bb, pool);
+    apreq_brigade_setaside(ctx->bb, pool);
     return APR_INCOMPLETE;
 }
 
@@ -608,7 +656,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                         apr_bucket_split(e, off);
                     s = split_header_line(&param, pool, ctx->bb, nlen, glen, vlen);
                     if (parser->hook != NULL && s == APR_SUCCESS)
-                        s = APREQ_RUN_HOOK(parser->hook, param, NULL);
+                        s = apreq_run_hook(parser->hook, param, NULL);
 
                     if (s != APR_SUCCESS) {
                         ctx->status = HDR_ERROR;
@@ -648,7 +696,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
             ; /* not reached */
         }
     }
-    APREQ_BRIGADE_SETASIDE(ctx->bb,pool);
+    apreq_brigade_setaside(ctx->bb,pool);
     return APR_INCOMPLETE;
 }
 
@@ -896,8 +944,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         {
             s = split_on_bdry(ctx->bb, ctx->in, NULL, ctx->bdry + 2);
             if (s != APR_SUCCESS) {
-                APREQ_BRIGADE_SETASIDE(ctx->in, pool);
-                APREQ_BRIGADE_SETASIDE(ctx->bb, pool);
+                apreq_brigade_setaside(ctx->in, pool);
+                apreq_brigade_setaside(ctx->bb, pool);
                 return s;
             }
             ctx->status = MFD_NEXTLINE;
@@ -911,8 +959,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         {
             s = split_on_bdry(ctx->bb, ctx->in, NULL, CRLF);
             if (s != APR_SUCCESS) {
-                APREQ_BRIGADE_SETASIDE(ctx->in, pool);
-                APREQ_BRIGADE_SETASIDE(ctx->bb, pool);
+                apreq_brigade_setaside(ctx->in, pool);
+                apreq_brigade_setaside(ctx->bb, pool);
                 return s;
             }
             if (!APR_BRIGADE_EMPTY(ctx->bb)) {
@@ -937,13 +985,13 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 /* flush out old header parser internal structs for reuse */
                 ctx->hdr_parser->ctx = NULL;
             }
-            s = APREQ_RUN_PARSER(ctx->hdr_parser, ctx->info, ctx->in);
+            s = apreq_run_parser(ctx->hdr_parser, ctx->info, ctx->in);
             switch (s) {
             case APR_SUCCESS:
                 ctx->status = MFD_POST_HEADER;
                 break;
             case APR_INCOMPLETE:
-                APREQ_BRIGADE_SETASIDE(ctx->in, pool);
+                apreq_brigade_setaside(ctx->in, pool);
                 return APR_INCOMPLETE;
             default:
                 ctx->status = MFD_ERROR;
@@ -975,7 +1023,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             switch (brigade_start_string(ctx->in, ctx->bdry + 2)) {
 
             case APR_INCOMPLETE:
-                APREQ_BRIGADE_SETASIDE(ctx->in, pool);
+                apreq_brigade_setaside(ctx->in, pool);
                 return APR_INCOMPLETE;
 
             case APR_SUCCESS:
@@ -1101,8 +1149,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             switch (s) {
 
             case APR_INCOMPLETE:
-                APREQ_BRIGADE_SETASIDE(ctx->in, pool);
-                APREQ_BRIGADE_SETASIDE(ctx->bb, pool);
+                apreq_brigade_setaside(ctx->in, pool);
+                apreq_brigade_setaside(ctx->bb, pool);
                 return s;
 
             case APR_SUCCESS:
@@ -1123,7 +1171,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 v->data[v->size] = 0;
 
                 if (parser->hook != NULL) {
-                    s = APREQ_RUN_HOOK(parser->hook, param, NULL);
+                    s = apreq_run_hook(parser->hook, param, NULL);
                     if (s != APR_SUCCESS) {
                         ctx->status = MFD_ERROR;
                         return s;
@@ -1154,14 +1202,14 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             case APR_INCOMPLETE:
                 if (parser->hook != NULL) {
-                    s = APREQ_RUN_HOOK(parser->hook, param, ctx->bb);
+                    s = apreq_run_hook(parser->hook, param, ctx->bb);
                     if (s != APR_SUCCESS) {
                         ctx->status = MFD_ERROR;
                         return s;
                     }
                 }
-                APREQ_BRIGADE_SETASIDE(ctx->bb, pool);
-                APREQ_BRIGADE_SETASIDE(ctx->in, pool);
+                apreq_brigade_setaside(ctx->bb, pool);
+                apreq_brigade_setaside(ctx->in, pool);
                 s = apreq_brigade_concat(pool, parser->temp_dir, parser->brigade_limit, 
                                          param->upload, ctx->bb);
                 return (s == APR_SUCCESS) ? APR_INCOMPLETE : s;
@@ -1169,7 +1217,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             case APR_SUCCESS:
                 if (parser->hook != NULL) {
                     APR_BRIGADE_INSERT_TAIL(ctx->bb, ctx->eos);
-                    s = APREQ_RUN_HOOK(parser->hook, param, ctx->bb);
+                    s = apreq_run_hook(parser->hook, param, ctx->bb);
                     APR_BUCKET_REMOVE(ctx->eos);
                     if (s != APR_SUCCESS) {
                         ctx->status = MFD_ERROR;
@@ -1177,7 +1225,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     }
                 }
                 apr_table_addn(t, param->v.name, param->v.data);
-                APREQ_BRIGADE_SETASIDE(ctx->bb, pool);
+                apreq_brigade_setaside(ctx->bb, pool);
                 s = apreq_brigade_concat(pool, parser->temp_dir, parser->brigade_limit,
                                          param->upload, ctx->bb);
 
@@ -1198,7 +1246,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
     case MFD_MIXED:
         {
-            s = APREQ_RUN_PARSER(ctx->mix_parser, t, ctx->in);
+            s = apreq_run_parser(ctx->mix_parser, t, ctx->in);
             switch (s) {
             case APR_SUCCESS:
                 ctx->status = MFD_INIT;
@@ -1230,7 +1278,7 @@ APREQ_DECLARE_HOOK(apreq_hook_discard_brigade)
 {
     apr_status_t s = APR_SUCCESS;
     if (hook->next)
-        s = APREQ_RUN_HOOK(hook->next, param, bb);
+        s = apreq_run_hook(hook->next, param, bb);
     if (bb != NULL)
         apr_brigade_cleanup(bb);
     return s;
@@ -1277,14 +1325,14 @@ APREQ_DECLARE_PARSER(apreq_parse_generic)
     }
 
     if (parser->hook != NULL) {
-        s = APREQ_RUN_HOOK(parser->hook, ctx->param, bb);
+        s = apreq_run_hook(parser->hook, ctx->param, bb);
         if (s != APR_SUCCESS) {
             ctx->status = GEN_ERROR;
             return s;
         }
     }
 
-    APREQ_BRIGADE_SETASIDE(bb, pool);
+    apreq_brigade_setaside(bb, pool);
     s = apreq_brigade_concat(pool, parser->temp_dir, parser->brigade_limit,
                              ctx->param->upload, bb);
 
@@ -1340,7 +1388,7 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser)
             if (s == APR_SUCCESS) {
                 ctx->status = XML_COMPLETE;
                 if (hook->next)
-                    s = APREQ_RUN_HOOK(hook->next, param, bb);
+                    s = apreq_run_hook(hook->next, param, bb);
             }
             else {
                 ctx->status = XML_ERROR;
@@ -1368,7 +1416,7 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser)
     }
 
     if (hook->next)
-        return APREQ_RUN_HOOK(hook->next, param, bb);
+        return apreq_run_hook(hook->next, param, bb);
 
     return APR_SUCCESS;
 }
