@@ -119,12 +119,13 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
         return s;
 
     v->name = v->data + vlen + 1;
+    v->dlen = vlen;
 
     s = apreq_decodev(v->name, &nlen, (struct iovec *)arr.elts, mark);
     if (s != APR_SUCCESS)
         return s;
 
-    v->size = nlen + vlen + 1;
+    v->nlen = nlen;
 
     while ((f = APR_BRIGADE_FIRST(bb)) != e)
         apr_bucket_delete(f);

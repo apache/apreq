@@ -7,7 +7,7 @@ static int apreq_xs_table_keys(void *data, const char *key, const char *val)
     dTHXa(d->perl);
     dSP;
     apreq_param_t *p = apreq_value_to_param(val);
-    SV *sv = newSVpvn(key, apreq_param_nlen(p));
+    SV *sv = newSVpvn(key, p->v.nlen);
     if (apreq_param_is_tainted(p))
         SvTAINTED_on(sv);
 
@@ -296,7 +296,7 @@ value(obj, p1=NULL, p2=NULL)
     /*nada*/
 
   CODE:
-    RETVAL = newSVpvn(obj->v.data, apreq_param_vlen(obj));
+    RETVAL = newSVpvn(obj->v.data, obj->v.dlen);
     if (apreq_param_is_tainted(obj))
         SvTAINTED_on(RETVAL);
 
@@ -326,7 +326,7 @@ name(obj)
     APR::Request::Param obj
 
   CODE:
-    RETVAL = newSVpvn(obj->v.name, apreq_param_nlen(obj));
+    RETVAL = newSVpvn(obj->v.name, obj->v.nlen);
     if (apreq_param_is_tainted(obj))
         SvTAINTED_on(RETVAL);
 

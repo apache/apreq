@@ -92,15 +92,13 @@ typedef enum {
 /** @brief libapreq's pre-extensible string type */
 typedef struct apreq_value_t {
     char             *name;    /**< value name */
-    apr_size_t        size;    /**< total size (nlen + dlen + 1) */
+    apr_size_t        nlen;    /**< length of name */
+    apr_size_t        dlen;    /**< length of data */
     char              data[1]; /**< value data  */
 } apreq_value_t;
 
 static APR_INLINE
 void apreq_value_table_add(const apreq_value_t *v, apr_table_t *t) {
-#ifdef APREQ_DEBUG
-    assert(v->size == (v->name - v->data) + strlen(v->name));
-#endif
     apr_table_addn(t, v->name, v->data);
 }
 

@@ -42,8 +42,7 @@ APREQ_DECLARE(apr_size_t)apreq_cookie_size(const apreq_cookie_t *c)
     if (c->commentURL != NULL)
         alen += strlen(c->commentURL);
 
-    return (apr_size_t)alen + c->v.size + sizeof *c;
-
+    return (apr_size_t)alen + c->v.nlen + c->v.dlen;
 }
  
 APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
@@ -157,17 +156,16 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
         return NULL;
 
     *(const apreq_value_t **)&v = &c->v;
-    v->size = nlen + vlen + 1;
 
     if (vlen > 0 && value != NULL)
         memcpy(v->data, value, vlen);
     v->data[vlen] = 0;
-
+    v->dlen = vlen;
     v->name = v->data + vlen + 1;
     if (name != NULL)
         memcpy (v->name, name, nlen);
     v->name[nlen] = 0;
-
+    v->nlen = nlen;
     /* session cookie is the default */
     c->max_age = -1;
 

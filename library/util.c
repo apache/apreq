@@ -392,10 +392,6 @@ APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src,
     return d - dest;
 }
 
-
-#define apreq_value_nlen(v) (v->size - (v->name - v->data))
-#define apreq_value_vlen(v) ((v->name - v->data) - 1)
-
 APREQ_DECLARE(char *) apreq_join(apr_pool_t *p, 
                                  const char *sep, 
                                  const apr_array_header_t *arr,
@@ -414,7 +410,7 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
         return NULL;
 
     for (j=0, len=0; j < n; ++j)
-        len += apreq_value_vlen(a[j]) + slen;
+        len += a[j]->dlen + slen + 1;
 
     /* Allocated the required space */
 
@@ -442,17 +438,17 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
     switch (mode) {
 
     case APREQ_JOIN_ENCODE:
-        d += apreq_encode(d, a[0]->data, apreq_value_vlen(a[0]));
+        d += apreq_encode(d, a[0]->data, a[0]->dlen);
 
         for (j = 1; j < n; ++j) {
                 memcpy(d, sep, slen);
                 d += slen;
-                d += apreq_encode(d, a[j]->data, apreq_value_vlen(a[j]));
+                d += apreq_encode(d, a[j]->data, a[j]->dlen);
         }
         break;
 
     case APREQ_JOIN_DECODE:
-        if (apreq_decode(d, &len, a[0]->data, apreq_value_vlen(a[0])))
+        if (apreq_decode(d, &len, a[0]->data, a[0]->dlen))
             return NULL;
         else
             d += len;
@@ -461,7 +457,7 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
             memcpy(d, sep, slen);
             d += slen;
 
-            if (apreq_decode(d, &len, a[j]->data, apreq_value_vlen(a[j])))
+            if (apreq_decode(d, &len, a[j]->data, a[j]->dlen))
                 return NULL;
             else
                 d += len;
@@ -471,25 +467,25 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
 
     case APREQ_JOIN_QUOTE:
 
-        d += apreq_quote_once(d, a[0]->data, apreq_value_vlen(a[0]));
+        d += apreq_quote_once(d, a[0]->data, a[0]->dlen);
 
         for (j = 1; j < n; ++j) {
             memcpy(d, sep, slen);
             d += slen;
-            d += apreq_quote_once(d, a[j]->data, apreq_value_vlen(a[j]));
+            d += apreq_quote_once(d, a[j]->data, a[j]->dlen);
         }
         break;
 
 
     case APREQ_JOIN_AS_IS:
-        memcpy(d,a[0]->data,apreq_value_vlen(a[0]));
-        d += apreq_value_vlen(a[0]);
+        memcpy(d,a[0]->data, a[0]->dlen);
+        d += a[0]->dlen;
 
         for (j = 1; j < n ; ++j) {
             memcpy(d, sep, slen);
             d += slen;
-            memcpy(d, a[j]->data, apreq_value_vlen(a[j]));
-            d += apreq_value_vlen(a[j]);
+            memcpy(d, a[j]->data, a[j]->dlen);
+            d += a[j]->dlen;
         }
         break;
 

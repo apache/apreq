@@ -7,7 +7,7 @@ static int apreq_xs_table_keys(void *data, const char *key, const char *val)
     dTHXa(d->perl);
     dSP;
     apreq_cookie_t *c = apreq_value_to_cookie(val);
-    SV *sv = newSVpv(key, 0);
+    SV *sv = newSVpvn(key, c->v.nlen);
     if (apreq_cookie_is_tainted(c))
         SvTAINTED_on(sv);
    
@@ -217,7 +217,7 @@ value(obj, p1=NULL, p2=NULL)
     /*nada*/
 
   CODE:
-    RETVAL = newSVpvn(obj->v.data, apreq_cookie_vlen(obj));
+    RETVAL = newSVpvn(obj->v.data, obj->v.dlen);
     if (apreq_cookie_is_tainted(obj))
         SvTAINTED_on(RETVAL);
 
@@ -247,7 +247,7 @@ name(obj)
     APR::Request::Cookie obj
 
   CODE:
-    RETVAL = newSVpvn(obj->v.name, apreq_cookie_nlen(obj));
+    RETVAL = newSVpvn(obj->v.name, obj->v.nlen);
     if (apreq_cookie_is_tainted(obj))
         SvTAINTED_on(RETVAL);
 

@@ -40,16 +40,6 @@ typedef struct apreq_param_t {
     const apreq_value_t  v;      /**< underlying name/value info */
 } apreq_param_t;
 
-static APR_INLINE
-apr_size_t apreq_param_nlen(const apreq_param_t *p) {
-    return p->v.size - (p->v.name - p->v.data);
-}
-
-static APR_INLINE
-apr_size_t apreq_param_vlen(const apreq_param_t *p) {
-    return (p->v.name - p->v.data) - 1;
-}
-
 APREQ_DECLARE(apr_size_t)apreq_param_size(const apreq_param_t *p);
 
 

@@ -104,9 +104,9 @@ int main(int argc, char const * const * argv)
         }
 
         apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
-        dest = apr_pcalloc(pool, cookie->v.size + 1);
+        dest = apr_pcalloc(pool, cookie->v.dlen + 1);
         if (apreq_decode(dest, &dlen, cookie->v.data, 
-                         apreq_cookie_vlen(cookie)) == APR_SUCCESS)
+                         cookie->v.dlen) == APR_SUCCESS)
             apr_file_printf(out, "%s", dest);
         else {
 //            apreq_log(APREQ_ERROR APR_EGENERAL, env,

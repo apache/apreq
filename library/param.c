@@ -44,16 +44,17 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
     param->flags = 0; 
 
     *(const apreq_value_t **)&v = &param->v;
-    v->size = vlen + nlen + 1;
 
     if (vlen && val != NULL)
         memcpy(v->data, val, vlen);
     v->data[vlen] = 0;
+    v->dlen = vlen;
 
     v->name = v->data + vlen + 1;
     if (nlen && name != NULL)
         memcpy(v->name, name, nlen);
     v->name[nlen] = 0;
+    v->nlen = nlen;
 
     return param;
 }
@@ -75,7 +76,7 @@ APREQ_DECLARE(apr_size_t)apreq_param_size(const apreq_param_t *p)
     if (p->upload != NULL)
         apr_brigade_length(p->upload, 0, &blen);
 
-    return (apr_size_t)blen + tlen + p->v.size + sizeof *p;
+    return (apr_size_t)blen + tlen + p->v.nlen + p->v.dlen;
 
 }
 
@@ -117,7 +118,8 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
         *param = NULL;
         return status;
     }
-    v->size = nlen + vlen + 1;
+    v->nlen = nlen;
+    v->dlen = vlen;
     *param = p;
 
     return APR_SUCCESS;
@@ -127,16 +129,12 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
 APREQ_DECLARE(char *) apreq_param_encode(apr_pool_t *pool,
                                          const apreq_param_t *param)
 {
-    apr_size_t dlen, nlen, vlen;
+    apr_size_t dlen;
     char *data;
-
-    nlen = apreq_param_nlen(param);
-    vlen = apreq_param_vlen(param);
-
-    data = apr_palloc(pool, 3 * (nlen + vlen) + 2);
-    dlen = apreq_encode(data, param->v.name, nlen);
+    data = apr_palloc(pool, 3 * (param->v.nlen + param->v.dlen) + 2);
+    dlen = apreq_encode(data, param->v.name, param->v.nlen);
     data[dlen++] = '=';
-    dlen += apreq_encode(data + dlen, param->v.data, vlen);
+    dlen += apreq_encode(data + dlen, param->v.data, param->v.dlen);
 
     return data;
 }

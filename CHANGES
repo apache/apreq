@@ -5,11 +5,8 @@
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
 - C API [joes]
-  Change v->size semantics: now it represents the total
-  amount of memory appended to the apreq_value_t struct.
-  Added supporting apreq_param_nlen(), apreq_param_vlen(), 
-  apreq_param_size(), apreq_cookie_nlen(), apreq_cookie_vlen(), 
-  apreq_cookie_size(), apreq_value_table_add().
+  Replace v->size with v->nlen + v->dlen.
+  Added supporting apreq_value_table_add().
 
 - C API [joes]
   Remove apreq_cookie_attr().

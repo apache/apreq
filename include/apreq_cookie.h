@@ -74,17 +74,6 @@ apreq_cookie_t *apreq_value_to_cookie(const char *val)
            apreq_attr_to_type(apreq_value_t, data, deconst.out));
 }
 
-static APR_INLINE
-apr_size_t apreq_cookie_nlen(const apreq_cookie_t *c) {
-    return c->v.size - (c->v.name - c->v.data);
-}
-
-static APR_INLINE
-apr_size_t apreq_cookie_vlen(const apreq_cookie_t *c) {
-    return (c->v.name - c->v.data) - 1;
-}
-
-
 /**@return 1 if this is an RFC cookie, 0 if its a Netscape cookie. */
 static APR_INLINE
 unsigned apreq_cookie_version(const apreq_cookie_t *c) {

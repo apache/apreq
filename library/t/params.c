@@ -49,7 +49,7 @@ static void request_args_get(dAT)
     val = apr_table_get(args,"quux");
     AT_str_eq(val, "foo bar");
     param = apreq_value_to_param(val);
-    AT_int_eq(apreq_param_vlen(param), 7);
+    AT_int_eq(param->v.dlen, 7);
 
     AT_str_eq(apr_table_get(args,"plus"), "+");
     AT_str_eq(apr_table_get(args,"uplus"), "+");
@@ -146,7 +146,7 @@ static void make_param(dAT)
  
     param = apreq_param_make(p, name, nlen, val, vlen);
     AT_str_eq(param->v.name, name);
-    AT_int_eq(apreq_param_vlen(param), vlen);
+    AT_int_eq(param->v.dlen, vlen);
     AT_str_eq(param->v.data, val);
 
     encode = apreq_param_encode(p, param);
@@ -155,7 +155,7 @@ static void make_param(dAT)
     s = apreq_param_decode(&decode, p, encode, nlen, vlen+2);
     AT_int_eq(s, APR_SUCCESS);
     AT_str_eq(decode->v.name, name);
-    AT_int_eq(apreq_param_vlen(decode), vlen);
+    AT_int_eq(decode->v.dlen, vlen);
     AT_str_eq(decode->v.data, val);
 }
 

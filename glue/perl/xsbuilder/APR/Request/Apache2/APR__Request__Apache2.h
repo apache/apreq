@@ -82,7 +82,7 @@ static int apreq_xs_table_keys(void *data, const char *key, const char *val)
     dTHXa(d->perl);
     dSP;
     apreq_param_t *p = apreq_value_to_param(val);
-    SV *sv = newSVpvn(key, apreq_param_nlen(p));
+    SV *sv = newSVpvn(key, p->v.nlen);
     if (apreq_param_is_tainted(p))
         SvTAINTED_on(sv);
 
