@@ -1,2 +1,41 @@
-No httpd header dependencies in src/; those go in env/apache2.
+No httpd header dependencies in src/; those go in env/.
 Only APR is used here.
+
+Data structures and relations:
+
+  BASE:
+
+    apreq_value_t:  basic type for handling opaque data.  The type
+                    is meant to be extended by placing all "metadata"
+                    in front (within a larger structure).
+
+    apreq_table_t : apreq_value_t container. treats value_t as 
+                    "key -> data" pair and provides lookup api.  
+                    Custom copy/merge functions can be added to 
+                    internally handle additional metadata attached
+                    to the contained apreq_value_t's.
+
+
+  COOKIE EXTENSIONS:
+
+    apreq_cookie_t: extends apreq_value_t to represent server-side
+                cookie data.
+
+    apreq_jar_t: Just a table with cookie-based copy/merge functions.
+
+
+  PARAM EXTENSIONS:
+
+    apreq_param_t: extends apreq_value_t to represent POST param data.
+
+    apreq_request_t: maintains arg/body tables which represent parsed data.
+
+
+  PARSER EXTENSIONS:
+
+    apreq_parser_t: extends apreq_value_t to represent a parser callback,
+                    with its associated configuration data.
+
+    The apreq_table_t extension for managing parsers is currently
+                   environment-dependent.  Environments are 
+                   extension-agnostic.
