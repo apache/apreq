@@ -14,8 +14,8 @@
 **  limitations under the License.
 */
 
-#ifndef APREQ_XS_TABLE_METHODS_H
-#define APREQ_XS_TABLE_METHODS_H
+#ifndef APREQ_XS_TABLES_H
+#define APREQ_XS_TABLES_H
 
 /* backward compatibility macros support */
 #include "ppport.h"
@@ -211,4 +211,4 @@ static XS(apreq_xs_##attr##_get)                                        \
 
 
 
-#endif /* APREQ_XS_TABLE_METHODS_H */
+#endif /* APREQ_XS_TABLES_H */
