@@ -59,7 +59,7 @@ END
 }
 
 close $make;
-
+generate_defs();
 
 print << 'END';
 
@@ -73,7 +73,7 @@ A Makefile has been generated. You can now run
 END
     if ($doxygen) {
 print << 'END';
-  nmake docs          - build documents
+  nmake docs          - builds documents
 
 END
 }
@@ -166,6 +166,35 @@ sub which {
             return "$base.$ext" if -x "$base.$ext";
         }
     }
+}
+
+sub generate_defs {
+    my $preamble =<<'END';
+LIBRARY
+
+EXPORTS
+
+END
+    chdir '../env';
+    my $match = qr{^apreq_env};
+    foreach my $file(qw(mod_apreq libapreq_cgi)) {
+        my %fns = ();
+        open my $fh, "<$file.c"
+            or die "Cannot open env/$file.c: $!";
+        while (<$fh>) {
+            next unless /^APREQ_DECLARE\([^\)]+\)\s*(\w+)/;
+            my $fn = $1;
+            $fns{$fn}++ if $fn =~ /$match/;
+        }
+        close $fh;
+        open my $def, ">../win32/$file.def"
+            or die "Cannot open win32/$file.def: $!";
+        print $def $preamble;
+        print $def $_, "\n" for (sort keys %fns);
+        print $def "apreq_env\n";
+        close $def;
+    }
+    
 }
 
 __DATA__
