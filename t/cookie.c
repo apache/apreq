@@ -16,8 +16,8 @@
 
 #include "apreq_env.h"
 #include "apr_strings.h"
-#include "test_apreq.h"
 #include "apreq_cookie.h"
+#include "at.h"
 
 static const char nscookies[] = "a=1; foo=bar; fl=left; fr=right;bad; "
                                 "ns=foo=1&bar=2,frl=right-left; "
@@ -25,122 +25,133 @@ static const char nscookies[] = "a=1; foo=bar; fl=left; fr=right;bad; "
                                 "good_one=1;bad";
 
 static apr_table_t *jar;
+static apr_pool_t *p;
 
-static void jar_make(CuTest *tc)
+static void jar_make(dAT)
 {
-    apr_status_t s;
-
     jar = apr_table_make(p, APREQ_DEFAULT_NELTS);
-    CuAssertPtrNotNull(tc, jar);
-    s = apreq_parse_cookie_header(p, jar, nscookies);
-    CuAssertIntEquals(tc, APREQ_ERROR_NOTOKEN, s);
+    AT_not_null(jar);
+    AT_int_eq(apreq_parse_cookie_header(p, jar, nscookies), APREQ_ERROR_NOTOKEN);
 }
 
 
-static void jar_get(CuTest *tc)
+static void jar_get(dAT)
 {
-    const char *val;
 
-    val = apr_table_get(jar,"a");
-    CuAssertStrEquals(tc,"1",val);
+    AT_str_eq(apr_table_get(jar, "a"), "1");
 
     /* ignore wacky cookies that don't have an '=' sign */
-    val = apr_table_get(jar,"bad");
-    CuAssertPtrEquals(tc,NULL,val);
-    /* accept wacky cookies that contain multiple '=' */
-    val = apr_table_get(jar,"ns");
-    CuAssertStrEquals(tc,"foo=1&bar=2",val);
+    AT_is_null(apr_table_get(jar, "bad"));
 
-    val = apr_table_get(jar,"foo");
-    CuAssertStrEquals(tc,"bar",val);
-    val = apr_table_get(jar,"fl");
-    CuAssertStrEquals(tc,"left",val);
-    val = apr_table_get(jar,"fr");
-    CuAssertStrEquals(tc,"right",val);
-    val = apr_table_get(jar,"frl");
-    CuAssertStrEquals(tc,"right-left",val);
-    val = apr_table_get(jar,"flr");
-    CuAssertStrEquals(tc,"left-right",val);
-    val = apr_table_get(jar,"fll");
-    CuAssertStrEquals(tc,"left-left",val);
+    /* accept wacky cookies that contain multiple '=' */
+    AT_str_eq(apr_table_get(jar, "ns"), "foo=1&bar=2");
+
+    AT_str_eq(apr_table_get(jar,"foo"), "bar");
+    AT_str_eq(apr_table_get(jar,"fl"),  "left");
+    AT_str_eq(apr_table_get(jar,"fr"),  "right");
+    AT_str_eq(apr_table_get(jar,"frl"), "right-left");
+    AT_str_eq(apr_table_get(jar,"flr"), "left-right");
+    AT_str_eq(apr_table_get(jar,"fll"), "left-left");
 }
 
 
-static void netscape_cookie(CuTest *tc)
+static void netscape_cookie(dAT)
 {
     char *val;
     apreq_cookie_t *c;
-    apreq_cookie_version_t version = APREQ_COOKIE_VERSION_NETSCAPE;
 
     *(const char **)&val = apr_table_get(jar, "foo");
-    CuAssertPtrNotNull(tc, val);
-    c = apreq_value_to_cookie(val);
-    CuAssertStrEquals(tc,"bar",apreq_cookie_value(c));
-    CuAssertIntEquals(tc, version,c->version);
+    AT_not_null(val);
 
-    CuAssertStrEquals(tc,"foo=bar", apreq_cookie_as_string(c,p));
+    c = apreq_value_to_cookie(val);
+
+    AT_str_eq(apreq_cookie_value(c), "bar");
+    AT_int_eq(c->version, APREQ_COOKIE_VERSION_NETSCAPE);
+    AT_str_eq(apreq_cookie_as_string(c, p), "foo=bar");
+
     c->domain = apr_pstrdup(p, "example.com");
-    CuAssertStrEquals(tc,"foo=bar; domain=example.com", 
-                      apreq_cookie_as_string(c,p));
+    AT_str_eq(apreq_cookie_as_string(c, p), "foo=bar; domain=example.com");
 
     c->path = apr_pstrdup(p, "/quux");
-    CuAssertStrEquals(tc, "foo=bar; path=/quux; domain=example.com",
-                      apreq_cookie_as_string(c,p));
+    AT_str_eq(apreq_cookie_as_string(c, p), 
+              "foo=bar; path=/quux; domain=example.com");
+
     apreq_cookie_expires(c, "+1y");
-    CuAssertStrEquals(tc,apr_pstrcat(p,
-                         "foo=bar; path=/quux; domain=example.com; expires=", 
-                         apreq_expires(p,"+1y",APREQ_EXPIRES_NSCOOKIE), NULL), 
-                      apreq_cookie_as_string(c,p));
+    val = apr_pstrcat(p, "foo=bar; path=/quux; domain=example.com; expires=", 
+                      apreq_expires(p, "+1y", APREQ_EXPIRES_NSCOOKIE), NULL);
+    AT_str_eq(apreq_cookie_as_string(c, p), val);
 }
 
 
-static void rfc_cookie(CuTest *tc)
+static void rfc_cookie(dAT)
 {
     apreq_cookie_t *c = apreq_make_cookie(p,"rfc",3,"out",3);
+    char *val;
     long expires; 
 
-    CuAssertStrEquals(tc,"out",apreq_cookie_value(c));
-    c->version = APREQ_COOKIE_VERSION_RFC;
+    AT_str_eq(apreq_cookie_value(c), "out");
 
-    CuAssertStrEquals(tc,"rfc=out; Version=1", apreq_cookie_as_string(c,p));
+    c->version = APREQ_COOKIE_VERSION_RFC;
+    AT_str_eq(apreq_cookie_as_string(c,p),"rfc=out; Version=1");
+
     c->domain = apr_pstrdup(p, "example.com");
-    CuAssertStrEquals(tc,"rfc=out; Version=1; domain=\"example.com\"", 
-                      apreq_cookie_as_string(c,p));
+    AT_str_eq(apreq_cookie_as_string(c,p),
+              "rfc=out; Version=1; domain=\"example.com\"");
 
     c->path = apr_pstrdup(p, "/quux");
-    CuAssertStrEquals(tc, 
-              "rfc=out; Version=1; path=\"/quux\"; domain=\"example.com\"",
-                      apreq_cookie_as_string(c,p));
+    AT_str_eq(apreq_cookie_as_string(c,p),
+              "rfc=out; Version=1; path=\"/quux\"; domain=\"example.com\"");
 
     apreq_cookie_expires(c, "+3m");
     expires = apreq_atoi64t("+3m");
-    CuAssertStrEquals(tc,apr_psprintf(p,
-         "rfc=out; Version=1; path=\"/quux\"; domain=\"example.com\"; max-age=%ld",
-               expires), apreq_cookie_as_string(c,p));
-
+    val = apr_psprintf(p, "rfc=out; Version=1; path=\"/quux\"; "
+                       "domain=\"example.com\"; max-age=%ld",
+                       expires);
+    AT_str_eq(apreq_cookie_as_string(c,p), val);
 }
-static void ua_version(CuTest *tc)
+
+static void ua_version(dAT)
 {
-    apreq_cookie_version_t v;
-    char version[] = "$Version=\"1\"";
+    apreq_env_handle_t *ns, *rfc;
 
-    v = apreq_ua_cookie_version(apreq_handle_custom(p, NULL, NULL, NULL, NULL, 0, NULL));
-    CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_NETSCAPE, v);
-    v = apreq_ua_cookie_version(apreq_handle_custom(p, NULL, NULL, version, NULL, 0, NULL));
-    CuAssertIntEquals(tc, APREQ_COOKIE_VERSION_RFC, v);
+    ns  = apreq_handle_custom(p, NULL, NULL, NULL, NULL, 0, NULL);
+    AT_int_eq(apreq_ua_cookie_version(ns), APREQ_COOKIE_VERSION_NETSCAPE);
 
+    rfc = apreq_handle_custom(p, NULL, NULL, "$Version=\"1\"", NULL, 0, NULL);
+    AT_int_eq(apreq_ua_cookie_version(rfc), APREQ_COOKIE_VERSION_RFC);
 }
 
-CuSuite *testcookie(void)
+#define dT(func, plan) {#func, func, plan}
+
+
+int main(int argc, char *argv[])
 {
-    CuSuite *suite = CuSuiteNew("Cookie");
+    unsigned i, plan = 0;
+    dAT;
+    at_test_t test_list [] = {
+        dT(jar_make, 2),
+        dT(jar_get, 9),
+        dT(netscape_cookie, 7),
+        dT(rfc_cookie, 5),
+        dT(ua_version, 2)
+    };
 
-    SUITE_ADD_TEST(suite, jar_make);
-    SUITE_ADD_TEST(suite, jar_get);
-    SUITE_ADD_TEST(suite, netscape_cookie);
-    SUITE_ADD_TEST(suite, rfc_cookie);
-    SUITE_ADD_TEST(suite, ua_version);
+    apr_initialize();
+    atexit(apr_terminate);
 
-    return suite;
+    apr_pool_create(&p, NULL);
+
+    AT = at_create(p, 0, at_report_stdout_make(p)); 
+
+    for (i = 0; i < sizeof(test_list) / sizeof(at_test_t);  ++i)
+        plan += test_list[i].plan;
+
+    AT_begin(plan);
+
+    for (i = 0; i < sizeof(test_list) / sizeof(at_test_t);  ++i)
+        AT_run(&test_list[i]);
+
+    AT_end();
+
+    return 0;
 }
-

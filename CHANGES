@@ -5,6 +5,9 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- C Tests [joes]
+  Replace CuTest-based tests with custom TAP-compliant framework.
+
 - C API [Max Kellermann]
   Continue the API improvements:
 
