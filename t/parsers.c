@@ -22,7 +22,7 @@
 
 #define CRLF "\015\012"
 
-static char url_data[] = "alpha=one&beta=two;omega=last";
+static char url_data[] = "alpha=one&beta=two;omega=last%2";
 static char form_data[] = 
 "--AaB03x" CRLF
 "content-disposition: form-data; name=\"field1\"" CRLF
@@ -50,11 +50,17 @@ static void parse_urlencoded(CuTest *tc)
     APR_BRIGADE_INSERT_HEAD(bb,
         apr_bucket_immortal_create(url_data,strlen(url_data), 
                                    bb->bucket_alloc));
+
+    rv = apreq_parse_request(req,bb);
+    CuAssertIntEquals(tc, APR_INCOMPLETE, rv);
+
+    APR_BRIGADE_INSERT_HEAD(bb,
+        apr_bucket_immortal_create("blast",5, 
+                                   bb->bucket_alloc));
     APR_BRIGADE_INSERT_TAIL(bb,
            apr_bucket_eos_create(bb->bucket_alloc));
 
-    do rv = apreq_parse_request(req,bb);
-    while (rv == APR_INCOMPLETE);
+    rv = apreq_parse_request(req,bb);
 
     CuAssertIntEquals(tc, APR_SUCCESS, rv);
 
@@ -64,7 +70,7 @@ static void parse_urlencoded(CuTest *tc)
     val = apr_table_get(req->body,"beta");
     CuAssertStrEquals(tc, "two", val);
     val = apr_table_get(req->body,"omega");
-    CuAssertStrEquals(tc, "last", val);
+    CuAssertStrEquals(tc, "last+last", val);
 
 }
 

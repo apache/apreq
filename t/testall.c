@@ -97,8 +97,9 @@ static void test_log(const char *file, int line, int level,
                      apr_status_t status, void *env, const char *fmt,
                      va_list vp)
 {
+    char buf[256];
     if (level < APREQ_LOG_ERR)
-        fprintf(stderr, "[%s(%d)] %s\n", file, line, apr_pvsprintf(p,fmt,vp));
+        fprintf(stderr, "[%s(%d)]%s (%s)\n", file, line, apr_strerror(status,buf,255), apr_pvsprintf(p,fmt,vp));
 }
 
 static apr_status_t test_read(void *env, apr_read_type_e block, 

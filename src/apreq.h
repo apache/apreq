@@ -239,7 +239,10 @@ APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src,
  * @return Length of url-decoded string in dest, or < 0 on decoding (bad data) error.
  */
 
-APREQ_DECLARE(apr_ssize_t) apreq_decode(char *dest, const char *src, const apr_size_t slen);
+APREQ_DECLARE(apr_ssize_t) apreq_decode(char *dest, const char *src, apr_size_t slen);
+
+APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, struct iovec *v, 
+                                          int nelts, apr_size_t *bytes_written);
 
 /**
  * Returns an url-encoded copy of a string.

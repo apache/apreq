@@ -114,80 +114,69 @@ static apr_status_t split_urlword(apr_table_t *t,
 {
     apr_pool_t *pool = apr_table_elts(t)->pool;
     apreq_param_t *param = apr_palloc(pool, nlen + vlen + 1 + sizeof *param);
-    apr_size_t total, off;
     apreq_value_t *v = &param->v;
+    apr_bucket *e, *end;
+    apr_status_t s;
+    struct iovec vec[APREQ_NELTS];
+    apr_array_header_t arr = { pool, sizeof(struct iovec), 0,
+                               APREQ_NELTS, (char *)vec };
 
     param->bb = NULL;
     param->info = NULL;
 
     v->name = v->data + vlen + 1;
 
-    off = 0;
-    total = 0;
-    while (total < nlen) {
+    apr_brigade_partition(bb, nlen+1, &end);
+
+    for (e = APR_BRIGADE_FIRST(bb); e != end; e = APR_BUCKET_NEXT(e)) {
         apr_size_t dlen;
         const char *data;
-        apr_bucket *f = APR_BRIGADE_FIRST(bb);
-        apr_status_t s = apr_bucket_read(f, &data, &dlen, APR_BLOCK_READ);
-        apr_ssize_t decoded_len;
-
-        if ( s != APR_SUCCESS )
+        struct iovec *iov;
+        s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
+        if (s != APR_SUCCESS)
             return s;
 
-        total += dlen;
-
-        if (total >= nlen) {
-            dlen -= total - nlen;
-            apr_bucket_split(f, dlen);
-            if (data[dlen-1] == '=')
-                --dlen;
-        }
-
-        decoded_len = apreq_decode((char *)v->name + off, data, dlen);
-
-        if (decoded_len < 0) {
-            return APR_EGENERAL;
-        }
-
-        off += decoded_len;
-        apr_bucket_delete(f);
+        iov = apr_array_push(&arr);
+        iov->iov_base = (char *)data;
+        iov->iov_len  = dlen;
     }
 
-    ((char *)v->name)[off] = 0;
+    ((struct iovec *)arr.elts)[arr.nelts - 1].iov_len--; /* drop '=' sign */
 
-    off = 0;
-    total = 0;
-    while (total < vlen) {
+    s = apreq_decodev((char *)v->name, (struct iovec *)arr.elts, 
+                      arr.nelts, &v->size);
+    if (s != APR_SUCCESS)
+        return s;
+
+    while ((e = APR_BRIGADE_FIRST(bb)) != end)
+        apr_bucket_delete(e);
+
+    arr.nelts = 0;
+    apr_brigade_partition(bb, vlen + 1, &end);
+
+    for (e = APR_BRIGADE_FIRST(bb); e != end; e = APR_BUCKET_NEXT(e)) {
         apr_size_t dlen;
         const char *data;
-        apr_bucket *f = APR_BRIGADE_FIRST(bb);
-        apr_status_t s = apr_bucket_read(f, &data, &dlen, APR_BLOCK_READ);
-        apr_ssize_t decoded_len;
-
-        if ( s != APR_SUCCESS )
+        struct iovec *vec;
+        s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
+        if (s != APR_SUCCESS)
             return s;
 
-        total += dlen;
-
-        if (total >= vlen) {
-            dlen -= total - vlen;
-            apr_bucket_split(f, dlen);
-            if (data[dlen-1] == '&' || data[dlen-1] == ';')
-                --dlen;
-        }
-
-        decoded_len = apreq_decode(v->data + off, data, dlen);
-
-        if (decoded_len < 0) {
-            return APR_EGENERAL;
-        }
-
-        off += decoded_len;
-        apr_bucket_delete(f);
+        vec = apr_array_push(&arr);
+        vec->iov_base = (char *)data;
+        vec->iov_len  = dlen;
     }
 
-    v->data[off] = 0;
-    v->size = off;
+    if (end != APR_BRIGADE_SENTINEL(bb))
+        ((struct iovec *)arr.elts)[arr.nelts - 1].iov_len--; /* drop '=' sign */
+
+    s = apreq_decodev(v->data, (struct iovec *)arr.elts, arr.nelts, &v->size);
+    if (s != APR_SUCCESS)
+        return s;
+
+    while ((e = APR_BRIGADE_FIRST(bb)) != end)
+        apr_bucket_delete(e);
+
     apr_table_addn(t, v->name, v->data);
     return APR_SUCCESS;
 }
@@ -236,14 +225,16 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
 
         if (APR_BUCKET_IS_EOS(e)) {
             s = (ctx->status == URL_NAME) ? APR_SUCCESS : 
-                split_urlword(t, ctx->bb, nlen+1, vlen);
+                split_urlword(t, ctx->bb, nlen, vlen);
             APR_BRIGADE_CONCAT(bb, ctx->bb);
             ctx->status = (s == APR_SUCCESS) ? URL_COMPLETE : URL_ERROR;
+            apreq_log(APREQ_DEBUG s, env, "url parser saw EOS");
             return s;
         }
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if ( s != APR_SUCCESS ) {
             ctx->status = URL_ERROR;
+            apreq_log(APREQ_ERROR s, env, "apr_bucket_read failed");
             return s;
         }
     parse_url_bucket:
@@ -267,9 +258,10 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
                 switch (data[off++]) {
                 case '&':
                 case ';':
-                    s = split_urlword(t, ctx->bb, nlen+1, vlen+1);
+                    s = split_urlword(t, ctx->bb, nlen, vlen);
                     if (s != APR_SUCCESS) {
                         ctx->status = URL_ERROR;
+                        apreq_log(APREQ_ERROR s, env, "split_urlword failed");
                         return s;
                     }
                     goto parse_url_brigade;

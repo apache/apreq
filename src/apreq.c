@@ -278,25 +278,13 @@ static APR_INLINE unsigned int x2ui(const char *what) {
     return (digit);
 }
 
-APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s, 
-                                       const apr_size_t slen)
+APR_INLINE
+static apr_status_t url_decode(char *d, apr_size_t *dlen, 
+                               const char *s, apr_size_t *slen)
 {
-    register int badesc = 0;
+    const char *src = s;
     char *start = d;
-    const char *end = s + slen;
-
-    if (s == NULL || d == NULL)
-        return -1;
-
-    if (s == (const char *)d) {     /* optimize for src = dest case */
-        for ( ; s < end; ++s) {
-            if (*s == '%' || *s == '+')
-                break;
-            else if (*s == 0)
-                return s - (const char *)d;
-        }
-        d = (char *)s;
-    }
+    const char *end = s + *slen;
 
     for (; s < end; ++d, ++s) {
         switch (*s) {
@@ -306,12 +294,12 @@ APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s,
             break;
 
         case '%':
-	    if (apr_isxdigit(s[1]) && apr_isxdigit(s[2]))
+	    if (s + 2 < end && apr_isxdigit(s[1]) && apr_isxdigit(s[2]))
             {
 		*d = x2c(s + 1);
 		s += 2;
 	    }
-            else if ((s[1] == 'u' || s[1] == 'U') &&
+            else if (s + 5 < end && (s[1] == 'u' || s[1] == 'U') &&
                      apr_isxdigit(s[2]) && apr_isxdigit(s[3]) && 
                      apr_isxdigit(s[4]) && apr_isxdigit(s[5]))
             {
@@ -352,14 +340,23 @@ APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s,
                 s += 5;
             }
 	    else {
-		badesc = 1;
-		*d = '%';
+                *dlen = d - start;
+                *slen = s - src;
+                if (s + 5 < end || (s + 2 < end && s[1] != 'u' && s[1] != 'U')) {
+                    *d = 0;
+                    return APR_EGENERAL;
+                }
+                memcpy(d, s, end - s);
+                d[end - s] = 0;
+                return APR_INCOMPLETE;
 	    }
             break;
 
         case 0:
             *d = 0;
-            return -1;
+            *dlen = d - start;
+            *slen = s - src;
+            return APR_BADCH;
 
         default:
             *d = *s;
@@ -367,11 +364,81 @@ APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s,
     }
 
     *d = 0;
+    *dlen = d - start;
+    *slen = s - src;
+    return APR_SUCCESS;
+}
 
-    if (badesc)
-	return -2;
-    else
-	return d - start;
+APREQ_DECLARE(apr_ssize_t) apreq_decode(char *d, const char *s, 
+                                        apr_size_t slen)
+{
+    apr_size_t dlen;
+    const char *end = s + slen;
+
+    if (s == NULL || d == NULL)
+        return -1;
+
+    if (s == (const char *)d) {     /* optimize for src = dest case */
+        for ( ; s < end; ++s) {
+            if (*s == '%' || *s == '+')
+                break;
+            else if (*s == 0)
+                return s - (const char *)d;
+        }
+        d = (char *)s;
+    }
+
+    switch (url_decode(d, &dlen, s, &slen)) {
+    case APR_SUCCESS:
+        return dlen;
+    case APR_INCOMPLETE:
+        return -2;
+    default:
+        return -1;
+    }
+}
+
+
+APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, struct iovec *v, int nelts, 
+                                          apr_size_t *bytes_written)
+{
+    apr_status_t status = APR_SUCCESS;
+    int n = 0;
+
+    *bytes_written = 0;
+    for (n = 0; n < nelts; ++n) {
+        apr_size_t slen = v[n].iov_len;
+        apr_size_t dlen;
+
+        switch (status = url_decode(d,&dlen,v[n].iov_base, &slen)) {
+
+        case APR_SUCCESS:
+            d += dlen;
+            *bytes_written += dlen;
+            continue;
+
+        case APR_INCOMPLETE:
+            d += dlen;
+            *bytes_written += dlen;
+
+            if (++n == nelts)
+                return APR_INCOMPLETE;
+
+            dlen = v[n-1].iov_len - slen;
+            memcpy(d + dlen, v[n].iov_base, v[n].iov_len);
+            v[n].iov_len += dlen;
+            v[n].iov_base = d;
+
+            status = apreq_decodev(d, v + n, nelts - n, &dlen);
+            *bytes_written += dlen;
+            return status;
+
+        default:
+            *bytes_written = dlen;
+            return status;
+        }
+    }
+    return APR_SUCCESS;
 }
 
 
