@@ -170,15 +170,16 @@ static XS(apreq_xs_##attr##_get)                                        \
     const char *key = NULL;                                             \
     struct apreq_xs_do_arg d = { NULL, NULL, aTHX };                    \
     void *env;                                                          \
-    SV *sv;                                                             \
+    SV *sv, *obj;                                                       \
                                                                         \
     if (items == 0 || items > 2 || !SvROK(ST(0)))                       \
         Perl_croak(aTHX_ "Usage: $object->get($key)");                  \
                                                                         \
-    sv = apreq_xs_find_obj(aTHX_ ST(0), #attr);                         \
-    env = apreq_xs_##attr##_sv2env(sv);                                 \
+    sv = ST(0);                                                         \
+    obj = apreq_xs_find_obj(aTHX_ sv, #attr);                           \
+    env = apreq_xs_##attr##_sv2env(obj);                                \
     d.env = env;                                                        \
-    d.parent = sv;                                                      \
+    d.parent = obj;                                                     \
     if (items == 2)                                                     \
         key = SvPV_nolen(ST(1));                                        \
                                                                         \
@@ -188,22 +189,22 @@ static XS(apreq_xs_##attr##_get)                                        \
                                                                         \
     case G_ARRAY:                                                       \
         PUTBACK;                                                        \
-        apreq_xs_##attr##_push(sv, &d, key);                            \
+        apreq_xs_##attr##_push(obj, &d, key);                           \
         break;                                                          \
                                                                         \
     case G_SCALAR:                                                      \
         if (items == 1) {                                               \
-            apr_table_t *t = apreq_xs_##attr##_sv2table(sv);            \
+            apr_table_t *t = apreq_xs_##attr##_sv2table(obj);           \
             if (t != NULL)                                              \
-                XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class,sv)));      \
+                XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class,obj)));     \
             PUTBACK;                                                    \
             break;                                                      \
         }                                                               \
                                                                         \
-        RETVAL = apreq_xs_##attr##_##type(sv, key);                     \
+        RETVAL = apreq_xs_##attr##_##type(obj, key);                    \
         if (RETVAL && (COND))                                           \
             XPUSHs(sv_2mortal(                                          \
-                   apreq_xs_##type##2sv(RETVAL,subclass,sv)));          \
+                   apreq_xs_##type##2sv(RETVAL,subclass,obj)));         \
                                                                         \
     default:                                                            \
         PUTBACK;                                                        \

@@ -138,7 +138,9 @@ sub handler {
         $req->config(DISABLE_UPLOADS => 1);
         eval {my $upload = $req->upload('HTTPUPLOAD')};
         if (ref $@ eq "Apache::Request::Error") {
-            $req->print("ok");
+            my $args = $@->args('test');
+            my $upload = $@->upload('HTTPUPLOAD'); # no exception this time!
+            $@->print("ok") if $args eq $test;
         }
     }
 

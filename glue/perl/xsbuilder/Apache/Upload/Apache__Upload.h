@@ -22,7 +22,7 @@
 /* XXX modperl_* dependency for T_HASHOBJ support */
 #include "modperl_common_util.h"
 
-#define apreq_xs_upload_error_check   do {                              \
+#define apreq_xs_request_upload_error_check   do {                      \
     int n = PL_stack_sp - (PL_stack_base + ax - 1);                     \
     apreq_request_t *req;                                               \
     apr_status_t s;                                                     \
@@ -33,7 +33,7 @@
         if (n == 1 && items == 2)                                       \
             break;                                                      \
     default:                                                            \
-        req = (apreq_request_t *)SvIVX(sv);                             \
+        req = (apreq_request_t *)SvIVX(obj);                            \
         if (req->parser == NULL)                                        \
            break;                                                       \
         switch (s = apreq_parse_request(req,NULL)) {                    \
@@ -41,22 +41,22 @@
         case APR_SUCCESS:                                               \
             break;                                                      \
         default:                                                        \
-            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Request::upload", \
-                           "Apache::Request::Error");                   \
+            APREQ_XS_THROW_ERROR(request, s, "Apache::Request::upload", \
+                                 "Apache::Request::Error");             \
         }                                                               \
     }                                                                   \
 } while (0)
 
 
-#define apreq_xs_upload_table_error_check 
+#define apreq_xs_upload_table_error_check
 
 
 #define READ_BLOCK_SIZE (1024 * 256)
 #define S2P(s) (s ? apreq_value_to_param(apreq_strtoval(s)) : NULL)
-#define apreq_xs_upload_do      (items==1 ? apreq_xs_upload_table_keys  \
-                                : apreq_xs_upload_table_values)
+#define apreq_xs_upload_do      (items==1 ? apreq_xs_request_upload_table_keys  \
+                                : apreq_xs_request_upload_table_values)
 
-#define apreq_xs_upload_push(sv,d,key) do {                             \
+#define apreq_xs_request_upload_push(sv,d,key) do {                             \
     apreq_request_t *req = (apreq_request_t *)SvIVX(sv);                \
     apr_status_t s;                                                     \
     do s = apreq_env_read(req->env, APR_BLOCK_READ, READ_BLOCK_SIZE);   \
@@ -66,12 +66,12 @@
 } while (0)
 
 #define apreq_xs_upload_table_push(sv,d,k) apreq_xs_push(upload_table,sv,d,k)
-#define apreq_xs_upload_sv2table(sv) apreq_uploads(apreq_env_pool(env), \
+#define apreq_xs_request_upload_sv2table(sv) apreq_uploads(apreq_env_pool(env), \
                                                 (apreq_request_t *)SvIVX(sv))
 #define apreq_xs_upload_table_sv2table(sv) ((apr_table_t *)SvIVX(sv))
-#define apreq_xs_upload_sv2env(sv)         ((apreq_request_t *)SvIVX(sv))->env
+#define apreq_xs_request_upload_sv2env(sv)         ((apreq_request_t *)SvIVX(sv))->env
 #define apreq_xs_upload_table_sv2env(sv)   apreq_xs_sv2env(sv)
-#define apreq_xs_upload_param(sv,k) apreq_upload((apreq_request_t *)SvIVX(sv),k)
+#define apreq_xs_request_upload_param(sv,k) apreq_upload((apreq_request_t *)SvIVX(sv),k)
 #define apreq_xs_upload_table_param(sv,k) \
                         S2P(apr_table_get(apreq_xs_upload_table_sv2table(sv),k))
 
@@ -81,8 +81,8 @@
 #define apreq_xs_param2sv(ptr,class,parent)  apreq_xs_2sv(ptr,class,parent)
 #define apreq_xs_sv2param(sv) ((apreq_param_t *)SvIVX(SvRV(sv)))
 
-static int apreq_xs_upload_table_keys(void *data, const char *key,
-                                      const char *val)
+static int apreq_xs_request_upload_table_keys(void *data, const char *key,
+                                              const char *val)
 {
 #ifdef USE_ITHREADS
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
@@ -109,7 +109,7 @@ static int apreq_xs_upload_table_keys(void *data, const char *key,
 #define UPLOAD_TABLE  "Apache::Upload::Table"
 #define UPLOAD_PKG    "Apache::Upload"
 
-APREQ_XS_DEFINE_TABLE_GET(upload, UPLOAD_TABLE, param, UPLOAD_PKG, RETVAL->bb);
+APREQ_XS_DEFINE_TABLE_GET(request_upload, UPLOAD_TABLE, param, UPLOAD_PKG, RETVAL->bb);
 APREQ_XS_DEFINE_TABLE_GET(upload_table, UPLOAD_TABLE, param, UPLOAD_PKG, 1);
 APREQ_XS_DEFINE_ENV(upload);
 
@@ -129,15 +129,19 @@ static XS(apreq_xs_upload_link)
     apr_bucket_brigade *bb;
     apr_file_t *f;
     apr_status_t s = APR_SUCCESS;
+    SV *sv, *obj;
 
     if (items != 2 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $upload->link($name)");
 
-    if (!(mg = mg_find(SvRV(ST(0)), PERL_MAGIC_ext)))
+    sv = ST(0);
+    obj = apreq_xs_find_obj(aTHX_ sv, "upload");
+
+    if (!(mg = mg_find(obj, PERL_MAGIC_ext)))
         Perl_croak(aTHX_ "$upload->link($name): can't find env");
 
     env = mg->mg_ptr;
-    bb = apreq_xs_sv2param(ST(0))->bb;
+    bb = ((apreq_param_t *)SvIVX(obj))->bb;
     name = SvPV_nolen(ST(1));
 
     f = apreq_brigade_spoolfile(bb);
@@ -151,10 +155,8 @@ static XS(apreq_xs_upload_link)
         if (s == APR_SUCCESS) {
             s = apreq_brigade_fwrite(f, &len, bb);
             if (s != APR_SUCCESS) {
-                if (GIMME_V != G_VOID)
-                    XSRETURN_UNDEF;
-                apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::link", 
-                               "Apache::Upload::Error");
+                apreq_log(APREQ_ERROR s, env, "apreq_brigade_fwrite failed");
+                goto link_error;
             }
             XSRETURN_YES;
         }
@@ -162,9 +164,10 @@ static XS(apreq_xs_upload_link)
             goto link_error;
     }
     s = apr_file_name_get(&fname, f);
-    if (s != APR_SUCCESS)
+    if (s != APR_SUCCESS) {
+        apreq_log(APREQ_ERROR s, env, "apr_file_name_get failed");
         goto link_error;
-
+    }
     if (PerlLIO_link(fname, name) >= 0)
         XSRETURN_YES;
     else {
@@ -173,15 +176,14 @@ static XS(apreq_xs_upload_link)
                           apreq_env_pool(env));
         if (s == APR_SUCCESS)
             XSRETURN_YES;
+        else
+            apreq_log(APREQ_ERROR s, env, "apr_file_copy failed");
     }
 
  link_error:
-    if (GIMME_V != G_VOID)
-        XSRETURN_UNDEF;
-
-    apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::link", 
-                   "APR::Error");
-
+    APREQ_XS_THROW_ERROR(upload, s, "Apache::Upload::link", 
+                         "Apache::Upload::Error");
+    XSRETURN_UNDEF;
 }
 
 
@@ -194,22 +196,28 @@ static XS(apreq_xs_upload_slurp)
     apr_off_t len_off;
     apr_size_t len_size;
     apr_bucket_brigade *bb;
+    SV *sv, *obj;
     apr_status_t s;
 
     if (items != 2 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $upload->slurp($data)");
 
-    if (!(mg = mg_find(SvRV(ST(0)), PERL_MAGIC_ext)))
+    sv = ST(0);
+    obj = apreq_xs_find_obj(aTHX_ sv, "upload");
+
+    if (!(mg = mg_find(obj, PERL_MAGIC_ext)))
         Perl_croak(aTHX_ "$upload->slurp($data): can't find env");
 
     env = mg->mg_ptr;
-    bb = apreq_xs_sv2param(ST(0))->bb;
+    bb = ((apreq_param_t *)SvIVX(obj))->bb;
 
     s = apr_brigade_length(bb, 0, &len_off);
-    if (s != APR_SUCCESS)
-        apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::slurp", 
-                       "Apache::Upload::Error");
-
+    if (s != APR_SUCCESS) {
+        apreq_log(APREQ_ERROR s, env, "apr_brigade_length failed");
+        APREQ_XS_THROW_ERROR(upload, s, "Apache::Upload::slurp", 
+                             "Apache::Upload::Error");
+        XSRETURN_UNDEF;
+    }
 
     len_size = len_off; /* max_body setting will be low enough to prevent
                          * overflow, but even if it wasn't the code below will
@@ -222,10 +230,12 @@ static XS(apreq_xs_upload_slurp)
     SvCUR_set(ST(1), len_size);
     SvPOK_only(ST(1));
     s = apr_brigade_flatten(bb, data, &len_size);
-    if (s != APR_SUCCESS)
-        apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::slurp", 
-                       "APR::Error");
-
+    if (s != APR_SUCCESS) {
+        apreq_log(APREQ_ERROR s, env, "apr_brigade_flatten failed");
+        APREQ_XS_THROW_ERROR(upload, s, "Apache::Upload::slurp", 
+                             "Apache::Upload::Error");
+        XSRETURN_UNDEF;
+    }
     XSRETURN_IV(len_size);
 }
 
@@ -237,21 +247,28 @@ static XS(apreq_xs_upload_size)
     apr_bucket_brigade *bb;
     apr_status_t s;
     apr_off_t len;
+    SV *sv, *obj;
 
     if (items != 1 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $upload->size()");
 
-    if (!(mg = mg_find(SvRV(ST(0)), PERL_MAGIC_ext)))
+    sv = ST(0);
+    obj = apreq_xs_find_obj(aTHX_ sv, "upload");
+
+    if (!(mg = mg_find(obj, PERL_MAGIC_ext)))
         Perl_croak(aTHX_ "$upload->size(): can't find env");
 
     env = mg->mg_ptr;
-    bb = apreq_xs_sv2param(ST(0))->bb;
+    bb = ((apreq_param_t *)SvIVX(obj))->bb;
 
     s = apr_brigade_length(bb, 1, &len);
 
-    if (s != APR_SUCCESS)
-        apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::size", 
-                       "APR::Error");
+    if (s != APR_SUCCESS) {
+        apreq_log(APREQ_ERROR s, env, "apr_brigade_length failed");
+        APREQ_XS_THROW_ERROR(upload, s, "Apache::Upload::size", 
+                             "Apache::Upload::Error");
+        XSRETURN_UNDEF;
+    }
 
     XSRETURN_IV((IV)len);
 }
@@ -262,11 +279,15 @@ static XS(apreq_xs_upload_type)
     apreq_param_t *upload;
     const char *ct, *sc;
     STRLEN len;
+    SV *sv, *obj;
 
     if (items != 1 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $upload->type()");
 
-    upload = apreq_xs_sv2param(ST(0));
+    sv = ST(0);
+    obj = apreq_xs_find_obj(aTHX_ sv, "upload");
+
+    upload = (apreq_param_t *)SvIVX(obj);
     ct = apr_table_get(upload->info, "Content-Type");
     if (ct == NULL)
         Perl_croak(aTHX_ "$upload->type: can't find Content-Type header");
@@ -304,7 +325,7 @@ static XS(apreq_xs_upload_brigade_read)
     apr_bucket_brigade *bb;
     apr_bucket *e, *end;
     IV want = -1, offset = 0;
-    SV *sv;
+    SV *sv, *obj;
     apr_status_t s;
     char *buf;
 
@@ -315,8 +336,11 @@ static XS(apreq_xs_upload_brigade_read)
         want = SvIV(ST(2));
     case 2:
         sv = ST(1);
-        bb = (apr_bucket_brigade *)SvIVX(SvRV(ST(0)));
-        break;
+        if (SvROK(ST(0))) {
+            obj = SvRV(ST(0));
+            bb = (apr_bucket_brigade *)SvIVX(obj);
+            break;
+        }
     default:
         Perl_croak(aTHX_ "Usage: $bb->READ($buf,$len,$off)");
     }
@@ -389,13 +413,14 @@ static XS(apreq_xs_upload_brigade_readline)
     dXSARGS;
     apr_bucket_brigade *bb;
     apr_bucket *e;
-    SV *sv;
+    SV *sv, *obj;
     apr_status_t s;
 
     if (items != 1 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $bb->READLINE");
 
-    bb = (apr_bucket_brigade *)SvIVX(SvRV(ST(0)));
+    obj = SvRV(ST(0));
+    bb = (apr_bucket_brigade *)SvIVX(obj);
 
     if (APR_BRIGADE_EMPTY(bb))
         XSRETURN(0);
@@ -453,15 +478,19 @@ static XS(apreq_xs_upload_tempname)
     apr_status_t s;
     apr_file_t *file;
     const char *path;
+    SV *sv, *obj;
 
     if (items != 1 || !SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $upload->tempname()");
 
-    if (!(mg = mg_find(SvRV(ST(0)), PERL_MAGIC_ext)))
+    sv = ST(0);
+    obj = apreq_xs_find_obj(aTHX_ sv, "upload");
+
+    if (!(mg = mg_find(obj, PERL_MAGIC_ext)))
         Perl_croak(aTHX_ "$upload->tempname(): can't find env");
 
     env = mg->mg_ptr;
-    bb = apreq_xs_sv2param(ST(0))->bb;
+    bb = ((apreq_param_t *)SvIVX(obj))->bb;
     file = apreq_brigade_spoolfile(bb);
 
     if (file == NULL) {
@@ -471,25 +500,34 @@ static XS(apreq_xs_upload_tempname)
 
         s = apreq_file_mktemp(&file, apreq_env_pool(env), tmpdir);
 
-        if (s != APR_SUCCESS)
-            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::tempname", 
-                           "Apache::Upload::Error");
+        if (s != APR_SUCCESS) {
+            apreq_log(APREQ_ERROR s, env, "apreq_file_mktemp failed");
+            goto tempname_error;
+        }
 
         s = apreq_brigade_fwrite(file, &len, bb);
 
-        if (s != APR_SUCCESS)
-            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::tempname", 
-                           "Apache::Upload::Error");
+        if (s != APR_SUCCESS) {
+            apreq_log(APREQ_ERROR s, env, "apreq_brigade_fwrite failed");
+            goto tempname_error;
+        }
 
         last = apr_bucket_file_create(file, len, 0, bb->p, bb->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(bb, last);
     }
 
     s = apr_file_name_get(&path, file);
-    if (s != APR_SUCCESS)
-        apreq_xs_croak(aTHX_ newHV(), s, "Apache::Upload::tempname", 
-                       "APR::Error");
+    if (s != APR_SUCCESS) {
+        apreq_log(APREQ_ERROR s, env, "apr_file_name_get failed");
+        goto tempname_error;
+    }
 
     ST(0) = sv_2mortal(newSVpvn(path, strlen(path)));
     XSRETURN(1);
+
+ tempname_error:
+    APREQ_XS_THROW_ERROR(upload, s, "Apache::Upload::tempname", 
+                         "Apache::Upload::Error");
+    XSRETURN_UNDEF;
+
 }

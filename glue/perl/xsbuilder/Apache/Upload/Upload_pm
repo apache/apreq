@@ -21,7 +21,7 @@ sub fh {
 
 
 package Apache::Upload::Error;
-push our(@ISA), "APR::Error";
+push our(@ISA), qw/APR::Error Apache::Upload/;
 
 package Apache::Upload::Table;
 push our(@ISA), "APR::Table";

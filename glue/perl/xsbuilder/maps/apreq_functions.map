@@ -6,8 +6,8 @@ MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
 
 MODULE=Apache::Request PACKAGE=Apache::Request
  DEFINE_env     | apreq_xs_request_env |
- DEFINE_args    | apreq_xs_args_get |
- DEFINE_body    | apreq_xs_body_get |
+ DEFINE_args    | apreq_xs_request_args_get |
+ DEFINE_body    | apreq_xs_request_body_get |
  DEFINE_config  | apreq_xs_request_config |
  DEFINE_parse   | apreq_xs_request_parse |
  DEFINE_pool    | apreq_xs_request_pool |
@@ -46,7 +46,7 @@ MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table
  DEFINE_new     | apreq_xs_table_request_make |
 
 MODULE=Apache::Upload PACKAGE=Apache::Request PREFIX=Apache__Request_
- DEFINE_upload  | apreq_xs_upload_get |
+ DEFINE_upload  | apreq_xs_request_upload_get |
 
 MODULE=Apache::Upload PACKAGE=Apache::Upload::Brigade PREFIX=Apache__Upload__Brigade_
  DEFINE_new | apreq_xs_upload_brigade_copy |

@@ -14,7 +14,7 @@ BEGIN {
 
 
 package Apache::Request::Error;
-push our(@ISA), "APR::Error";
+push our(@ISA), qw/APR::Error Apache::Request/;
 
 package Apache::Request;
 push our(@ISA), __PACKAGE__ -> env;
@@ -34,7 +34,7 @@ sub param;
 *parms = *param;
 *params = *param;
 
-sub status {
+sub param_status {
    my $req = shift;
    return wantarray ? ($req->args_status, $req->body_status)
                     : $req->args_status || $req->body_status;

@@ -268,6 +268,16 @@ void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func,
     Perl_croak(aTHX_ Nullch);
 }
 
+#define APREQ_XS_THROW_ERROR(attr, status, func, errpkg)  do {          \
+    if (!sv_derived_from(sv, errpkg)) {                                 \
+        HV *hv = newHV();                                               \
+        SV *rv = sv_bless(newRV_inc(obj),SvSTASH(obj));                 \
+        sv_setsv(*hv_fetch(hv, "_" #attr, 2, 1), sv_2mortal(rv));       \
+        apreq_xs_croak(aTHX_ hv, status, func, errpkg);                 \
+    }                                                                   \
+} while (0)
+
+
 #define APREQ_XS_DEFINE_POOL(attr)                              \
 static XS(apreq_xs_##attr##_pool)                               \
 {                                                               \

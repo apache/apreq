@@ -4,6 +4,10 @@
 
 @section v2_04_dev Changes with libapreq2-2.04-dev
 
+- Perl API [joes]
+  Exception objects inherit from the object which raised it,
+  which allows $@ to invoke its methods with impunity (exceptions 
+  are disabled for objects which derive from an exception class).
 
 - Perl API [joes]
   Implement HOOK_DATA and UPLOAD_HOOK.

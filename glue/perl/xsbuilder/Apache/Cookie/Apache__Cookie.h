@@ -40,11 +40,10 @@ APREQ_XS_DEFINE_OBJECT(jar);
         if (n == 1 && items == 2)                                       \
             break;                                                      \
     default:                                                            \
-        s = ((apreq_jar_t *)SvIVX(sv))->status;                         \
-        if (s != APR_SUCCESS) {                                         \
-            apreq_xs_croak(aTHX_ newHV(), s, "Apache::Cookie::Jar::get",\
-                           "Apache::Cookie::Error");                    \
-        }                                                               \
+        s = ((apreq_jar_t *)SvIVX(obj))->status;                        \
+        if (s != APR_SUCCESS)                                           \
+            APREQ_XS_THROW_ERROR(jar, s, "Apache::Cookie::Jar::get",    \
+                                 "Apache::Cookie::Jar::Error");         \
     }                                                                   \
 } while (0)
 
@@ -141,12 +140,15 @@ static XS(apreq_xs_cookie_set_attr)
     apr_pool_t *p;
     apr_status_t status = APR_SUCCESS;
     int j = 1;
+    SV *sv, *obj;
 
     if (items % 2 != 1 || ! SvROK(ST(0)))
         Perl_croak(aTHX_ "Usage: $cookie->set_attr(%attrs)");
 
-    c = apreq_xs_sv2(cookie,ST(0));
-    p = apreq_env_pool(apreq_xs_sv2env(SvRV(ST(0))));
+    sv = ST(0);
+    obj = apreq_xs_find_obj(aTHX_ sv, "cookie");
+    c = (apreq_cookie_t *)SvIVX(obj);
+    p = apreq_env_pool(apreq_xs_sv2env(obj));
 
     for (j = 1; j + 1 < items; j += 2) {
         STRLEN alen, vlen;
@@ -159,10 +161,13 @@ static XS(apreq_xs_cookie_set_attr)
         case APR_SUCCESS:
             break;
         default:
-            if (GIMME_V == G_VOID)
-                apreq_xs_croak(aTHX_ newHV(), status, "Apache::Cookie::set_attr",
-                               "Apache::Cookie::Error");
-            XSRETURN_IV(status);
+            if (GIMME_V == G_VOID) {
+                APREQ_XS_THROW_ERROR(cookie, status, "Apache::Cookie::set_attr",
+                                     "Apache::Cookie::Error");
+                XSRETURN_EMPTY;
+            }
+            else
+                XSRETURN_IV(status);
         }
     }
     XSRETURN_IV(status);

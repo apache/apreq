@@ -16,7 +16,10 @@ BEGIN {
 }
 
 package Apache::Cookie::Error;
-push our(@ISA), "APR::Error";
+push our(@ISA), qw/APR::Error Apache::Cookie/;
+
+package Apache::Cookie::Jar::Error;
+push our(@ISA), qw/APR::Error Apache::Cookie::Jar/;
 
 package Apache::Cookie;
 
