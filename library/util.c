@@ -501,42 +501,50 @@ APR_INLINE
 static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v, 
                                   int *nelts, apr_size_t *bytes_written)
 {
-    apr_size_t len, bytes_avail = 0;
-    int n = *nelts;
-    apr_status_t s = apr_file_writev(f, v, n, &len);
+    apr_size_t len;
+    int n;
+    apr_status_t s;
 
-    *bytes_written = len;
+    *bytes_written = 0;
 
-    if (s != APR_SUCCESS)
-        return s;
+    while (1) {
+        /* try to write */
+        s = apr_file_writev(f, v, *nelts, &len);
 
-    while (--n >= 0 && bytes_avail <= len)
-        bytes_avail += v[n].iov_len;
+        *bytes_written += len;
 
+        if (s != APR_SUCCESS)
+            return s;
 
-    if (bytes_avail > len) {
-        /* incomplete write: must shift v */
+        /* see how far we've come */
         n = 0;
-        while (v[n].iov_len <= len) {
-            len -= v[n].iov_len;
-            ++n;
+        while (n < *nelts && len >= v[n].iov_len)
+            len -= v[n++].iov_len;
+
+        if (n == *nelts) {
+            /* nothing left to write, report success */
+            *nelts = 0;
+            return APR_SUCCESS;
         }
+
+        /* incomplete write: must shift v */
         v[n].iov_len -= len;
         v[n].iov_base = (char *)(v[n].iov_base) + len;
 
         if (n > 0) {
+            /* we're satisfied for now if we can remove one iovec from
+               the "v" array */
             (*nelts) -= n;
             memmove(v, v + n, sizeof(*v) * *nelts);
-        }
-        else {
-            s = apreq_fwritev(f, v, nelts, &len);
-            *bytes_written += len;
-        }
-    }
-    else
-        *nelts = 0;
 
-    return s;
+            return APR_SUCCESS;
+        }
+
+        /* we're still in the first iovec - check for endless loop,
+           and then try again */
+        if (len == 0)
+            return APREQ_ERROR_GENERAL;
+    }
 }
 
 
@@ -757,13 +765,21 @@ apr_status_t spool_bucket_split(apr_bucket *a, apr_size_t point)
     return rv;
 }
 
+static
+apr_status_t spool_bucket_copy(apr_bucket *e, apr_bucket **c)
+{
+    apr_status_t rv = apr_bucket_shared_copy(e, c);
+    (*c)->type = &apr_bucket_type_file;
+    return rv;
+}
+
 static const apr_bucket_type_t spool_bucket_type = {
     "APREQ_SPOOL", 5, APR_BUCKET_DATA,
     spool_bucket_destroy,
     spool_bucket_read,
     spool_bucket_setaside,
     spool_bucket_split,
-    apr_bucket_copy_notimpl,
+    spool_bucket_copy,
 };
 
 APREQ_DECLARE(apr_file_t *)apreq_brigade_spoolfile(apr_bucket_brigade *bb)

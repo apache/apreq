@@ -297,7 +297,7 @@ void apreq_brigade_copy(apr_bucket_brigade *d, apr_bucket_brigade *s) {
          e = APR_BUCKET_NEXT(e))
     {
         apr_bucket *c;
-        apr_bucket_copy(e, &c);
+        apr_bucket_copy(e, &c); /*XXX may fail! */
         APR_BRIGADE_INSERT_TAIL(d, c);
     }
 }
