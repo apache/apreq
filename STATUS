@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/05/06 03:31:57 $]
+Last modified at [$Date: 2003/05/30 22:15:01 $]
 
      2.0.0  in development
 
@@ -26,11 +26,10 @@ RELEASE SHOWSTOPPERS:
            This behavior is unsafe, since large uploads can
            DOS the server by exhausting RAM.
 
+           [joes] How about writing an upload hook?
+
+
         3. The req->upload API is unimplemented.
-
-    * Filter API (env/mod_apreq.c) is missing key components:
-
-        1. Safety features (see above).
 
 
 CURRENT VOTES:
@@ -39,11 +38,26 @@ CURRENT VOTES:
 
 TODO:
 
-    * Apache::Test tests in env/t.
+    * Add documentation system.
 
-    * Populate the glue/ directory (perl, tcl, etc.).
+      [joes] suggests:
 
-    * add XForms logic to the mfd parser.
+      * doxygen for C API (header comments).
+
+      * perldoc for Perl glue (pod).
+    
+
+    * Populate the glue/ directory.
+
+      * Port apreq-1's Apache::Test tests for the Perl API into glue/perl/t.
+
+      * ExtUtils::XSBuilder framework for glue/perl is in place.
+        Now perl developers should be able to build & compile
+        Request.xs & Cookie.xs.  The Apache::Test tests from apreq-1
+        are really needed now to establish the API, and make it
+        play nice with (& without) modperl-2.
+
+    * Add XForms logic to the mfd parser.
 
 
 OPEN ISSUES:
@@ -51,7 +65,7 @@ OPEN ISSUES:
   Documentation system.
 
   Should we bundle an apr-based "application/xml" parser?  
-  If so, how should we parse the xml data into an apreq_table?
+  If so, how should we parse the xml data into an apr_table?
 
 
 BUGS:
@@ -61,5 +75,20 @@ BUGS:
 
 WISH LIST:
 
-     APR should adopt our table implementation.  joes offered a patch to
-     dev@apr on 4/28/2003 but it was apparently mistaken as porno-spam.
+     [joes] I wish folks would contribute some glue code for
+     one of these:
+
+              php, 
+
+              mod_tcl, 
+
+              mod_python, 
+
+              mod_jk, 
+
+              mod_ruby,
+
+              mod_parrot.
+
+     Someone should also adopt env/libapreq_cgi.c and ensure it
+     donesn't fall into disrepair by adding some tests for it to env/t.
