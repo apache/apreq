@@ -129,40 +129,6 @@ static SV *apreq_xs_c2perl(pTHX_ void *obj, void *env, const char *class, SV *pa
     return rv;
 }
 
-/**
- * Converts a C object, with environment, to a TIEHASH object.
- * @param obj C object.
- * @param env C environment.
- * @param class Class perl object will be blessed and tied to.
- * @return Reference to a new TIEHASH object in class.
- */
-APR_INLINE
-static SV *apreq_xs_table_c2perl(pTHX_ void *obj, void *env, 
-                                 const char *class, SV *parent)
-{
-    SV *sv = (SV *)newHV();
-    /*upgrade ensures CUR and LEN are both 0 */
-    SV *rv = sv_setref_pv(newSV(0), class, obj);
-    if (env) {
-        /* We use the old idiom for sv_magic() below,
-         * because perl 5.6 mangles the env pointer on
-         * the recommended 5.8.x invocation
-         *
-         *   sv_magic(SvRV(rv), Nullsv, PERL_MAGIC_ext, env, 0);
-         *
-         * 5.8.x is OK with the old way as well, but in the future
-         * we may have to use "#if PERL_VERSION < 8" ...
-         */
-        sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, Nullch, -1);
-        SvMAGIC(SvRV(rv))->mg_ptr = env;
-    }
-
-    sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
-    SvREFCNT_dec(rv); /* corrects SvREFCNT_inc(rv) implicit in sv_magic */
-
-    return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
-}
-
 #define apreq_xs_2sv(t,class,parent)                    \
              apreq_xs_c2perl(aTHX_ t, env, class, parent)
 
