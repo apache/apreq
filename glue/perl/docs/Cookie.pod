@@ -399,6 +399,7 @@ As a special case, $set = "now" is equivalent to $set = "0".
 =for example end
 
 =for example_testing
+     ok $expires == 3 * 30 * 24 * 3600; # 3 months
      ok $cookie->expires == 3 * 3600;
 
 
