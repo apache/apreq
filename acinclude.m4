@@ -76,7 +76,7 @@ AC_DEFUN(AC_APREQ, [
 
 
         AM_CONDITIONAL(BUILD_PERL_GLUE, test "x$PERL_GLUE" != "xno")
-        AM_CONDITIONAL(HAVE_APACHE_TEST, test -b "`$prereq_check Apache::Test`")
+        AM_CONDITIONAL(HAVE_APACHE_TEST, test -n "`$prereq_check Apache::Test`")
         AM_CONDITIONAL(BUILD_HTTPD, test -n "$APACHE2_SRC")
         AM_CONDITIONAL(BUILD_APR, test "x$APR_CONFIG" = x`$APR_CONFIG --srcdir`/apr-config)
         AM_CONDITIONAL(BUILD_APU, test "x$APU_CONFIG" = x`$APU_CONFIG --srcdir`/apu-config)
