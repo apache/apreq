@@ -285,7 +285,7 @@ $(LIBAPREQ):
 
 CLEAN:
         cd $(LIBDIR)
-        $(RM_F) *.pch *.exe *.exp *.lib *.pch *.idb *.so *.dll *.obj
+        $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
         cd ..
 !IF EXIST("$(PERLGLUE)\Makefile")
         cd $(PERLGLUE)
