@@ -2,6 +2,11 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.24 - August 23, 2003
+
+Applied Steve Hay's Request.pm doc patch explaining the tempnam()
+dependence for C<Apache::Request::new()>'s TEMP_DIR option.
+
 =item 1.23 - July 10, 2003
 
 Applied Graham Clark's patch to cleanup apache_request.h macros.

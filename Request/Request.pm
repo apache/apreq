@@ -64,8 +64,6 @@ and are therefore parsed using case-insensitive keys.
 
 =back
 
-=over 4
-
 =head2 new
 
 Create a new I<Apache::Request> object with an I<Apache> request_rec object:
@@ -115,6 +113,17 @@ file system as the final destination file:
  my $apr = Apache::Request->new($r, TEMP_DIR => "/home/httpd/tmp");
  my $upload = $apr->upload('file');
  $upload->link("/home/user/myfile") || warn "link failed: $!";
+
+Note: The standard C library function C<tempnam()> is used to define the
+file to be used, and it may well prefer to look for some other temporary
+directory, specified by an environment variable in the environment of the
+user that Apache is running as, in preference to the one passed to it.
+For example, Microsoft's C<tempnam()> implementation will look for a TMP
+environment variable first; glibc's version looks for TMPDIR first. The
+TEMP_DIR specified here is generally only used if the relevant environment
+variable is not set, or the directory specified by it does not exist.
+Refer to your system's C library documentation for the full details on your
+platform.
 
 =item HOOK_DATA
 
@@ -173,10 +182,10 @@ The I<parse> method does the actual work of parsing the request.
 It is called for you by the accessor methods, so it is not required but
 can be useful to provide a more user-friendly message should an error 
 occur:
- 
+
     my $r = shift;
     my $apr = Apache::Request->new($r); 
- 
+
     my $status = $apr->parse; 
     unless ($status == OK) { 
 	$apr->custom_response($status, $apr->notes("error-notes")); 
@@ -237,8 +246,6 @@ An optional name parameter can be passed to return the I<Apache::Upload>
 object associated with the given name:
 
     my $upload = $apr->upload($name);
-
-=back
 
 =head1 SUBCLASSING Apache::Request
 
@@ -301,8 +308,6 @@ Thus, the second example above can be simplified as:
 	}
 
 =head1 Apache::Upload METHODS
-
-=over 4
 
 =head2 name
 
@@ -386,8 +391,6 @@ I<link> will create a hard link to it:
 
 Typically the new name must lie on the same file system as the
 spool file. Check your system's link(2) manpage for details.
-
-=back
 
 =head1 SEE ALSO
 
