@@ -2,11 +2,12 @@ package TestApReq::request;
 
 use strict;
 use warnings FATAL => 'all';
-use APR;
+
 use Apache::RequestRec;
 use Apache::RequestIO;
 use Apache::Request ();
 use Apache::Connection;
+use Apache::Upload;
 
 sub handler {
     my $r = shift;

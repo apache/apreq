@@ -7,11 +7,11 @@
 #   data[1]
 #</apreq_value_t>
 
-!<apreq_param_t MODULE=Apache::Request>
-!   info
-!   bb
+<apreq_param_t MODULE=Apache::Upload>
+   info
+   bb
 !   v
-!</apreq_param_t>
+</apreq_param_t>
 
 <apreq_request_t MODULE=Apache::Request>
 !   args

@@ -10,7 +10,6 @@ MODULE=Apache::Request PACKAGE=Apache::Request
  DEFINE_env     | apreq_xs_request_env |
  DEFINE_args    | apreq_xs_args_get |
  DEFINE_body    | apreq_xs_body_get |
- DEFINE_upload  | apreq_xs_upload_get |
  DEFINE_config  | apreq_xs_request_config |
  DEFINE_parse   | apreq_xs_request_parse |
 apr_status_t:DEFINE_status  | apreq_env_read(apreq_xs_sv2(request,sv),APR_BLOCK_READ,0) | SV *:sv
@@ -23,18 +22,21 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Ta
 
 ##########  Apache::Upload:: Functions  ##########
 
-MODULE=Apache::Request PACKAGE=Apache::Upload PREFIX=Apache__Upload_
- apr_bucket_brigade *:DEFINE_bb  | apreq_brigade_copy(apreq_xs_rv2param(sv)->bb) | SV *:sv
- apr_table_t *:DEFINE_info       | apreq_param_info(apreq_xs_rv2param(sv)) | SV *:sv
- const char *:DEFINE_name        | apreq_param_name(apreq_xs_rv2param(sv)) | SV *:sv
- char *:DEFINE_filename          | apreq_param_value(apreq_xs_rv2param(sv)) | SV *:sv
- apr_status_t:DEFINE_status      | apreq_param_status(apreq_xs_rv2param(sv)) | SV *:sv
+MODULE=Apache::Upload PACKAGE=Apache::Upload PREFIX=Apache__Upload_
+! apr_table_t *:DEFINE_info       | apreq_param_info(apreq_xs_sv2param(sv)) | SV *:sv
+ const char *:DEFINE_name        | apreq_param_name(apreq_xs_sv2param(sv)) | SV *:sv
+ char *:DEFINE_filename          | apreq_param_value(apreq_xs_sv2param(sv)) | SV *:sv
+ apr_status_t:DEFINE_status      | apreq_param_status(apreq_xs_sv2param(sv)) | SV *:sv
+ DEFINE_env                      | apreq_xs_upload_env |
  DEFINE_link                     | apreq_xs_upload_link |
  DEFINE_slurp                    | apreq_xs_upload_slurp |
 
-MODULE=Apache::Request PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table_
+MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table_
  DEFINE_get     | apreq_xs_upload_table_get |
  DEFINE_FETCH   | apreq_xs_upload_table_get |
+
+MODULE=Apache::Upload PACKAGE=Apache::Request PREFIX=Apache__Request_
+ DEFINE_upload  | apreq_xs_upload_get |
 
 
 
