@@ -1,26 +1,25 @@
-APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/06/30 22:24:07 $]
+Last modified at [$Date: 2003/07/10 04:35:18 $]   -*-text-*-
+/** @page STATUS
 
      2.0.0  in development
 
 Contributors looking for a mission:
 
-    * just do an egrep on "TODO" or "XXX" and see what's there
+    - just do an egrep on "TODO" or "XXX" and see what's there
 
 
 CURRENT RELEASE NOTES:
 
-    * This is unreleased software.
+    - This is unreleased software.
 
 
 RELEASE SHOWSTOPPERS:
 
-    * Missing Perl API components: 
-
-        1. What should $req->parse do?
-        2. How should we encode/decode $cookie->value?
-        3. What about CGI?  We can use import() to autoload 
-           an environment if none exists, but should we?
+    - Missing Perl API components: 
+      -# What should $req->parse do?
+      -# How should we encode/decode $cookie->value?
+      -# What about CGI?  We can use import() to autoload 
+         an environment if none exists, but should we?
 
 CURRENT VOTES:
 
@@ -28,41 +27,43 @@ CURRENT VOTES:
 
 TODO:
 
-    * Write tests to exercise the filter prefetch code:
-         1) Test AAA handler that checks early POST data,
-         2) Test output filter w/ a streaming content-handler,
-            that needs apreq to read POST data that is beyond 
-            what the content handler has already pulled in.
+    - Write tests to exercise the filter prefetch code:
+         Output filter w/ a streaming content-handler,
+         that needs apreq to read POST data that is beyond 
+         what the content handler has already pulled in.
 
-    * Adopt a versioning system for the various components: 
-         1) src/,  (libtool-based)
-         2) env/,  (module-magic-number ?)   
-         3) glue/, (per-language ?)
+    - Adopt a versioning system for the various components: 
+      -# src/,  (libtool-based, following apr)
+      -# env/,  (module-magic-number ?)   
+      -# glue/, (per-language ?)
 
-    * Bring Perl documentation up to speed.
+    - Bring Perl documentation up to speed.
 
-    * Add XForms logic to the mfd parser.
+    - Write parser/hook API documentation.
 
-    * symbol exports files:
-      - win32 now has hardcoded .def files (need to automate, e.g. based
-        on exports.c ala httpd-2.0)
-      - aix needs .exp files
+    - Add XForms logic to the mfd parser.
 
-    * on Win32, figure out how to build things so Apache::Cookie
+    - symbol exports files:
+      -# win32 now has hardcoded .def files (need to automate, e.g. based
+         on exports.c ala httpd-2.0)
+      -# aix needs .exp files
+
+    - on Win32, figure out how to build things so Apache::Cookie
       and Apache::Request don't need to be linked against mod_apreq
       to resolve missing apreq_env* symbols. 
 
+    - drop build/test_config.pl from the repository.
 
 OPEN ISSUES:
 
-    * Should we bundle an apr-based "application/xml" parser?  
+    - Should we bundle an apr-based "application/xml" parser?  
       If so, how should we parse the xml data into an apr_table?
 
-    * How should the Perl API work in a CGI context?
+    - How should the Perl API work in a CGI context?
       Will users need to preload an "CGI environment" module 
       before loading Request.so or Cookie.so?
 
-    * Figure out how to bundle a CPAN release.
+    - Figure out how to bundle a CPAN release.
 
 BUGS:
 
@@ -71,15 +72,20 @@ BUGS:
 
 WISH LIST:
 
-    * I [joes] wish folks would contribute some glue code for
+    - I [joes] wish folks would contribute some glue code for
       one of these:
 
-      - php, 
-      - mod_tcl, 
+      - php,
+      - Rivet,
+      - mod_dtcl, 
       - mod_python, 
       - mod_jk, 
+      - tomcat,
       - mod_ruby,
       - mod_parrot.
 
-    * Someone should also adopt env/libapreq_cgi.c and ensure it
+    - Someone should also adopt env/libapreq_cgi.c and ensure it
       doesn't fall into disrepair by adding some tests to env/t.
+
+
+*/

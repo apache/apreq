@@ -195,10 +195,9 @@ static ap_filter_t *get_apreq_filter(request_rec *r)
         if (strcmp(f->frec->name, filter_name) == 0)
             return cfg->f = f;
     }
-    apreq_filter_relocate(ap_add_input_filter(filter_name, NULL, r, r->connection));
-    apreq_log(APREQ_DEBUG 0, r, 
-              "apreq filter now added to top of filter chain" );
-    return cfg->f = r->input_filters;
+    cfg->f = ap_add_input_filter(filter_name, NULL, r, r->connection);
+    apreq_filter_relocate(cfg->f);
+    return cfg->f;
 }
 
 APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env, 
@@ -300,7 +299,6 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
             ctx->status = APR_SUCCESS;
             cfg->f = ap_add_input_filter(filter_name, NULL, r, r->connection);
             apreq_filter_relocate(cfg->f);
-            cfg->f = r->input_filters;
         }
     } 
     else {
