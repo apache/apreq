@@ -10,10 +10,16 @@ Contributors looking for a mission:
 
 CURRENT RELEASE NOTES:
 
+     - This is the multi-env-unstable branch.  It is a work-in-progress
+       which attempts to refactor our C interfaces to provide a more 
+       robust module API.  This refactoring effort will propagate 
+       into the perl glue as well, once the C API changes settle into 
+       place.
 
 
 RELEASE SHOWSTOPPERS:
 
+     - The api docs and perl glue are currently broken.
 
 
 CURRENT VOTES:

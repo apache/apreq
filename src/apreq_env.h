@@ -241,7 +241,7 @@ APREQ_DECLARE(apr_ssize_t) apreq_env_max_brigade(void *env, apr_ssize_t bytes);
  * @brief Vtable describing the necessary environment functions.
  */
 
-typedef struct apreq_env_t {
+typedef struct apreq_env_module_t {
     const char *name;
     apr_uint32_t magic_number;
     void (*log)(const char *,int,int,apr_status_t,void *,const char *,va_list);
@@ -256,18 +256,18 @@ typedef struct apreq_env_t {
     const char *(*temp_dir)(void *, const char *);
     apr_off_t (*max_body)(void *,apr_off_t);
     apr_ssize_t (*max_brigade)(void *, apr_ssize_t);
-} apreq_env_t;
+} apreq_env_module_t;
 
 /**
  * Convenience macro for defining an environment module by mapping
  * a function prefix to an associated environment structure.
  * @param pre Prefix to define new environment.  All attributes of
- * the apreq_env_t struct are defined with this as their prefix. The
+ * the apreq_env_module_t struct are defined with this as their prefix. The
  * generated struct is named by appending "_module" to the prefix.
  * @param name Name of this environment.
  * @param mmn Magic number (i.e. version number) of this environment.
  */
-#define APREQ_ENV_MODULE(pre, name, mmn) const apreq_env_t pre##_module = { \
+#define APREQ_ENV_MODULE(pre, name, mmn) const apreq_env_module_t pre##_module = { \
   name, mmn, pre##_log, pre##_pool, pre##_bucket_alloc, pre##_jar,          \
   pre##_request, pre##_query_string, pre##_header_in, pre##_header_out,     \
   pre##_read, pre##_temp_dir, pre##_max_body, pre##_max_brigade }
@@ -280,7 +280,7 @@ typedef struct apreq_env_t {
  * @return The previous active environment.  Note: a call using
  * mod == NULL fetches the current environment module without modifying it.
  */
-APREQ_DECLARE(const apreq_env_t *) apreq_env_module(const apreq_env_t *mod);
+APREQ_DECLARE(const apreq_env_module_t *) apreq_env_module(const apreq_env_module_t *mod);
 
 /**
  * The current environment's name.

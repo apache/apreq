@@ -5,6 +5,10 @@
 @section v2_05 Changes with libapreq2-2.05
 
 
+- C API [Max Kellemann]
+  Rename apreq_env_t to apreq_env_module_t, to prepare for
+  a new thread-safe apreq_env API.
+
 - C API [Max Kellermann]
   mod_apreq must check the return value of apreq_brigade_concat
   to avoid a RAM-consuming infinite loop.  A bad APREQ_TempDir 

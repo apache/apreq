@@ -22,17 +22,17 @@
 #include "apr_file_io.h"
 
 
-extern const apreq_env_t cgi_module;
-static const apreq_env_t *apreq_env = &cgi_module;
+extern const apreq_env_module_t cgi_module;
+static const apreq_env_module_t *apreq_env = &cgi_module;
 
 extern void apreq_parser_initialize(void);
 
 
-APREQ_DECLARE(const apreq_env_t *) apreq_env_module(const apreq_env_t *mod)
+APREQ_DECLARE(const apreq_env_module_t *) apreq_env_module(const apreq_env_module_t *mod)
 {
     apreq_parser_initialize();
     if (mod != NULL) {
-        const apreq_env_t *old_mod = apreq_env;
+        const apreq_env_module_t *old_mod = apreq_env;
         apreq_env = mod;
         return old_mod;
     }

@@ -718,7 +718,7 @@ static APREQ_ENV_MODULE(apache2, APREQ_MODULE_NAME,
 
 static void register_hooks (apr_pool_t *p)
 {
-    const apreq_env_t *old_env;
+    const apreq_env_module_t *old_env;
     old_env = apreq_env_module(&apache2_module);
     ap_register_input_filter(filter_name, apreq_filter, apreq_filter_init,
                              AP_FTYPE_PROTOCOL-1);
