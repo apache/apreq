@@ -28,7 +28,7 @@ WARN_IF_DOC_ERROR      = YES
 WARN_FORMAT            = "$file:$line: $text"
 
 INPUT                  = . src env
-FILE_PATTERNS          = *.c *.h *.dox CHANGES STATUS FAQ
+FILE_PATTERNS          = *.c *.h *.dox CHANGES STATUS
 RECURSIVE              = NO
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO

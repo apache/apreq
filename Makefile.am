@@ -9,6 +9,7 @@ POD_PREFIX=glue/perl/xsbuilder/Apache
 COOKIE_POD=$(POD_PREFIX)/Cookie/Cookie_pod
 REQUEST_POD=$(POD_PREFIX)/Request/Request_pod
 UPLOAD_POD=$(POD_PREFIX)/Upload/Upload_pod
+FAQ_POD=FAQ.pod
 SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi
 EUM=ExtUtils::Manifest
 
@@ -54,7 +55,7 @@ docs_install: docs
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
 	cp -a docs $(DESTDIR)$(pkgdatadir)
 
-pod2html: Request.html Cookie.html Upload.html
+pod2html: Request.html Cookie.html Upload.html FAQ.html
 
 Cookie.html: Makefile.am $(COOKIE_POD)
 	pod2html <$(COOKIE_POD) | perl -0777 -pe '$(SED_BODY_TAG)' > Cookie.html
@@ -62,6 +63,8 @@ Request.html: Makefile.am $(REQUEST_POD)
 	pod2html <$(REQUEST_POD)| perl -0777 -pe '$(SED_BODY_TAG)' > Request.html
 Upload.html: Makefile.am $(UPLOAD_POD)
 	pod2html <$(UPLOAD_POD)| perl -0777 -pe '$(SED_BODY_TAG)' > Upload.html
+FAQ.html: Makefile.am $(FAQ_POD)
+	pod2html <$(FAQ_POD) | perl -0777 -pe '$(SED_BODY_TAG)' > FAQ.html
 
 apr_tags: docs/apr.tag docs/apu.tag
 

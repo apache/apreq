@@ -77,3 +77,8 @@
  * @ingroup apreq_xs
  * @htmlinclude Cookie.html
  */
+
+/**
+ * @page apreq_faq FAQ
+ * @htmlinclude FAQ.html
+ */
