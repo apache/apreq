@@ -20,4 +20,6 @@ sub handler {
     return 0;
 }
 
+sub DESTROY { $_[0]->print("DESTROYING ", __PACKAGE__, " object\n") }
+
 1;
