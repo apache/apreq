@@ -81,6 +81,7 @@ application-specific subclass and pass that subclass's name as the
 VALUE_CLASS argument:
 
 =for example begin
+
     {
         package FOO;
         @ISA= 'Apache::Cookie';
@@ -461,8 +462,42 @@ Get or set the secure flag for the cookie:
 =for example end
 
 =for example_testing
-     ok $is_secure;
-     ok (not $cookie->secure);
+    ok $is_secure;
+    ok (not $cookie->secure);
+
+
+
+
+=head2 C<< comment(), comment($set) >>
+
+Get or set the comment field of an RFC (Version > 0) cookie.
+
+=for example begin
+
+    $cookie->comment("Never eat yellow snow");
+    print $cookie->comment;
+
+=for example end
+
+=for example_testing
+    ok $_STDOUT_ eq "Never eat yellow snow";
+
+
+
+
+=head2 C<< commentURL(), commentURL($set) >>
+
+Get or set the commentURL field of an RFC (Version > 0) cookie.
+
+=for example begin
+
+    $cookie->commentURL("http://localhost/cookie.policy");
+    print $cookie->commentURL;
+
+=for example end
+
+=for example_testing
+    ok $_STDOUT_ eq "http://localhost/cookie.policy";
 
 
 
