@@ -41,7 +41,6 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
     v->name = v->data + vlen + 1;
     memcpy((char *)v->name, name, nlen);
     ((char *)v->name)[nlen] = 0;
-    v->status = APR_SUCCESS;
 
     return param;
 }
@@ -89,10 +88,13 @@ APREQ_DECLARE(apreq_request_t *) apreq_request(void *env, const char *qs)
     }
 
     if (qs != NULL) {
-        apr_status_t s = apreq_parse_query_string(p, req->args, qs);
-        if (s != APR_SUCCESS)
-            apreq_log(APREQ_ERROR s, env, "invalid query string: %s", qs);
+        req->args_status = apreq_parse_query_string(p, req->args, qs);
+        if (req->args_status != APR_SUCCESS)
+            apreq_log(APREQ_ERROR req->args_status, env, 
+                      "invalid query string: %s", qs);
     }
+    else
+        req->args_status = APR_SUCCESS;
 
     return req;
 }
@@ -195,22 +197,18 @@ APREQ_DECLARE(apreq_param_t *) apreq_decode_param(apr_pool_t *pool,
     param->info = NULL;
     param->bb = NULL;
 
-    param->v.status = APR_SUCCESS;
     param->v.name = NULL;
 
     size = apreq_decode(param->v.data, word + nlen + 1, vlen);
 
-    if (size < 0) {
-        param->v.size = 0;
-        param->v.status = APR_BADARG;
-        return param;
-    }
+    if (size < 0)
+        return NULL;
 
     param->v.size = size;
     param->v.name = param->v.data + size + 1;
 
     if (apreq_decode(param->v.data + size + 1, word, nlen) < 0)
-        param->v.status = APR_BADCH;
+        return NULL;
 
     return param;
 }
@@ -222,14 +220,13 @@ APREQ_DECLARE(char *) apreq_encode_param(apr_pool_t *pool,
     apreq_value_t *v;
     apr_size_t nlen;
 
-    if (param->v.name == NULL || param->v.status != APR_SUCCESS)
+    if (param->v.name == NULL)
         return NULL;
 
     nlen = strlen(param->v.name);
 
     v = apr_palloc(pool, 3 * (nlen + param->v.size) + 2 + sizeof *v);
     v->name = param->v.name;
-    v->status = APR_SUCCESS;
     v->size = apreq_encode(v->data, param->v.name, nlen);
     v->data[v->size++] = '=';
     v->size += apreq_encode(v->data + v->size, param->v.data, param->v.size);
@@ -265,8 +262,8 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
                     vlen = qs - start - nlen - 1;
 
                 param = apreq_decode_param(pool, start, nlen, vlen);
-                if (param->v.status != APR_SUCCESS)
-                    return param->v.status;
+                if (param == NULL)
+                    return APR_EGENERAL;
 
                 apr_table_addn(t, param->v.name, param->v.data);
             }

@@ -3,6 +3,17 @@
 
 @section v2_04_dev Changes with libapreq2-2.04-dev
 
+- Perl API [joes]
+  Added $jar->status, $req->args_status and $req->body_status to report
+  parsing errors.
+
+- C API [joes]
+  Dropped status attribute of apreq_value_t.  Added status field to
+  apreq_jar_t and added args_status field to apreq_request_t. Parsers
+  also must return their public status code when a NULL brigade is passed.
+  apreq_hook_disable_uploads() is also added.
+  .
+  This is an ABI change affecting all versions of libapreq2 prior to 2.0.12.
 
 - Perl API [joes]
   $upload->info returns a proper APR::Table object now. Also implemented

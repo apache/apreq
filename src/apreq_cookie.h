@@ -42,8 +42,9 @@ extern "C" {
 
 /** @brief This is the container class for libapreq cookies. */
 typedef struct apreq_jar_t {
-    apr_table_t   *cookies;     /**< cookie table */
-    void          *env;         /**< environment */
+    apr_table_t   *cookies;   /**< cookie table */
+    void          *env;       /**< environment */
+    apr_status_t  status;     /**< status of "Cookie" header parse */
 } apreq_jar_t;
 
 

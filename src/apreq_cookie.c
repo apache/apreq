@@ -282,6 +282,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
         j = apr_palloc(p, sizeof *j);
         j->env = env;
         j->cookies = apr_table_make(p, APREQ_NELTS);
+        j->status = APR_SUCCESS;
     }
 
     origin = hdr;
@@ -316,51 +317,83 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar(void *env, const char *hdr)
 
         case 0:
             /* this is the normal exit point for apreq_jar */
+            if (c != NULL) {
+                apreq_log(APREQ_DEBUG j->status, env, 
+                          "adding cookie: %s => %s", c->v.name, c->v.data);
+                apreq_add_cookie(j, c);
+            }
             return j;
 
         case ',':
             ++hdr;
+            if (c != NULL) {
+                apreq_log(APREQ_DEBUG j->status, env, 
+                          "adding cookie: %s => %s", c->v.name, c->v.data);
+                apreq_add_cookie(j, c);
+            }
             goto parse_cookie_header;
 
         case '$':
             if (c == NULL) {
-                apreq_log(APREQ_ERROR APR_BADCH, env,
-                      "Saw attribute, expecting NAME=VALUE cookie pair: %s",
+                j->status = APR_BADCH;
+                apreq_log(APREQ_ERROR j->status, env,
+                      "Saw RFC attribute, was expecting NAME=VALUE cookie pair: %s",
                           hdr);
                 return j;
             }
             else if (version == NETSCAPE) {
-                c->v.status = APR_EMISMATCH;
-                apreq_log(APREQ_ERROR c->v.status, env, 
-                          "Saw attribute in a Netscape Cookie header: %s", 
+                j->status = APR_EMISMATCH;
+                apreq_log(APREQ_ERROR j->status, env, 
+                          "Saw RFC attribute in a Netscape Cookie header: %s", 
                           hdr);
                 return j;
             }
 
             status = get_pair(&hdr, &name, &nlen, &value, &vlen);
-
-            if (status == APR_SUCCESS)
-                apreq_cookie_attr(p, c, name, nlen, value, vlen);    
-            else {
-                c->v.status = status;
-                apreq_log(APREQ_WARN c->v.status, env,
-                           "Ignoring bad attribute pair: %s", hdr);
+            if (status != APR_SUCCESS) {
+                j->status = status;
+                apreq_log(APREQ_ERROR status, env,
+                              "Bad RFC attribute: %s",
+                           apr_pstrmemdup(p, name, hdr-name));
+                return j;
             }
+
+            status = apreq_cookie_attr(p, c, name, nlen, value, vlen);
+            switch (status) {
+            case APR_ENOTIMPL:
+                apreq_log(APREQ_WARN status, env, 
+                          "Skipping unrecognized RFC attribute pair: %s",
+                           apr_pstrmemdup(p, name, hdr-name));
+                /* fall through */
+            case APR_SUCCESS:
+                break;
+            default:
+                j->status = status;
+                apreq_log(APREQ_ERROR status, env,
+                          "Bad RFC attribute pair: %s",
+                           apr_pstrmemdup(p, name, hdr-name));
+                return j;
+            }
+
             break;
 
         default:
+            if (c != NULL) {
+                apreq_log(APREQ_DEBUG j->status, env, 
+                          "adding cookie: %s => %s", c->v.name, c->v.data);
+                apreq_add_cookie(j, c);
+            }
+
             status = get_pair(&hdr, &name, &nlen, &value, &vlen);
 
             if (status == APR_SUCCESS) {
                 c = apreq_make_cookie(p, name, nlen, value, vlen);
                 c->version = version;
-                apreq_log(APREQ_DEBUG status, env, 
-                          "adding cookie: %s => %s", c->v.name, c->v.data);
-                apreq_add_cookie(j, c);
             }
             else {
-                apreq_log(APREQ_WARN status, env,
-                          "Skipping bad NAME=VALUE pair: %s", hdr);
+                apreq_log(APREQ_WARN status, env, 
+                          "Skipping bad NAME=VALUE pair: %s", 
+                           apr_pstrmemdup(p, name, hdr-name));
             }
         }
     }

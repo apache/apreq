@@ -31,6 +31,16 @@
 #define CRLF    "\015\012"
 #endif
 
+#define PARSER_STATUS_CHECK(PREFIX)   do {         \
+    if (ctx->status == PREFIX##_ERROR)             \
+        return APR_EGENERAL;                       \
+    else if (ctx->status == PREFIX##_COMPLETE)     \
+        return APR_SUCCESS;                        \
+    else if (bb == NULL)                           \
+        return APR_INCOMPLETE;                     \
+} while (0);
+
+
 APREQ_DECLARE(apreq_parser_t *)
     apreq_make_parser(apr_pool_t *pool,
                       const char *enctype,
@@ -179,7 +189,7 @@ static apr_status_t split_urlword(apr_table_t *t,
     v->data[off] = 0;
     v->size = off;
     apr_table_addn(t, v->name, v->data);
-    return v->status = APR_SUCCESS;
+    return APR_SUCCESS;
 }
 
 struct url_ctx {
@@ -209,11 +219,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
     else
         ctx = parser->ctx;
 
-    if (ctx->status == URL_ERROR)
-        return APR_EGENERAL;
-    else if (ctx->status == URL_COMPLETE)
-        return APR_SUCCESS;
-
+    PARSER_STATUS_CHECK(URL);
     APR_BRIGADE_CONCAT(ctx->bb, bb);
 
  parse_url_brigade:
@@ -359,7 +365,6 @@ static apr_status_t split_header(apr_table_t *t,
         apr_bucket_delete(f);
     }
 
-    v->status = APR_SUCCESS;
     ((char *)v->name)[nlen] = 0;
 
     /* remove trailing (CR)LF from value */
@@ -403,11 +408,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
     else
         ctx = parser->ctx;
 
-    if (ctx->status == HDR_ERROR)
-        return APR_EGENERAL;
-    else if (ctx->status == HDR_COMPLETE)
-        return APR_SUCCESS;
-
+    PARSER_STATUS_CHECK(HDR);
     APR_BRIGADE_CONCAT(ctx->bb, bb);
 
  parse_hdr_brigade:
@@ -849,6 +850,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         return APR_SUCCESS;
     }
 
+    PARSER_STATUS_CHECK(MFD);
     APR_BRIGADE_CONCAT(ctx->in, bb);
 
  mfd_parse_brigade:
@@ -983,7 +985,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 param->info = ctx->info;
                 param->bb = apr_brigade_create(pool, 
                                                apr_bucket_alloc_create(pool));
-                param->v.status = APR_INCOMPLETE;
                 arr = (apr_array_header_t *)apr_table_elts(t);
                 e.key = (char *)param->v.name;
                 e.val = param->v.data;
@@ -1030,7 +1031,6 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
                 v = &param->v;
                 v->name = name;
-                v->status = APR_SUCCESS;
                 apr_brigade_flatten(ctx->bb, v->data, &len);
                 v->size = len;
                 v->data[v->size] = 0;

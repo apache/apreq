@@ -124,6 +124,7 @@ Get or set the secure flag for the cookie:
  my $secure = $cookie->secure;
  $cookie->secure(1);
 
+
 =head1 CHANGES to the v1 API:
 
 =over 4

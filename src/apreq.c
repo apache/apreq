@@ -40,7 +40,6 @@ APREQ_DECLARE(apreq_value_t *)apreq_make_value(apr_pool_t  *p,
     v->name = v->data + vlen + 1;
     memcpy((char *)v->name, name, nlen);
     ((char *)v->name)[nlen] = 0;
-    v->status = APR_SUCCESS;
 
     return v;
 }
@@ -493,7 +492,6 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
     rv = apr_palloc(p, len + sizeof *rv);
     rv->name = 0;
     rv->size = 0;
-    rv->status = APR_SUCCESS;
     rv->data[0] = 0;
 
     if (n == 0)
@@ -518,10 +516,8 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
     case APREQ_JOIN_DECODE:
         len = apreq_decode(d, a[0]->data, a[0]->size);
 
-        if (len < 0) {
-            rv->status = APR_BADCH;
-            break;
-        }
+        if (len < 0)
+            return NULL;
         else
             d += len;
 
@@ -531,10 +527,8 @@ APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p,
 
             len = apreq_decode(d, a[j]->data, a[j]->size);
 
-            if (len < 0) {
-                rv->status = APR_BADCH;
-                break;
-            }
+            if (len < 0)
+                return NULL;
             else
                 d += len;
         }
@@ -583,7 +577,6 @@ APREQ_DECLARE(char *) apreq_escape(apr_pool_t *p,
 
     rv = apr_palloc(p, 3 * slen + sizeof *rv);
     rv->name = NULL;
-    rv->status = APR_SUCCESS;
     rv->size = apreq_encode(rv->data, src, slen);
     return rv->data;
 }

@@ -46,7 +46,6 @@ typedef struct apreq_parser_t apreq_parser_t;
 #define apreq_param_name(p)      ((p)->v.name)
 #define apreq_param_value(p)     ((p)->v.data)
 #define apreq_param_info(p)      ((p)->info)
-#define apreq_param_status(p)    ((p)->v.status)
 #define apreq_param_brigade(p) ((p)->bb ? apreq_copy_brigade((p)->bb) : NULL)
 
 /** creates a param from name/value information */
@@ -58,10 +57,11 @@ APREQ_DECLARE(apreq_param_t *) apreq_make_param(apr_pool_t *p,
 
 /** Structure which manages the request data. */
 typedef struct apreq_request_t {
-    apr_table_t        *args;         /**< parsed query_string */
+    apr_table_t        *args;         /**< parsed query-string */
     apr_table_t        *body;         /**< parsed post data */
     apreq_parser_t     *parser;       /**< active parser for this request */
     void               *env;          /**< request environment */
+    apr_status_t        args_status;  /**< status of query-string parse */
 } apreq_request_t;
 
 
@@ -212,6 +212,7 @@ APREQ_DECLARE(apr_table_t *) apreq_uploads(apr_pool_t *pool,
 
 APREQ_DECLARE(apreq_param_t *) apreq_upload(const apreq_request_t *req,
                                             const char *key);
+#include "apreq.h"
 
 /** Parser arguments. */
 #define APREQ_PARSER_ARGS (apreq_parser_t *parser,     \
@@ -276,6 +277,8 @@ struct apreq_parser_t {
  * successful parse, so callers may need to clean up the brigade
  * themselves (in particular, rejected buckets should not be 
  * passed back to the parser again).
+ * @remark  bb == NULL is valid: the parser should return its 
+ * public status: APR_INCOMPLETE, APR_SUCCESS, or an error code.
  */
 #define APREQ_RUN_PARSER(psr,env,t,bb) (psr)->parser(psr,env,t,bb)
 
@@ -386,11 +389,11 @@ APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env,
  *
  */
 APREQ_DECLARE_HOOK(apreq_hook_disable_uploads);
+
 #ifdef __cplusplus
 }
+
 #endif
-
-
 #endif /* APREQ_PARAMS_H */
 
 

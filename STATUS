@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/06/23 02:22:28 $]   -*-text-*-
+Last modified at [$Date: 2004/06/29 18:34:48 $]   -*-text-*-
 /** @page apreq_status STATUS
 
      2.04-dev under development
@@ -61,10 +61,6 @@ CURRENT VOTES:
 TODO:
 
     - CuTest needs va_arg to print comments for a failed unit test.
-
-    - Eliminate useless "status" field from apreq_value_t.  The only behavioral
-      change required is the mfd parser - it should wait until the upload has
-      finished before adding it to the r->body table.
 
     - Add FAQ file.
 

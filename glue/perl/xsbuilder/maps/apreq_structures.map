@@ -19,6 +19,7 @@
 !   parser
 !   cfg
 !  env
+   args_status
 </apreq_request_t>
 
 <apreq_cookie_t MODULE=Apache::Cookie>
@@ -36,6 +37,7 @@
 <apreq_jar_t MODULE=Apache::Cookie>
 ! cookies
 !  env
+  status
 </apreq_jar_t>
 
 

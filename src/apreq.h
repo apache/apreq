@@ -65,7 +65,6 @@
 /** @brief libapreq's pre-extensible string type */
 typedef struct apreq_value_t {
     const char    *name;    /**< value's name */
-    apr_status_t   status;  /**< APR status, usually APR_SUCCESS or APR_INCOMPLETE*/
     apr_size_t     size;    /**< Size of data.*/
     char           data[1]; /**< Actual data bytes.*/
 } apreq_value_t;

@@ -173,6 +173,24 @@ object associated with the given name:
 
     my $upload = $apr->upload($name);
 
+=head2 C<args_status()>
+
+Reports the final I<APR> status code of the query-string parser.
+APR_SUCCESS on success, error otherwise.
+
+=head2 C<body_status()>
+
+Reports the current I<APR> status code of the POST data parser.
+APR_SUCCESS when parser has completed, APR_INCOMPLETE if parser
+has more data to parse, error otherwise.
+
+=head2 C<status()>
+
+In scalar context, this returns C<args_status> if there was
+an error during the query-string parse, otherwise this returns
+C<body_status>.  In list context this returns the list 
+C<(args_status, body_status)>.
+
 =head1 SUBCLASSING Apache::Request
 
 If the instances of your subclass are hash references then you can actually

@@ -28,3 +28,9 @@ sub param;
 
 *parms = *param;
 *params = *param;
+
+sub status {
+   my $req = shift;
+   return wantarray ? ($req->args_status, $req->body_status)
+                    : $req->args_status || $req->body_status;
+}
