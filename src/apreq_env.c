@@ -225,11 +225,17 @@ static void cgi_log(const char *file, int line, int level,
 {
     dP;
     char buf[256];
+#ifndef WIN32
     apr_file_t *err;
     apr_file_open_stderr(&err, p);
     apr_file_printf(err, "[%s(%d): %s] %s\n", file, line, 
             apr_strerror(status,buf,255),apr_pvsprintf(p,fmt,vp));
     apr_file_flush(err);
+#else
+    fprintf(stderr, "[%s(%d): %s] %s\n", file, line, 
+            apr_strerror(status,buf,255),apr_pvsprintf(p,fmt,vp));
+#endif
+
 }
 
 static apr_status_t cgi_read(void *env, 
