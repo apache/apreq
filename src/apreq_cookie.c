@@ -250,7 +250,8 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar_parse(void *ctx,
         /* use the environment's cookie data */
 
         /* fetch ctx->jar (cached jar) */
-        if ( apreq_env_jar(ctx, &j) == APR_SUCCESS && j != NULL )
+        j = apreq_env_jar(ctx, NULL);
+        if ( j != NULL )
             return j;
         
         data = apreq_env_cookie(ctx);
@@ -259,7 +260,7 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar_parse(void *ctx,
         /* XXX: potential race condition here 
            between env_jar fetch and env_jar set.  */
 
-        apreq_env_jar(ctx,&j);      /* set (cache) ctx->jar */
+        apreq_env_jar(ctx,j);      /* set (cache) ctx->jar */
 
         if (data == NULL)
             return j;
@@ -336,8 +337,6 @@ APREQ_DECLARE(apreq_jar_t *) apreq_jar_parse(void *ctx,
     return j;
 }
 
-#define ADD_ATTR(name) do { strcpy(f,c->name ? "; " #name "=%s" : \
-                                    "%.0s"); f+= strlen(f); } while (0)
 
 APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c, 
                                           char *buf, apr_size_t len)
@@ -356,6 +355,9 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
     if (c->v.name == NULL)
         return -1;
     
+#define ADD_ATTR(name) do { strcpy(f,c->name ? "; " #name "=%s" : \
+                                    "%.0s"); f+= strlen(f); } while (0)
+
     if (c->version == NETSCAPE) {
 
         ADD_ATTR(path);
@@ -380,6 +382,8 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
     ADD_ATTR(comment);
     ADD_ATTR(commentURL);
 
+#undef ADD_ATTR
+
     /* "%.0s" very hackish, but it should be safe.  max_age is
      * the last va_arg, and we're not actually printing it in 
      * the "%.0s" case. Should check the apr_snprintf implementation
@@ -398,7 +402,6 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
                         c->comment, c->commentURL, c->time.max_age);
 }
 
-#undef ADD_ATTR
 
 APREQ_DECLARE(const char*) apreq_cookie_as_string(const apreq_cookie_t *c,
                                                   apr_pool_t *p)

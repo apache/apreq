@@ -628,26 +628,24 @@ APREQ_DECLARE(int) apreq_table_nelts(const apreq_table_t *t)
     return t->a.nelts - t->ghosts;
 }
 
-APREQ_DECLARE(int) apreq_is_empty_table(const apreq_table_t *t)
-{
-    return t->a.nelts > t->ghosts;
-}
-
-
 APREQ_DECLARE(apreq_value_copy_t *)apreq_table_copier(apreq_table_t *t, 
                                                       apreq_value_copy_t *c)
 {
+    apreq_value_copy_t *original = t->copy;
+
     if (c != NULL)
         t->copy = c;
-    return t->copy;
+    return original;
 }
 
 APREQ_DECLARE(apreq_value_merge_t *)apreq_table_merger(apreq_table_t *t, 
                                                        apreq_value_merge_t *m)
 {
+    apreq_value_merge_t *original = t->merge;
+
     if (m != NULL)
         t->merge = m;
-    return t->merge;
+    return original;
 }
 
 
