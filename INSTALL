@@ -1,3 +1,22 @@
+****************************************************
+* NOTE TO OS X users- PLEASE READ THE INSTALLATION *
+* INSTRUCTIONS IN INSTALL.MacOSX                   *
+****************************************************
+
+--------------------------------------------------
+IMPORTANT NOTE: To install the Perl modules, your 
+mod_perl installation MUST includes support for 
+Apache::Table.  This means that mod_perl should
+be built using the EVERYTHING=1, or at minimum 
+PERL_TABLE_API=1.  If you see errors like this 
+(during compilation of libapreq)
+
+  Error: 'Apache::Table' not in typemap in Request.xs,
+
+your mod_perl must be rebuilt to include Apache::Table 
+support.
+--------------------------------------------------
+
 To install the Perl and C libraries, simply run:
 
  perl Makefile.PL && make && make test && make install
@@ -16,7 +35,19 @@ If your httpd is static:
 
  perl Makefile.PL -httpd /path/to/apache/bin/httpd
 
-To build libapreq without the Makefile.PL, run:
+--------------------------------------------------
 
- ./configure [--with-apache-includes=DIR] && make
+Alternatively, to build and install a shared version 
+of libapreq using GNU libtool, do this:
 
+ ./configure --with-apache-includes=DIR && make && make install
+
+Note: The mod_perl API (Apache::Request and Apache::Cookie) will
+link against this version of libapreq if it is available.  That
+means if you're upgrading from an older version of libapreq.so, 
+that was installed using this "./configure" method, you may need 
+to upgrade the old library installation PRIOR to building Request.so
+and Cookie.so:
+
+ ./configure --with-apache-includes=DIR && make && make install
+ perl Makefile.PL && make && make test && make install
