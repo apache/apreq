@@ -74,7 +74,6 @@ param key => val
 param ONE => ONE_value
 param TWO => TWO_value
 param THREE => M1,M2,M3
-param key => val
 EOF
     my $ok = $page eq $expect;
     test ++$i, $ok;

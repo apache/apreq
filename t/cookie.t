@@ -1,6 +1,7 @@
 #!perl
 use strict;
 use Apache::src ();
+use LWP::UserAgent;
 #use lib qw(lib blib/lib blib/arch);
 eval 'require Apache::Cookie' or die $@;
 #warn "No CGI::Cookie" and skip_test unless have_module "CGI::Cookie";
@@ -17,4 +18,4 @@ my $request = HTTP::Request->new('GET', $url);
 $request->header(Cookie => $cookie);
 my $response = $ua->request($request, undef, undef); 
 print $response->content;
- 
+

@@ -24,8 +24,8 @@ for ($apr->param) {
     print $/;
 }
 
-for my $table ($apr->query_params, $apr->post_params) {
-    my ($k,$v) = each %$table;
-    print "param $k => $v$/";
-}
+#for my $table ($apr->query_params, $apr->post_params) {
+#    my ($k,$v) = each %$table;
+#    print "param $k => $v$/";
+#}
 

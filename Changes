@@ -2,6 +2,10 @@ Revision history for libapreq
 
 =over 4
 
+=item 1.12 - February 27, 2003
+
+Applied Tatsuhiko Miyagawa's patch for handling %uXXXX strings.
+
 =item 1.11 - February 27, 2003
 
 Add req->nargs to C API to distinguish between query string and 

@@ -240,6 +240,117 @@ ApacheRequest *ApacheRequest_new(request_rec *r)
 
     return req;
 }
+static char x2c(const char *what)
+{
+    register char digit;
+
+#ifndef CHARSET_EBCDIC
+    digit = ((what[0] >= 'A') ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'))
+;
+    digit *= 16;
+    digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
+#else /*CHARSET_EBCDIC*/
+    char xstr[5];
+    xstr[0]='0';
+    xstr[1]='x';
+    xstr[2]=what[0];
+    xstr[3]=what[1];
+    xstr[4]='\0';
+    digit = os_toebcdic[0xFF & ap_strtol(xstr, NULL, 16)];
+#endif /*CHARSET_EBCDIC*/
+    return (digit);
+}
+
+
+static unsigned int utf8_convert(char *str) {
+    long x = 0;
+    int i = 0;
+    while (i < 4 ) {
+	if ( ap_isxdigit(str[i]) != 0 ) {
+	    if( ap_isdigit(str[i]) != 0 ) {
+		x = x * 16 + str[i] - '0';
+	    }
+	    else {
+		str[i] = tolower( str[i] );
+		x = x * 16 + str[i] - 'a' + 10;
+	    }
+	}
+	else {
+	    return 0;
+	}
+	i++;
+    }
+    if(i < 3)
+	return 0;
+    return (x);
+}
+
+static int ap_unescape_url_u(char *url)
+{
+    register int x, y, badesc, badpath;
+
+    badesc = 0;
+    badpath = 0;
+    for (x = 0, y = 0; url[y]; ++x, ++y) {
+	if (url[y] != '%'){
+	    url[x] = url[y];
+	}
+	else {
+	    if(url[y + 1] == 'u' || url[y + 1] == 'U'){
+		unsigned int c = utf8_convert(&url[y + 2]);
+		y += 5;
+		if(c < 0x80){
+		    url[x] = c;
+		}
+		else if(c < 0x10000){
+		    url[x] = (0xe0 | (c >> 12));
+		    url[++x] = (0x80 | ((c >> 6) & 0x3f));
+		    url[++x] = (0x80 | (c & 0x3f));
+		}
+		else if(c < 0x200000){
+		    url[x] = 0xf0 | (c >> 18);
+		    url[++x] = 0x80 | ((c >> 12) & 0x3f);
+		    url[++x] = 0x80 | ((c >> 6) & 0x3f);
+		    url[++x] = 0x80 | (c & 0x3f);
+		}
+		else if(c < 0x4000000){
+		    url[x] = 0xf8 | (c >> 24);
+		    url[++x] = 0x80 | ((c >> 18) & 0x3f);
+		    url[++x] = 0x80 | ((c >> 12) & 0x3f);
+		    url[++x] = 0x80 | ((c >> 6) & 0x3f);
+		    url[++x] = 0x80 | (c & 0x3f);
+		}
+		else if(c < 0x8000000){
+		    url[x] = 0xfe | (c >> 30);
+		    url[++x] = 0x80 | ((c >> 24) & 0x3f);
+		    url[++x] = 0x80 | ((c >> 18) & 0x3f);
+		    url[++x] = 0x80 | ((c >> 12) & 0x3f);
+		    url[++x] = 0x80 | ((c >> 6) & 0x3f);
+		    url[++x] = 0x80 | (c & 0x3f);
+		}
+	    }
+	    else {
+		if (!ap_isxdigit(url[y + 1]) || !ap_isxdigit(url[y + 2])) {
+		    badesc = 1;
+		    url[x] = '%';
+		}
+		else {
+		    url[x] = x2c(&url[y + 1]);
+		    y += 2;
+		    if (url[x] == '/' || url[x] == '\0')
+			badpath = 1;
+		}
+	    }
+	}
+    }
+    url[x] = '\0';
+    if (badesc)
+	return BAD_REQUEST;
+    else if (badpath)
+	return NOT_FOUND;
+    else
+	return OK;
+}
 
 static int urlword_dlm[] = {'&', ';', 0};
 
@@ -275,10 +386,9 @@ static void split_to_parms(ApacheRequest *req, const char *data)
 	const char *key = ap_getword(r->pool, &val, '=');
 
 	req_plustospace((char*)key);
-	ap_unescape_url((char*)key);
+	ap_unescape_url_u((char*)key);
 	req_plustospace((char*)val);
-	ap_unescape_url((char*)val);
-
+	ap_unescape_url_u((char*)val);
 	ap_table_add(req->parms, key, val);
     }
 
