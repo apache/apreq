@@ -10,7 +10,9 @@
 #include "apr_pools.h"
 #include "apr_strings.h"
 
-#define APREQ_DECLARE(d)        d
+#include <stddef.h>
+
+#define APREQ_DECLARE(d)                d
 
 /* default enctypes */
 #define APREQ_URL_ENCTYPE               "application/x-www-form-urlencoded"
@@ -20,8 +22,8 @@
 #define APREQ_XML_ENCTYPE               "application/xml"
 #define APREQ_XML_ENCTYPE_LENGTH        15
 
-#define APREQ_EXPIRES_HTTP              1
-#define APREQ_EXPIRES_COOKIE            2
+#define APREQ_EXPIRES_HTTP              0
+#define APREQ_EXPIRES_COOKIE            1
 
 #define APREQ_DEFAULT_POST_MAX         -1 /* XXX: unsafe default ??? */
 #define APREQ_DEFAULT_NELTS             8
@@ -34,9 +36,10 @@
 #define APREQ_MATCH_PART                1
 
 /* join modes */
-#define APREQ_ESCAPE                    1
-#define APREQ_URLENCODE                 2
-#define APREQ_QUOTE                     3
+#define APREQ_JOIN_ESCAPE               1
+#define APREQ_JOIN_UNESCAPE             2
+#define APREQ_JOIN_URLENCODE            3
+#define APREQ_JOIN_QUOTE                4
 
 /* status codes */
 #define APREQ_OK                        0
@@ -46,14 +49,11 @@
 
 typedef struct apreq_value_t {
     const char          *name;
-    apr_ssize_t          size;
-    unsigned             flags;
+    apr_size_t           size;
+    apr_status_t         status;
     char                 data[1];
 } apreq_value_t;
 
-typedef apreq_value_t *(apreq_value_make_t)(apr_pool_t *p, const char *name,
-                                            const char *data,
-                                            const apr_ssize_t size);
 typedef apreq_value_t *(apreq_value_merge_t)(apr_pool_t *p,
                                              const apr_array_header_t *a);
 typedef apreq_value_t *(apreq_value_copy_t)(apr_pool_t *p,
@@ -66,15 +66,14 @@ typedef apreq_value_t *(apreq_value_copy_t)(apr_pool_t *p,
 #define apreq_strlen(ptr) (apreq_strtoval(ptr)->size)
 
 apreq_value_t *apreq_value_make(apr_pool_t *p, const char *name, 
-                                const char *data, const apr_ssize_t size);
+                                const char *data, const apr_size_t size);
 apreq_value_t *apreq_value_copy(apr_pool_t *p, const apreq_value_t *val);
 apreq_value_t *apreq_value_merge(apr_pool_t *p, const apr_array_header_t *arr);
 
-/* apr_array_pstrcat, w/ string separator and APREQ_ESCAPE mode */
-char *apreq_pvcat(apr_pool_t *p, 
-                  const apr_array_header_t *arr, 
-                  const char *sep, 
-                  int mode);
+APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 
+                                       const char *sep, 
+                                       const apr_array_header_t *arr, 
+                                       int mode);
 
 /* XXX: should we drop this and replace it with apreq_index ? */
 char *apreq_memmem(char* hay, apr_off_t haylen, 
@@ -84,8 +83,9 @@ apr_off_t apreq_index(const char* hay, apr_off_t haylen,
                       const char* ndl, apr_off_t ndllen, int part);
 
 /* url-escapes non-alphanumeric characters */
-char *apreq_escape(apr_pool_t *p, char *s);
-apr_off_t apreq_unescape(char *s);
+apr_size_t apreq_quote(char *dest, const char *src, const apr_size_t slen);
+apr_size_t apreq_escape(char *dest, const char *src, const apr_size_t slen);
+apr_ssize_t apreq_unescape(char *dest, const char *src, apr_size_t slen);
 
 /* returns date string, (time_str is offset from "now") formatted
  * either as an NSCOOKIE or HTTP date */

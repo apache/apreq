@@ -67,7 +67,12 @@ APREQ_DECLARE(apr_status_t) apreq_env_set_cookie2(void *ctx, const char *s);
 #define APREQ_LOG_ERROR(r)  AP_LOG_MARK, AP_LOG_ERR,0,(r)
 #define APREQ_LOG_WARN(r)   AP_LOG_MARK, AP_LOG_WARNING,0,(r)
 
-APREQ_DECLARE(void) apreq_warn(void *ctx, const char *fmt, ...);
+APREQ_DECLARE(void) apreq_debug(void *ctx, apr_status_t status,
+                               const char *fmt, ...);
+APREQ_DECLARE(void) apreq_warn(void *ctx, apr_status_t status,
+                               const char *fmt, ...);
+APREQ_DECLARE(void) apreq_error(void *ctx, apr_status_t status,
+                                const char *fmt, ...);
 
 #ifdef __cplusplus
  }

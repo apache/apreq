@@ -116,8 +116,8 @@ APREQ_DECLARE(apreq_table_t *) apreq_table_copy(apr_pool_t *p,
  * @param p The pool to allocate the APR table from
  * @param t The APREQ table to copy
  */
-APREQ_DECLARE(apr_table_t *)apreq_table_export(const apreq_table_t *t, 
-                                               apr_pool_t *p);
+APREQ_DECLARE(apr_table_t *) apreq_table_export(const apreq_table_t *t, 
+                                                apr_pool_t *p);
 
 /**
  * Create an APREQ Table from an APR Table.
@@ -233,28 +233,19 @@ APREQ_DECLARE(const char*) apreq_table_get(const apreq_table_t *t,
  */
 APREQ_DECLARE(const char *) apreq_table_get_cached(apreq_table_t *t,
                                                    const char *key);
-/**
- * Return the (unique) keys in a (char *) array, preserving their 
- * original order.
- * @param t Table.
- * @param p Pool used to allocate the resulting array struct.
- */
-APREQ_DECLARE(apr_array_header_t *) apreq_table_keys(const apreq_table_t *t,
-                                                     apr_pool_t *p);
 
 /**
  * Return the (unique) values in an (apreq_value_t *) array,
  * preserving their original order.
  * @param t Table.
  * @param p Pool used to allocate the resulting array struct.
- * @remark For multivalued keys, the first apreq_value_t is 
- * returned.
+ * @remark With key == NULL, all values are returned.  However,
+ * only the first value of a multivalued entry is used.
  */
+
 APREQ_DECLARE(apr_array_header_t *) apreq_table_values(const apreq_table_t *t,
                                                        apr_pool_t *p,
                                                        const char *key);
-
-
 /**
  * Add an apreq_value_t to the table. If another value already exists
  * with the same name, this will replace the old value.
@@ -283,8 +274,8 @@ APREQ_DECLARE(void) apreq_table_unset(apreq_table_t *t, const char *key);
  * via t->merge.
  */
 
-APREQ_DECLARE(void) apreq_table_merge(apreq_table_t *t, 
-                                      const apreq_value_t *v);
+APREQ_DECLARE(apr_status_t) apreq_table_merge(apreq_table_t *t, 
+                                              const apreq_value_t *v);
 
 /**
  * Add data to a table, regardless of whether there is another element with the
@@ -354,9 +345,9 @@ APREQ_DECLARE(void) apreq_table_cat(apreq_table_t *t, const apreq_table_t *s);
  * </PRE>
  */
 
-APREQ_DECLARE(void) apreq_table_overlap(apreq_table_t *a, 
-                                        const apreq_table_t *b,
-                                        const unsigned flags);
+APREQ_DECLARE(apr_status_t) apreq_table_overlap(apreq_table_t *a, 
+                                                const apreq_table_t *b,
+                                                const unsigned flags);
 
 /** Iterator API */
 

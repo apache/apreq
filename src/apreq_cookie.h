@@ -11,7 +11,8 @@ typedef struct apreq_table_t apreq_jar_t;
 
 typedef enum { NETSCAPE, RFC } apreq_cookie_version_t;
 
-#define APREQ_COOKIE_DEFAULT_VERSION       NETSCAPE
+#define APREQ_COOKIE_VERSION               NETSCAPE
+#define APREQ_COOKIE_LENGTH                4096
 
 typedef struct apreq_cookie_t {
 
@@ -96,15 +97,20 @@ apreq_jar_t *apreq_jar_parse(void *ctx, const char *data);
  * The cookie is allocated from the ctx pool.
  *
  * @param ctx   The current context.
- * @param v     The cookie version, currently one of  ::NETSCAPE or ::RFC.
+ * @param v     The cookie version, currently one of ::NETSCAPE or ::RFC.
+ *              Use ::APREQ_COOKIE_VERSION if you'd like to leave
+ *              that decision up to libapreq.  Currently libapreq uses
+ *              Netscape cookies by default, but this may change in a
+ *              future version.
  * @param name  The cookie's name.
  * @param nlen  Length of name.
  * @param value The cookie's value.
  * @param vlen  Length of value.
  */
-apreq_cookie_t *apreq_cookie_make(void *ctx, const apreq_cookie_version_t v,
-                                  const char *name, const apr_ssize_t nlen, 
-                                  const char *value, const apr_ssize_t vlen);
+APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(void *ctx, 
+                                  const apreq_cookie_version_t version,
+                                  const char *name, const apr_size_t nlen, 
+                                  const char *value, const apr_size_t vlen);
 
 
 APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apreq_cookie_t *c, 

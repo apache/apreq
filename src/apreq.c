@@ -4,15 +4,19 @@
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 #define MAX(a,b) ( (a) > (b) ? (a) : (b) )
 
-apreq_value_t *apreq_value_make(apr_pool_t *p, const char *n,
-                                const char *d, const apr_ssize_t s)
+apreq_value_t *apreq_value_make(apr_pool_t *p, const char *name,
+                                const char *d, apr_size_t size)
 {
-    apreq_value_t *v = apr_palloc(p, s + sizeof *v);
-    memcpy(v->data, d, s);
-    v->flags = 0;
-    v->name = n;
-    v->size = s;
-    v->data[s] = 0;
+    apreq_value_t *v = apr_palloc(p, size + sizeof *v);
+    if (d == NULL || v == NULL)
+        return NULL;
+
+    memcpy(v->data, d, size);
+    v->size = size;
+    v->status = APR_SUCCESS;
+    v->name = name;
+    v->data[size] = 0;
+
     return v;
 }
 
@@ -36,44 +40,11 @@ apreq_value_t *apreq_value_copy(apr_pool_t *p,
 apreq_value_t *apreq_value_merge(apr_pool_t *p,
                                  const apr_array_header_t *arr)
 {
-    apr_ssize_t s;
-    apreq_value_t *rv;
-    apreq_value_t **a = (apreq_value_t **)arr->elts;
-    int j, n = arr->nelts;
-
-    if (n == 0)
-        return NULL;
-
-    while (*a == NULL && n > 0) {
-        ++a;
-        --n;
-    }
-    while (n > 0 && a[n-1] == NULL)
-        --n;
-
-    if (n == 0)
-        return NULL;
-
-    for (j=0, s=0; j < n; ++j)
-        if (a[j] != NULL)
-            s += a[j]->size + 2;
-
-    rv = apr_palloc(p, s + sizeof *rv);
-    rv->size = 0;
-
-    memcpy(rv->data, a[0]->data, a[0]->size);
-    rv->size = a[0]->size;
-
-    for (j = 1; j < n; ++j) {
-        rv->data[rv->size++] = ',';
-        rv->data[rv->size++] = ' ';
-        memcpy(rv->data, a[j]->data, a[j]->size);
-        rv->size += a[j]->size;
-    }
-    rv->flags = 0;              /* XXX */
-    rv->name = a[0]->name;
-    rv->data[rv->size] = 0;     /* nul-terminate rv->data */
-    return rv;
+    apreq_value_t *a = *(apreq_value_t **)(arr->elts);
+    apreq_value_t *v = apreq_char_to_value( apreq_join(p, ", ", arr, 0) );
+    if (arr->nelts > 0)
+        v->name = a->name;
+    return v;
 }
 
 char *apreq_expires(apr_pool_t *p, const char *time_str, const int type)
@@ -232,60 +203,86 @@ static char x2c(const char *what)
     return (digit);
 }
 
-apr_off_t apreq_unescape(char *s)
+apr_ssize_t apreq_unescape(char *d, const char *s, const apr_size_t slen)
 {
-    register int badesc, badpath;
-    char *x, *y;
-
-    badesc = 0;
-    badpath = 0;
-    /* Initial scan for first '%'. Don't bother writing values before
-     * seeing a '%' */
-    y = strchr(s, '%');
-    if (y == NULL) {
+    register int badesc = 0;
+    char *start = d;
+    const char *end = s + slen;
+    if (s == NULL || d == NULL)
         return -1;
-    }
 
-    for (x = y; *y; ++x, ++y) {
-        switch (*y) {
-        case '+':
-            *x = ' ';
-            break;
-        case '%':
-	    if (!apr_isxdigit(*(y + 1)) || !apr_isxdigit(*(y + 2))) {
-		badesc = 1;
-		*x = '%';
-	    }
-	    else {
-		*x = x2c(y + 1);
-		y += 2;
-	    }
-            break;
-        default:
-            *x = *y;
+    if (s == (const char *)d) {     /* optimize for src = dest case */
+        for ( ; s < end; ++s) {
+            if (*s == '%' || *s == '+')
+                break;
+            else if (*s == 0)
+                return s - (const char *)d;
         }
     }
-    *x = '\0';
+
+    for (; s < end; ++d, ++s) {
+        switch (*s) {
+
+        case '+':
+            *d = ' ';
+            break;
+
+        case '%':
+	    if (apr_isxdigit(s[1]) && apr_isxdigit(s[2]))
+            {
+		*d = x2c(s + 1);
+		s += 2;
+	    }
+            else if (s[1] == 'u' && apr_isxdigit(s[2]) &&
+                     apr_isxdigit(s[3]) && apr_isxdigit(s[4]) &&
+                     apr_isxdigit(s[5]))
+            {
+                /* XXX: Need to decode oddball
+                 * javascript unicode escapes: %uXXXX
+                 * For now we'll just give up.
+                 */
+                badesc = 1;
+                *d = '%';
+            }
+	    else {
+		badesc = 1;
+		*d = '%';
+	    }
+            break;
+
+        case 0:
+            *d = 0;
+            return -1;
+
+        default:
+            *d = *s;
+        }
+    }
+
+    *d = 0;
+
     if (badesc)
-	return -1;
+	return -2;
     else
-	return x - s;
+	return d - start;
 }
 
 
-char *apreq_escape(apr_pool_t *p, char *str) 
+apr_size_t apreq_escape(char *dest, const char *src, 
+                        const apr_size_t slen) 
 {
-    char *esc = apr_palloc(p, 3 * strlen(str) + 1);
-    char *d = esc;
-    const unsigned char *s = (const unsigned char *)str;
+    char *d = dest;
+    const unsigned char *s = (const unsigned char *)src;
     unsigned c;
-    while((c = *s)) {
-        if( apr_isalnum(c) ) {
+
+    for ( ;s < (const unsigned char *)src + slen; ++s) {
+        c = *s;
+        if ( apr_isalnum(c) )
             *d++ = c;
-        } 
-        else if ( c == ' ' ) {
+
+        else if ( c == ' ' )
             *d++ = '+';
-        }
+
         else {
 #if APR_CHARSET_EBCDIC
             c = apr_xlate_conv_byte(ap_hdrs_to_ascii, (unsigned char)c);
@@ -294,102 +291,162 @@ char *apreq_escape(apr_pool_t *p, char *str)
             *d++ = c2x_table[c >> 4];
             *d++ = c2x_table[c & 0xf];
         }
-        ++s;
     }
     *d = 0;
-    return esc;
+
+    return d - dest;
 }
 
-static char *apreq_array_pstrcat(apr_pool_t *p,
-                                 const apr_array_header_t *arr,
-                                 const char *sep, int mode)
+apr_size_t apreq_quote(char *dest, const char *src, const apr_size_t slen) 
 {
-    char *cp, *res, **strpp;
-    apr_size_t len, size;
-    int i;
+    char *d = dest;
+    const char *s = src;
 
-    size = sep ? strlen(sep) : 0;
-
-    if (arr->nelts <= 0 || arr->elts == NULL) {    /* Empty table? */
-        return (char *) apr_pcalloc(p, 1);
+    if (slen == 0) {
+        *d = 0;
+        return 0;
     }
 
-    /* Pass one --- find length of required string */
-
-    len = 0;
-    for (i = 0, strpp = (char **) arr->elts; ; ++strpp) {
-        if (strpp && *strpp != NULL) {
-            len += strlen(*strpp);
-        }
-        if (++i >= arr->nelts) {
-            break;
-        }
-
-        len += size;
+    if (src[0] == '"' && src[slen-1] == '"') { /* src is already quoted */
+        memcpy(dest, src, slen);
+        return slen;
     }
 
-    /* Allocate the required string */
+    *d++ = '"';
 
-    if (mode == APREQ_ESCAPE)
+    while (s < src + slen) {
+
+        switch (*s) {
+
+        case '\\': 
+            if (s < src + slen - 1) {
+                *d++ = *s++;
+                break;
+            }
+            /* else fall through */
+
+        case '"':
+            *d++ = '\\';
+        }
+
+        *d++ = *s++;
+    }
+
+    *d++ = '"';
+    *d = 0;
+
+    return d - dest;
+}
+
+
+APREQ_DECLARE(const char *) apreq_join(apr_pool_t *p, 
+                                       const char *sep, 
+                                       const apr_array_header_t *arr,
+                                       int mode)
+{
+    apr_ssize_t len, slen;
+    apreq_value_t *rv;
+    const apreq_value_t **a = (const apreq_value_t **)arr->elts;
+    char *d;
+    const int n = arr->nelts;
+    int j;
+
+    slen = sep ? strlen(sep) : 0;
+
+    if (n == 0)
+        return NULL;
+
+    for (j=0, len=0; j < n; ++j)
+        len += a[j]->size + slen;
+
+    /* Allocated the required space */
+
+    switch (mode) {
+    case APREQ_JOIN_ESCAPE:
         len += 2 * len;
-    else if(mode == APREQ_QUOTE)
-        len += 2 * arr->nelts;
+        break;
+    case APREQ_JOIN_QUOTE:
+        len = 2 * (len + n);
+        break;
+    }
 
-    res = (char *) apr_palloc(p, len + 1);
-    cp = res;
+    rv = apr_palloc(p, len + sizeof *rv);
+    rv->name = 0;
+    rv->size = 0;
+    rv->status = APR_SUCCESS;
+    rv->data[0] = 0;
+
+    if (n == 0)
+        return rv->data;
 
     /* Pass two --- copy the argument strings into the result space */
 
-    for (i = 0, strpp = (char **) arr->elts; ; ++strpp) {
-        if (strpp && *strpp != NULL) {
-            len = strlen(*strpp);
+    d = rv->data;
 
-            if (mode == APREQ_ESCAPE) {
-                const unsigned char *s = (const unsigned char *)*strpp;
-                unsigned c;
-                while((c = *s)) {
-                    if( apr_isalnum(c) ) {
-                        *cp++ = c;
-                    } else if ( c == ' ' ) {
-                        *cp++ = '+';
-                    }
-                    else {
-#if APR_CHARSET_EBCDIC
-                        c = apr_xlate_conv_byte(ap_hdrs_to_ascii, 
-                                                (unsigned char)c);
-#endif
-                        *cp++ = '%';
-                        *cp++ = c2x_table[c >> 4];
-                        *cp++ = c2x_table[c & 0xf];
-                    }
-                    ++s;
-                }
-            } 
-            else if (mode == APREQ_QUOTE) {
-                *cp++ = '"';
-                memcpy(cp, *strpp, len);
-                cp += len;
-                *cp++ = '"';
+    switch (mode) {
 
-            }
+    case APREQ_JOIN_ESCAPE:
+        d += apreq_escape(d, a[0]->data, a[0]->size);
 
-            else {
-                memcpy(cp, *strpp, len);
-                cp += len;
-            }
-
+        for (j = 1; j < n; ++j) {
+                memcpy(d, sep, slen);
+                d += slen;
+                d += apreq_escape(d, a[j]->data, a[j]->size);
         }
-        if (++i >= arr->nelts) {
+        break;
+
+    case APREQ_JOIN_UNESCAPE:
+        len = apreq_unescape(d, a[0]->data, a[0]->size);
+
+        if (len < 0) {
+            rv->status = APR_BADCH;
             break;
         }
-        if (sep) {
-            memcpy(cp,sep,size);
-            cp += size;
+        else
+            d += len;
+
+        for (j = 1; j < n; ++j) {
+            memcpy(d, sep, slen);
+            d += slen;
+
+            len = apreq_unescape(d, a[j]->data, a[j]->size);
+
+            if (len < 0) {
+                rv->status = APR_BADCH;
+                break;
+            }
+            else
+                d += len;
         }
+        break;
+
+
+    case APREQ_JOIN_QUOTE:
+        d += apreq_quote(d, a[0]->data, a[0]->size);
+
+        for (j = 1; j < n; ++j) {
+            memcpy(d, sep, slen);
+            d += slen;
+            d += apreq_quote(d, a[j]->data, a[j]->size);
+        }
+        break;
+
+
+    default:
+        memcpy(d,a[0]->data,a[0]->size);
+        d += a[0]->size;
+
+        for (j = 0; j < n ; ++j) {
+            memcpy(d, sep, slen);
+            d += slen;
+            memcpy(d, a[j]->data, a[j]->size);
+            d += a[j]->size;
+        }
+        break;
 
     }
 
-    *cp = '\0';
-
-    return res;
+    *d = 0;
+    rv->size = d - rv->data;
+    return rv->data;
 }
