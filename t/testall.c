@@ -57,6 +57,7 @@
 
 #include "test_apreq.h"
 #include "apreq_env.h"
+#include "apr_strings.h"
 
 /* Top-level pool which can be used by tests. */
 apr_pool_t *p;

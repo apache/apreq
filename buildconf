@@ -7,6 +7,12 @@ rm -f aclocal.m4
 rm -f generated_lists
 rm -rf autom4te*.cache
 
+echo "checking buildconf prereqs";
+perl build/version_check.pl libtool 1.4.2  || exit 1
+perl build/version_check.pl autoconf 2.53  || exit 1
+perl build/version_check.pl automake 1.6.3 || exit 1
+
+
 libtool="libtoolize --automake --copy --force"
 echo "running $libtool" && $libtool && \
 echo "running aclocal"  && aclocal && \
