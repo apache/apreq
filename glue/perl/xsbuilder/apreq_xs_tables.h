@@ -166,21 +166,9 @@ static XS(apreq_xs_table_##attr##_##method)                             \
 }
 
 
+/* KEY MAGIC: needs 5.8.x, x >= 1 (not sure if this will work in 5.10.x) */
 
-/* TABLE_GET */
-struct apreq_xs_table_key_magic {
-    SV         *obj;
-    const char *val;
-};
-
-/* Ignore KEY_MAGIC for now - testing safer MGVTBL approach.
-** Comment the define of APREQ_XS_TABLE_USE_KEY_MAGIC out
-** if perl still chokes on key magic
-** Need 5.8.1 or higher for PERL_MAGIC_vstring
-*/
-#define APREQ_XS_TABLE_USE_KEY_MAGIC (PERL_VERSION == 8 && PERL_SUBVERSION > 0)
-
-#if APREQ_XS_TABLE_USE_KEY_MAGIC
+#if (PERL_VERSION == 8 && PERL_SUBVERSION >= 1)
 
 #define APREQ_XS_TABLE_ADD_KEY_MAGIC(p, sv, o, v) do {                  \
     struct apreq_xs_table_key_magic *info = apr_palloc(p,sizeof *info); \
@@ -195,6 +183,14 @@ struct apreq_xs_table_key_magic {
 #define APREQ_XS_TABLE_ADD_KEY_MAGIC(p,sv,o,v) /* noop */
 
 #endif
+
+
+/* TABLE_GET */
+struct apreq_xs_table_key_magic {
+    SV         *obj;
+    const char *val;
+};
+
 
 struct apreq_xs_do_arg {
     void            *env;
