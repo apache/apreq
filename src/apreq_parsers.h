@@ -117,6 +117,10 @@ struct apreq_parser_t {
     apreq_hook_t           *hook;
     void                   *ctx;
 };
+APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool, 
+                                                 const apreq_cfg_t *cfg,
+                                                 apr_bucket_brigade *out, 
+                                                 apr_bucket_brigade *in);
 
 
 APREQ_DECLARE_PARSER(apreq_parse_headers);

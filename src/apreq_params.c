@@ -66,9 +66,9 @@
 
 static const apreq_cfg_t default_cfg = {
     1024 * 1024, /**< limit on POST data size */
-    8192 * 2,    /**< limit on brigade size */
+    1024 * 256,  /**< limit on brigade size */
     200,         /**< maximum number of form fields */
-    8192 * 8     /**< maximum amount of prefetch data */
+    1024 * 64    /**< maximum amount of prefetch data */
 };
     
 

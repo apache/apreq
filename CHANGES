@@ -5,6 +5,8 @@
 - July 15, 2003 - C API [joes]
 
 Dropped param->charset.
+Make apreq_brigade_concat public, so mod_apreq can use it
+for its ctx->spool brigade.
 
 - July 14, 2003 - Documentation [joes]
 

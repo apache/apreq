@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,7 +80,7 @@ static int apreq_request_test_handler(request_rec *r)
     apr_bucket_brigade *bb;
     apreq_request_t *req;
     apr_status_t s;
-    int saw_eos = 1;
+    int saw_eos = 0;
 
     if (strcmp(r->handler, "apreq_request_test") != 0)
         return DECLINED;

@@ -709,14 +709,12 @@ static apr_status_t split_on_bdry(apr_pool_t *pool,
     return APR_INCOMPLETE;
 }
 
-
-
 #define MAX_FILE_BUCKET_LENGTH ( 1 << ( 6 * sizeof(apr_size_t) ) )
 
-static apr_status_t bb_concat(apr_pool_t *pool, 
-                              const apreq_cfg_t *cfg,
-                              apr_bucket_brigade *out, 
-                              apr_bucket_brigade *in)
+APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool, 
+                                                 const apreq_cfg_t *cfg,
+                                                 apr_bucket_brigade *out, 
+                                                 apr_bucket_brigade *in)
 {
     apr_bucket *last = APR_BRIGADE_LAST(out);
     apr_status_t s;
@@ -725,6 +723,9 @@ static apr_status_t bb_concat(apr_pool_t *pool,
     apr_bucket *e;
     apr_off_t wlen;
     int n = 0;
+
+    if (APR_BUCKET_IS_EOS(last))
+        return APR_EOF;
 
     if (! APR_BUCKET_IS_FILE(last)) {
         apr_bucket_brigade *bb;
@@ -767,6 +768,11 @@ static apr_status_t bb_concat(apr_pool_t *pool,
     if (s != APR_SUCCESS)
         return s;
     last->length += wlen;
+    last = APR_BRIGADE_LAST(in);
+    if (APR_BUCKET_IS_EOS(last)) {
+        apr_bucket_copy(last, &e);
+        APR_BRIGADE_INSERT_TAIL(out, e);
+    }
     return apr_brigade_destroy(in);
 }
 
@@ -1045,7 +1051,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     if (s != APR_INCOMPLETE && s != APR_SUCCESS)
                         return s;
                 }
-                s = bb_concat(pool, cfg, param->bb, ctx->bb);
+                s = apreq_brigade_concat(pool, cfg, param->bb, ctx->bb);
                 return (s == APR_SUCCESS) ? APR_INCOMPLETE : s;
 
             case APR_SUCCESS:
@@ -1059,8 +1065,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                         return s;
                 }
 
-                param->v.status = bb_concat(pool, cfg,
-                                            param->bb, ctx->bb);
+                param->v.status = apreq_brigade_concat(pool, cfg,
+                                                       param->bb, ctx->bb);
 
                 if (param->v.status != APR_SUCCESS)
                     return s;

@@ -400,6 +400,7 @@ APREQ_DECLARE(apr_file_t *) apreq_brigade_spoolfile(apr_bucket_brigade *bb);
 APREQ_DECLARE(apr_bucket_brigade *)
          apreq_copy_brigade(const apr_bucket_brigade *bb);
 
+
 /** @} */
 
 #ifdef __cplusplus

@@ -21,7 +21,7 @@ ok t_cmp(403, GET_RC("/apreq_access_test"), "access denied");
 
 my $filler = "0123456789" x 7000; # < 8000 + 64K
 my $body = POST_BODY("/apreq_access_test?foo=1;", 
-                     content => "bar=2&quux=$filler;test=6");
+                     content => "bar=2&quux=$filler;test=6&more=$filler");
 ok t_cmp(<<EOT, $body, "prefetch credentials");
 ARGS:
 \tfoo => 1
@@ -29,4 +29,5 @@ BODY:
 \tbar => 2
 \tquux => $filler
 \ttest => 6
+\tmore => $filler
 EOT

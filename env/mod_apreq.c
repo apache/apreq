@@ -211,11 +211,11 @@ APREQ_DECLARE(apreq_request_t *) apreq_env_request(void *env,
     if (req != NULL) {
         apreq_request_t *old = c->req;
         c->req = req;
+        apreq_log(APREQ_DEBUG 0, r, 
+                  "apreq request is now initialized" );
         return old;
     }
 
-    apreq_log(APREQ_DEBUG 0, r, 
-              "apreq request is now initialized" );
     return c->req;
 }
 
@@ -325,6 +325,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     request_rec *r = f->r;
     struct filter_ctx *ctx;
     apr_status_t rv;
+    apreq_request_t *req;
 
     if (f->ctx == NULL)
         apreq_filter_make_context(f);
@@ -341,9 +342,10 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     }
     apreq_log(APREQ_DEBUG ctx->status, r, "entering filter (%d)",
               r->input_filters == f);
+    req = apreq_request(r, NULL);
+
     if (bb != NULL) {
         apr_bucket_brigade *tmp;
-
         rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
         if (rv != APR_SUCCESS) {
             apreq_log(APREQ_ERROR rv, r, "get_brigade failed");
@@ -361,18 +363,20 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                     apreq_log(APREQ_ERROR rv, r, "partition failed");
                     return rv;
                 }
-                if (e != APR_BRIGADE_SENTINEL(bb)) {
-                    apr_bucket *next = APR_BUCKET_NEXT(e);
-                    if (APR_BUCKET_IS_EOS(next))
-                        e = APR_BUCKET_NEXT(next);
-                    ctx->spool = apr_brigade_split(bb, e);
-                }
+                if (APR_BUCKET_IS_EOS(e))
+                    e = APR_BUCKET_NEXT(e);
+                ctx->spool = apr_brigade_split(bb, e);
+                apreq_log(APREQ_DEBUG rv,r, "returning %d bytes from spool", 
+                          readbytes);
             }
         }
 
         if (ctx->status != APR_INCOMPLETE) {
-            if (APR_BRIGADE_EMPTY(ctx->spool))
+            if (APR_BRIGADE_EMPTY(ctx->spool)) {
                 ap_remove_input_filter(f);
+                apreq_log(APREQ_DEBUG ctx->status,r,"removing filter(%d)",
+                          r->input_filters == f);
+            }
             return ctx->status;
         }
     }
@@ -392,12 +396,12 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             bb = apreq_copy_brigade(tmp);
             apr_brigade_length(bb,0,&len);
             total_read += len;
-            APR_BRIGADE_CONCAT(ctx->spool, tmp);
+            apreq_brigade_concat(r->pool, req->cfg, ctx->spool, tmp);
             APR_BRIGADE_CONCAT(ctx->bb, bb);
             last = APR_BRIGADE_LAST(ctx->spool);
         }
     }
-    ctx->status = apreq_parse_request(apreq_request(r, NULL), ctx->bb);
+    ctx->status = apreq_parse_request(req, ctx->bb);
     apreq_log(APREQ_DEBUG ctx->status, r, "leaving filter (%d)",
               r->input_filters == f);
     return (ctx->status == APR_INCOMPLETE) ? APR_SUCCESS : ctx->status;
