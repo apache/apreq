@@ -30,7 +30,7 @@ t/TEST : Makefile.am t/TEST.PL
 else
 
 noinst_LTLIBRARIES = mod_apreq2.la
-mod_apreq2_la_SOURCES = handle.c
+mod_apreq2_la_SOURCES = apreq_private_apache2.h handle.c filter.c
 
 install-exec-local: mod_apreq.la
 	@APACHE2_APXS@ -i -a -n apreq2 mod_apreq2.la
