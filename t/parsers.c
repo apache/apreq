@@ -91,10 +91,16 @@ static void parse_multipart(CuTest *tc)
         APR_BRIGADE_INSERT_HEAD(bb, e);
         APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
+        /* Split e into two buckets, leaving e with the first j bytes. 
+         * Then put all the buckets after e into the tail brigade,
+         * drop any existing parser data (from a previous pass through
+         * the loop) and run the parser tests.
+         */
         apr_bucket_split(e,j);
-        tail = apr_brigade_split(bb,e);
+        tail = apr_brigade_split(bb, APR_BUCKET_NEXT(e));
         req->body = NULL;
         req->parser = NULL;
+
         rv = apreq_parse_request(req,bb);
         CuAssertIntEquals(tc, APR_INCOMPLETE, rv);
         rv = apreq_parse_request(req, tail);        
