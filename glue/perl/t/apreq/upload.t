@@ -23,7 +23,7 @@ foreach my $name (@names) {
     my $url = ( ($name =~ /\.pod$/) ?
         "getfiles-perl-pod/" : "/getfiles-binary-" ) . $name;
     my $content = GET_BODY_ASSERT($url);
-    my $path = File::Spec->catfile($cwd, $name);
+    my $path = File::Spec->catfile($cwd, 't', $name);
     open my $fh, ">", $path or die "Cannot open $path: $!";
     binmode $fh;
     print $fh $content;
@@ -33,7 +33,7 @@ foreach my $name (@names) {
 eval {require Digest::MD5;};
 my $has_md5 = $@ ? 0 : 1;
 
-foreach my $file( map {File::Spec->catfile($cwd, $_)} @names) {
+foreach my $file( map {File::Spec->catfile($cwd, 't', $_)} @names) {
     my $size = -s $file;
     my $cs = $has_md5 ? cs($file) : 0;
     my $basename = File::Basename::basename($file);
