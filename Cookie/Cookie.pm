@@ -45,7 +45,7 @@ Just like CGI::Cookie::new, but requires an I<Apache> request object:
                              -value   =>  'bar', 
                              -expires =>  '+3M', 
                              -domain  =>  '.capricorn.com', 
-                             -path    =>  '/cgi-bin/database' 
+                             -path    =>  '/cgi-bin/database',
                              -secure  =>  1 
                             ); 
 
