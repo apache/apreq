@@ -14,7 +14,7 @@ pkgincludedir = $(includedir)/@APREQ_LIBNAME@
 
 if ENABLE_PROFILE
 
-AM_CFLAGS= -fprofile-arcs -ftest-coverage
+AM_CFLAGS= -pg -fprofile-arcs -ftest-coverage
 
 clean-local:
 	-rm *.bb *.bbg *.da *.gcov

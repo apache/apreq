@@ -1,7 +1,7 @@
 AC_DEFUN([AC_APREQ], [
 
         AC_ARG_ENABLE(profile,
-                AC_HELP_STRING([--enable-profile],[compile libapreq2 with "-fprofile-arcs -ftest-coverage" for gcov/gprof]),
+                AC_HELP_STRING([--enable-profile],[compile libapreq2 with "-pg -fprofile-arcs -ftest-coverage" for gcov/gprof]),
                 [PROFILE=$enableval],[PROFILE="no"])
         AC_ARG_ENABLE(perl_glue,
                 AC_HELP_STRING([--enable-perl-glue],[build perl modules Apache::Request and Apache::Cookie]),
