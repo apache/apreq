@@ -263,7 +263,7 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
     }
 
     if (end != APR_BRIGADE_SENTINEL(bb))
-        ((struct iovec *)arr.elts)[arr.nelts - 1].iov_len--; /* drop '=' sign */
+        ((struct iovec *)arr.elts)[arr.nelts - 1].iov_len--; /* drop [&;] */
 
     s = apreq_decodev(v->data, &v->size,
                       (struct iovec *)arr.elts, arr.nelts);
