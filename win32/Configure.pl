@@ -85,8 +85,6 @@ TEST: $(LIBAPREQ) $(MOD)
         $(PERL) "-MExtUtils::Command::MM" "-e" "test_harness()" $(TEST_FILES)
 	cd $(APREQ_HOME)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
-        if not exist "$(APREQ_ENV)\t\cgi-bin" mkdir "$(APREQ_ENV)\t\cgi-bin"
-        copy $(LIBDIR)\test_cgi.exe $(APREQ_ENV)\t\cgi-bin\test_cgi.exe
         cd $(APREQ_HOME)
 END
 
@@ -96,8 +94,6 @@ CLEAN:
         $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
         cd $(TDIR)
         $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
-        cd $(APREQ_ENV)
-        $(PERL) t\TEST.PL -clean
         cd $(APREQ_HOME)
 !IF EXIST("$(PERLGLUE)\Makefile")
         cd $(PERLGLUE)
@@ -445,7 +441,6 @@ CFG_HOME=$(APREQ_HOME)\win32
 LIBDIR=$(CFG_HOME)\libs
 PERLGLUE=$(APREQ_HOME)\glue\perl
 APACHE_LIB=$(APACHE)\lib
-APREQ_ENV=$(APREQ_HOME)\env
 TDIR=$(APREQ_HOME)\library\t
 
 ALL : "$(LIBAPREQ)"

@@ -77,7 +77,7 @@ ALL : "$(OUTDIR)\libapreq2.dll"
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /Fp"$(INTDIR)\libapreq2.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /FD /c 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapreq2.bsc" 
@@ -96,7 +96,7 @@ ALL : "$(OUTDIR)\libapreq2.dll"
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /Fp"$(INTDIR)\libapreq2.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ  /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /FD /GZ  /c 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapreq2.bsc" 
@@ -146,57 +146,57 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi3
 SOURCE=$(LIBDIR)\cookie.c
 
 "$(INTDIR)\cookie.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\cookie.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\param.c
 
 "$(INTDIR)\param.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\param.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\parser.c
 
 "$(INTDIR)\parser.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\parser.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\parser_header.c
 
 "$(INTDIR)\parser_header.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\parser_header.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\parser_multipart.c
 
 "$(INTDIR)\parser_multipart.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\parser_multipart.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\parser_urlencoded.c
 
 "$(INTDIR)\parser_urlencoded.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\parser_urlencoded.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\version.c
 
 "$(INTDIR)\version.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\version.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\module.c
 
 "$(INTDIR)\module.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\module.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\module_custom.c
 
 "$(INTDIR)\module_custom.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\module_custom.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\module_cgi.c
 
 "$(INTDIR)\module_cgi.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\module_cgi.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBDIR)\util.c
 
 "$(INTDIR)\util.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(INTDIR)\util.obj" $(CPP_PROJ) $(SOURCE)
 
 !ENDIF 
 

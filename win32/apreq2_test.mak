@@ -69,7 +69,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /Fp"$(INTDIR)\apreq2_test.pch" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /Fo"$(OUTDIR)\\" /Fd"$(OUTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /FD /c 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(LIBDIR)\apreq2_test.bsc"	
 LIB32=link.exe -lib
@@ -127,7 +127,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"$(LIBDIR)\apreq2_test.pch" /YX /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /Fo"$(OUTDIR)\\" /Fd"$(OUTDIR)\\" /FD /GZ  /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB"/YX /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /FD /GZ  /c 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(LIBDIR)\apreq2_test.bsc" 
 LIB32=link.exe -lib
@@ -194,42 +194,32 @@ LIB32_OBJS= \
    $(CPP_PROJ) $< 
 <<
 
-
-!IF "$(NO_EXTERNAL_DEPS)" != "1"
-!IF EXISTS("apreq2_test.dep")
-!INCLUDE "apreq2_test.dep"
-!ELSE 
-!MESSAGE Warning: cannot find "apreq2_test.dep"
-!ENDIF 
-!ENDIF 
-
-
 !IF "$(CFG)" == "apreq2_test - Win32 Release" || "$(CFG)" == "apreq2_test - Win32 Debug"
 
 SOURCE=$(LIBTDIR)\at.c
 
 "$(LIBDIR)\at.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(LIBDIR)\at.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBTDIR)\cookie.c
 
 "$(OUTDIR)\cookie.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(OUTDIR)\cookie.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBTDIR)\params.c
 
 "$(OUTDIR)\params.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(OUTDIR)\params.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBTDIR)\parsers.c
 
 "$(OUTDIR)\parsers.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(OUTDIR)\parsers.obj" $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(LIBTDIR)\version.c
 
 "$(OUTDIR)\version.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
+	$(CPP) /Fo"$(OUTDIR)\version.obj" $(CPP_PROJ) $(SOURCE)
 
 !ENDIF 
 
