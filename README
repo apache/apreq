@@ -18,7 +18,7 @@
   and Apache-2's input filter API.  The C codebase is separated into
   two independent components:
 
-        1) libapreq2, the shared library.  This libarary is based 
+        1) libapreq2, the shared library.  This library is based 
            solely on libapr and libaprutil, and requires linking
            applications to provide stub code for the apreq_env
            interface (defined by the "apreq_env.h" header file).
