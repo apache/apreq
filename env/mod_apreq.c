@@ -39,10 +39,10 @@ struct dir_config {
 
 static void *apreq_create_dir_config(apr_pool_t *p, char *d)
 {
-    /* dir == OR_ALL */
+    /* d == OR_ALL */
     struct dir_config *dc = apr_palloc(p, sizeof *dc);
-    dc->temp_dir = NULL;
-    dc->max_body = -1;
+    dc->temp_dir    = NULL;
+    dc->max_body    = -1;
     dc->max_brigade = APREQ_MAX_BRIGADE_LEN;
     return dc;
 }
@@ -96,7 +96,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
  * Normally the installation process triggered by '% make install'
  * will make the necessary changes to httpd.conf for you.
  * 
- * XXX describe normal operation, effects of apenv_config_t settings, etc. 
+ * XXX describe normal operation, effects of config settings, etc. 
  *
  * @defgroup mod_apreq Apache-2 Filter Module
  * @ingroup MODULES
@@ -202,17 +202,19 @@ static void apreq_filter_relocate(ap_filter_t *f)
 static ap_filter_t *get_apreq_filter(request_rec *r)
 {
     struct env_config *cfg = get_cfg(r);
-    ap_filter_t *f;
+    ap_filter_t *f = r->input_filters;
+
     if (cfg->f != NULL)
         return cfg->f;
 
-    for (f  = r->input_filters; 
-         f != r->proto_input_filters;
-         f  = f->next)
-    {
+    for (;;) {
         if (strcmp(f->frec->name, filter_name) == 0)
             return cfg->f = f;
+        if (f == r->proto_input_filters)
+            break;
+        f = f->next;
     }
+
     cfg->f = ap_add_input_filter(filter_name, NULL, r, r->connection);
     apreq_filter_relocate(cfg->f);
     return cfg->f;
@@ -347,73 +349,6 @@ static apr_ssize_t apache2_max_brigade(void *env, apr_ssize_t bytes)
 }
 
 
-static apr_status_t apreq_filter_init(ap_filter_t *f)
-{
-    request_rec *r = f->r;
-    struct filter_ctx *ctx;
-    struct env_config *cfg = get_cfg(r);
-
-
-    /* We must be inside config.c:ap_invoke_handler -> 
-     * ap_invoke_filter_init (r->input_filters), and
-     * we have to deal with the possibility that apreq may have
-     * prefetched data prior to apache running the ap_invoke_filter_init
-     * hook.
-     */
-
-    if (f->ctx) {
-        ctx = f->ctx;
-
-        /* We may have already prefetched some data.
-         * If "f" is no longer at the top of the filter chain,
-         * we need to add a new apreq filter to the top and start over.
-         * XXX: How safe would the following (unimplemented) optimization 
-         * be on redirects????: Leave the filter intact if
-         * it's still at the end of the input filter chain (this would
-         * imply that no other input filters were added after libapreq
-         * started parsing).
-         */
-
-        if (!APR_BRIGADE_EMPTY(ctx->spool)) {
-            apreq_request_t *req = cfg->req;
-
-            /* Adding "f" to the protocol filter chain ensures the 
-             * spooled data is preserved across internal redirects.
-             */
-
-            r->proto_input_filters = f;            
-
-            /* We MUST dump the current parser (and filter) because 
-             * its existing state is now incorrect.
-             * NOTE:
-             *   req->parser != NULL && req->body != NULL, since 
-             *   apreq_parse_request was called at least once already.
-             * 
-             */
-
-            apreq_log(APREQ_DEBUG 0, r, "dropping stale apreq filter (%p)", f);
-
-            if (req) {
-                req->parser = NULL;
-                req->body = NULL;
-            }
-            if (cfg->f == f) {
-                ctx->status = APR_SUCCESS;
-                cfg->f = NULL;
-            }
-        }
-        else {
-            /* No data was parsed/prefetched, so it's safe to move the filter
-             * up to the top of the chain.
-             */
-            apreq_filter_relocate(f);
-        }
-    }
-
-    return APR_SUCCESS;
-}
-
-
 static apr_status_t apreq_filter(ap_filter_t *f,
                                  apr_bucket_brigade *bb,
                                  ap_input_mode_t mode,
@@ -442,6 +377,18 @@ static apr_status_t apreq_filter(ap_filter_t *f,
     cfg = get_cfg(r);
     req = cfg->req;
 
+    if (f != r->input_filters) {
+        ctx->status = APR_SUCCESS;
+        if (cfg->f == f) {
+            cfg->f = NULL;
+            if (req) {
+                req->parser = NULL;
+                req->body = NULL;
+            }
+            get_apreq_filter(r);
+        }
+    }
+
     if (bb != NULL) {
 
         if (!ctx->saw_eos) {
@@ -451,7 +398,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                 rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
             
                 if (rv != APR_SUCCESS) {
-                    apreq_log(APREQ_ERROR rv, r, "get_brigade failed");
+                    apreq_log(APREQ_ERROR rv, r, "ap_get_brigade failed");
                     return rv;
                 }
 
@@ -495,12 +442,10 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             }
             return APR_SUCCESS;
         }
-
     }
     else if (!ctx->saw_eos) {
-
+        ap_filter_t *in;
         /* bb == NULL, so this is a prefetch read! */
-
         apr_off_t total_read = 0;
         bb = apr_brigade_create(ctx->bb->p, ctx->bb->bucket_alloc);
 
@@ -514,9 +459,10 @@ static apr_status_t apreq_filter(ap_filter_t *f,
             }
 
             rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
-            if (rv != APR_SUCCESS)
+            if (rv != APR_SUCCESS) {
+                apreq_log(APREQ_ERROR rv, r, "ap_get_brigade failed");
                 return rv;
-
+            }
             APREQ_BRIGADE_SETASIDE(bb, r->pool);
             APREQ_BRIGADE_COPY(ctx->bb, bb);
 
@@ -533,6 +479,19 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                       ") exceeds configured max_body limit (%" APR_OFF_T_FMT ")",
                       ctx->bytes_read, cfg->max_body);
         }
+
+        /* Adding "f" to the protocol filter chain ensures the 
+         * spooled data is preserved across internal redirects.
+         */
+        for (in = r->input_filters; in != r->proto_input_filters; 
+             in = in->next)
+        {
+            if (f == in) {
+                r->proto_input_filters = f;
+                break;
+            }
+        }
+
     }
     else
         return APR_SUCCESS;
@@ -541,7 +500,9 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         if (req == NULL)
             req = apreq_request(r, NULL);
 
+        assert(req->env == r);
         ctx->status = apreq_parse_request(req, ctx->bb);
+        apr_brigade_cleanup(ctx->bb);
     }
 
     return APR_SUCCESS;
@@ -554,7 +515,7 @@ static void register_hooks (apr_pool_t *p)
 {
     const apreq_env_t *old_env;
     old_env = apreq_env_module(&apache2_module);
-    ap_register_input_filter(filter_name, apreq_filter, apreq_filter_init,
+    ap_register_input_filter(filter_name, apreq_filter, NULL,
                              AP_FTYPE_CONTENT_SET);
 }
 
@@ -615,9 +576,9 @@ static const command_rec apreq_cmds[] =
     AP_INIT_TAKE1("APREQ_TempDir", apreq_set_temp_dir, NULL, OR_ALL,
                   "Default location of temporary directory"),
     AP_INIT_TAKE1("APREQ_MaxBody", apreq_set_max_body, NULL, OR_ALL,
-                  "Maximum amount of data that can be fed into libapreq."),
+                  "Maximum amount of data that will be fed into a parser."),
     AP_INIT_TAKE1("APREQ_MaxBrigade", apreq_set_max_brigade, NULL, OR_ALL,
-                  "Maximum in-memory bytes a stored brigade may use."),
+                  "Maximum in-memory bytes a brigade may use."),
     {NULL}
 };
 
@@ -632,5 +593,5 @@ module AP_MODULE_DECLARE_DATA apreq_module =
 	NULL,
 	NULL,
 	apreq_cmds,
-	register_hooks,			/* callback for registering hooks */
+	register_hooks,
 };
