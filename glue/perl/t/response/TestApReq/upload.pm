@@ -9,7 +9,6 @@ use Apache::Request ();
 use Apache::Upload;
 use File::Spec;
 require File::Basename;
-use constant WIN32 => $^O eq 'MSWin32';
 
 sub handler {
     my $r = shift;
@@ -32,14 +31,7 @@ sub handler {
     }
     elsif ($method eq 'tempname') {
         my $name = $upload->tempname;
-        if (WIN32) {
-            open $fh, "<:APR", $name, $upload->pool 
-                or die "Can't open $name: $!";
-        }
-        else {
-            open $fh, "<", $name
-                or die "Can't open $name: $!";
-        }
+        open $fh, "<", $name or die "Can't open $name: $!";
         binmode $fh;
         read $fh, $data, $upload->size;
         close $fh;
@@ -48,21 +40,14 @@ sub handler {
         my $link_file = File::Spec->catfile($temp_dir, "linkfile");
         unlink $link_file if -f $link_file;
         $upload->link($link_file) or die "Can't link to $link_file: $!";
-        if (WIN32) {
-            open $fh, "<:APR", $link_file, $upload->pool
-                or die "Can't open $link_file: $!";
-        }
-        else {
-        open $fh, "<", $link_file
-            or die "Can't open $link_file: $!";
-        }
+        open $fh, "<", $link_file or die "Can't open $link_file: $!";
         binmode $fh;
         read $fh, $data, $upload->size;
         close $fh;
         unlink $link_file if -f $link_file;
     }
     elsif ($method eq 'io') {
-       read $upload->io, $data, $upload->size;
+        read $upload->io, $data, $upload->size;
     }
     else  {
         die "unknown method: $method";

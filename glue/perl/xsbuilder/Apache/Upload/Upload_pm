@@ -14,15 +14,9 @@ sub io {
 
 sub fh {
     my $upload = shift;
-    my $fh;
-    if ($^O eq 'MSWin32') {
-        open $fh, "<:APR", $upload->tempname, $upload->pool 
-            or die "Can't open ", $upload->tempname, ": ", $!;
-    }
-    else {
-        open $fh, "<", $upload->tempname
-            or die "Can't open ", $upload->tempname, ": ", $!;
-    }
+    open my $fh, "<", $upload->tempname
+        or die "Can't open ", $upload->tempname, ": ", $!;
+    binmode $fh;
     return $fh;
 }
 

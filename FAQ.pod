@@ -29,19 +29,6 @@ I<Apache::Upload> is now a separate module in apreq2, so you need to
 C<use Apache::Upload> to load the C<Apache::Request::upload> function.
 
 
-=head2 On Win32, I can't open an uploaded file specified by $upload-E<gt>tempname
-
-C<tempname> in libapreq2 enables a flag that will delete the temporary
-file after it's closed. On Win32, however, use of Perl's C<open()>
-to open this file causes a premature deletion. Use instead the
-APR::PerlIO layer to open this file:
-
-  use APR::PerlIO;
-  ...
-  my $name = $upload->tempname;
-  open my $fh, "<:APR", $name, $upload->pool or die "Can't open $name: $!";
-  ...
-
 =head1 Using libapreq2 outside of Apache.
 
 [...]
