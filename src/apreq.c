@@ -170,7 +170,7 @@ APREQ_DECLARE(long) apreq_atol(const char *s)
     char *p;
     if (s == NULL)
         return 0;
-    n = apr_strtoi64(s, &p, 0); /* XXX: what about overflow? */
+    n = (long)apr_strtoi64(s, &p, 0); /* XXX: what about overflow? */
 
     if (p == NULL)
         return n;

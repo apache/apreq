@@ -65,7 +65,8 @@
 #include <stdio.h>
 
 #define dENV struct env_ctx *env = (struct env_ctx *)ctx
-/* the "warehouse" */
+
+/* rigged environent for unit tests */
 
 struct env_ctx {
     apr_pool_t         *pool;

@@ -917,11 +917,10 @@ APREQ_DECLARE(apr_status_t) apreq_parse_multipart(apr_pool_t *pool,
             apr_bucket *eos;
             apr_status_t s = split_on_bdry(pool, ctx->bb, bb, ctx->bdry);
             apreq_param_t *param;
-            apreq_table_iter_t ti;
+            const apr_array_header_t *arr;
 
-            ti.t = req->body;
-            apreq_table_last(&ti);
-            param = apreq_value_to_param(ti.v);
+            arr = apreq_table_elts(req->body);
+            param = apreq_value_to_param(APREQ_ARRAY_VALUE(arr,arr->nelts-1));
 
             switch (s) {
 

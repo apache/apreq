@@ -352,20 +352,9 @@ APREQ_DECLARE(apr_status_t) apreq_table_overlap(apreq_table_t *a,
                                                 const unsigned flags);
 
 /** Iterator API */
+APR_INLINE
+APREQ_DECLARE(const apr_array_header_t *)apreq_table_elts(apreq_table_t *t);
 
-typedef struct apreq_table_iter_t {
-    const apreq_value_t *v;
-    const apreq_table_t *t;
-    int                  i;
-} apreq_table_iter_t;
-
-APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_fetch(apreq_table_iter_t *ti,
-                                                         int idx);
-#define apreq_table_first(ti) apreq_table_fetch(ti,0)
-#define apreq_table_last(ti) apreq_table_fetch(ti,apreq_table_nelts((ti)->t)-1)
-
-APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_next(apreq_table_iter_t *ti);
-APREQ_DECLARE(apr_status_t) APR_INLINE apreq_table_prev(apreq_table_iter_t *ti);
 
 /**
  * Declaration prototype for the iterator callback function of apr_table_do()

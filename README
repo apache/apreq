@@ -3,7 +3,7 @@
 
   What is it?
   -----------
-  httpd-apreq (aka `apreq') is subproject of the Apache Server Project 
+  httpd-apreq (aka `apreq') is subproject of the Apache HTTP Server Project 
   whose membership (aka apreq's `committers') develops and maintains the 
   libapreq software library.
 
@@ -62,6 +62,7 @@
                 Perl API - modperl@perl.apache.org
                  Tcl API - XXX
                 Java API - XXX
+              Python API - XXX
 
         developer list (bugs, patches, etc.):
                 apreq-dev@cvs.apache.org

@@ -161,9 +161,10 @@ static void table_unset(CuTest *tc)
 static void table_overlap(CuTest *tc)
 {
     const char *val;
-    apreq_table_t *t1 = apreq_table_make(p, 1);
     apreq_table_t *t2 = apreq_table_make(p, 1);
     apr_status_t s;
+
+    t1 = apreq_table_make(p, 1);
 
     apreq_table_add(t1, V("a", "0"));
     apreq_table_add(t1, V("g", "7"));
@@ -182,6 +183,7 @@ static void table_overlap(CuTest *tc)
     CuAssertIntEquals(tc, APR_SUCCESS, s);
     CuAssertIntEquals(tc, 7, apreq_table_nelts(t1));
     CuAssertIntEquals(tc, 3, apreq_table_ghosts(t1));
+    CuAssertIntEquals(tc, 9, apreq_table_exorcise(t1));
 
     val = apreq_table_get(t1, "a");
     CuAssertStrEquals(tc, "0, 1",val);
@@ -199,12 +201,43 @@ static void table_overlap(CuTest *tc)
     CuAssertStrEquals(tc, "7",val);
 }
 
+static void table_elts(CuTest *tc)
+{
+    const char *val;
+    const apreq_value_t *v;
+    const apr_array_header_t *a;
+
+    a = apreq_table_elts(t1);
+
+    CuAssertIntEquals(tc, 7, apreq_table_nelts(t1));
+    CuAssertIntEquals(tc, 0, apreq_table_ghosts(t1));
+
+    v = APREQ_ARRAY_VALUE(a,0);
+    CuAssertStrEquals(tc,"0, 1", v->data);
+    v = APREQ_ARRAY_VALUE(a,1);
+    CuAssertStrEquals(tc,"7", v->data);
+    v = APREQ_ARRAY_VALUE(a,2);
+    CuAssertStrEquals(tc,"2, 2.0, 2.", v->data);
+    v = APREQ_ARRAY_VALUE(a,3);
+    CuAssertStrEquals(tc,"3", v->data);
+
+    v = APREQ_ARRAY_VALUE(a,a->nelts-1);
+    CuAssertStrEquals(tc,"6", v->data);
+    v = APREQ_ARRAY_VALUE(a,a->nelts-2);
+    CuAssertStrEquals(tc,"5", v->data);
+    v = APREQ_ARRAY_VALUE(a,a->nelts-3);
+    CuAssertStrEquals(tc,"4", v->data);
+}
+
+
 static void table_overlay(CuTest *tc)
 {
     const char *val;
-    t1 = apreq_table_make(p, 1);
     apreq_table_t *t2 = apreq_table_make(p, 1);
     apr_status_t s;
+
+    t1 = apreq_table_make(p, 1);
+
     apreq_table_add(t1, V("a", "0"));
     apreq_table_add(t1, V("g", "7"));
 
@@ -236,28 +269,6 @@ static void table_overlay(CuTest *tc)
     CuAssertStrEquals(tc, "7",val);
 }
 
-static void table_iterators(CuTest *tc)
-{
-    const char *val;
-    apreq_table_iter_t ti;
-    ti.t = t1;
-    apreq_table_first(&ti);
-    CuAssertStrEquals(tc,"0", ti.v->data);
-    apreq_table_next(&ti);
-    CuAssertStrEquals(tc,"7", ti.v->data);
-    apreq_table_next(&ti);
-    CuAssertStrEquals(tc,"1", ti.v->data);
-    apreq_table_next(&ti); 
-    CuAssertStrEquals(tc,"2", ti.v->data);
-    apreq_table_last(&ti);
-    CuAssertStrEquals(tc,"6", ti.v->data);
-    apreq_table_prev(&ti);
-    CuAssertStrEquals(tc,"2.", ti.v->data);
-    apreq_table_prev(&ti);
-    CuAssertStrEquals(tc,"5", ti.v->data);
-
-}
-
 CuSuite *testtable(void)
 {
     CuSuite *suite = CuSuiteNew("Table");
@@ -271,8 +282,8 @@ CuSuite *testtable(void)
     SUITE_ADD_TEST(suite, table_clear);
     SUITE_ADD_TEST(suite, table_unset);
     SUITE_ADD_TEST(suite, table_overlap);
+    SUITE_ADD_TEST(suite, table_elts);
     SUITE_ADD_TEST(suite, table_overlay);
-    SUITE_ADD_TEST(suite, table_iterators);
 
     return suite;
 }
