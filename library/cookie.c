@@ -46,12 +46,12 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
     }
 }
 
-APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apr_pool_t *p,
-                                              apreq_cookie_t *c, 
-                                              const char *attr,
-                                              apr_size_t alen,
-                                              const char *val,
-                                              apr_size_t vlen)
+static apr_status_t apreq_cookie_attr(apr_pool_t *p,
+                                      apreq_cookie_t *c, 
+                                      const char *attr,
+                                      apr_size_t alen,
+                                      const char *val,
+                                      apr_size_t vlen)
 {
     if (alen < 2)
         return APR_EBADARG;

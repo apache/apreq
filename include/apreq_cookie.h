@@ -144,25 +144,6 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *pool,
                                                   const apr_size_t vlen);
 
 /**
- * Sets the associated cookie attribute.
- * @param p    Pool for allocating the new attribute.
- * @param c    Cookie.
- * @param attr Name of attribute- leading '-' or '$' characters
- *             are ignored.
- * @param alen Length of attr.
- * @param val  Value of new attribute.
- * @param vlen Length of new attribute.
- * @remarks    Ensures cookie version & time are kept in sync.
- */
-APREQ_DECLARE(apr_status_t) apreq_cookie_attr(apr_pool_t *p,
-                                              apreq_cookie_t *c, 
-                                              const char *attr,
-                                              apr_size_t alen,
-                                              const char *val,
-                                              apr_size_t vlen);
-
-
-/**
  * Returns a string that represents the cookie as it would appear 
  * in a valid "Set-Cookie*" header.
  *

@@ -6,6 +6,9 @@
 
 
 - C API [joes]
+  Remove apreq_cookie_attr().
+
+- C API [joes]
   - Add apreq_error.h, apreq_module.h.
   - Rename apreq_run* and apreq_make* funcs to conform with 
     apreq_$obj_$meth scheme.
