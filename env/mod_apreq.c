@@ -79,7 +79,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER 20040324
+#define APREQ_MODULE_MAGIC_NUMBER 20040613
 
 
 static void apache2_log(const char *file, int line, int level, 
