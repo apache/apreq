@@ -415,6 +415,14 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 	int blen, wlen;
 
 	if (!header) {
+#ifdef DEBUG
+            ap_log_rerror(REQ_ERROR,
+		      "[libapreq] silently drop remaining '%ld' bytes", r->remaining);
+#endif
+            ap_hard_timeout("[libapreq] parse_multipart", r);
+            while ( ap_get_client_block(r, buff, sizeof(buff)) > 0 )
+                /* wait for more input to ignore */ ;
+            ap_kill_timeout(r);
 	    return OK;
 	}
 

@@ -105,6 +105,13 @@ int fill_buffer(multipart_buffer *self)
     /* calculate the free space in the buffer */
     bytes_to_read = self->bufsize - self->bytes_in_buffer;
 
+    if (bytes_to_read >= self->r->remaining) {
+        bytes_to_read = self->r->remaining - strlen(self->boundary);
+#ifdef DEBUG
+        ap_log_rerror(MPB_ERROR, "mozilla 0.97 hack: '%ld'", self->r->remaining);
+#endif
+    }
+
     /* read the required number of bytes */
     if(bytes_to_read > 0) {
 	char *buf = self->buffer + self->bytes_in_buffer;
