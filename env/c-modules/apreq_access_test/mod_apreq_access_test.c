@@ -105,10 +105,10 @@ static int apreq_access_checker(request_rec *r)
         ap_get_module_config(r->per_dir_config, &apreq_access_test_module);
 
     if (!cfg || !cfg->param)
-        return -1;
+        return DECLINED;
 
     if (apreq_param(req, cfg->param))
-        return 0;
+        return OK;
     else {
         if (req->body)
             apreq_log(APREQ_DEBUG HTTP_FORBIDDEN, r, "%s not found in %d elts",
