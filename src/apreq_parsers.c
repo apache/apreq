@@ -878,7 +878,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 APR_BRIGADE_INSERT_HEAD(bb,e);
                 break;
             default:
-                /* has body, ok */
+                ; /* has body, ok */
             }
 
             cd = apr_table_get(ctx->info, "Content-Disposition");
