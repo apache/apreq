@@ -157,8 +157,13 @@ static apr_status_t split_urlword(apr_table_t *t,
     apr_bucket *e, *end;
     apr_status_t s;
     struct iovec vec[APREQ_NELTS];
-    apr_array_header_t arr = { pool, sizeof(struct iovec), 0,
-                               APREQ_NELTS, (char *)vec };
+    apr_array_header_t arr;
+
+    arr.pool     = pool;
+    arr.elt_size = sizeof(struct iovec);
+    arr.nelts    = 0;
+    arr.nalloc   = APREQ_NELTS;
+    arr.elts     = (char *)vec;
 
     param->bb = NULL;
     param->info = NULL;
