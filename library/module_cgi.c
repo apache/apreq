@@ -56,8 +56,8 @@ struct cgi_handle {
 
     const char                  *temp_dir;
     apr_size_t                   brigade_limit;
-    apr_uint64_t                    read_limit;
-    apr_uint64_t                    bytes_read;
+    apr_uint64_t                 read_limit;
+    apr_uint64_t                 bytes_read;
 
     apr_bucket_brigade          *in;
 
