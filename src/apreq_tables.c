@@ -153,12 +153,12 @@ struct apreq_table_t {
 #define KILL(t,idx)    do { (idx)[o].key = NULL; \
                             (t)->ghosts++; } while (0)
 #define RESURRECT(t,idx) do { (idx)[o].key = (idx)[o].val->name; \
-           COMPUTE_KEY_CHECKSUM((idx[o].key),(idx)[o].checksum); \
+           COMPUTE_KEY_CHECKSUM((idx)[o].key,(idx)[o].checksum); \
                                                (t)->ghosts--; } while (0)
 
 /* NEVER KILL AN ENTRY THAT'S STILL WITHIN THE FOREST */
 #define IN_FOREST(t,idx) ( !DEAD(idx) && ( (idx)[o].tree[UP] >= 0 || \
-                           (idx) == t->root[TABLE_HASH((idx)[o].checksum>>24)] ) )
+                   (idx) == t->root[TABLE_HASH((idx)[o].checksum>>24)] ) )
 
 /* MUST ensure n's parent exists (>=0) before using LR(n) */
 #define LR(n) (  ( (n)[o].tree[UP][o].tree[LEFT] == (n) ) ? LEFT : RIGHT  )
@@ -369,6 +369,8 @@ static void delete(apreq_table_entry_t *o,
 
         if (x >= 0)
             x[o].tree[UP] = parent;
+        else
+            x = parent;
 
         if (flags & TF_BALANCE == 0 || idx[o].color == RED)
             return;
@@ -389,7 +391,12 @@ static void delete(apreq_table_entry_t *o,
                 x[o].tree[UP]                = y[o].tree[UP];
                 y[o].tree[UP][o].tree[LR(y)] = x;
             }
+            else
+                x = y[o].tree[UP];
         }
+        else
+            if (x < 0)
+                x = parent;
 
         /* copy idx's tree data into y ("RIGHT" is already done). */
         y[o].tree[LEFT] = idx[o].tree[LEFT];
@@ -405,10 +412,8 @@ static void delete(apreq_table_entry_t *o,
             y[o].color = idx[o].color;
             return;
         }
-        else {
+        else
             y[o].color = idx[o].color;
-            x = y;
-        }
     }
 
 
@@ -420,7 +425,7 @@ static void delete(apreq_table_entry_t *o,
      *
      */
 
-    while (x[o].color == BLACK && x != *root) {
+    while (x != *root && x[o].color == BLACK) {
         /* x has a parent & sibling */
         int parent = x[o].tree[UP];
         register const int direction = LR(x);
@@ -686,7 +691,8 @@ APREQ_DECLARE(void) apreq_table_balance(apreq_table_t *t, const int on)
         for (idx = 0; idx < t->a.nelts; ++idx)
             if (!DEAD(idx))
                 insert(o, &t->root[TABLE_HASH(idx[o].checksum>>24)], 
-                       t->root[TABLE_HASH(idx[o].checksum>>24)], idx+o, TF_BALANCE);
+                       t->root[TABLE_HASH(idx[o].checksum>>24)], idx+o, 
+                       TF_BALANCE);
 
         t->flags |= TF_BALANCE;
     }
