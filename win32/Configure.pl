@@ -436,4 +436,4 @@ HELP:
 	@echo nmake perl_glue     - build the perl glue
 	@echo nmake perl_test     - test the perl glue
 	@echo nmake perl_install  - install the perl glue
-	@nmake docs               - builds documents (requires doxygen)
+	@echo nmake docs          - builds documents (requires doxygen)
