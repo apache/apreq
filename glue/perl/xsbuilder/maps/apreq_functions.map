@@ -118,8 +118,9 @@ DEFINE_parse | apreq_xs_parse |
 MODULE=APR::Request  PACKAGE=APR::Request PREFIX=APR__Request_
 DEFINE_parse | apreq_xs_parse |
 
-MODULE=APR::Request::Apache2 PACKAGE=APR::Request::Apache2
+MODULE=APR::Request::Apache2 PACKAGE=APR::Request::Apache2 PREFIX=APR__Request__Apache2_
 apreq_xs_handle_apache2_t *:DEFINE_new | apreq_handle_apache2 (r) | const char *:class, request_rec *:r
+DEFINE_param | apreq_xs_apache2_param |
 
 MODULE=APR::Request::CGI PACKAGE=APR::Request::CGI
 apreq_xs_handle_cgi_t *:DEFINE_new | apreq_handle_cgi (p) | const char *:class, apr_pool_t *:p

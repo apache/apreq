@@ -424,7 +424,7 @@ param(handle, key)
     if (param == NULL)
         RETVAL = &PL_sv_undef;
     else
-        RETVAL = apreq_xs_param2sv(aTHX_ param, PARAM_CLASS, obj);
+        RETVAL = apreq_xs_param2sv(aTHX_ param, NULL, obj);
 
 
   OUTPUT:

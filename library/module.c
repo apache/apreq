@@ -101,14 +101,16 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *req, const char *key)
 APREQ_DECLARE(apr_table_t *)apreq_params(apreq_handle_t *req, apr_pool_t *p)
 {
     const apr_table_t *args, *body;
+    apreq_args(req, &args);
+    apreq_body(req, &body);
 
-    if (apreq_args(req, &args) == APR_SUCCESS)
-        if (apreq_body(req, &body) == APR_SUCCESS)
+    if (args != NULL)
+        if (body != NULL)
             return apr_table_overlay(p, args, body);
         else
             return apr_table_copy(p, args);
     else
-        if (apreq_body(req, &body) == APR_SUCCESS)
+        if (body != NULL)
             return apr_table_copy(p, body);
         else
             return NULL;
