@@ -1,5 +1,5 @@
 APREQ 2.0 STATUS:                                              -*-text-*-
-Last modified at [$Date: 2003/04/17 19:19:39 $]
+Last modified at [$Date: 2003/04/18 02:29:11 $]
 
      2.0.0  in development
 
@@ -10,20 +10,48 @@ Contributors looking for a mission:
 
 CURRENT RELEASE NOTES:
 
+    * This is unreleased alpha software.
+
 
 RELEASE SHOWSTOPPERS:
+
+    * Missing API components: 
+
+        1. Key safety features ("disable uploads", "max body", "temp dir",
+           etc.) are unimplemented.
+
+        2. File uploads are `buffered' into a bucket brigade.
+           The buckets are currently heap-allocated, which 
+           causes the entire file to be spooled into RAM.
+           This behavior is unsafe, since large uploads can
+           DOS the server by exhausting RAM.
+
+        3. The req->upload API is unimplemented.
+
+    * Filter API (env/mod_apreq.c) is missing key components:
+
+        1. Safety features (see above).
+
+        2. `Prefetching' filter reads are unimplemented.
+
+        3. Filter should activate `as necessary', and inject itself only
+           once into the input filter chain.
 
 
 CURRENT VOTES:
 
 
+
 TODO:
 
-  Write tests.
-  Populate the glue/ directory (perl, tcl, etc.).
+    * Write core unit tests in t/.
+    * Populate the glue/ directory (perl, tcl, etc.).
 
 
 OPEN ISSUES:
 
+  Documentation system.
+
 
 BUGS:
+
