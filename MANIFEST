@@ -15,6 +15,7 @@ README
 Request/Makefile.PL
 Request/Request.pm
 Request/Request.xs
+STATUS
 ToDo
 acinclude.m4
 aclocal.m4
