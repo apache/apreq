@@ -114,7 +114,7 @@ module AP_MODULE_DECLARE_DATA apreq_module;
 
 
 #define APREQ_MODULE_NAME "APACHE2"
-#define APREQ_MODULE_MAGIC_NUMBER 20031031
+#define APREQ_MODULE_MAGIC_NUMBER 20031107
 
 
 static void apache2_log(const char *file, int line, int level, 
@@ -401,7 +401,7 @@ static apr_status_t apreq_filter(ap_filter_t *f,
                           r->input_filters == f);
                 ap_remove_input_filter(f);
             }
-            return ctx->status;
+            return APR_SUCCESS;
         }
 
         if (req == NULL)
@@ -441,10 +441,12 @@ static apr_status_t apreq_filter(ap_filter_t *f,
         }
     }
     else
-        return ctx->status;
+        return APR_SUCCESS;
 
-    ctx->status = apreq_parse_request(req, ctx->bb);
-    return (ctx->status == APR_INCOMPLETE) ? APR_SUCCESS : ctx->status;
+    if (ctx->status == APR_INCOMPLETE)
+        ctx->status = apreq_parse_request(req, ctx->bb);
+
+    return APR_SUCCESS;
 }
 
 static APREQ_ENV_MODULE(apache2, APREQ_MODULE_NAME,

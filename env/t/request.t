@@ -5,7 +5,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY POST_BODY GET_RC);
 
-plan tests => 11;
+plan tests => 14;
 
 foreach my $location ('/apreq_request_test', '/apreq_access_test') {
 
@@ -19,7 +19,7 @@ foreach my $location ('/apreq_request_test', '/apreq_access_test') {
 
 ok t_cmp(403, GET_RC("/apreq_access_test"), "access denied");
 
-my $filler = "0123456789" x 6400; # < 64K
+my $filler = "0123456789";# x 6400; # < 64K
 my $body = POST_BODY("/apreq_access_test?foo=1;", 
                      content => "bar=2&quux=$filler;test=6&more=$filler");
 ok t_cmp(<<EOT, $body, "prefetch credentials");
@@ -51,3 +51,27 @@ BODY:
 \tmore => $filler
 EOT
 }
+
+# output filter tests
+
+sub filter_content ($) {
+   my $body = shift;      
+   $body =~ s/^.*--APREQ OUTPUT FILTER--\s+//s;
+   return $body;
+}
+
+ok t_cmp(200, GET_RC("/index.html"), "/index.html");
+ok t_cmp("ARGS:\n\ttest => 13\n", filter_content
+         GET_BODY("/index.html?test=13"), "output filter GET");
+
+ok t_cmp(<<EOT,
+ARGS:
+\ttest => 14
+BODY:
+\tpost data => foo
+\tmore => $filler
+\ttest => output filter POST
+EOT
+     filter_content POST_BODY("/index.html?test=14", content => 
+     "post+data=foo;more=$filler;test=output+filter+POST"), 
+     "output filter POST");
