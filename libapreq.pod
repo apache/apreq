@@ -49,6 +49,30 @@ error code if a file upload is attempted:
      return status;
  }
 
+
+=item req->temp_dir
+
+Sets the directory where upload files are spooled.
+
+  char dir[] = "/usr/tmp";
+  req->temp_dir = dir;
+
+=item req->hook_data
+
+=item req->upload_hook
+
+Redirects upload data to be processed by the hook.
+
+  req->hook_data = (void *) some_struct_pointer;
+  req->upload_hook = (int(*)(void*,char*,int,const ApacheUpload*)) some_function;
+
+In this case 
+
+  some_function(req->hookdata,buffer,bufsize,upload);
+
+will be called repeatedly during the file upload instead of writing the 
+data to a temp file.
+
 =back
 
 =head2 ApacheRequest *ApacheRequest_new (request_rec *r)
@@ -111,7 +135,7 @@ The name of the filefield parameter:
 
 =item upload->filename
 
-The name of the upload file:
+The name of the upload file as reported by the client:
 
  char *filename = upload->filename;
 
@@ -120,6 +144,12 @@ The name of the upload file:
 A file pointer to the uploaded file:
 
  FILE *fp = upload->fp;
+
+=item upload->tempname
+
+The name of the temporary upload file on the server:
+
+char *tempname = upload->tempname;
 
 =item upload->size
 

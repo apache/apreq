@@ -4,6 +4,16 @@ Revision history for libapreq
 
 =item 0.32 - ?
 
+fix $r->param( key => [ 0..9 ] ), convert to XS. [Joe Schaefer <joe@sunstarsys.com>]
+Thanks to Jody Biggs <jody@codegrok.com> for the spot and suggested fix.
+
+req->upload_hook, req->hook_data added. [David Welton <davidw@prosa.it>]
+
+upload->tempname, req->temp_dir; $upload->link(), $upload->tempname()
+added. [Joe Schaefer <joe@sunstarsys.com>]
+
+handle cookies containing "&", "=" in data. [Joe Schaefer <joe@sunstarsys.com>]
+
 $r->parms can be set to another Apache::Table instance [dougm]
 
 fix compile errors when PerlIO is used

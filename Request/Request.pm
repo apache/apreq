@@ -12,19 +12,6 @@ use Apache::Table ();
 }
 
 #just prototype methods here, moving to xs later
-sub param {
-    my $self = shift;
-    my($name, $value) = @_;
-    my $tab = $self->parms;
-    unless ($name) {
-	my %seen;
-	return wantarray ? grep { !$seen{$_}++ } keys %$tab : $tab;
-    }
-    if (defined $value) {
-	$tab->set($name, $value);
-    }
-    return wantarray ? ($tab->get($name)) : scalar $tab->get($name);
-}
 
 sub instance {
     my $class = shift;
@@ -99,6 +86,16 @@ error code if a file upload is attempted:
      ...
      return $status;
  }
+
+=item TEMP_DIR
+
+Sets the directory where upload files are spooled.  On a *nix-like
+that supports link(2), the TEMP_DIR should be placed on the same
+file system as the final destination file:
+
+ my $apr = Apache::Request->new($r, TEMP_DIR => "/home/httpd/tmp");
+ my $upload = $apr->upload('file');
+ $upload->link("/home/user/myfile") || warn "link failed: $!";
 
 =back
 
@@ -240,6 +237,22 @@ an array context:
     for my $upload ($apr->upload) {
 	...
     }
+
+=head2 tempname
+
+Provides the name of the spool file.
+
+=head2 link
+
+To avoid recopying the spool file on a Unix-like system,
+I<link> will create a hard link to it:
+
+  my $upload = $apr->upload('file');
+  $upload->link("/path/to/newfile") or
+      die sprintf "link from '%s' failed: $!", $upload->tempname;
+
+Typically the new name must lie on the same file system as the
+spool file. Check your system's link(2) manpage for details.
 
 =back
 

@@ -76,6 +76,7 @@ typedef ApacheUpload  * Apache__Upload;
 #define ApacheUpload_name(upload)     upload->name
 #define ApacheUpload_filename(upload) upload->filename
 #define ApacheUpload_next(upload)     upload->next
+#define ApacheUpload_tempname(upload)   upload->tempname
 
 #ifndef PerlLIO_dup
 #define PerlLIO_dup(fd)   dup((fd)) 
@@ -211,6 +212,11 @@ ApacheRequest_new(class, r, ...)
 		RETVAL->post_max = (int)SvIV(ST(i+1));
 		break;
 	    }
+	case 't':
+	    if (strcasecmp(key, "temp_dir") == 0) {
+		RETVAL->temp_dir = (char *)SvPV(ST(i+1), PL_na);
+		break;
+	    }
 	default:
 	    croak("[libapreq] unknown attribute: `%s'", key);
 	}
@@ -244,6 +250,92 @@ ApacheRequest_parms(req, parms=NULL)
         ApacheRequest_parse(req);
     }
     ST(0) = mod_perl_tie_table(req->parms);
+
+void
+ApacheRequest_param(req, key=NULL, sv=Nullsv)
+    Apache::Request req	
+    char *key
+    SV *sv
+
+    PPCODE:
+    if ( !req->parsed ) ApacheRequest_parse(req);
+
+    if (key) {
+
+	if (sv != Nullsv) {
+
+	    if (SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV) {
+	    	I32 i;
+	    	AV *av = (AV*)SvRV(sv);
+	    	const char *val;
+
+            	ap_table_unset(req->parms, key);
+	    	for (i=0; i<=AvFILL(av); i++) {
+		    val = (const char *)SvPV(*av_fetch(av, i, FALSE),PL_na);
+	            ap_table_add(req->parms, key, val);
+	    	}
+	    }
+            else ap_table_set(req->parms, key, (const char *)SvPV(sv, PL_na));
+	}
+
+	switch (GIMME_V) {
+
+        case G_SCALAR:			/* return (first) parameter value */
+	    {
+	    	const char *val = ap_table_get(req->parms, key);
+	    	if (val) XPUSHs(sv_2mortal(newSVpv((char*)val,0)));
+	    	else XSRETURN_UNDEF;
+	    }
+	    break;
+
+	case G_ARRAY:			/* return list of parameter values */
+	    {
+  	        I32 i;
+	        array_header *arr  = ap_table_elts(req->parms);
+	        table_entry *elts = (table_entry *)arr->elts;
+	        for (i = 0; i < arr->nelts; ++i) {
+	            if (elts[i].key && !strcasecmp(elts[i].key, key))
+	            	XPUSHs(sv_2mortal(newSVpv(elts[i].val,0)));
+	        }
+	    }
+	    break;
+
+	default:
+            XSRETURN_UNDEF;
+	} 
+    } 
+    else {		
+
+	switch (GIMME_V) {
+
+	case G_SCALAR:	    		/* like $apr->parms */
+	    ST(0) = mod_perl_tie_table(req->parms);
+	    XSRETURN(1); 
+	    break;
+
+	case G_ARRAY:			/* return list of unique keys */
+            {
+            	I32 i;
+	    	array_header *arr  = ap_table_elts(req->parms);
+	    	table_entry *elts = (table_entry *)arr->elts;
+	    	for (i = 0; i < arr->nelts; ++i) {
+		    I32 j;
+	           if (!elts[i].key) continue;
+		    /* simple but inefficient uniqueness check */
+		    for (j = 0; j < i; ++j) { 
+		        if (!strcasecmp(elts[i].key, elts[j].key))
+			    break;
+		    }
+	            if ( i == j )
+	                XPUSHs(sv_2mortal(newSVpv(elts[i].key,0)));
+	        }
+            }
+	    break;
+
+	default:
+	    XSRETURN_UNDEF;
+ 	}
+    }
 
 void
 ApacheRequest_upload(req, name=NULL)
@@ -323,6 +415,10 @@ char *
 ApacheUpload_filename(upload)
     Apache::Upload upload
 
+char *
+ApacheUpload_tempname(upload)
+    Apache::Upload upload
+
 Apache::Upload
 ApacheUpload_next(upload)
     Apache::Upload upload 
@@ -330,6 +426,17 @@ ApacheUpload_next(upload)
 const char *
 ApacheUpload_type(upload)
     Apache::Upload upload 
+
+char *
+ApacheUpload_link(upload, name)
+    Apache::Upload upload
+    char *name
+
+	CODE:
+	RETVAL = (link(upload->tempname, name)) ? NULL : name;
+	
+	OUTPUT:
+	RETVAL	
 
 void
 ApacheUpload_info(upload, key=NULL)

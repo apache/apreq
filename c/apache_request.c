@@ -203,6 +203,9 @@ ApacheRequest *ApacheRequest_new(request_rec *r)
     req->upload = NULL;
     req->post_max = -1;
     req->disable_uploads = 0;
+    req->upload_hook = NULL;
+    req->hook_data = NULL;
+    req->temp_dir = NULL;
     req->parsed = 0;
     req->r = r;
 
@@ -315,20 +318,41 @@ int ApacheRequest_parse_urlencoded(ApacheRequest *req)
     return OK;
 }
 
-FILE *ApacheRequest_tmpfile(ApacheRequest *req)
+static void remove_tmpfile(void *data) {
+    remove((char *) data);
+}
+
+FILE *ApacheRequest_tmpfile(ApacheRequest *req, ApacheUpload *upload)
 {
     request_rec *r = req->r;
     FILE *fp;
-
-    if (!(fp = tmpfile())) {
+    char prefix[] = "apreq";
+    char *name;
+    int fd, tries = 100;
+    
+    while (--tries > 0) {
+	if ( (name = tempnam(req->temp_dir, prefix)) == NULL ) continue;
+	fd = ap_popenf(r->pool, name, O_CREAT|O_EXCL|O_RDWR, 0600);
+	if ( fd >= 0 )
+	    break; /* success */
+	else
+	    free(name);
+    }
+    
+    if ( tries == 0  || (fp = ap_pfdopen(r->pool, fd, "w+") ) == NULL ) {
 	ap_log_rerror(REQ_ERROR,
-		      "[libapreq] could not create tmpfile()"); 
+		      "[libapreq] could not open temp file '%s'", name); 	
+	if ( fd >= 0 ) { remove(name); }
+	return NULL;
     }
-    else {
-	ap_note_cleanups_for_file(r->pool, fp);
-    }
+
+    upload->fp = fp;
+    upload->tempname = ap_pstrdup(r->pool, name);
+    ap_register_cleanup(r->pool, (void *)upload->tempname, 
+			remove_tmpfile, ap_null_cleanup);
 
     return fp;
+
 }
 
 int ApacheRequest_parse_multipart(ApacheRequest *req)
@@ -376,7 +400,7 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 	table *header = multipart_buffer_headers(mbuff);	
 	const char *cd, *param=NULL, *filename=NULL;
 	char buff[FILLUNIT];
-	int blen;
+	int blen, wlen;
 
 	if (!header) {
 	    return OK;
@@ -418,7 +442,7 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 		req->upload = upload;
 	    }
 
-	    if (!(upload->fp = ApacheRequest_tmpfile(req))) {
+	    if (! req->upload_hook && ! ApacheRequest_tmpfile(req, upload) ) {
 		return HTTP_INTERNAL_SERVER_ERROR;
 	    }
 
@@ -427,12 +451,18 @@ int ApacheRequest_parse_multipart(ApacheRequest *req)
 	    upload->name = ap_pstrdup(req->r->pool, param);
 
 	    while ((blen = multipart_buffer_read(mbuff, buff, sizeof(buff)))) {
-		/* write the file */
-	        /* XXX: do better error-checking on the fwrite? */
-		upload->size += fwrite(buff, 1, blen, upload->fp); 	
+		if (req->upload_hook != NULL) {
+		    wlen = req->upload_hook(req->hook_data, buff, blen, upload);
+		} else {
+		    wlen = fwrite(buff, 1, blen, upload->fp);
+		}
+		if (wlen != blen) {
+		    return HTTP_INTERNAL_SERVER_ERROR;
+		}
+		upload->size += wlen;
 	    }
 
-	    if (upload->size > 0) {
+	    if (upload->size > 0 && (req->upload_hook == NULL)) {
 		fseek(upload->fp, 0, 0);
 	    }
 	    else {

@@ -192,8 +192,40 @@ ApacheCookieJar *ApacheCookie_parse(request_rec *r, const char *data)
         cookie_push_arr(arr, ap_pstrcat(p, name, "=", val, NULL)); \
     }
 
-#define escape_url(val) \
-ap_os_escape_path(p, val?val:"", 1)
+static char * escape_url(pool *p, char *val) 
+{
+  char *result = ap_os_escape_path(p, val?val:"", 1);
+  char *end = result + strlen(result);
+  char *seek;
+
+  for ( seek = end-1; seek >= result; --seek) {
+    char *ptr, *replacement;
+
+    switch (*seek) {
+
+    case '&':
+	replacement = "%26";
+	break;
+    case '=':
+	replacement = "%3d";
+	break;
+    /* additional cases here */
+
+    default:
+	continue; /* next for() */
+    }
+
+
+    for (ptr = end; ptr > seek; --ptr) {
+      ptr[2] = ptr[0];
+    }
+
+    strncpy(seek, replacement, 3);
+    end += 2;
+  }
+
+  return(result);
+}
 
 char *ApacheCookie_as_string(ApacheCookie *c)
 {
@@ -214,10 +246,10 @@ char *ApacheCookie_as_string(ApacheCookie *c)
 	cookie_push_arr(values, "secure");
     }
 
-    cookie = ap_pstrcat(p, escape_url(c->name), "=", NULL);
+    cookie = ap_pstrcat(p, escape_url(p, c->name), "=", NULL);
     for (i=0; i<c->values->nelts; i++) {
 	cookie = ap_pstrcat(p, cookie, 
-			    escape_url(((char**)c->values->elts)[i]), 
+			    escape_url(p, ((char**)c->values->elts)[i]), 
 			    (i < (c->values->nelts-1) ? "&" : NULL),
 			    NULL);
     }
