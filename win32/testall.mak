@@ -3,7 +3,21 @@
 !IF "$(APACHE)" == ""
 !MESSAGE No Apache directory was specified.
 !MESSAGE This makefile is not to be run directly.
-!MESSAGE Please run Configure.bat, and then $(MAKE) on Makefile.
+!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
+!ERROR
+!ENDIF
+
+!IF "$(APR_LIB)" == ""
+!MESSAGE No apr lib was specified.
+!MESSAGE This makefile is not to be run directly.
+!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
+!ERROR
+!ENDIF
+
+!IF "$(APU_LIB)" == ""
+!MESSAGE No aprutil lib was specified.
+!MESSAGE This makefile is not to be run directly.
+!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
 !ERROR
 !ENDIF
 
@@ -87,8 +101,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\params.obj" \
 	"$(INTDIR)\testall.obj" \
 	"$(OUTDIR)\libapreq2.lib" \
-	"$(APACHE)\lib\libapr.lib" \
-	"$(APACHE)\lib\libaprutil.lib" \
+	"$(APR_LIB)" \
+	"$(APU_LIB)" \
 	"$(APACHE)\lib\libhttpd.lib" \
         "$(INTDIR)\parsers.obj"
 
@@ -148,8 +162,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\params.obj" \
 	"$(INTDIR)\testall.obj" \
 	"$(OUTDIR)\libapreq2.lib" \
-	"$(APACHE)\lib\libapr.lib" \
-	"$(APACHE)\lib\libaprutil.lib" \
+	"$(APR_LIB)" \
+	"$(APU_LIB)" \
 	"$(APACHE)\lib\libhttpd.lib" \
         "$(INTDIR)\parsers.obj" 
 

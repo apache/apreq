@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use FindBin;
 use Getopt::Long;
-require File::Spec;
+use File::Spec::Functions qw(devnull catfile catdir path);
 use Cwd;
 require Win32;
 use ExtUtils::MakeMaker;
@@ -39,11 +39,29 @@ if (not $no_perl and $] >= 5.008) {
     chdir $apreq_home;
 }
 
+my %apr_libs;
+my %map = (apr => 'libapr.lib', apu => 'libaprutil.lib');
+my $devnull = devnull();
+foreach (qw(apr apu)) {
+    my $cfg = catfile $apache, 'bin', "$_.bat";
+    $cfg =~ s!\\!/!g;
+    my $lib;
+    eval {$lib = qx{"$cfg" --$_-lib-file 2>$devnull;}};
+    if ($@ or not $lib or $lib =~ /usage/i) {
+        $apr_libs{$_} = catfile $apache, 'lib', $map{$_};
+    }
+    else {
+        $apr_libs{$_} = chomp $lib;
+    }
+}
+
 open(my $make, '>Makefile') or die qq{Cannot open Makefile: $!};
 print $make <<"END";
 # Microsoft Developer Studio Generated NMAKE File.
 
 APREQ_HOME=$apreq_home
+APR_LIB=$apr_libs{apr}
+APU_LIB=$apr_libs{apu}
 CFG=$cfg
 APACHE=$apache
 PERL=$^X
@@ -61,11 +79,11 @@ unless ($apxs) {
 
 my $test = << 'END';
 TEST: $(LIBAPREQ) $(MOD)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(TESTALL).mak CFG="$(TESTALL) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
         set PATH=%PATH%;$(APACHE)\bin;$(APREQ_HOME)\win32\libs
         cd $(LIBDIR) && $(TESTALL).exe -v
         cd $(APREQ_HOME)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
         copy $(LIBDIR)\test_cgi.exe $(APREQ_ENV)\t\cgi-bin\test_cgi.exe
         cd $(APREQ_HOME)
 END
@@ -251,13 +269,13 @@ sub which {
         for my $drive (@drives) {
             for ('Apache2', 'Program Files/Apache2',
                  'Program Files/Apache Group/Apache2') {
-                my $bin = File::Spec->catpath($drive, $_, 'bin');
+                my $bin = catdir $drive, $_, 'bin';
                 push @extras, $bin if (-d $bin);
             }
         }
     }
-    my @a = map {File::Spec->catfile($_, $program) } 
-        (File::Spec->path(), @extras);
+    my @a = map {catfile $_, $program} 
+        (path(), @extras);
     for my $base(@a) {
         return $base if -x $base;
         for my $ext (@path_ext) {
@@ -404,10 +422,10 @@ APREQ_ENV=$(APREQ_HOME)\env
 ALL : "$(LIBAPREQ)"
 
 $(LIBAPREQ):
-	$(MAKE) /nologo /f $(CFG_HOME)\$(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
 
 $(MOD): $(LIBAPREQ)
-	$(MAKE) /nologo /f $(CFG_HOME)\$(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)"
+	$(MAKE) /nologo /f $(CFG_HOME)\$(MOD).mak CFG="$(MOD) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
 
 PERL_GLUE: $(MOD)
         cd $(PERLGLUE)

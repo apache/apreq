@@ -3,7 +3,21 @@
 !IF "$(APACHE)" == ""
 !MESSAGE No Apache directory was specified.
 !MESSAGE This makefile is not to be run directly.
-!MESSAGE Please run Configure.bat, and then $(MAKE) on Makefile.
+!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
+!ERROR
+!ENDIF
+
+!IF "$(APR_LIB)" == ""
+!MESSAGE No apr lib was specified.
+!MESSAGE This makefile is not to be run directly.
+!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
+!ERROR
+!ENDIF
+
+!IF "$(APU_LIB)" == ""
+!MESSAGE No aprutil lib was specified.
+!MESSAGE This makefile is not to be run directly.
+!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
 !ERROR
 !ENDIF
 
@@ -56,8 +70,8 @@ LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:no /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" 
 LINK32_OBJS= \
 	"$(INTDIR)\mod_apreq.obj" \
-	"$(APACHE)\lib\libapr.lib" \
-	"$(APACHE)\lib\libaprutil.lib" \
+	"$(APR_LIB)" \
+	"$(APU_LIB)" \
 	"$(APACHE)\lib\libhttpd.lib" \
 	"$(OUTDIR)\libapreq2.lib"
 
@@ -81,8 +95,8 @@ LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /incremental:yes /pdb:"$(OUTDIR)\mod_apreq.pdb" /debug /machine:I386 /out:"$(OUTDIR)\mod_apreq.so" /implib:"$(OUTDIR)\mod_apreq.lib" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\mod_apreq.obj" \
-	"$(APACHE)\lib\libapr.lib" \
-	"$(APACHE)\lib\libaprutil.lib" \
+	"$(APR_LIB)" \
+	"$(APU_LIB)" \
 	"$(APACHE)\lib\libhttpd.lib" \
 	"$(OUTDIR)\libapreq2.lib"
 

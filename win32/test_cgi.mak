@@ -3,7 +3,21 @@
 !IF "$(APACHE)" == ""
 !MESSAGE No Apache directory was specified.
 !MESSAGE This makefile is not to be run directly.
-!MESSAGE Please run Configure.bat, and then $(MAKE) on Makefile.
+!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
+!ERROR
+!ENDIF
+
+!IF "$(APR_LIB)" == ""
+!MESSAGE No apr lib was specified.
+!MESSAGE This makefile is not to be run directly.
+!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
+!ERROR
+!ENDIF
+
+!IF "$(APU_LIB)" == ""
+!MESSAGE No aprutil lib was specified.
+!MESSAGE This makefile is not to be run directly.
+!MESSAGE Please use Perl Makefile.PL, and then $(MAKE) on Makefile.
 !ERROR
 !ENDIF
 
@@ -84,8 +98,8 @@ LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32
 LINK32_OBJS= \
         "$(INTDIR)\test_cgi.obj" \
 	"$(OUTDIR)\libapreq2.lib" \
-	"$(APACHE)\lib\libapr.lib" \
-	"$(APACHE)\lib\libaprutil.lib"
+	"$(APR_LIB)" \
+	"$(APU_LIB)"
 
 "$(OUTDIR)\test_cgi.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -140,8 +154,8 @@ LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32
 LINK32_OBJS= \
         "$(INTDIR)\test_cgi.obj" \
 	"$(OUTDIR)\libapreq2.lib" \
-	"$(APACHE)\lib\libapr.lib" \
-	"$(APACHE)\lib\libaprutil.lib"
+	"$(APR_LIB)" \
+	"$(APU_LIB)"
 
 "$(OUTDIR)\test_cgi.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
