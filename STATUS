@@ -1,4 +1,4 @@
-Last modified at [$Date: 2004/05/22 13:58:21 $]   -*-text-*-
+Last modified at [$Date: 2004/05/22 14:56:17 $]   -*-text-*-
 /** @page STATUS
 
      2.03-dev under development
@@ -23,11 +23,6 @@ CURRENT RELEASE NOTES:
 
 
 RELEASE SHOWSTOPPERS:
-
-    - License for Perl API (pod and pm files) needs updating to ASLv2. See
-      http://www.apache.org/dev/apply-license.html
-
-    - Include perl glue for CGI environment.
 
 
 CURRENT VOTES:
@@ -57,6 +52,8 @@ CURRENT VOTES:
 
 
 TODO:
+
+    - Include perl glue for CGI environment.
 
     - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
 
