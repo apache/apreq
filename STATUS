@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/10/31 21:38:35 $]   -*-text-*-
+Last modified at [$Date: 2003/11/01 19:17:29 $]   -*-text-*-
 /** @page STATUS
 
      2.01-dev in development
@@ -10,7 +10,16 @@ Contributors looking for a mission:
 
 CURRENT RELEASE NOTES:
 
-    - This is unreleased software.
+    - This is a developer release, indicated by the "-dev" suffix
+      on the version string.  We believe the core interfaces to be stable,
+      but some portions of the API may still need significant modification.
+      Thus, binary/source compatibility may be broken from one developer 
+      release to the next. In particular the version numbering rules specified
+      at
+
+                 http://apr.apache.org/versioning.html
+
+      do not apply to developer releases.
 
 
 RELEASE SHOWSTOPPERS:
@@ -20,9 +29,6 @@ CURRENT VOTES:
 
 
 TODO:
-
-    - httpd 2.0.46 is a requirement, need to add the check in
-      ./configure and abort if not satisfied.
 
     - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
 
