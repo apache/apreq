@@ -186,8 +186,7 @@ struct apreq_xs_table_key_magic {
     struct apreq_xs_table_key_magic *info = apr_palloc(p,sizeof *info); \
     info->obj = o;                                                      \
     info->val = v;                                                      \
-    sv_magic(sv, Nullsv, PERL_MAGIC_vstring, Nullch, -1);               \
-    SvMAGIC(sv)->mg_ptr = (char *)info;                                 \
+    sv_magic(sv, Nullsv, PERL_MAGIC_vstring, (char *)info, -1);         \
     SvRMAGICAL_on(sv);                                                  \
 } while (0)
 
