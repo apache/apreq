@@ -109,11 +109,11 @@ struct apreq_parser_fcn {
 APREQ_DECLARE(void) apreq_register_parser(const char *enctype, 
                                     apr_status_t (*parser) (APREQ_PARSER_ARGS))
 {
-    struct apreq_parser_fcn *f = NULL;
+    apr_status_t (**f) (APREQ_PARSER_ARGS) = NULL;
     apreq_parser_initialize();
     if (parser != NULL) {
         f = apr_palloc(default_parser_pool, sizeof *f);
-        f->parser = parser;
+        *f = parser;
     }
     apr_hash_set(default_parsers, apr_pstrdup(default_parser_pool, enctype),
                  APR_HASH_KEY_STRING, f);
@@ -122,10 +122,10 @@ APREQ_DECLARE(void) apreq_register_parser(const char *enctype,
 
 APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
 {
+    apr_status_t (**f) (APREQ_PARSER_ARGS);
     apr_pool_t *pool = apreq_env_pool(env);
     const char *type = apreq_env_content_type(env);
     apr_ssize_t tlen;
-    struct apreq_parser_fcn *f;
 
     if (type == NULL || default_parsers == NULL)
         return NULL;
@@ -137,7 +137,7 @@ APREQ_DECLARE(apreq_parser_t *)apreq_parser(void *env, apreq_hook_t *hook)
     f = apr_hash_get(default_parsers, type, tlen);
 
     if (f != NULL)
-        return apreq_make_parser(pool, type, f->parser, hook, NULL);
+        return apreq_make_parser(pool, type, *f, hook, NULL);
     else
         return NULL;
 }
