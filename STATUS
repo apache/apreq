@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/10/25 04:13:14 $]   -*-text-*-
+Last modified at [$Date: 2003/10/25 04:33:13 $]   -*-text-*-
 /** @page STATUS
 
      2.0.0  in development
@@ -29,10 +29,6 @@ CURRENT VOTES:
 
 TODO:
 
-    - Figure out why there's problems (Win32 specific?) with
-      running the env/t/cgi_test/ libapreq_cgi tests as part
-      of the env/t/ mod_apreq tests, so that the two can be merged.
-      
     - httpd 2.0.46 is a requirement, need to add the check in
       ./configure and abort if not satisfied.
 
