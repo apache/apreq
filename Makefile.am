@@ -1,10 +1,10 @@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src env t
 EXTRA_DIST = INSTALL
-APUDIR=`@APU_CONFIG@ --srcdir`
-APRDIR=`@APR_CONFIG@ --srcdir`
-APUDOX = (cd $(APUDIR); cat - docs/doxygen.conf | doxygen -)
-APRDOX = (cd $(APRDIR); cat - docs/doxygen.conf | doxygen -)
+APU_SRCDIR=`@APU_CONFIG@ --srcdir`
+APR_SRCDIR=`@APR_CONFIG@ --srcdir`
+APU_DOX = (cd $(APU_SRCDIR); cat - docs/doxygen.conf | doxygen -)
+APR_DOX = (cd $(APR_SRCDIR); cat - docs/doxygen.conf | doxygen -)
 COOKIE_POD=glue/perl/blib/lib/Apache/Cookie.pod
 REQUEST_POD=glue/perl/blib/lib/Apache/Request.pod
 
@@ -20,8 +20,8 @@ Request.html: Makefile.am $(REQUEST_POD)
 
 apr_tags: 
 	-mkdir docs
-	echo GENERATE_TAGFILE=`pwd`/docs/apu.tag | $(APUDOX)
-	echo GENERATE_TAGFILE=`pwd`/docs/apr.tag | $(APRDOX)
+	echo GENERATE_TAGFILE=`pwd`/docs/apu.tag | $(APU_DOX)
+	echo GENERATE_TAGFILE=`pwd`/docs/apr.tag | $(APR_DOX)
 
 test: lib_test env_test
 
@@ -41,3 +41,10 @@ perl_glue:
 	cd glue/perl; @PERL@ ../../build/xsbuilder.pl run
 	cd glue/perl; @PERL@ Makefile.PL -apxs @APACHE2_APXS@
 	cd glue/perl; make
+
+if BUILD_HTTPD
+
+httpd_install:
+	cd @APACHE2_SRC@; make install
+
+endif

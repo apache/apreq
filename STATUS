@@ -1,4 +1,4 @@
-Last modified at [$Date: 2003/09/29 19:20:04 $]   -*-text-*-
+Last modified at [$Date: 2003/10/08 17:44:18 $]   -*-text-*-
 /** @page STATUS
 
      2.0.0  in development
@@ -29,20 +29,9 @@ TODO:
     - httpd 2.0.46 is a requirement, need to add the check in
       ./configure and abort if not satisfied.
 
-    - Write tests to exercise the filter prefetch code:
-        We need to make the prefectch code compatible
-        with internal redirects and subrequests.  Also
-        should stop parsing at filter_init() stage if 
-        the only handler that needs libapreq is a 
-        pre-content handler.  I think we'll wind up needing
-        to adjust r->proto_input_filters, making it
-        point at the apreq filter (right behind HTTP_IN),
-        but I haven't figured out what condition signals that
-        the apreq filter is being injected pre-, or post-,
-        filter_init.  If redirects and subrequests can only
-        happen in the content handler phase (or later),
-        we can safely do the adjustment during filter_init()
-        and the problem is solved. [joes]
+    - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
+
+    - Add an apreq-config script similar to ap[ru]-config.
 
     - Bring Perl documentation up to speed.
 

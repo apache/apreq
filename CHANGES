@@ -2,6 +2,18 @@
 
 @section 2.0.0-dev Changes with libapreq-2.0.0-dev
 
+- October 8, 2003 - configure: static mod_apreq.c [Bojan Smojver, joes]
+
+Add --with-apache2-src configure option, along with --with-apr-config
+and --with-apu-config, and provide support for compiling mod_apreq 
+into httpd as a static apache module.
+
+- October 1, 2003 - C API: mod_apreq.c [joes]
+
+Support for internal redirects added to the mod_apreq filter.
+This ensures any POST data prefetched in the main request 
+gets passed along to the subrequest handler(s).
+
 - July 18, 2003 - C bugfix: apreq_decode [Graham Clark]
 
 If the source and destination strings are represented by the same
