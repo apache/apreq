@@ -33,8 +33,8 @@ T_APACHEOBJ
 	r = sv2request_rec($arg, \"$ntype\", cv)
 
 T_COOKIEOBJ
-	c = sv_2cookie($arg)
+	c = sv_2cookie(aTHX_ $arg)
 
 T_APROBJ
-	req = sv_2apreq($arg)
+	req = sv_2apreq(aTHX_ $arg)
 
