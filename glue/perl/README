@@ -1,0 +1,22 @@
+
+
+package heirarchy:
+
+        APREQ.xs  dynaloads appropriate env (if necessary)
+                  and wraps apreq.h
+
+        APREQ::Value  (defined in APREQ.xs)
+               ::Cookie (Cookies.xs)
+               ::Param  (Params.xs)
+               ::Parser (Parsers.xs)
+
+        APREQ::Table (Tables.xs)
+
+        APREQ::Jar (defined in Cookies.xs)
+                 Apache2::Cookie.pm (includes CGI::Cookie conventions)
+
+        APREQ::Request (defined in Params.xs)
+                 Apache2::Request.pm (subclasses Apache2 also)
+                    {     r => Apache2->request, 
+                      apreq => APREQ::Request    }
+
