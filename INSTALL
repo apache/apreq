@@ -1,7 +1,7 @@
 PREREQUISITES:
 
 Please see the PREREQUISITES file.  If you are building httpd-apreq-2 
-directly from cvs, you can generate the list of prerequisites:
+directly from svn, you can generate the list of prerequisites:
 
             % perl build/version_check.pl
 
@@ -26,7 +26,7 @@ Apache::Cookie modules):
   (optional)% make test
             % make install
 
-Developers and other folks using httpd-apreq-2 directly from cvs need to
+Developers and other folks using httpd-apreq-2 directly from svn need to
 execute "./buildconf" prior to running "./configure".
 
 
@@ -57,6 +57,30 @@ Win32 build:
   C:\httpd-apreq-2> nmake mod_apreq
   C:\httpd-apreq-2> nmake perl_glue
   C:\httpd-apreq-2> nmake perl_test
+
+SVN ACCESS
+
+Development of httpd-apreq-2 can be followed through the svn repository:
+
+  $ svn checkout https://svn.apache.org/repos/asf/httpd/apreq/trunk/ httpd-apreq-2
+
+Subversion sources, and binaries for some platforms, may be obtained
+through the home page:
+
+     http://subversion.tigris.org/
+
+Documentation on using svn is available at
+
+     http://svnbook.red-bean.com/
+
+In particular,
+
+     http://svnbook.red-bean.com/en/1.0/apa.html
+
+contains a guide for users familiar with cvs.
+
+
+
 
 
 
