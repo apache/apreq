@@ -48,41 +48,42 @@ static XS(apreq_xs_table_##attr##_make)                         \
     XSRETURN(1);                                                \
 }
 
-#define APREQ_XS_DEFINE_TABLE_METHOD_N(attr,method)                             \
-static XS(apreq_xs_table_##attr##_##method)                                     \
-{                                                                               \
-    dXSARGS;                                                                    \
-    void *env;                                                                  \
-    apr_table_t *t;                                                             \
-    const char *key, *val;                                                      \
-    SV *sv;                                                                     \
-    STRLEN klen, vlen;                                                          \
-    apreq_##attr##_t *obj;                                                      \
-                                                                                \
-    if (items != 3 || !SvROK(ST(0)) || !SvPOK(ST(1)))                           \
-        Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val)");             \
-                                                                                \
-    sv  = apreq_xs_find_obj(aTHX_ ST(0), #attr);                                \
-    if (sv == NULL)                                                             \
-         Perl_croak(aTHX_ "Cannot find object");                                \
-    env = apreq_xs_sv2env(sv);                                                  \
-    t   = (apr_table_t *) SvIVX(sv);                                            \
-    key = SvPV(ST(1), klen);                                                    \
-                                                                                \
-    if (SvROK(ST(2))) {                                                         \
-        obj = (apreq_##attr##_t *) SvIVX(SvRV(ST(2)));                          \
-    }                                                                           \
-    else if (SvPOK(ST(2))) {                                                    \
-        val = SvPV(ST(2), vlen);                                                \
-        obj = apreq_make_##attr(apreq_env_pool(env), key, klen, val, vlen);     \
-    }                                                                           \
-    else                                                                        \
-        Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val): "             \
-                   "unrecognized SV type for $val");                            \
-    val = obj->v.data;                                                          \
-                                                                                \
-    apr_table_##method##n(t, key, val);                                         \
-    XSRETURN_EMPTY;                                                             \
+#define APREQ_XS_DEFINE_TABLE_METHOD_N(attr,method)                     \
+static XS(apreq_xs_table_##attr##_##method)                             \
+{                                                                       \
+    dXSARGS;                                                            \
+    void *env;                                                          \
+    apr_table_t *t;                                                     \
+    const char *key, *val;                                              \
+    SV *sv;                                                             \
+    STRLEN klen, vlen;                                                  \
+    apreq_##attr##_t *obj;                                              \
+                                                                        \
+    if (items != 3 || !SvROK(ST(0)) || !SvPOK(ST(1)))                   \
+        Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val)");     \
+                                                                        \
+    sv  = apreq_xs_find_obj(aTHX_ ST(0), #attr);                        \
+    if (sv == NULL)                                                     \
+         Perl_croak(aTHX_ "Cannot find object");                        \
+    env = apreq_xs_sv2env(sv);                                          \
+    t   = (apr_table_t *) SvIVX(sv);                                    \
+    key = SvPV(ST(1), klen);                                            \
+                                                                        \
+    if (SvROK(ST(2))) {                                                 \
+        obj = (apreq_##attr##_t *) SvIVX(SvRV(ST(2)));                  \
+    }                                                                   \
+    else if (SvPOK(ST(2))) {                                            \
+        val = SvPV(ST(2), vlen);                                        \
+        obj = apreq_make_##attr(apreq_env_pool(env), key, klen,         \
+                                                     val, vlen);        \
+    }                                                                   \
+    else                                                                \
+        Perl_croak(aTHX_ "Usage: $table->" #method "($key, $val): "     \
+                   "unrecognized SV type for $val");                    \
+    val = obj->v.data;                                                  \
+                                                                        \
+    apr_table_##method##n(t, key, val);                                 \
+    XSRETURN_EMPTY;                                                     \
 }
 
 
@@ -93,15 +94,25 @@ struct apreq_xs_table_key_magic {
     const char *val;
 };
 
-#define APREQ_XS_TABLE_ADD_KEY_MAGIC(p, sv, o, v) do {                          \
-    struct apreq_xs_table_key_magic *info = apr_palloc(p,sizeof *info);         \
-    info->obj = o;                                                              \
-    info->val = v;                                                              \
-    sv_magic(sv, Nullsv, PERL_MAGIC_vstring, Nullch, -1);                       \
-    SvMAGIC(sv)->mg_ptr = (char *)info;                                         \
-    SvRMAGICAL_on(sv);                                                          \
+/* Comment this define out if perl still chokes on key magic */
+#define APREQ_XS_TABLE_USE_KEY_MAGIC
+
+#ifdef APREQ_XS_TABLE_USE_KEY_MAGIC
+
+#define APREQ_XS_TABLE_ADD_KEY_MAGIC(p, sv, o, v) do {                  \
+    struct apreq_xs_table_key_magic *info = apr_palloc(p,sizeof *info); \
+    info->obj = o;                                                      \
+    info->val = v;                                                      \
+    sv_magic(sv, Nullsv, PERL_MAGIC_vstring, Nullch, -1);               \
+    SvMAGIC(sv)->mg_ptr = (char *)info;                                 \
+    SvRMAGICAL_on(sv);                                                  \
 } while (0)
 
+#else
+
+#define APREQ_XS_TABLE_ADD_KEY_MAGIC(p,sv,o,v) /* noop */
+
+#endif
 
 struct apreq_xs_do_arg {
     void            *env;
