@@ -24,7 +24,7 @@ directory into which you have installed the include files, such as
 and then "sudo make install" to install the C library.
 
 Next, the normal Perl build of libapreq should work. Note that you'll need
-libwwwperl and URI installed in order to run make test.
+Apache::TestMM, libwwwperl, and URI installed in order to run "make test".
 
 % perl Makefile.PL
 % make
