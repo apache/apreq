@@ -305,39 +305,44 @@ ApacheRequest_new(class, r, ...)
     RETVAL = ApacheRequest_new(r);
     register_uploads(RETVAL);
 
-    for (i=2; i<items; i+=2) { 
-        char *key = SvPV(ST(i),na); 
-	switch (toLOWER(*key)) {
-	case 'd':
-	    if (strcasecmp(key, "disable_uploads") == 0) {
-		RETVAL->disable_uploads = (int)SvIV(ST(i+1));
-		break;
-	    }
+    for (i=2; i<items; i+=2) {
+        char *key = SvPV(ST(i),na);
 
-	case 'h':
-	   if (strcasecmp(key, "hook_data") == 0) {
+        switch (toLOWER(*key)) {
+          case 'd':
+            if (strcasecmp(key, "disable_uploads") == 0) {
+                RETVAL->disable_uploads = (int)SvIV(ST(i+1));
+            }
+            break;
+
+          case 'h':
+            if (strcasecmp(key, "hook_data") == 0) {
                 XsUploadHookSet(data, ST(i+1));
-		break;
-	   }
-	case 'p':
-	    if (strcasecmp(key, "post_max") == 0) {
-		RETVAL->post_max = (int)SvIV(ST(i+1));
-		break;
-	    }
-	case 't':
-	    if (strcasecmp(key, "temp_dir") == 0) {
-		RETVAL->temp_dir = (char *)SvPV(ST(i+1), PL_na);
-		break;
-	    }
-	case 'u':
-	    if (strcasecmp(key, "upload_hook") == 0) {
+            }
+            break;
+
+          case 'p':
+            if (strcasecmp(key, "post_max") == 0) {
+                RETVAL->post_max = (int)SvIV(ST(i+1));
+            }
+            break;
+
+          case 't':
+            if (strcasecmp(key, "temp_dir") == 0) {
+                RETVAL->temp_dir = (char *)SvPV(ST(i+1), PL_na);
+            }
+            break;
+
+          case 'u':
+            if (strcasecmp(key, "upload_hook") == 0) {
                 XsUploadHookSet(sub, ST(i+1));
                 RETVAL->upload_hook = upload_hook;
-		break;
-	    }
-	default:
-	    croak("[libapreq] unknown attribute: `%s'", key);
-	}
+            }
+            break;
+
+          default:
+            croak("[libapreq] unknown attribute: `%s'", key);
+        }
     }
 
     OUTPUT:
