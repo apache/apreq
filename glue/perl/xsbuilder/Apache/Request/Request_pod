@@ -30,8 +30,9 @@ and are therefore parsed using case-insensitive keys.
 
 =back
 
-=head2 new  Create a new I<Apache::Request> object with an
-environment object $r:
+=head2 new  
+
+creates a new I<Apache::Request> object with an environment object $r:
 
     my $req = Apache::Request->new($r);
 
