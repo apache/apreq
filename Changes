@@ -4,6 +4,8 @@ Revision history for libapreq
 
 =item 0.33_01 - ?
 
+make apache_cookie.h c++ compatible [Simon Tamás <simont@westel.hu>]
+
 =item 0.33 - June 17, 2001
 
 $r->upload can be set to another Apache::Upload instance [dougm]

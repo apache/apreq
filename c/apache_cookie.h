@@ -12,6 +12,10 @@ typedef struct {
     int secure;
 } ApacheCookie;
 
+#ifdef  __cplusplus
+ extern "C" {
+#endif 
+
 #define ApacheCookieJarItems(arr) arr->nelts
 
 #define ApacheCookieJarFetch(arr,i) \
@@ -40,5 +44,9 @@ char *ApacheCookie_as_string(ApacheCookie *c);
 char *ApacheCookie_attr(ApacheCookie *c, char *key, char *val);
 char *ApacheCookie_expires(ApacheCookie *c, char *time_str);
 void ApacheCookie_bake(ApacheCookie *c);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #define APC_ERROR APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, c->r
