@@ -30,7 +30,7 @@
 extern apr_pool_t *p;
 
 CuSuite *getsuite(void);
-
+CuSuite *testversion(void);
 CuSuite *testtable(void);
 CuSuite *testcookie(void);
 CuSuite *testenv(void);

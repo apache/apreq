@@ -42,7 +42,7 @@ static const struct testlist {
     const char *testname;
     CuSuite *(*func)(void);
 } tests[] = {
-//    {"tables", testtable},
+    {"version", testversion},
     {"cookies", testcookie},
     {"params", testparam},
     {"parsers", testparser},
