@@ -136,10 +136,10 @@ print << "END";
 A Makefile has been generated in $apreq_home.
 You can now run
 
-  nmake               - builds the libapreq library
+  nmake               - builds the libapreq2 library
   nmake test          - runs the supplied tests
   nmake mod_apreq     - builds mod_apreq
-  nmake libapreq_cgi  - builds libapreq_cgi
+  nmake libapreq2_cgi - builds libapreq2_cgi
   nmake clean         - clean
   nmake install       - install the C libraries
   nmake perl_glue     - build the perl glue
@@ -280,6 +280,8 @@ EXPORTS
 
 END
     chdir "$apreq_home/env";
+    my %defs = (mod_apreq => 'mod_apreq.def',
+               libapreq_cgi => 'libapreq2_cgi.def');
     my $match = qr{^apreq_env};
     foreach my $file(qw(mod_apreq libapreq_cgi)) {
         my %fns = ();
@@ -291,8 +293,8 @@ END
             $fns{$fn}++ if $fn =~ /$match/;
         }
         close $fh;
-        open my $def, ">../win32/$file.def"
-            or die "Cannot open win32/$file.def: $!";
+        open my $def, ">../win32/$defs{$file}"
+            or die "Cannot open win32/$defs{$file}: $!";
         print $def $preamble;
         print $def $_, "\n" for (sort keys %fns);
         close $def;
@@ -349,11 +351,11 @@ END
 
 __DATA__
 
-LIBAPREQ=libapreq
+LIBAPREQ=libapreq2
 TESTALL=testall
 CGITEST=test_cgi
 MOD=mod_apreq
-CGI=libapreq_cgi
+CGI=libapreq2_cgi
 
 !IF "$(CFG)" != "Release" && "$(CFG)" != "Debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
@@ -436,11 +438,10 @@ INSTALL: $(LIBAPREQ)
         cd $(APREQ_HOME)
 
 HELP:
-	@echo nmake               - builds the libapreq library
-	@echo nmake               - builds the libapreq library
+	@echo nmake               - builds the libapreq2 library
 	@echo nmake test          - runs the supplied tests
 	@echo nmake mod_apreq     - builds mod_apreq
-	@echo nmake libapreq_cgi  - builds libapreq_cgi
+	@echo nmake libapreq2_cgi - builds libapreq2_cgi
 	@echo nmake clean         - clean
 	@echo nmake install       - install the C libraries
 	@echo nmake perl_glue     - build the perl glue

@@ -68,7 +68,7 @@ APXS=$self->{APXS}
 all: $lib
 
 $lib: $name.c
-	\$(APXS) -L../../../win32/libs -I../../../src -llibapreq -llibhttpd -lmod_apreq $dversion -p -I$self->{cmodules_dir} -c $name.c
+        \$(APXS) -L../../../win32/libs -I../../../src -llibapreq2 -llibhttpd -lmod_apreq $dversion -p -I$self->{cmodules_dir} -c $name.c
 
 clean:
 	-erase @goners vc60.pdb 

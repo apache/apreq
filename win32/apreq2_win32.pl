@@ -108,7 +108,7 @@ my $src_dir = -d $apreq_home ? $apreq_home : '';
 
 my %apreq_args = (APREQ_MAJOR_VERSION => $vers{MAJOR},
                   APREQ_DOTTED_VERSION => $dotted,
-                  APREQ_LIBNAME => 'libapreq.lib',
+                  APREQ_LIBNAME => 'libapreq2.lib',
                   prefix => $prefix,
                   exec_prefix => $prefix,
                   bindir => "$prefix/bin",

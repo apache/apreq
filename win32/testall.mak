@@ -87,7 +87,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\env.obj" \
 	"$(INTDIR)\params.obj" \
 	"$(INTDIR)\testall.obj" \
-	"$(OUTDIR)\libapreq.lib" \
+	"$(OUTDIR)\libapreq2.lib" \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib" \
 	"$(APACHE)\lib\libhttpd.lib" \
@@ -149,7 +149,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\env.obj" \
 	"$(INTDIR)\params.obj" \
 	"$(INTDIR)\testall.obj" \
-	"$(OUTDIR)\libapreq.lib" \
+	"$(OUTDIR)\libapreq2.lib" \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib" \
 	"$(APACHE)\lib\libhttpd.lib" \

@@ -30,7 +30,7 @@ if (Apache::Build::WIN32) {
     my $apache_dir = Apache::Build->build_config()->dir;
     ($apache_includes = "-I$apache_dir" . '/include') =~ s!\\!/!g;
     ($apr_libs = $apache_dir . '/lib') =~ s!\\!/!g;
-    $apreq_libname = "apreq";
+    $apreq_libname = "apreq2";
 }
 else {
     slurp my $config => "$base_dir/config.status";

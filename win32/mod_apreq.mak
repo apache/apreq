@@ -59,7 +59,7 @@ LINK32_OBJS= \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib" \
 	"$(APACHE)\lib\libhttpd.lib" \
-	"$(OUTDIR)\libapreq.lib"
+	"$(OUTDIR)\libapreq2.lib"
 
 "$(OUTDIR)\mod_apreq.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -84,7 +84,7 @@ LINK32_OBJS= \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib" \
 	"$(APACHE)\lib\libhttpd.lib" \
-	"$(OUTDIR)\libapreq.lib"
+	"$(OUTDIR)\libapreq2.lib"
 
 "$(OUTDIR)\mod_apreq.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
