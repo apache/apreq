@@ -274,8 +274,8 @@ static void cgi_log(const char *file, int line, int level,
     apr_file_flush(err);
 
 #else
-    fprintf(stderr, "[%s] [level] [client] %s(%d): %s: %s\n", 
-            date, priorities[level].t_name, remote_addr, file, file, 
+    fprintf(stderr, "[%s] [%s] [%s] %s(%d): %s: %s\n",
+            date, priorities[level].t_name, remote_addr, file, line,
             apr_strerror(status,buf,255),apr_pvsprintf(p,fmt,vp));
 #endif
 
