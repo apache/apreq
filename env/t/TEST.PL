@@ -67,7 +67,7 @@ sub cmodules_write_makefile {
         my @goners = map {$name . '.' . $_} qw(exp ilk lib pdb so lo);
         my $libs = join ' ', 
             (map {'-l' . File::Spec->catfile($env_dir_libs, $_)}
-              qw(libapreq2.lib));
+              qw(libapreq2.lib mod_apreq.lib));
         print $fh <<EOF;
 APXS=$self->{APXS}
 all: $lib
