@@ -59,7 +59,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\apreq_params.obj" \
 	"$(INTDIR)\apreq_parsers.obj" \
         "$(INTDIR)\apreq_env.obj" \
-	"$(INTDIR)\apreq_tables.obj" \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib"
 
@@ -87,7 +86,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\apreq_params.obj" \
 	"$(INTDIR)\apreq_parsers.obj" \
         "$(INTDIR)\apreq_env.obj" \
-	"$(INTDIR)\apreq_tables.obj" \
 	"$(APACHE)\lib\libapr.lib" \
 	"$(APACHE)\lib\libaprutil.lib"
 
@@ -153,11 +151,6 @@ SOURCE=$(APREQ_HOME)\src\apreq_parsers.c
 "$(INTDIR)\apreq_parsers.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-
-SOURCE=$(APREQ_HOME)\src\apreq_tables.c
-
-"$(INTDIR)\apreq_tables.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 SOURCE=$(APREQ_HOME)\src\apreq_env.c
 
