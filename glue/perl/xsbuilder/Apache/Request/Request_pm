@@ -13,7 +13,7 @@ sub table_class { 'Apache::Request::Table' }
 sub new {
     my $class = shift;
     my $env = shift;
-    my $req = $class->make($env);
+    my $req = $class->request($env);
     $req->config(@_);
     return $req;
 }
