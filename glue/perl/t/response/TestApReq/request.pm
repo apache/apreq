@@ -179,20 +179,6 @@ sub handler {
                     $test_string eq "test:disable_uploads:foo:bar1:foo:bar2";
             }
 
-            # MAGIC KEY TESTS
-            if ($^V ge v5.8.1) {
-                warn "Running MAGIC KEY tests";
-                $test_string = "";
-                $test_string .= "$_=" . $args->get($_) . ";" for $args->get;
-                die "get test failed: '$test_string'" unless
-                    $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
-
-                $test_string = "";
-                $test_string .= "$_=" . $args->get($_) . ";" for @_ = $args->get;
-                die "get test2 failed: '$test_string'" unless
-                    $test_string eq "test=disable_uploads;foo=bar1;foo=bar2;";
-            }
-
             # TABLE DO TESTS
             {
                 my $do_data = "";

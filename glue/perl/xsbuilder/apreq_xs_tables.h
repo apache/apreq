@@ -158,25 +158,6 @@ static XS(apreq_xs_table_##attr##_##method)                             \
 }
 
 
-/* KEY MAGIC: needs 5.8.x, x >= 1 (not sure if this will work in 5.10.x) */
-
-#if (PERL_VERSION == 8 && PERL_SUBVERSION >= 1)
-
-#define APREQ_XS_TABLE_ADD_KEY_MAGIC(p, sv, o, v) do {                  \
-    struct apreq_xs_table_key_magic *info = apr_palloc(p,sizeof *info); \
-    info->obj = o;                                                      \
-    info->val = v;                                                      \
-    sv_magic(sv, Nullsv, PERL_MAGIC_vstring, (char *)info, -1);         \
-    SvRMAGICAL_on(sv);                                                  \
-} while (0)
-
-#else
-
-#define APREQ_XS_TABLE_ADD_KEY_MAGIC(p,sv,o,v) /* noop */
-
-#endif
-
-
 /* TABLE_GET */
 struct apreq_xs_table_key_magic {
     SV         *obj;
@@ -201,7 +182,6 @@ static int apreq_xs_table_keys(void *data, const char *key,
 
     dSP;
     SV *sv = newSVpv(key,0);
-    APREQ_XS_TABLE_ADD_KEY_MAGIC(apreq_env_pool(d->env),sv,d->parent,val);
     XPUSHs(sv_2mortal(sv));
     PUTBACK;
     return 1;
@@ -293,22 +273,6 @@ static XS(apreq_xs_##attr##_get)                                        \
                 XPUSHs(sv_2mortal(apreq_xs_table2sv(t,class,d.parent,d.pkg))); \
             PUTBACK;                                                    \
             break;                                                      \
-        }                                                               \
-        if (SvMAGICAL(ST(1))                                            \
-            && (mg = mg_find(ST(1),PERL_MAGIC_vstring))                 \
-            && mg->mg_len == -1 /*&& mg->mg_obj == obj*/)               \
-        {                                                               \
-            struct apreq_xs_table_key_magic *info = (void*)mg->mg_ptr;  \
-            if (info->obj == d.parent) {                                \
-                RETVAL = apreq_value_to_##type(                         \
-                                       apreq_strtoval(info->val));      \
-                if (!strcasecmp(key,RETVAL->v.name) && (COND)) {        \
-                        XPUSHs(sv_2mortal(apreq_xs_##type##2sv(         \
-                                              RETVAL,d.pkg,d.parent))); \
-                        PUTBACK;                                        \
-                        break;                                          \
-                }                                                       \
-            }                                                           \
         }                                                               \
                                                                         \
         RETVAL = apreq_xs_##attr##_##type(obj, key);                    \
