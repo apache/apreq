@@ -20,7 +20,7 @@ my $location = "/TestApReq__request";
              "basic param");
 }
 
-for my $test (qw/slurp bb_read fh_read tempfile bad;query=string%%/) {
+for my $test (qw/slurp bb_read fh_read tempname bad;query=string%%/) {
     # upload a string as a file
     my $value = 'DataUpload' x 100_000;
     my $result = UPLOAD_BODY("$location?test=$test", content => $value); 
