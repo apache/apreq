@@ -139,6 +139,7 @@ sub include_dirs {\@dirs}
 package My::WrapXS;
 use base qw/ExtUtils::XSBuilder::WrapXS/;
 our $VERSION = $version;
+use constant WIN32 => ($^O =~ /Win32/i);
 
 ##################################################
 # Finally, we get to the actual script...
@@ -159,12 +160,23 @@ Apache::TestMM::generate_script("t/TEST");
 Apache::TestSmokePerl->generate_script;
 Apache::TestReportPerl->generate_script;
 
-ModPerl::MM::WriteMakefile(
+my %opts = (
     NAME => 'libapreq2',
     DIR => [qw(xs)],
     clean => { FILES => "xs t/logs t/TEST @scripts" },
     realclean => { FILES => "xsbuilder/tables" },
 );
+
+if (WIN32) {
+    my $PM = {
+        'lib/Apache/Request.pm' => '$(INST_LIB)/Apache/Request.pm',
+        'lib/Apache/Upload.pm' => '$(INST_LIB)/Apache/Upload.pm',
+        'lib/Apache/Cookie.pm' => '$(INST_LIB)/Apache/Cookie.pm',
+    };
+    $opts{PM} = $PM;
+}
+
+ModPerl::MM::WriteMakefile(%opts);
 
 # That's the whole script - below is just a bunch of local overrides
 ##################################################
