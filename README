@@ -21,6 +21,15 @@ originally implemented as a pure Perl Apache::Request module.
 The C implementation has a similar look-and-feel, including structures
 modeled from Lincoln's Perl design.
 
+IMPORTANT NOTE: To install the Perl modules, your mod_perl installation
+MUST includes support for Apache::Table.  This means that mod_perl should
+be built using the EVERYTHING=1, or at minimum PERL_TABLE_API=1.  If you
+see errors like this (during compilation of libapreq)
+
+        Error: 'Apache::Table' not in typemap in Request.xs,
+
+your mod_perl must be rebuilt to include Apache::Table support.
+
 The Perl interface also includes experimental support for Perl+sfio builds:
 
         % perl Makefile.PL DEFINE=-DSFIO
