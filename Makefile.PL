@@ -97,7 +97,7 @@ WriteMakefile(
 	      );
 
 sub clean_files {
-    return [qw( t/TEST t/httpd.conf t/httpd.loc t/error_log t/httpd )];
+    return [qw( t/TEST )];
 }
 
 if ($Is_Win32 and -e $lib) {
