@@ -15,6 +15,9 @@
 */
 #include "apr_optional.h"
 
+/* avoid namespace collisions from perl's XSUB.h */
+#include "modperl_perl_unembed.h"
+
 /* Temporary work-around for missing apr_perlio.h file.
  * #include "apr_perlio.h" 
  */
