@@ -424,7 +424,6 @@ sub makefilepl_text {
 
     my $txt = qq{
 $self->{noedit_warning_hash}
-use Apache2;
 use ModPerl::MM;
 
 local \$MMARGS ;
