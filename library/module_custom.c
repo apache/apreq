@@ -159,14 +159,13 @@ static apreq_param_t *custom_body_get(apreq_handle_t *env, const char *name)
     if (handle->body == NULL || name == NULL)
         return NULL;
 
- get_body_value:
+    while (1) {
+        *(const char **)&val = apr_table_get(handle->body, name);
+        if (val != NULL)
+            break;
 
-    *(const char **)&val = apr_table_get(handle->body, name);
-    if (val == NULL) {
-        if (handle->body_status == APR_INCOMPLETE) {
+        if (handle->body_status == APR_INCOMPLETE)
             custom_parse_brigade(env, READ_BYTES);
-            goto get_body_value;
-        }
         else
             return NULL;
     }
