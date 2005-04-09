@@ -147,7 +147,7 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
         apr_bucket_delete(f);
 
     apreq_param_tainted_on(param);
-    apreq_param_charset_set(p, charset);
+    apreq_param_charset_set(param, charset);
     *p = param;
     return APR_SUCCESS;
 }

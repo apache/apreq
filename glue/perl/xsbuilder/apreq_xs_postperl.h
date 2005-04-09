@@ -146,7 +146,7 @@ static SV *apreq_xs_param2sv(pTHX_ apreq_param_t *p,
         SV *rv = newSVpvn(p->v.data, p->v.dlen);
         if (apreq_param_is_tainted(p))
             SvTAINTED_on(rv);
-        if (apreq_param_is_utf8(p))
+        if (apreq_param_charset_get(p) == APREQ_CHARSET_UTF8)
             SvUTF8_on(rv);
         return rv;
     }

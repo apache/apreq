@@ -439,21 +439,17 @@ is_tainted(obj, val=NULL)
     RETVAL
 
 IV
-is_utf8(obj, val=NULL)
+charset(obj, val=NULL)
     APR::Request::Param obj
     SV *val
   PREINIT:
     /*nada*/
 
   CODE:
-    RETVAL = apreq_param_is_utf8(obj);
-
-    if (items == 2) {
-        if (SvTRUE(val))
-           apreq_param_utf8_on(obj);
-        else
-           apreq_param_utf8_off(obj);
-    }
+    if (items == 2)
+        RETVAL = apreq_param_charset_set(obj, SvIV(val));
+    else
+        RETVAL = apreq_param_charset_get(obj);
 
   OUTPUT:
     RETVAL
