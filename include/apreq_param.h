@@ -59,23 +59,18 @@ void apreq_param_tainted_off(apreq_param_t *p) {
     APREQ_FLAGS_OFF(p->flags, APREQ_TAINTED);
 }
 
-/** @return 1 if the UTF-8 flag is set, 0 otherwise. */
+/** Sets the character encoding for this parameter. */
 static APR_INLINE
-unsigned apreq_param_is_utf8(const apreq_param_t *p) {
-    return APREQ_CHARSET_UTF8
-        & APREQ_FLAGS_GET(p->flags, APREQ_CHARSET);
+apreq_charset_t apreq_param_charset_set(apreq_param_t *p, unsigned char c) {
+    unsigned char old = APREQ_FLAGS_GET(p->flags, APREQ_CHARSET);
+    APREQ_FLAGS_SET(p->flags, APREQ_CHARSET, c);
+    return old;
 }
 
-/** Sets the charset of this parameter to UTf-8. */
+/** Gets the character encoding for this parameter. */
 static APR_INLINE
-void apreq_param_utf8_on(apreq_param_t *p) {
-    APREQ_FLAGS_SET(p->flags, APREQ_CHARSET, APREQ_CHARSET_UTF8);
-}
-
-/** Sets the charset of this parameter to 8 bit ASCII. */
-static APR_INLINE
-void apreq_param_utf8_off(apreq_param_t *p) {
-    APREQ_FLAGS_SET(p->flags, APREQ_CHARSET, APREQ_CHARSET_ASCII);
+apreq_charset_t apreq_param_charset_get(apreq_param_t *p) {
+    return APREQ_FLAGS_GET(p->flags, APREQ_CHARSET);
 }
 
 

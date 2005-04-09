@@ -64,10 +64,6 @@
 #define APREQ_CHARSET_BIT           0
 #define APREQ_CHARSET_MASK        255
 
-#define APREQ_CHARSET_ASCII         0
-#define APREQ_CHARSET_ISO_8859_1    1
-#define APREQ_CHARSET_UTF8          8
-
 #define APREQ_TAINTED_BIT           8
 #define APREQ_TAINTED_MASK          1
 
@@ -76,6 +72,14 @@
 
 #define APREQ_COOKIE_SECURE_BIT    13
 #define APREQ_COOKIE_SECURE_MASK    1
+
+/** Character encodings. */
+typedef enum {
+    APREQ_CHARSET_ASCII  =0,
+    APREQ_CHARSET_LATIN1 =1, /* ISO-8859-1   */
+    APREQ_CHARSET_CP1252 =2, /* Windows-1252 */
+    APREQ_CHARSET_UTF8   =8
+} apreq_charset_t;
 
 
 /** @enum apreq_join_t Join type */

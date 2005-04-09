@@ -77,7 +77,33 @@ static void test_decode(dAT)
 
 static void test_decodev(dAT)
 {
+    char src1[] = "%2540%2";
+    char src2[] = "0%u0";
+    char src3[] = "041";
+    struct iovec iovec1[] = {
+        { src1, sizeof(src1) - 1 },
+        { src2, sizeof(src2) - 1 },
+        { src3, sizeof(src3) - 1 },
+    };
+    struct iovec iovec2[] = {
+        { src1, sizeof(src1) - 1 },
+        { src2, sizeof(src2) - 1 },
+    };
+    const char expect1[] = "%40 A";
+    const char expect2[] = "%40 ";
+    char dest[sizeof(src1) + sizeof(src2) + sizeof(src3)];
+    apr_size_t dest_len;
+    apr_status_t status;
 
+    status = apreq_decodev(dest, &dest_len, iovec1, 3);
+    AT_int_eq(status, APR_SUCCESS + APREQ_CHARSET_UTF8);
+    AT_int_eq(dest_len, sizeof(expect1) - 1);
+    AT_mem_eq(dest, expect1, sizeof(expect1) - 1);
+
+    status = apreq_decodev(dest, &dest_len, iovec2, 2);
+    AT_int_eq(status, APR_INCOMPLETE);
+    AT_int_eq(dest_len, sizeof(expect2) - 1);
+    AT_mem_eq(dest, expect2, sizeof(expect2) - 1);
 }
 
 
@@ -139,7 +165,7 @@ int main(int argc, char *argv[])
         { dT(test_atoi64t, 9) },
         { dT(test_index, 6) },
         { dT(test_decode, 0) },
-        { dT(test_decodev, 0) },
+        { dT(test_decodev, 6) },
         { dT(test_encode, 0) },
         { dT(test_quote, 0) },
         { dT(test_quote_once, 0), },

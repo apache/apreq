@@ -55,7 +55,7 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
     struct iovec vec[APREQ_DEFAULT_NELTS];
     apr_array_header_t arr;
     apr_size_t mark;
-
+    apreq_charset_t charset;
 
     if (nlen == 0)
         return APR_EBADARG;
@@ -115,15 +115,31 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
 
     s = apreq_decodev(v->data, &vlen,
                       (struct iovec *)arr.elts + mark, arr.nelts - mark);
-    if (s != APR_SUCCESS)
+    if (s > APR_SUCCESS + APREQ_CHARSET_UTF8)
         return s;
+
+    charset = s;
 
     v->name = v->data + vlen + 1;
     v->dlen = vlen;
 
     s = apreq_decodev(v->name, &nlen, (struct iovec *)arr.elts, mark);
-    if (s != APR_SUCCESS)
+    if (s > APR_SUCCESS + APREQ_CHARSET_UTF8)
         return s;
+    switch (s) {
+    case APREQ_CHARSET_UTF8:
+        if (charset == APREQ_CHARSET_ASCII)
+            charset = APREQ_CHARSET_UTF8;
+    case APREQ_CHARSET_ASCII:
+        break;
+
+    case APREQ_CHARSET_LATIN1:
+        if (charset != APREQ_CHARSET_CP1252)
+            charset = APREQ_CHARSET_LATIN1;
+        break;
+    case APREQ_CHARSET_CP1252:
+        charset = APREQ_CHARSET_CP1252;
+    }
 
     v->nlen = nlen;
 
@@ -131,6 +147,7 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
         apr_bucket_delete(f);
 
     apreq_param_tainted_on(param);
+    apreq_param_charset_set(p, charset);
     *p = param;
     return APR_SUCCESS;
 }

@@ -68,6 +68,7 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
     apr_status_t status;
     apreq_value_t *v;
     apreq_param_t *p;
+    apreq_charset_t charset;
 
     if (nlen == 0) {
         *param = NULL;
@@ -82,23 +83,41 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
 
     if (vlen > 0) {
         status = apreq_decode(v->data, &v->dlen, word + nlen + 1, vlen);
-        if (status != APR_SUCCESS) {
+        if (status > APR_SUCCESS + APREQ_CHARSET_UTF8) {
             *param = NULL;
             return status;
         }
+        charset = status;
     }
     else {
         v->data[0] = 0;
         v->dlen = 0;
+        charset = APREQ_CHARSET_ASCII;
     }
     v->name = v->data + vlen + 1;
 
     status = apreq_decode(v->name, &v->nlen, word, nlen);
-    if (status != APR_SUCCESS) {
+    if (status > APR_SUCCESS + APREQ_CHARSET_UTF8) {
         *param = NULL;
         return status;
     }
 
+    switch (status) {
+    case APREQ_CHARSET_UTF8:
+        if (charset == APREQ_CHARSET_ASCII)
+            charset = APREQ_CHARSET_UTF8;
+    case APREQ_CHARSET_ASCII:
+        break;
+
+    case APREQ_CHARSET_LATIN1:
+        if (charset != APREQ_CHARSET_CP1252)
+            charset = APREQ_CHARSET_LATIN1;
+        break;
+    case APREQ_CHARSET_CP1252:
+        charset = APREQ_CHARSET_CP1252;
+    }
+
+    apreq_param_charset_set(p, charset);
     *param = p;
 
     return APR_SUCCESS;

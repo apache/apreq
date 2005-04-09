@@ -50,7 +50,6 @@ apreq_strerror(apr_status_t s, char *buf, apr_size_t bufsize);
 /** Parsing interrupted. */
 #define APREQ_ERROR_INTERRUPT      (APREQ_ERROR_GENERAL + 2)
 
-
 /** Invalid input data. */
 #define APREQ_ERROR_BADDATA        (APREQ_ERROR_GENERAL  + 10)
 /** Invalid character. */
@@ -61,7 +60,8 @@ apreq_strerror(apr_status_t s, char *buf, apr_size_t bufsize);
 #define APREQ_ERROR_BADATTR        (APREQ_ERROR_BADDATA  +  3)
 /** Invalid header. */
 #define APREQ_ERROR_BADHEADER      (APREQ_ERROR_BADDATA  +  4)
-
+/** Invalid utf8 encoding. */
+#define APREQ_ERROR_BADUTF8        (APREQ_ERROR_BADDATA  +  5)
 
 /** Missing input data. */
 #define APREQ_ERROR_NODATA         (APREQ_ERROR_GENERAL  + 20)
