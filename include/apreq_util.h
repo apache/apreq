@@ -123,7 +123,9 @@ APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src,
  * @param src  Original string.
  * @param slen Length of original string.
  *
- * @return APR_SUCCESS.
+ * @return APR_SUCCESS + apreq_charset_t (<=APREQ_CHARSET_UTF8) on success.
+ * @return APR_INCOMPLETE + apreq_charset_t (<=APREQ_CHARSET_UTF8) if the string
+ *         ends in the middle of an escape sequence.
  * @return ::APREQ_ERROR_BADSEQ or ::APREQ_ERROR_BADCHAR on malformed input.
  *
  * @remarks In the non-success case, dlen will be set to include
@@ -144,9 +146,9 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *dest, apr_size_t *dlen,
  * @param v     Array of iovecs that represent the source string
  * @param nelts Number of iovecs in the array.
  *
- * @return APR_SUCCESS.
- * @return ::APR_INCOMPLETE if the iovec ends in the middle of an \%XX escape
- *         sequence.
+ * @return APR_SUCCESS + apreq_charset_t (<=APREQ_CHARSET_UTF8) on success.
+ * @return APR_INCOMPLETE + apreq_charset_t (<=APREQ_CHARSET_UTF8) if the iovec
+ *         ends in the middle of an escape sequence.
  * @return ::APREQ_ERROR_BADSEQ or ::APREQ_ERROR_BADCHAR on malformed input.
  *
  * @remarks In the non-APR_SUCCESS case, dlen will be set to include

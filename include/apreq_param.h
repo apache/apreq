@@ -102,7 +102,11 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
  * @param word  Start of the name=value pair.
  * @param nlen  Length of urlencoded name.
  * @param vlen  Length of urlencoded value.
- * @remark      Unless vlen == 0, this function assumes there is
+ *
+ * @return APR_SUCCESS + apreq_charset_t (<=APREQ_CHARSET_UTF8) on success.
+ * @return ::APREQ_ERROR_BADSEQ or ::APREQ_ERROR_BADCHAR on malformed input.
+ *
+ * @remarks     Unless vlen == 0, this function assumes there is
  *              exactly one character ('=') which separates the pair.
  *            
  */
