@@ -326,10 +326,13 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                 else if (c < 0xE0) {
                     if (s + 3 >= end) {
                         *charset = fragment_charset(s+1, end);
-                        s -= 2;
-                        memcpy(d, s, end - s);
-                        d[end - s] = 0;
-                        return APR_INCOMPLETE;
+                        if (*charset == APREQ_CHARSET_UTF8) {
+                            s -= 2;
+                            memcpy(d, s, end - s);
+                            d[end - s] = 0;
+                            return APR_INCOMPLETE;
+                        }
+                        *d = c;
                     }
                     if (is_enc8(s+1, 1)) {
                         *charset = APREQ_CHARSET_UTF8;
@@ -346,10 +349,13 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                     /* 3-byte utf8 */
                     if (s + 6 >= end) {
                         *charset = fragment_charset(s+1, end);
-                        s -= 2;
-                        memcpy(d, s, end - s);
-                        d[end - s] = 0;
-                        return APR_INCOMPLETE;
+                        if (*charset == APREQ_CHARSET_UTF8) {
+                            s -= 2;
+                            memcpy(d, s, end - s);
+                            d[end - s] = 0;
+                            return APR_INCOMPLETE;
+                        }
+                        *d = c;
                     }
                     if (is_enc8(s+1, 2)) {
                         *charset = APREQ_CHARSET_UTF8;
@@ -368,10 +374,13 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                     /* 4-byte utf8 */
                     if (s + 9 >= end) {
                         *charset = fragment_charset(s+1, end);
-                        s -= 2;
-                        memcpy(d, s, end - s);
-                        d[end - s] = 0;
-                        return APR_INCOMPLETE;
+                        if (*charset == APREQ_CHARSET_UTF8) {
+                            s -= 2;
+                            memcpy(d, s, end - s);
+                            d[end - s] = 0;
+                            return APR_INCOMPLETE;
+                        }
+                        *d = c;
                     }
                     if (is_enc8(s+1, 3)) {
                         *charset = APREQ_CHARSET_UTF8;
@@ -391,10 +400,13 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                     /* 5-byte utf8 */
                     if (s + 12 >= end) {
                         *charset = fragment_charset(s+1, end);
-                        s -= 2;
-                        memcpy(d, s, end - s);
-                        d[end - s] = 0;
-                        return APR_INCOMPLETE;
+                         if (*charset == APREQ_CHARSET_UTF8) {
+                             s -= 2;
+                             memcpy(d, s, end - s);
+                             d[end - s] = 0;
+                             return APR_INCOMPLETE;
+                         }
+                         *d = c;
                     }
                     if (is_enc8(s+1, 4)) {
                         *charset = APREQ_CHARSET_UTF8;
@@ -415,10 +427,13 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                     /* 6-byte utf8 */
                     if (s + 15 >= end) {
                         *charset = fragment_charset(s+1, end);
-                        s -= 2;
-                        memcpy(d, s, end - s);
-                        d[end - s] = 0;
-                        return APR_INCOMPLETE;
+                        if (*charset == APREQ_CHARSET_UTF8) {
+                            s -= 2;
+                            memcpy(d, s, end - s);
+                            d[end - s] = 0;
+                            return APR_INCOMPLETE;
+                        }
+                        *d = c;
                     }
                     if (is_enc8(s+1, 5)) {
                         *charset = APREQ_CHARSET_UTF8;
