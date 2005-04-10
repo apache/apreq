@@ -10,9 +10,10 @@ sub exe_version { scalar qx/$path -v/ }
 sub gnu_version { scalar qx/$path --version/ }
 
 sub xsb_version { 
-    package ExtUtils::XSBuilder;
-    require ExtUtils::XSBuilder;
-    return our $VERSION;
+    eval {
+        require ExtUtils::XSBuilder;
+    };
+    $@ ? return '' : return $ExtUtils::XSBuilder::VERSION;
 }
 
 sub a_t_version {
@@ -133,7 +134,7 @@ my $version = $prereq{$tool}->{version};
 my @version = split /\./, $version;
 
 $_ = $prereq{$tool}->{test}->();
-die "$0 failed: no version_string found in '$_'.\n" unless /(\d[.\d]+)/;
+die "$0 failed: no version_string found in '$_' for '$tool'.\n" unless /(\d[.\d]+)/;
 my $saw = $1;
 my @saw = split /\./, $saw;
 $_ = 0 for @saw[@saw .. $#version]; # ensure @saw has enough entries
