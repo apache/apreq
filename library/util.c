@@ -334,7 +334,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         }
                         *d = c;
                     }
-                    if (is_enc8(s+1, 1)) {
+                    else if (is_enc8(s+1, 1)) {
                         *charset = APREQ_CHARSET_UTF8;
                         *d++ = c;
                         *d   = hex2_to_char(s+2);
@@ -357,7 +357,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         }
                         *d = c;
                     }
-                    if (is_enc8(s+1, 2)) {
+                    else if (is_enc8(s+1, 2)) {
                         *charset = APREQ_CHARSET_UTF8;
                         *d++ = c;
                         *d++ = hex2_to_char(s+2);
@@ -382,7 +382,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         }
                         *d = c;
                     }
-                    if (is_enc8(s+1, 3)) {
+                    else if (is_enc8(s+1, 3)) {
                         *charset = APREQ_CHARSET_UTF8;
                         *d++ = c;
                         *d++ = hex2_to_char(s+2);
@@ -408,7 +408,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                          }
                          *d = c;
                     }
-                    if (is_enc8(s+1, 4)) {
+                    else if (is_enc8(s+1, 4)) {
                         *charset = APREQ_CHARSET_UTF8;
                         *d++ = c;
                         *d++ = hex2_to_char(s+2);
@@ -435,7 +435,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         }
                         *d = c;
                     }
-                    if (is_enc8(s+1, 5)) {
+                    else if (is_enc8(s+1, 5)) {
                         *charset = APREQ_CHARSET_UTF8;
                         *d++ = c;
                         *d++ = hex2_to_char(s+2);
