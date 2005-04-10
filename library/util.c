@@ -231,11 +231,11 @@ static APR_INLINE apreq_charset_t fragment_charset(const char *word,
 
     switch (flen % 3) {
     case 2:
-     if (!is_89AB(*--end))
-         return APREQ_CHARSET_LATIN1;
+        if (!is_89AB(*--end))
+            return APREQ_CHARSET_LATIN1;
     case 1:
         if (*--end != '%')
-         return APREQ_CHARSET_LATIN1;
+            return APREQ_CHARSET_LATIN1;
     }
     return APREQ_CHARSET_UTF8;
 }
@@ -309,7 +309,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                     *d = c;
                 }
                 else if (c < 0xA0) {
-                    /* these are ctrl chars in 8859 */
+                    /* these are ctrl chars in latin1 */
                     *charset = APREQ_CHARSET_CP1252;
                     *d = c;
                 }
@@ -324,11 +324,12 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                 /* utf8 cases */
 
                 else if (c < 0xE0) {
+                    /* 2-byte utf8 */
                     if (s + 3 >= end) {
                         *charset = fragment_charset(s+1, end);
                         if (*charset == APREQ_CHARSET_UTF8) {
                             s -= 2;
-                            memcpy(d, s, end - s);
+                            memmove(d, s, end - s);
                             d[end - s] = 0;
                             return APR_INCOMPLETE;
                         }
@@ -351,7 +352,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         *charset = fragment_charset(s+1, end);
                         if (*charset == APREQ_CHARSET_UTF8) {
                             s -= 2;
-                            memcpy(d, s, end - s);
+                            memmove(d, s, end - s);
                             d[end - s] = 0;
                             return APR_INCOMPLETE;
                         }
@@ -376,7 +377,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         *charset = fragment_charset(s+1, end);
                         if (*charset == APREQ_CHARSET_UTF8) {
                             s -= 2;
-                            memcpy(d, s, end - s);
+                            memmove(d, s, end - s);
                             d[end - s] = 0;
                             return APR_INCOMPLETE;
                         }
@@ -402,7 +403,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         *charset = fragment_charset(s+1, end);
                          if (*charset == APREQ_CHARSET_UTF8) {
                              s -= 2;
-                             memcpy(d, s, end - s);
+                             memmove(d, s, end - s);
                              d[end - s] = 0;
                              return APR_INCOMPLETE;
                          }
@@ -429,7 +430,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         *charset = fragment_charset(s+1, end);
                         if (*charset == APREQ_CHARSET_UTF8) {
                             s -= 2;
-                            memcpy(d, s, end - s);
+                            memmove(d, s, end - s);
                             d[end - s] = 0;
                             return APR_INCOMPLETE;
                         }
@@ -499,7 +500,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                     return APREQ_ERROR_BADSEQ;
                 }
 
-                memcpy(d, s, end - s);
+                memmove(d, s, end - s);
                 d[end - s] = 0;
                 return APR_INCOMPLETE;
 	    }
@@ -603,7 +604,7 @@ APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src,
     const unsigned char *s = (const unsigned char *)src;
     unsigned c;
 
-    for ( ;s < (const unsigned char *)src + slen; ++s) {
+    for ( ; s < (const unsigned char *)src + slen; ++s) {
         c = *s;
         if ( apr_isalnum(c) )
             *d++ = c;
@@ -746,7 +747,6 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
 
 
     case APREQ_JOIN_QUOTE:
-
         d += apreq_quote_once(d, a[0]->data, a[0]->dlen);
 
         for (j = 1; j < n; ++j) {
@@ -942,7 +942,7 @@ unsigned is_2616_token(const char c) {
     switch (c) {
     case ' ': case ';': case ',': case '"': case '\t':
         /* The chars we are expecting are listed above;
-           the chars below for are just for completeness. */
+           the chars below are just for completeness. */
     case '?': case '=': case '@': case ':': case '\\': case '/':
     case '(': case ')':
     case '<': case '>':
