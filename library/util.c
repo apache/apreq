@@ -329,6 +329,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         *charset = fragment_charset(s+1, end);
                         if (*charset == APREQ_CHARSET_UTF8) {
                             s -= 2;
+                            *dlen = d - start;
+                            *slen = s - src;
                             memmove(d, s, end - s);
                             d[end - s] = 0;
                             return APR_INCOMPLETE;
@@ -352,6 +354,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         *charset = fragment_charset(s+1, end);
                         if (*charset == APREQ_CHARSET_UTF8) {
                             s -= 2;
+                            *dlen = d - start;
+                            *slen = s - src;
                             memmove(d, s, end - s);
                             d[end - s] = 0;
                             return APR_INCOMPLETE;
@@ -377,6 +381,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         *charset = fragment_charset(s+1, end);
                         if (*charset == APREQ_CHARSET_UTF8) {
                             s -= 2;
+                            *dlen = d - start;
+                            *slen = s - src;
                             memmove(d, s, end - s);
                             d[end - s] = 0;
                             return APR_INCOMPLETE;
@@ -403,6 +409,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         *charset = fragment_charset(s+1, end);
                          if (*charset == APREQ_CHARSET_UTF8) {
                              s -= 2;
+                             *dlen = d - start;
+                             *slen = s - src;
                              memmove(d, s, end - s);
                              d[end - s] = 0;
                              return APR_INCOMPLETE;
@@ -430,6 +438,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         *charset = fragment_charset(s+1, end);
                         if (*charset == APREQ_CHARSET_UTF8) {
                             s -= 2;
+                            *dlen = d - start;
+                            *slen = s - src;
                             memmove(d, s, end - s);
                             d[end - s] = 0;
                             return APR_INCOMPLETE;
