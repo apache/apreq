@@ -31,7 +31,7 @@ T_HASHOBJ
             MAGIC *mg;
             if (SvMAGICAL(hv)) {
                 if ((mg = mg_find(hv, PERL_MAGIC_tied))) {
-                    $var = (void *)MgObjIV(mg);
+                    $var = INT2PTR(void *, MgObjIV(mg));
                 }
                 else {
                     Perl_warn(aTHX_ \"Not a tied hash: (magic=%c)\", mg);
@@ -44,7 +44,7 @@ T_HASHOBJ
             }
         }
         else {
-            $var = (void *)SvObjIV($arg);
+            $var = INT2PTR(void *, SvObjIV($arg));
         }
     }
     else {
@@ -82,7 +82,7 @@ T_APREQ_TABLE
             MAGIC *mg;
             if (SvMAGICAL(hv)) {
                 if ((mg = mg_find(hv, PERL_MAGIC_tied))) {
-                    $var = (void *)MgObjIV(mg);
+                    $var = INT2PTR(void *,MgObjIV(mg));
                 }
                 else {
                     Perl_warn(aTHX_ \"Not a tied hash: (magic=%c)\", mg);
@@ -95,7 +95,7 @@ T_APREQ_TABLE
             }
         }
         else {
-            $var = (void *)SvObjIV($arg);
+            $var = INT2PTR(void *, SvObjIV($arg));
         }
     }
     else {
