@@ -9,7 +9,7 @@ $path = $tool unless defined $path;
 sub exe_version { scalar qx/$path -v/ }
 sub gnu_version { scalar qx/$path --version/ }
 
-sub xsb_version { 
+sub xsb_version {
     eval {
         require ExtUtils::XSBuilder;
     };
@@ -41,7 +41,7 @@ sub mp2_version {
 my %svn = (
                 libtool => { version => "1.4.3",   test => \&gnu_version },
                autoconf => { version => "2.53",    test => \&gnu_version },
-               automake => { version => "1.4.0",   test => \&gnu_version },
+               automake => { version => "1.6.0",   test => \&gnu_version },
                 doxygen => { version => "1.2",     test => \&gnu_version },
                    perl => { version => "5.6.1",   test => \&gnu_version },
   "ExtUtils::XSBuilder" => { version => "0.23",    test => \&xsb_version },
