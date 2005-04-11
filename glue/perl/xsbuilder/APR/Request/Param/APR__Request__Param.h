@@ -100,13 +100,15 @@ static XS(apreq_xs_brigade_copy)
     apr_bucket_brigade *bb, *bb_copy;
     char *class;
     SV *sv, *obj;
+    IV iv;
 
     if (items != 2 || !SvPOK(ST(0)) || !SvROK(ST(1)))
         Perl_croak(aTHX_ "Usage: APR::Request::Brigade->new($bb)");
 
     class = SvPV_nolen(ST(0));
     obj = apreq_xs_find_bb_obj(aTHX_ ST(1));
-    bb = (apr_bucket_brigade *)SvIVX(obj);
+    iv = SvIVX(obj);
+    bb = INT2PTR(apr_bucket_brigade *, iv);
     bb_copy = apr_brigade_create(bb->p, bb->bucket_alloc);
     apreq_brigade_copy(bb_copy, bb);
 
@@ -136,8 +138,10 @@ static XS(apreq_xs_brigade_read)
         sv = ST(1);
         SvUPGRADE(sv, SVt_PV);
         if (SvROK(ST(0))) {
+            IV iv;
             obj = apreq_xs_find_bb_obj(aTHX_ ST(0));
-            bb = (apr_bucket_brigade *)SvIVX(obj);
+            iv = SvIVX(obj);
+            bb = INT2PTR(apr_bucket_brigade *, iv);
             break;
         }
     default:
@@ -218,6 +222,7 @@ static XS(apreq_xs_brigade_readline)
     apr_bucket_brigade *bb;
     apr_bucket *e;
     SV *sv, *obj;
+    IV iv;
     apr_status_t s;
     unsigned tainted;
 
@@ -225,7 +230,8 @@ static XS(apreq_xs_brigade_readline)
         Perl_croak(aTHX_ "Usage: $bb->READLINE");
 
     obj = apreq_xs_find_bb_obj(aTHX_ ST(0));
-    bb = (apr_bucket_brigade *)SvIVX(obj);
+    iv = SvIVX(obj);
+    bb = INT2PTR(apr_bucket_brigade *, iv);
 
     if (APR_BRIGADE_EMPTY(bb))
         XSRETURN(0);
