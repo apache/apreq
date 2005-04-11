@@ -4,9 +4,11 @@
 
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
+- C API [joes]
+  Add apreq_cp_1252_to_utf8().
 
 - C API [joes]
-  Add utf8 charset flag for params.
+  Add charset support for params.
 
 - C API [joes]
   Replace v->size with v->nlen + v->dlen.

@@ -183,6 +183,36 @@ apr_uint16_t cp1252_to_bmp(unsigned char c)
     return c;
 }
 
+/* converts cp1252 to utf8 */
+APREQ_DECLARE(apr_size_t) apreq_cp1252_to_utf8(char *dest,
+                                               const char *src, apr_size_t slen)
+{
+    const unsigned char *s = (unsigned const char *)src;
+    const unsigned char *end = s + slen;
+    unsigned char *d = (unsigned char *)dest;
+    apr_uint16_t c;
+
+    while (s < end) {
+        c = cp1252_to_bmp(*s++);
+        
+        if (c < 0x80) {
+            *d++ = c;
+        }
+        else if (c < 0x800) {
+            *d++ = 0xC0 | (c >> 6);
+            *d++ = 0x80 | (c & 0x3F);
+        }
+        else {
+            *d++ = 0xE0 | (c >> 12);
+            *d++ = 0x80 | ((c >> 6) & 0x3F);
+            *d++ = 0x80 | (c & 0x3F);
+        }
+    }
+    *d = 0;
+    return d - (unsigned char *)dest;
+}
+
+
 /**
  * Valid utf8 bit patterns:
  *

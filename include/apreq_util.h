@@ -109,10 +109,24 @@ APREQ_DECLARE(apr_size_t) apreq_quote_once(char *dest, const char *src,
  * @param src  Original string.
  * @param slen Length of original string.
  *
- * @return length of url-encoded string in dest.
+ * @return length of url-encoded string in dest; does not exceed 3 * slen.
  */
 APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src, 
                                        const apr_size_t slen);
+
+/**
+ * Convert a string from cp1252 to utf8.  Caller must ensure it is large enough
+ * to hold the encoded string and trailing '\\0'.
+ *
+ * @param dest Location of utf8-encoded result string. Caller must ensure it
+ *             is large enough to hold the encoded string and trailing '\\0'.
+ * @param src  Original string.
+ * @param slen Length of original string.
+ *
+ * @return length of utf8-encoded string in dest; does not exceed 3 * slen.
+ */
+APREQ_DECLARE(apr_size_t) apreq_cp1252_to_utf8(char *dest,
+                                               const char *src, apr_size_t slen);
 
 /**
  * Url-decodes a string.

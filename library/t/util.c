@@ -112,6 +112,10 @@ static void test_encode(dAT)
 
 }
 
+static void test_cp1252_to_utf8(dAT)
+{
+
+}
 
 static void test_quote(dAT)
 {
@@ -167,6 +171,7 @@ int main(int argc, char *argv[])
         { dT(test_decode, 0) },
         { dT(test_decodev, 6) },
         { dT(test_encode, 0) },
+        { dT(test_cp1252_to_utf8, 0) },
         { dT(test_quote, 0) },
         { dT(test_quote_once, 0), },
         { dT(test_join, 0) },
