@@ -509,6 +509,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                     break;
 
                 default:
+                    *dlen = d - start;
+                    *slen = s - src;
                     *d = 0;
                     return APREQ_ERROR_BADSEQ;
                 }
