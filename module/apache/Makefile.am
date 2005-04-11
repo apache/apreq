@@ -1,3 +1,10 @@
+AM_CPPFLAGS = $(APACHE1_INCLUDES) @APR_INCLUDES@
+TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
+
+pkgcfgdir = `@APACHE1_APXS@ -q SYSCONFDIR`
+pkglibdir = `@APACHE1_APXS@ -q LIBEXECDIR`
+pkgincludedir = `@APACHE1_APXS@ -q INCLUDEDIR`/@APREQ_LIBNAME@
+
 if MAINTAINER_MODE
 
 APACHE1_INCLUDES = -isystem `@APACHE1_APXS@ -q INCLUDEDIR`
@@ -9,11 +16,6 @@ APACHE1_INCLUDES = -I`@APACHE1_APXS@ -q INCLUDEDIR`
 endif
 
 
-
-AM_CPPFLAGS = $(APACHE1_INCLUDES) @APR_INCLUDES@
-TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
-
-pkginclude_HEADERS = apreq_module_apache.h
 mod_apreq2_la_LDFLAGS = -export-dynamic -module -avoid-version @APR_LTFLAGS@ \
                         `@APREQ_CONFIG@ --link-libtool --libs`
 mod_apreq2_la_SOURCES = apreq_private_apache.h handle.c command.c
@@ -21,9 +23,7 @@ mod_apreq2_la_SOURCES = apreq_private_apache.h handle.c command.c
 
 if HAVE_APACHE1
 
-pkgcfgdir = `@APACHE1_APXS@ -q SYSCONFDIR`
-pkglibdir = `@APACHE1_APXS@ -q LIBEXECDIR`
-pkgincludedir = `@APACHE1_APXS@ -q INCLUDEDIR`/@APREQ_LIBNAME@
+pkginclude_HEADERS = apreq_module_apache.h
 pkglib_LTLIBRARIES = mod_apreq2.la
 
 run_tests : t/TEST

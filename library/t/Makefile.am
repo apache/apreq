@@ -1,5 +1,5 @@
 AM_CPPFLAGS = @APR_INCLUDES@
-LDFLAGS = @APR_LTFLAGS@ `@APREQ_CONFIG@ --link-libtool --libs`
+AM_LDFLAGS = @APR_LTFLAGS@ `@APREQ_CONFIG@ --link-libtool --libs`
 noinst_LIBRARIES = libapache_test.a
 libapache_test_a_SOURCES = at.h at.c
 

@@ -1,9 +1,11 @@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
-pkginclude_HEADERS = apreq_module_apache2.h
 mod_apreq2_la_LDFLAGS = -export-dynamic -module -avoid-version @APR_LTFLAGS@ \
                         `@APREQ_CONFIG@ --link-libtool --libs`
 mod_apreq2_la_SOURCES = apreq_private_apache2.h handle.c filter.c
 
+pkgcfgdir = `@APACHE2_APXS@ -q SYSCONFDIR`
+pkgincludedir = `@APACHE2_APXS@ -q INCLUDEDIR`/@APREQ_LIBNAME@
+pkglibdir = `@APACHE2_APXS@ -q LIBEXECDIR`
 
 if MAINTAINER_MODE
 
@@ -32,9 +34,7 @@ all-local: @APACHE2_HTTPD@
 
 else
 
-pkgcfgdir = `@APACHE2_APXS@ -q SYSCONFDIR`
-pkgincludedir = `@APACHE2_APXS@ -q INCLUDEDIR`/@APREQ_LIBNAME@
-pkglibdir = `@APACHE2_APXS@ -q LIBEXECDIR`
+pkginclude_HEADERS = apreq_module_apache2.h
 pkglib_LTLIBRARIES = mod_apreq2.la
 
 install-exec-local :
