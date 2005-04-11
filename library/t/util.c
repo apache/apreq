@@ -19,6 +19,7 @@
 #include "apreq_util.h"
 #include "at.h"
 
+
 static void test_atoi64f(dAT)
 {
     AT_int_eq(apreq_atoi64f("0"), 0);
@@ -66,13 +67,23 @@ static void test_index(dAT)
               hlen - 3);
 }
 
+#define A_GRAVE  0xE5
+#define KATAKANA_A 0xFF71
+
 static void test_decode(dAT)
 {
+    apr_size_t elen;
+    char src1[] = "%C3%80%E3%82%a2"; /* A_GRAVE KATAKANA_A as utf8 */
+    unsigned char expect[6];
 
-
-
-
-
+    AT_int_eq(apreq_decode((char *)expect, &elen, src1, sizeof(src1) -1), 
+              APR_SUCCESS + APREQ_CHARSET_UTF8);
+    AT_int_eq(elen, 5);
+    AT_int_eq(expect[0], 0xC3);
+    AT_int_eq(expect[1], 0x80);
+    AT_int_eq(expect[2], 0xE3);
+    AT_int_eq(expect[3], 0x82);
+    AT_int_eq(expect[4], 0xA2);
 }
 
 static void test_decodev(dAT)
@@ -114,6 +125,38 @@ static void test_encode(dAT)
 
 static void test_cp1252_to_utf8(dAT)
 {
+    char src1[] = "%C3%80%E3%82%a2"; /* A_GRAVE KATAKANA_A as utf8 */
+    char src2[5];
+    unsigned char expect[16];
+    apr_size_t slen;
+
+    AT_int_eq(apreq_decode((char *)src2, &slen, src1, sizeof(src1) -1), 
+              APR_SUCCESS + APREQ_CHARSET_UTF8);
+    AT_int_eq(apreq_cp1252_to_utf8((char *)expect, src2, 5),
+              12);
+
+    /* 0xC3 */
+    AT_int_eq(expect[0], 0xC0 | (0xC3 >> 6));
+    AT_int_eq(expect[1], 0xC3 - 0x40);
+
+    /* 0x20AC */
+    AT_int_eq(expect[2], 0xE0 | (0x20AC >> 12));
+    AT_int_eq(expect[3], 0x80 | ((0x20AC >> 6) & 0x3F));
+    AT_int_eq(expect[4], 0x80 | (0x20AC & 0x3F));
+    
+    /* 0xE3 */
+    AT_int_eq(expect[5], 0xC3);
+    AT_int_eq(expect[6], 0xE3 - 0x40);
+
+    /* 0x201A */
+    AT_int_eq(expect[7], 0xE0 | (0x201A >> 12));
+    AT_int_eq(expect[8], 0x80 | ((0x201A >> 6) & 0x3F));
+    AT_int_eq(expect[9], 0x80 | (0x201A & 0x3F));
+    
+
+    /* 0xA2 */
+    AT_int_eq(expect[10], 0xC0 | (0xA2 >> 6));
+    AT_int_eq(expect[11], 0xA2);
 
 }
 
@@ -168,10 +211,10 @@ int main(int argc, char *argv[])
         { dT(test_atoi64f, 9) },
         { dT(test_atoi64t, 9) },
         { dT(test_index, 6) },
-        { dT(test_decode, 0) },
+        { dT(test_decode, 7) },
         { dT(test_decodev, 6) },
         { dT(test_encode, 0) },
-        { dT(test_cp1252_to_utf8, 0) },
+        { dT(test_cp1252_to_utf8, 14) },
         { dT(test_quote, 0) },
         { dT(test_quote_once, 0), },
         { dT(test_join, 0) },
