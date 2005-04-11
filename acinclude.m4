@@ -30,6 +30,9 @@ AC_DEFUN([AC_APREQ], [
         AC_ARG_WITH(perl-opts,
                 AC_HELP_STRING([--with-perl-opts],[extra MakeMaker options]),
                 [PERL_OPTS=$withval],[PERL_OPTS=""])
+        AC_ARG_WITH(expat,
+                AC_HELP_STRING([--with-expat],[specify expat location]),
+                [PERL_OPTS=$withval],[PERL_OPTS=""])
 
         prereq_check="$PERL build/version_check.pl"
 
@@ -155,6 +158,11 @@ AC_DEFUN([AC_APREQ], [
         APR_ADDTO([APR_LIBS], "`$APR_CONFIG --libs`")
         APR_ADDTO([APR_LDFLAGS], "`$APU_CONFIG --link-ld --ldflags`")
         APR_ADDTO([APR_LDFLAGS], "`$APR_CONFIG --link-ld --ldflags`")
+
+        if test -n "$EXPAT_DIR"; then
+            APR_ADDTO([APR_INCLUDES], "-I$EXPAT_DIR/include")
+            APR_ADDTO([APR_LTFLAGS], "-L$EXPAT_DIR/lib")
+        fi
 
         dnl Absolute source/build directory
         abs_srcdir=`(cd $srcdir && pwd)`
