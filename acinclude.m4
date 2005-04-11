@@ -32,7 +32,7 @@ AC_DEFUN([AC_APREQ], [
                 [PERL_OPTS=$withval],[PERL_OPTS=""])
         AC_ARG_WITH(expat,
                 AC_HELP_STRING([--with-expat],[specify expat location]),
-                [PERL_OPTS=$withval],[PERL_OPTS=""])
+                [EXPAT_DIR=$withval],[EXPAT_DIR=""])
 
         prereq_check="$PERL build/version_check.pl"
 
