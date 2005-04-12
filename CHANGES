@@ -5,7 +5,7 @@
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
 - C API [joes]
-  Add apreq_cp_1252_to_utf8().
+  Add apreq_cp1252_to_utf8().
 
 - C API [joes]
   Add charset support for params.
