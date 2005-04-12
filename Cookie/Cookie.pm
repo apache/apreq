@@ -177,6 +177,10 @@ This problem is solved in the libapreq-2.0 library.
 
 =back
 
+=head1 AUTHOR
+
+libapreq developers can be reached at apreq-dev (about) httpd.apache.org
+
 =head1 SEE ALSO
 
 Apache(3), Apache::Request(3), CGI::Cookie(3)

@@ -414,6 +414,10 @@ spool file. Check your system's link(2) manpage for details.
 
 libapreq(3), Apache::Table(3)
 
+=head1 AUTHOR
+
+libapreq developers can be reached at apreq-dev (about) httpd.apache.org
+
 =head1 CREDITS
 
 This interface is based on the original pure Perl version by Lincoln Stein.
