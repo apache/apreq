@@ -30,8 +30,6 @@ CURRENT RELEASE NOTES:
 RELEASE SHOWSTOPPERS:
 
     - The api docs and perl glue are currently broken.
-    - Improve the APREQ_ERROR related code.
-    - Improve the custom & cgi module code.
 
 
 CURRENT VOTES:
@@ -51,6 +49,9 @@ CURRENT VOTES:
 
 
 TODO:
+
+    - Introduce APR::Request::Parser and APR::Request::Hook.  Implement
+      Apache2::Request::new's UPLOAD_HOOK using them.
 
     - Move module/t to module/apache2/t.
 
