@@ -85,6 +85,11 @@ static int apreq_xs_table_keys(void *data, const char *key, const char *val)
     dSP;
     apreq_param_t *p = apreq_value_to_param(val);
     SV *sv = newSVpvn(key, p->v.nlen);
+
+#ifndef USE_ITHREADS
+    (void)data;
+#endif
+
     if (apreq_param_is_tainted(p))
         SvTAINTED_on(sv);
 
