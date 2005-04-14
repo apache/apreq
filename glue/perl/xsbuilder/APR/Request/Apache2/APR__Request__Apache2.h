@@ -78,8 +78,10 @@ SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *parent,
 
 static int apreq_xs_table_keys(void *data, const char *key, const char *val)
 {
+#ifdef USE_ITHREADS
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
     dTHXa(d->perl);
+#endif
     dSP;
     apreq_param_t *p = apreq_value_to_param(val);
     SV *sv = newSVpvn(key, p->v.nlen);
