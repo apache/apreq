@@ -4,7 +4,6 @@ Apache::Request - Methods for dealing with client request data
 
 
 =for testing
-    use Apache2;
     use Apache::Request;
     use Apache::Upload;
     use APR::Pool;

@@ -3,7 +3,6 @@
 Apache::Upload - Methods for dealing with file uploads.
 
 =for testing
-    use Apache2;
     use APR::Pool;
     use Apache::Upload;
     $r = APR::Pool->new;

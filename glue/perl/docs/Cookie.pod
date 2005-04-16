@@ -3,7 +3,6 @@
 Apache::Cookie, Apache::Cookie::Jar - HTTP Cookies Class
 
 =for testing
-    use Apache2;
     use Apache::Cookie;
     use APR::Pool;
     # use $r instead of $p here, so doc examples reflect mp2 env, not CGI/test env

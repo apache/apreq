@@ -1,5 +1,4 @@
 require APR::Request;
-use Apache2;
 use APR::Pool;
 push @ISA, "APR::Request";
 

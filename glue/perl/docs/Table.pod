@@ -3,7 +3,6 @@
 Apache::*::Table - Table classes for Apache::Request, Apache::Upload, and Apache::Cookie.
 
 =for testing
-    use Apache2;
     use Apache::Upload;
     use Apache::Cookie;
     use APR::Pool;
