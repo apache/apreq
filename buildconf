@@ -71,6 +71,7 @@ $perl build/version_check.pl libtool $libtool  || exit 1
 $perl build/version_check.pl autoconf $autoconf  || exit 1
 $perl build/version_check.pl automake $automake  || exit 1
 $perl build/version_check.pl ExtUtils::XSBuilder || exit 1
+$perl build/version_check.pl Test::Inline || exit 1
 
 echo "running $libtoolize" && $libtoolize && \
 echo "running $aclocal"  && $aclocal && \
