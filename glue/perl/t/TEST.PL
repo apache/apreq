@@ -2,7 +2,6 @@
 
 use strict;
 use warnings FATAL => 'all';
-use Apache2;
 use Apache2::Build;
 use constant WIN32 => Apache2::Build::WIN32;
 
