@@ -7,11 +7,10 @@ for (qw/slurp type size link tempname fh io filename/) {
 }
 sub Apache2::Request::upload {
     my $req = shift;
-    my $body = $req->body;
+    my $body = $req->body or return;
     $body->param_class(__PACKAGE__);
-    my @uploads;
     if (@_) {
-        @uploads = grep $_->upload, $body->get(@_);
+        my @uploads = grep $_->upload, $body->get(@_);
         return wantarray ? @uploads : $uploads[0];
     }
 
