@@ -16,6 +16,13 @@ sub xsb_version {
     $@ ? return '' : return $ExtUtils::XSBuilder::VERSION;
 }
 
+sub ti_version {
+    eval {
+        require Test::Inline;
+    };
+    @$ ? return '' : return $Test::Inline::VERSION;
+}
+
 sub a_t_version {
     require Apache::Test;
     $Apache::Test::VERSION;
@@ -66,6 +73,10 @@ my %perl_glue = (
   "ExtUtils::MakeMaker" => { version => "6.15",    test => \&mm_version },
            "Test::More" => { version => "0.47",    test => \&tm_version },
                 );
+
+my %test = (
+            "Test::Inline" => { version => "0.16", test => \&ti_version },
+           );
 
 sub print_prereqs ($$) {
     my ($preamble, $prereq) = @_;
@@ -128,7 +139,7 @@ EOT
 
 # test prerequisites from the command-line arguments
 
-my %prereq = (%svn, %build, %perl_glue);
+my %prereq = (%svn, %build, %perl_glue, %test);
 die "$0 failed: unknown tool '$tool'.\n" unless $prereq{$tool};
 my $version = $prereq{$tool}->{version};
 my @version = split /\./, $version;
