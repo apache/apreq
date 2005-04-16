@@ -3,14 +3,19 @@
 
 static int apreq_xs_table_keys(void *data, const char *key, const char *val)
 {
+#ifdef USE_ITHREADS
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
     dTHXa(d->perl);
+#endif
     dSP;
     apreq_cookie_t *c = apreq_value_to_cookie(val);
     SV *sv = newSVpvn(key, c->v.nlen);
     if (apreq_cookie_is_tainted(c))
         SvTAINTED_on(sv);
-   
+
+#ifndef USE_ITHREADS
+		(void)data;
+#endif	
     XPUSHs(sv_2mortal(sv));
     PUTBACK;
     return 1;

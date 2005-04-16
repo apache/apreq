@@ -74,14 +74,19 @@ static XS(apreq_xs_table_do)
 
 static int apreq_xs_table_keys(void *data, const char *key, const char *val)
 {
+#ifdef USE_ITHREADS
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
     dTHXa(d->perl);
+#endif
     dSP;
     apreq_param_t *p = apreq_value_to_param(val);
     SV *sv = newSVpvn(key, p->v.nlen);
     if (apreq_param_is_tainted(p))
         SvTAINTED_on(sv);
 
+#ifndef USE_ITHREADS
+		(void)data;
+#endif
     XPUSHs(sv_2mortal(sv));
     PUTBACK;
     return 1;
