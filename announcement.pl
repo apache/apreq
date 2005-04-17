@@ -68,11 +68,11 @@ query-strings and POST data.  The package $PACKAGE_NAME provides
 
     1) version $LIBRARY_VERSION of the libapreq2 library,
 
-    2) mod_apreq, a filter module necessary for using libapreq2
+    2) mod_apreq2, a filter module necessary for using libapreq2
        within the Apache HTTP Server,
 
-    3) the Apache::Request, Apache::Cookie, and Apache::Upload
-       perl modules for using libapreq2 with modperl-2.
+    3) the Apache2::Request, Apache2::Cookie, and Apache2::Upload
+       perl modules for using libapreq2 with mod_perl2.
 
 ========================================================================
 
