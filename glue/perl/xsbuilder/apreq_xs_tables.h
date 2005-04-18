@@ -1,5 +1,5 @@
 /*
-**  Copyright 2003-2004  The Apache Software Foundation
+**  Copyright 2003-2005  The Apache Software Foundation
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -21,40 +21,6 @@
 
 #include "ppport.h"
 
-
-#if (PERL_VERSION >= 8) /* MAGIC ITERATOR REQUIRES 5.8 */
-
-/* Requires perl 5.8 or better. 
- * A custom MGVTBL with its "copy" slot filled allows
- * us to FETCH a table entry immediately during iteration.
- * For multivalued keys this is essential in order to get
- * the value corresponding to the current key, otherwise
- * values() will always report the first value repeatedly.
- * With this MGVTBL the keys() list always matches up with
- * the values() list, even in the multivalued case.
- * We only prefetch the value during iteration, because the
- * prefetch adds overhead to EXISTS and STORE operations.
- * They are only "penalized" when the perl program is iterating
- * via each(), which seems to be a reasonable tradeoff.
- */
-
-
-static int apreq_xs_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv, 
-                                  const char *name, int namelen)
-{
-    /* Prefetch the value whenever the table iterator is > 0 */
-    MAGIC *tie_magic = mg_find(nsv, PERL_MAGIC_tiedelem);
-    SV *obj = SvRV(tie_magic->mg_obj);
-    if (SvCUR(obj))
-        SvGETMAGIC(nsv);
-    return 0;
-}
-
-static const MGVTBL apreq_xs_table_magic = {0, 0, 0, 0, 0, 
-                                            apreq_xs_table_magic_copy};
-
-#endif
-
 /**
  * Converts a C object, with environment, to a TIEHASH object.
  * @param obj C object.
@@ -62,37 +28,13 @@ static const MGVTBL apreq_xs_table_magic = {0, 0, 0, 0, 0,
  * @param class Class perl object will be blessed and tied to.
  * @return Reference to a new TIEHASH object in class.
  */
-APR_INLINE
-static SV *apreq_xs_table_c2perl(pTHX_ void *obj, const char *name, I32 nlen,
-                                 const char *class, SV *parent, unsigned tainted)
-{
-    SV *sv = (SV *)newHV();
-    /*upgrade ensures CUR and LEN are both 0 */
-    SV *rv = sv_setref_pv(newSV(0), class, obj);
-
-    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, name, nlen);
-    if (tainted)
-        SvTAINTED_on(SvRV(rv));
-
-#if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
-
-    sv_magic(sv, NULL, PERL_MAGIC_ext, Nullch, -1);
-    SvMAGIC(sv)->mg_virtual = (MGVTBL *)&apreq_xs_table_magic;
-    SvMAGIC(sv)->mg_flags |= MGf_COPY;
-
-#endif
-
-    sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
-    SvREFCNT_dec(rv); /* corrects SvREFCNT_inc(rv) implicit in sv_magic */
-
-    return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
-}
 
 
-#define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
-#define apreq_xs_table2sv(t,class,parent,name,nlen,tainted)          \
-     apreq_xs_table_c2perl(aTHX_ t, name, nlen, class, parent, tainted)
 
+/*#define apreq_xs_sv2table(sv)      ((apr_table_t *) SvIVX(SvRV(sv)))
+ *#define apreq_xs_table2sv(t,class,parent,name,nlen,tainted)          \
+ *     apreq_xs_table_c2perl(aTHX_ t, name, nlen, class, parent, tainted)
+ */
 
 #define APREQ_XS_DEFINE_TABLE_MAKE(attr,pkg, plen)                      \
 static XS(apreq_xs_table_##attr##_make)                                 \
@@ -163,35 +105,14 @@ static XS(apreq_xs_table_##attr##_##method)                             \
 }
 
 
-/* TABLE_GET */
-struct apreq_xs_table_key_magic {
-    SV         *obj;
-    const char *val;
-};
-
 
 struct apreq_xs_do_arg {
-    void            *env;
     const char      *pkg;
-    SV              *parent, *sub;
-    unsigned         tainted;
+    SV              *parent,
+                    *sub;
     PerlInterpreter *perl;
 };
 
-static int apreq_xs_table_keys(void *data, const char *key,
-                               const char *val)
-{
-    struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
-    dTHXa(d->perl);
-
-    dSP;
-    SV *sv = newSVpv(key,0);
-    if (d->tainted)
-        SvTAINTED_on(sv);
-    XPUSHs(sv_2mortal(sv));
-    PUTBACK;
-    return 1;
-}
 
 #define apreq_xs_do(attr)          (items == 1 ? apreq_xs_table_keys    \
                                    : apreq_xs_##attr##_table_values)

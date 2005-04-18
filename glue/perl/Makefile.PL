@@ -1,5 +1,4 @@
 use strict;
-use Apache2;
 use ModPerl::MM;
 
 use 5.005;
@@ -14,10 +13,11 @@ use Apache::TestConfigPerl ();
 use Apache::TestSmokePerl ();
 use Apache::TestReportPerl ();
 
+use Config;
 use File::Find qw(finddepth);
 use File::Basename;
-use Apache::Build;
-use constant WIN32 => Apache::Build::WIN32;
+use Apache2::Build;
+use constant WIN32 => Apache2::Build::WIN32;
 use Cwd;
 use ExtUtils::XSBuilder::ParseSource;
 
@@ -27,7 +27,8 @@ my $cwd = WIN32 ?
     Win32::GetLongPathName(cwd) : cwd;
 $cwd =~ m{^(.+)/glue/perl$} or die "Can't find base directory";
 my $base_dir = $1;
-my $src_dir = "$base_dir/src";
+my $inc_dir = "$base_dir/include";
+my $lib_dir = "$base_dir/library";
 my $xs_dir = "$base_dir/glue/perl/xsbuilder";
 
 sub slurp($$)
@@ -36,7 +37,7 @@ sub slurp($$)
     read $file, $_[0], -s $file;
 }
 
-my ($apache_includes, $apr_libs, $apreq_libname);
+my ($apache_includes, $apache_dir, $apr_libs, $apreq_libname, $perl_lib);
 
 if (WIN32) {
     # XXX May need fixing, Randy!
@@ -47,7 +48,7 @@ if (WIN32) {
     slurp my $make => "$base_dir/Makefile";
     $make =~ /^APACHE=(\S+)/m or
         die "Cannot find top-level Apache directory";
-    my $apache_dir = $1;
+    $apache_dir = $1;
     ($apache_includes = "-I$apache_dir" . '/include') =~ s!\\!/!g;
     ($apr_libs = "-L$apache_dir" . '/lib') =~ s!\\!/!g;
     $make =~ /^APR_LIB=(\S+)/m or
@@ -57,6 +58,8 @@ if (WIN32) {
         die "Cannot find aprutil lib";
     $apr_libs .= ' -l' . basename($1, '.lib');
     $apreq_libname = 'apreq2';
+    $perl_lib = $Config{installsitelib} . '\auto\libaprext';
+    $perl_lib =~ s{\\}{\\\\}g;
 }
 else {
     slurp my $config => "$base_dir/config.status";
@@ -66,24 +69,16 @@ else {
     $config =~ /^s,\@APR_INCLUDES\@,([^,]+)/m or
         die "Can't find apache include directory";
     $apache_includes .= " $1";
-    $config =~ /^s,\@APU_INCLUDES\@,([^,]+)/m or
-        die "Can't find apache include directory";
-    $apache_includes .= " $1";
 
-    $config =~ m/^s,\@APR_LDFLAGS\@,([^,]+)/m or
-        die "Can't find apr ldflags";
-    $apr_libs = $1;
-    $config =~ m/^s,\@APU_LDFLAGS\@,([^,]+)/m or
-        die "Can't find apu ldflags";
-    $apr_libs .= " $1";
+#    $config =~ m/^s,\@APR_LDFLAGS\@,([^,]+)/m or
+#        die "Can't find apr ldflags";
+#    $apr_libs = $1;
 
-    # need -laprutil befpre -lapr
-    $config =~ m/^s,\@APU_LDLIBS\@,([^,]+)/m or
-        die "Can't find apu libraries";
-    $apr_libs = $1;
-    $config =~ m/^s,\@APR_LDLIBS\@,([^,]+)/m or
-        die "Can't find apr libraries";
-    $apr_libs .= " $1";
+#    $config =~ m/^s,\@APR_LIBS\@,([^,]+)/m or
+#        die "Can't find apr libraries";
+#    $apr_libs .= " $1";
+
+    $apr_libs ="";
 
     $config =~ m/^s,\@APREQ_LIBNAME\@,([^,]+)/m or
         die "Can't find apreq libname";
@@ -96,17 +91,17 @@ else {
 }
 
 my $apreq_libs = WIN32 ?
-    qq{-L$base_dir/win32/libs -llib$apreq_libname } :
-    qq{-L$src_dir/.libs -l$apreq_libname};
+    qq{-L$base_dir/win32/libs -llib$apreq_libname -lmod_apreq2 -L$perl_lib -llibaprext -L$apache_dir/lib -lmod_perl} :
+    qx{$base_dir/apreq2-config --link-ld --ldflags --libs};
 
-my $mp2_typemaps = Apache::Build->new->typemaps;
+my $mp2_typemaps = Apache2::Build->new->typemaps;
 
 package My::ParseSource;
 use base qw/ExtUtils::XSBuilder::ParseSource/;
 use constant WIN32 => ($^O =~ /Win32/i);
-my @dirs = ("$base_dir/src");
-sub package {'Apache::libapreq2'}
-sub unwanted_includes {[qw/apreq_tables.h apreq_config.h/]}
+my @dirs = ("$base_dir/include", "$base_dir/module/apache2");
+sub package {'APR::Request'}
+sub unwanted_includes {[qw/apreq_config.h apreq_private_apache2.h/]}
 
 # ParseSource.pm v 0.23 bug: line 214 should read
 # my @dirs = @{$self->include_dirs};
@@ -143,6 +138,7 @@ sub include_dirs {\@dirs}
 package My::WrapXS;
 use base qw/ExtUtils::XSBuilder::WrapXS/;
 our $VERSION = $version;
+use constant WIN32 => ($^O =~ /Win32/i);
 
 ##################################################
 # Finally, we get to the actual script...
@@ -163,15 +159,22 @@ Apache::TestMM::generate_script("t/TEST");
 Apache::TestSmokePerl->generate_script;
 Apache::TestReportPerl->generate_script;
 
-ModPerl::MM::WriteMakefile(
+my %opts = (
     NAME => 'libapreq2',
     DIR => [qw(xs)],
     clean => { FILES => "xs t/logs t/TEST @scripts" },
     realclean => { FILES => "xsbuilder/tables" },
 );
 
+ModPerl::MM::WriteMakefile(%opts);
+
 # That's the whole script - below is just a bunch of local overrides
 ##################################################
+sub get_functions {
+    my $self = shift;
+    $self->{XS}->{"APR::Request::Error"} ||= [];
+    $self->SUPER::get_functions;
+}
 
 sub copy_docs {
     my @lines;
@@ -234,7 +237,7 @@ sub MY::postamble {
 doc_test : @tests
 	\$(FULLPERLRUN) "-Mblib" "-MTest::Harness" "-e" "runtests(\@ARGV)" @tests
 
-test :: doc_test
+#test :: doc_test
 
 EOT
     } else {
@@ -255,11 +258,119 @@ sub h_filename_prefix {'apreq_xs_'}
 sub my_xs_prefix {'apreq_xs_'}
 sub xs_include_dir { $xs_dir }
 
+sub mod_xs {
+    my($self, $module, $complete) = @_;
+    my $dirname = $self->class_dirname($module);
+    my @parts = split '::', $module;
+    my $mod_xs = "$dirname/$parts[-1].xs";
+
+    for ($self -> xs_include_dir, @{ $self->{glue_dirs} }) {
+        my $file = "$_/$mod_xs";
+		$mod_xs = $file if $complete;
+        return $mod_xs if -e $file;
+    }
+
+    undef;
+}
+
+sub mod_pm {
+    my($self, $module, $complete) = @_;
+    my $dirname = $self->class_dirname($module);
+    my @parts = split '::', $module;
+    my $mod_pm = "$dirname/$parts[-1].pm";
+
+    for ($self -> xs_include_dir, @{ $self->{glue_dirs} }) {
+        my $file = "$_/$mod_pm";
+		$mod_pm = $file if $complete;
+        return $mod_pm if -e $file;
+    }
+
+    undef;
+}
+
+#inline mod_xs directly, so we can put XS directives there
+
+sub write_xs {
+    my($self, $module, $functions) = @_;
+
+    my $fh = $self->open_class_file($module, '.xs');
+    print $fh "$self->{noedit_warning_c}\n";
+
+    my @includes = @{ $self->includes };
+
+    if (my $mod_h = $self->mod_h($module)) {
+        push @includes, $mod_h;
+    }
+
+    for (@includes) {
+        print $fh qq{\#include "$_"\n\n};
+    }
+
+    if (my $mod_xs = $self->mod_xs($module, 1)) {
+        open my $file, $mod_xs or die "can't open $mod_xs: $!";
+        print $fh $_ while <$file>;
+        print $fh "\n\n";
+    }
+
+    my $last_prefix = "";
+    my $fmap = $self -> typemap -> {function_map} ;
+    my $myprefix = $self -> my_xs_prefix ;
+
+    for my $func (@$functions) {
+        my $class = $func->{class};
+        if ($class)
+            {
+            my $prefix = $func->{prefix};
+            $last_prefix = $prefix if $prefix;
+
+            if ($func->{name} =~ /^$myprefix/o) {
+                #e.g. mpxs_Apache__RequestRec_
+                my $class_prefix = $fmap -> class_c_prefix($class);
+                if ($func->{name} =~ /$class_prefix/) {
+                    $prefix = $fmap -> class_xs_prefix($class);
+                }
+            }
+
+            $prefix = $prefix ? "  PREFIX = $prefix" : "";
+            print $fh "MODULE = $module    PACKAGE = $class $prefix\n\n";
+            }
+
+        print $fh $func->{code};
+    }
+
+    if (my $destructor = $self->typemap->destructor($last_prefix)) {
+        my $arg = $destructor->{argspec}[0];
+
+        print $fh <<EOF;
+void
+$destructor->{name}($arg)
+    $destructor->{class} $arg
+
+EOF
+    }
+
+    print $fh "PROTOTYPES: disabled\n\n";
+    print $fh "BOOT:\n";
+    print $fh $self->boot($module);
+    print $fh "    items = items; /* -Wall */\n\n";
+
+    if (my $newxs = $self->{newXS}->{$module}) {
+        for my $xs (@$newxs) {
+            print $fh qq{   cv = newXS("$xs->[0]", $xs->[1], __FILE__);\n};
+            print $fh qq{   GvSHARED_on(CvGV(cv));\n} if ExtUtils::XSBuilder::WrapXS::GvSHARED();
+        }
+    }
+
+    close $fh;
+}
+
+
+
 sub mod_pod {
     my($self, $module, $complete) = @_;
     my $dirname = $self->class_dirname($module);
     my @parts = split '::', $module;
-    my $mod_pod = "$dirname/$parts[-1]_pod";
+    my $mod_pod = "$dirname/$parts[-1].pod";
     for ($self -> xs_incsrc_dir, @{ $self->{glue_dirs} }) {
         my $file = "$_/$mod_pod";
         $mod_pod = $file if $complete;
@@ -295,24 +406,6 @@ $isa
 push \@ISA, 'DynaLoader' ;
 \$VERSION = '$version';
 bootstrap $module \$VERSION ;
-EOF
-
-    $text .= <<'EOF';
-
-if ($ENV{MOD_PERL}) {
-    require mod_perl;
-    my $env = __PACKAGE__->env || '';
-    if ($mod_perl::VERSION > 1.99) {
-        die __PACKAGE__ . ": httpd must load mod_apreq.so first"
-            if $env ne "Apache::RequestRec";
-    }
-    else {
-        die "Unsupported mod_perl version number: $modperl::VERSION";
-    }
-}
-EOF
-
-    $text .= <<"EOF";
 
 $code
 
@@ -331,7 +424,6 @@ sub makefilepl_text {
 
     my $txt = qq{
 $self->{noedit_warning_hash}
-use Apache2;
 use ModPerl::MM;
 
 local \$MMARGS ;
@@ -349,7 +441,7 @@ ModPerl::MM::WriteMakefile(
     'NAME'      => '$class',
     'VERSION'   => '$version',
     'TYPEMAPS'  => [qw(@$mp2_typemaps $typemap)],
-    'INC'       => "-I$base_dir/glue/perl/xs -I$src_dir -I$xs_dir $apache_includes",
+    'INC'       => "-I$base_dir/glue/perl/xs -I$inc_dir -I$xs_dir $apache_includes",
     'LIBS'      => "$apreq_libs $apr_libs",
 } ;
 $txt .= "'depend'  => $deps,\n" if ($deps) ;
@@ -361,45 +453,21 @@ $txt .= qq{
 
 }
 
-# another bug in WrapXS.pm - 
-# must insert a space before typemap definition
+# For now, just copy the typemap file in xsbuilder til we
+# can remove ExtUtils::XSBuilder.
 
 sub write_typemap
 {
     my $self = shift;
+
     my $typemap = $self->typemap;
     my $map = $typemap->get;
     my %seen;
 
     my $fh = $self->open_class_file('', 'typemap');
     print $fh "$self->{noedit_warning_hash}\n";
-
-    while (my($type, $t) = each %$map) {
-        my $class = $t -> {class} ;
-        $class ||= $type;
-        next if $seen{$type}++ || $typemap->special($class);
-
-        my $typemap = $t -> {typemapid} ;
-        if ($class =~ /::/) {
-            next if $seen{$class}++ ;
-            $class =~ s/::$// ;
-            print $fh "$class\t$typemap\n";
-        }
-        else {
-            print $fh "$type\t$typemap\n";
-        }
-    }
-
-    my $typemap_code = $typemap -> typemap_code ;
-
-    foreach my $dir ('INPUT', 'OUTPUT') {
-        print $fh "\n$dir\n" ;
-        while (my($type, $code) = each %{$typemap_code}) {
-            print $fh "$type\n\t$code->{$dir}\n\n" if ($code->{$dir}) ;
-        }
-    }
-
-    close $fh;
+    open my $tfh, "$xs_dir/typemap" or die $!;
+    print $fh $_ while <$tfh>;
 }
 
 
@@ -423,35 +491,54 @@ sub null_type {
 sub typemap_code
 {
     {
+           T_SUBCLASS  => {
+                          INPUT => <<'EOT',
+    if (SvROK($arg) || !sv_derived_from($arg, \"$Package\"))
+        Perl_croak(aTHX_ \"Usage: argument is not a subclass of $Package\");
+    $var = SvPV_nolen($arg)
+EOT
+                           },
+
         T_APREQ_COOKIE  => {
-                            INPUT  => '$var = apreq_xs_sv2(cookie,$arg)',
-                            perl2c => 'apreq_xs_sv2(cookie,sv)',
-                            OUTPUT => '$arg = apreq_xs_2sv($var,"\${ntype}\");',
-                            c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
+                            INPUT  => '$var = apreq_xs_sv2cookie(aTHX_ $arg)',
+                            perl2c => 'apreq_xs_sv2cookie(aTHX_ sv)',
+                            OUTPUT => '$arg = apreq_xs_cookie2sv(aTHX_ $var, class, parent);',
+                            c2perl => 'apreq_xs_cookie2sv(aTHX_ ptr, class, parent)',
                            },
+
         T_APREQ_PARAM   => {
-                            INPUT  => '$var = apreq_xs_sv2param($arg)',
-                            perl2c => 'apreq_xs_sv2param(sv)',
-                            OUTPUT => '$arg = apreq_xs_param2sv($var);',
-                            c2perl => 'apreq_xs_param2sv(ptr)',
+                            INPUT  => '$var = apreq_xs_sv2param(aTHX_ $arg)',
+                            perl2c => 'apreq_xs_sv2param(aTHX_ sv)',
+                            OUTPUT => '$arg = apreq_xs_param2sv(aTHX_ $var, class, parent);',
+                            c2perl => 'apreq_xs_param2sv(aTHX_ ptr, class, parent)',
                            },
-        T_APREQ_REQUEST => {
-                            INPUT  => '$var = apreq_xs_sv2(request,$arg)',
-                            perl2c => 'apreq_xs_sv2(request,sv)',
-                            OUTPUT => '$arg = apreq_xs_2sv($var,\"${ntype}\");',
-                            c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
+
+         T_APREQ_HANDLE => {
+                            INPUT  => '$var = apreq_xs_sv2handle(aTHX_ $arg)',
+                            perl2c => 'apreq_xs_sv2handle(aTHX_ sv)',
+                            c2perl => 'apreq_xs_handle2sv(aTHX_ ptr, class, parent)',
+                            OUTPUT => '$arg = apreq_xs_handle2sv(aTHX_ $var, class, parent);',
                            },
-        T_APREQ_JAR     => {
-                            INPUT  => '$var = apreq_xs_sv2(jar,$arg)',
-                            perl2c => 'apreq_xs_sv2(jar,sv)',
-                            OUTPUT => '$arg = apreq_xs_2sv($var,\"${ntype}\");',
-                            c2perl => 'apreq_xs_2sv(ptr,\"$class\")',
+
+     T_APREQ_HANDLE_CGI => {
+                            INPUT  => '$var = apreq_xs_sv2handle(aTHX_ $arg)',
+                            OUTPUT => '$arg = apreq_xs_handle2sv(aTHX_ $var, class, SvRV(ST(1)));'
                            },
- T_APREQ_COOKIE_VERSION => {
-                            INPUT  => '$var = ((apreq_cookie_version_t)SvTRUE($arg))',
-                            OUTPUT => '$arg = boolSV((bool)$var);',
+
+ T_APREQ_HANDLE_APACHE2 => {
+                            INPUT  => '$var = apreq_xs_sv2handle(aTHX_ $arg)',
+                            OUTPUT => <<'EOT',
+    $arg = apreq_xs_handle2sv(aTHX_ $var, class, SvRV(ST(1)));
+    SvMAGIC(SvRV($arg))->mg_ptr = (void *)r;
+EOT
                            },
-        T_HASHOBJ       => {
+
+          T_APREQ_ERROR => {
+                             INPUT => '$var = (HV *)SvRV($arg)',
+                            OUTPUT => '$arg = sv_bless(newRV_noinc((SV*)$var), gv_stashpvn(\"${ntype}\", sizeof(\"${ntype}\") - 1, FALSE);'
+                           },
+
+              T_HASHOBJ => {
                             INPUT => <<'EOT', # '$var = modperl_hash_tied_object(aTHX_ \"${ntype}\", $arg)'
     if (sv_derived_from($arg, \"${ntype}\")) {
         if (SVt_PVHV == SvTYPE(SvRV($arg))) {
@@ -482,7 +569,7 @@ sub typemap_code
     }
 EOT
 
-                            OUTPUT => <<'EOT', # '$arg = modperl_hash_tie(aTHX_ \"${ntype}\", $arg, $var);'
+                 OUTPUT => <<'EOT', # '$arg = modperl_hash_tie(aTHX_ \"${ntype}\", $arg, $var);'
   {
     SV *hv = (SV*)newHV();
     SV *rsv = $arg;

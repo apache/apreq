@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
-plan tests => 4;
+plan tests => 4, have_lwp;
 my $location = "/TestApReq__inherit";
 my @response = split/\r?\n/, GET_BODY($location, Cookie=>"apache=2");
 ok t_cmp($response[0], "method => GET", "inherit method");

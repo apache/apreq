@@ -10,7 +10,7 @@ AC_DEFUN([AC_APREQ], [
                 AC_HELP_STRING([--with-perl],[path to perl executable]),
                 [PERL=$withval],[PERL="perl"])
         AC_ARG_WITH(apache2-apxs,
-                AC_HELP_STRING([--with-apache2-apxs],[path to apxs]),
+                AC_HELP_STRING([--with-apache2-apxs],[path to apache2's apxs]),
                 [APACHE2_APXS=$withval],[APACHE2_APXS="apxs"])
         AC_ARG_WITH(apache2-src,
                 AC_HELP_STRING([--with-apache2-src],[path to httpd source]),
@@ -24,6 +24,15 @@ AC_DEFUN([AC_APREQ], [
         AC_ARG_WITH(apu-config,
                 AC_HELP_STRING([  --with-apu-config],[path to apu-*-config script]),
                 [APU_CONFIG=$withval],[APU_CONFIG=""])
+        AC_ARG_WITH(apache1-apxs,
+                AC_HELP_STRING([--with-apache1-apxs],[path to apache1's apxs]),
+                [APACHE1_APXS=$withval],[APACHE1_APXS=""])
+        AC_ARG_WITH(perl-opts,
+                AC_HELP_STRING([--with-perl-opts],[extra MakeMaker options]),
+                [PERL_OPTS=$withval],[PERL_OPTS=""])
+        AC_ARG_WITH(expat,
+                AC_HELP_STRING([--with-expat],[specify expat location]),
+                [EXPAT_DIR=$withval],[EXPAT_DIR=""])
 
         prereq_check="$PERL build/version_check.pl"
 
@@ -56,9 +65,11 @@ AC_DEFUN([AC_APREQ], [
                 if test ${APR_MAJOR_VERSION:="0"} -eq 0; then
                     apr_config=apr-config
                     apu_config=apu-config 
+                    apreq_libs="-lapr -laprutil"
                 else
                     apr_config=apr-$APR_MAJOR_VERSION-config
                     apu_config=apu-$APR_MAJOR_VERSION-config
+                    apreq_libs="-lapr-$APR_MAJOR_VERSION -laprutil-$APR_MAJOR_VERSION"
                 fi
 
                 if test -z "$APR_CONFIG"; then
@@ -93,21 +104,36 @@ AC_DEFUN([AC_APREQ], [
         fi
 
         if test "x$PERL_GLUE" != "xno"; then
+            AC_MSG_CHECKING(for perl)
             if test -z "`$prereq_check perl $PERL`"; then
                 AC_MSG_ERROR([Bad perl version])
             fi
+            AC_MSG_RESULT($PERL)
+
+            AC_MSG_CHECKING(for ExtUtils::XSBuilder)
             if test -z "`$prereq_check ExtUtils::XSBuilder`"; then
                 AC_MSG_ERROR([Bad ExtUtils::XSBuilder version])
             fi
+            AC_MSG_RESULT(yes)
+
+            AC_MSG_CHECKING(for mod_perl)
             if test -z "`$prereq_check mod_perl`"; then
                 AC_MSG_ERROR([Bad mod_perl version])
             fi
+            AC_MSG_RESULT(yes)
+
+            AC_MSG_CHECKING(for Apache::Test)
             if test -z "`$prereq_check Apache::Test`"; then
                 AC_MSG_ERROR([Bad Apache::Test version])
             fi
+            AC_MSG_RESULT(yes)
+
+            AC_MSG_CHECKING(for ExtUtils::MakeMaker)
             if test -z "`$prereq_check ExtUtils::MakeMaker`"; then
                 AC_MSG_ERROR([Bad ExtUtils::MakeMaker version])
             fi
+            AC_MSG_RESULT(yes)
+
         fi
 
         AM_CONDITIONAL(ENABLE_PROFILE, test "x$PROFILE" != "xno")
@@ -116,21 +142,27 @@ AC_DEFUN([AC_APREQ], [
         AM_CONDITIONAL(BUILD_HTTPD, test -n "$APACHE2_SRC")
         AM_CONDITIONAL(BUILD_APR, test "x$APR_CONFIG" = x`$APR_CONFIG --srcdir`/apr-config)
         AM_CONDITIONAL(BUILD_APU, test "x$APU_CONFIG" = x`$APU_CONFIG --srcdir`/apu-config)
+        AM_CONDITIONAL(HAVE_APACHE1, test -n "$APACHE1_APXS")
 
         dnl Reset the default installation prefix to be the same as apu's
-        ac_default_prefix=`$APU_CONFIG --prefix`
+        ac_default_prefix="`$APU_CONFIG --prefix`"
 
-        APR_INCLUDES=`$APR_CONFIG --includes`
-        APU_INCLUDES=`$APU_CONFIG --includes`
-        APR_LA=`$APR_CONFIG --link-libtool`
-        APU_LA=`$APU_CONFIG --link-libtool`
-        APR_LTLIBS=`$APR_CONFIG --link-libtool --libs`
-        APU_LTLIBS=`$APU_CONFIG --link-libtool --libs`
+        APR_ADDTO([APR_INCLUDES], "`$APR_CONFIG --includes`")
+        APR_ADDTO([APR_INCLUDES], "`$APU_CONFIG --includes`")
+        APR_LA="`$APR_CONFIG --apr-la-file`"
+        APU_LA="`$APU_CONFIG --apu-la-file`"
+        APR_ADDTO([APR_LTFLAGS], "`$APR_CONFIG --link-libtool`")
+        APR_ADDTO([APR_LTFLAGS], "`$APU_CONFIG --link-libtool`")
         dnl perl glue/tests do not use libtool: need ld linker flags
-        APR_LDLIBS=`$APR_CONFIG --link-ld --libs`
-        APU_LDLIBS=`$APU_CONFIG --link-ld --libs`
-        APR_LDFLAGS=`$APR_CONFIG --ldflags`
-        APU_LDFLAGS=`$APU_CONFIG --ldflags`
+        APR_ADDTO([APR_LIBS], "`$APU_CONFIG --libs`")
+        APR_ADDTO([APR_LIBS], "`$APR_CONFIG --libs`")
+        APR_ADDTO([APR_LDFLAGS], "`$APU_CONFIG --link-ld --ldflags`")
+        APR_ADDTO([APR_LDFLAGS], "`$APR_CONFIG --link-ld --ldflags`")
+
+        if test -n "$EXPAT_DIR"; then
+            APR_ADDTO([APR_INCLUDES], "-I$EXPAT_DIR/include")
+            APR_ADDTO([APR_LTFLAGS], "-L$EXPAT_DIR/lib")
+        fi
 
         dnl Absolute source/build directory
         abs_srcdir=`(cd $srcdir && pwd)`
@@ -142,33 +174,26 @@ AC_DEFUN([AC_APREQ], [
         fi
 
         if test "x$USE_MAINTAINER_MODE" != "xno"; then
-            CPPFLAGS="$CPPFLAGS -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -Werror"
+            APR_ADDTO([CFLAGS],[
+                      -Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
+                      -Wmissing-declarations -Wwrite-strings -Wcast-qual
+                      -Wfloat-equal -Wshadow -Wpointer-arith
+                      -Wbad-function-cast -Wsign-compare -Waggregate-return
+                      -Wmissing-noreturn -Wmissing-format-attribute -Wpacked
+                      -Wredundant-decls -Wnested-externs -Wdisabled-optimization
+                      -Wno-long-long -Wendif-labels -Wcast-align -Wpacked
+                      ])
+                # -Wdeclaration-after-statement is only supported on gcc 3.4+
         fi
 
-        if test "x$CPPFLAGS" = "x"; then
-           echo "  setting CPPFLAGS to \"`$APR_CONFIG --cppflags`\""
-           CPPFLAGS="`$APR_CONFIG --cppflags`"
-        else
-           apr_addto_bugger="`$APR_CONFIG --cppflags`"
-           for i in $apr_addto_bugger; do
-             apr_addto_duplicate="0"
-             for j in $CPPFLAGS; do
-               if test "x$i" = "x$j"; then
-                 apr_addto_duplicate="1"
-                 break
-               fi
-             done
-             if test $apr_addto_duplicate = "0"; then
-               echo "  adding \"$i\" to CPPFLAGS"
-               CPPFLAGS="$CPPFLAGS $i"
-             fi
-           done
-        fi
+        APR_ADDTO([CPPFLAGS], "`$APR_CONFIG --cppflags`")
 
         get_version="$abs_srcdir/build/get-version.sh"
-        version_hdr="$abs_srcdir/src/apreq_version.h"
+        version_hdr="$abs_srcdir/include/apreq_version.h"
 
         # set version data
+
+        APREQ_CONFIG="$top_builddir/apreq2-config"
 
         APREQ_MAJOR_VERSION=`$get_version major $version_hdr APREQ`
         APREQ_MINOR_VERSION=`$get_version minor $version_hdr APREQ`
@@ -183,16 +208,11 @@ AC_DEFUN([AC_APREQ], [
         APREQ_LIBTOOL_VERSION="$APREQ_LIBTOOL_CURRENT:$APREQ_LIBTOOL_REVISION:$APREQ_LIBTOOL_AGE"
 
         APREQ_LIBNAME="apreq$APREQ_MAJOR_VERSION"
-        APREQ_INCLUDES=""
-        APREQ_LDFLAGS=""
-        APREQ_EXPORT_LIBS=""
 
         echo "lib$APREQ_LIBNAME Version: $APREQ_DOTTED_VERSION"
 
+        AC_SUBST(APREQ_CONFIG)
         AC_SUBST(APREQ_LIBNAME)
-        AC_SUBST(APREQ_LDFLAGS)
-        AC_SUBST(APREQ_INCLUDES)
-        AC_SUBST(APREQ_EXPORT_LIBS)
         AC_SUBST(APREQ_LIBTOOL_VERSION)
         AC_SUBST(APREQ_MAJOR_VERSION)
         AC_SUBST(APREQ_DOTTED_VERSION)
@@ -202,19 +222,19 @@ AC_DEFUN([AC_APREQ], [
         AC_SUBST(APACHE2_INCLUDES)
         AC_SUBST(APACHE2_HTTPD)
 
+        AC_SUBST(APACHE1_APXS)
+
         AC_SUBST(APU_CONFIG)
         AC_SUBST(APR_CONFIG)
         AC_SUBST(APR_INCLUDES)
-        AC_SUBST(APU_INCLUDES)
-        AC_SUBST(APR_LTLIBS)
-        AC_SUBST(APU_LTLIBS)
-        AC_SUBST(APR_LDLIBS)
-        AC_SUBST(APU_LDLIBS)
         AC_SUBST(APR_LDFLAGS)
-        AC_SUBST(APU_LDFLAGS)
+        AC_SUBST(APR_LTFLAGS)
+        AC_SUBST(APR_LIBS)
         AC_SUBST(APR_LA)
         AC_SUBST(APU_LA)
+
         AC_SUBST(PERL)
+        AC_SUBST(PERL_OPTS)
 ])
 
 dnl APR_CONFIG_NICE(filename)
@@ -267,3 +287,29 @@ EOF
   chmod +x $1
 ])dnl
 
+dnl
+dnl APR_ADDTO(variable, value)
+dnl
+dnl  Add value to variable
+dnl
+AC_DEFUN([APR_ADDTO],[
+  if test "x$$1" = "x"; then
+    echo "  setting $1 to \"$2\""
+    $1="$2"
+  else
+    apr_addto_bugger="$2"
+    for i in $apr_addto_bugger; do
+      apr_addto_duplicate="0"
+      for j in $$1; do
+        if test "x$i" = "x$j"; then
+          apr_addto_duplicate="1"
+          break
+        fi
+      done
+      if test $apr_addto_duplicate = "0"; then
+        echo "  adding \"$i\" to $1"
+        $1="$$1 $i"
+      fi
+    done
+  fi
+])dnl

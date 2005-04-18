@@ -3,7 +3,6 @@
 Apache::Cookie, Apache::Cookie::Jar - HTTP Cookies Class
 
 =for testing
-    use Apache2;
     use Apache::Cookie;
     use APR::Pool;
     # use $r instead of $p here, so doc examples reflect mp2 env, not CGI/test env
@@ -607,7 +606,7 @@ CGI::Cookie(3)
 
 =head1 COPYRIGHT
 
-  Copyright 2003-2004  The Apache Software Foundation
+  Copyright 2003-2005  The Apache Software Foundation
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.

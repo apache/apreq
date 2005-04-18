@@ -1,7 +1,7 @@
 Last modified at [$Date$]   -*-text-*-
 /** @page apreq_status STATUS
 
-     2.05 in development.
+     2.05-dev in development.
 
 Contributors looking for a mission:
 
@@ -10,10 +10,26 @@ Contributors looking for a mission:
 
 CURRENT RELEASE NOTES:
 
+    - This is the multi-env-unstable branch.  It is a work-in-progress
+      which attempts to refactor our C interfaces to provide a more 
+      robust module API.  This refactoring effort will propagate 
+      into the perl glue as well, once the C API changes settle into 
+      place.
+
+    - This is a developer release, indicated by the "-dev" suffix on the
+      version string. We believe the core interfaces to be stable, but some
+      portions of the API may still need significant modification. Thus,
+      binary/source compatibility may be broken from one developer release to
+      the next. In particular the version numbering rules specified at 
+
+          http://apr.apache.org/versioning.html
+
+      do not apply to developer releases.
 
 
 RELEASE SHOWSTOPPERS:
 
+    - The api docs and perl glue are currently broken.
 
 
 CURRENT VOTES:
@@ -34,20 +50,45 @@ CURRENT VOTES:
 
 TODO:
 
-    - Add Apache-Test via svn:externals, include it in our
-      releases, and remove the associated prereq in build/version-check.pl.
+    - Introduce APR::Request::Parser and APR::Request::Hook.  Implement
+      Apache2::Request::new's UPLOAD_HOOK using them.
 
-    - Document the new apr-dependency in our soname's major version:
+    - Move module/t to module/apache2/t.
 
-         libapreq2.so.2.x.y  <--- has apr-0's ABI
-         libapreq2.so.3.x.y  <--- has apr-1's ABI
+    - Figure out how and where the apreq_xs_ headers, and typemap file,
+      should be installed.
 
-    - We need to add some basic charset support.  Long discussion 
-      starts here:
-              http://article.gmane.org/gmane.comp.apache.apreq/2371
+    - Write tests for the apache 1.3.x module.
 
-    - There are too many calls to apreq_env_pool()- lots of these
-      can be eliminated by caching the pool in the parser's context.
+    - Fix the broken make dependencies, especially in the module 
+      and glue subdirs.  The libtool workaround (for OSX IIRC) 
+      that copies module/.libs to module/t is especially bogus.
+
+    - Consider dropping ExtUtils::XSBuilder as the C API is fairly
+      stable now.  The header parsing + xs generation stuff may be too 
+      difficult for the community to maintain over ordinary .xs files.
+
+    - Round out the unit tests in library/t.  Ideally each
+      API function should have its own tests, and each possible
+      error status should be both tested & documented.  Also
+      upgrade these tests to use the Apache::Test framework.
+
+    - Fix all the "//apreq_log" comments in the cgi tests.
+
+    - Let hooks interrupt parsers via APREQ_ERROR_INTERRUPT.  
+      Need a delete_hook method to make interrupts a useful
+      way of tuning parser behavior.
+
+      [joes] Interrupts may not be worth the extra effort, so I don't 
+             plan to pursue this.  We have more important issues 
+             to deal with prior to release, and nobody has ever 
+             asked for this feature in apreq2.
+
+    - Add a "memory_limit" setting to apreq_parser_t and apreq_module_t, 
+      which will control how much pool allocation the parser may use.
+
+    - Add a "header_limit" setting to control outgoing header size
+      (mainly for baking cookies) instead of using a compiled-in limit.
 
     - in glue/perl/t/apreq/cgi.t on Win32, printing to the error log
       hangs if the strings involved are about 10000 in size.
@@ -57,21 +98,9 @@ TODO:
       apr_file_printf(err, ...), be used on Win32 in
       cgi_log() of src/apreq_env.c?
 
-    - The current tests don't cover these functions, 
-      so add CuTest tests for them:
-      -  apreq_merge_values()
-
-    - CuTest needs va_arg to print comments for a failed unit test.
-
     - Get env/ (Apache::Test) tests to work for --with-apache2-src option.
       Also add a test to configure that prevents simultaneous use of
       --with-apache2-src and --with-apache2-apxs.
-
-    - Bring Perl documentation up to speed: Table.pod, and Error.pod.
-      These docs either need to be written, or they require Test::Inline 
-      tests to verify their API.
-
-    - Write parser/hook API documentation, and add perl glue for the API.
 
     - symbol exports files:
       -# aix needs .exp files
@@ -81,10 +110,6 @@ TODO:
 
     - Rework glue/perl build system to use apreq2-config instead of
       relying on paths like "../../src".
-
-    - Taint checks need to be extended to APR objects, like
-      $upload->bb and $upload->info.  We may need be able to
-      do that with additional typemaps.
 
 
 OPEN ISSUES:

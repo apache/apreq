@@ -1,96 +1,96 @@
 ##########  Apache::Request:: Functions  ##########
 
-MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
- apreq_request | apreq_xs_request | const char *:class, void *:env, const char *:qs=NULL
- apreq_param | apreq_xs_request_get |
+#MODULE=Apache::Request PACKAGE=Apache::Request PREFIX=apreq_
+# apreq_request | apreq_xs_request | const char *:class, void *:env, const char *:qs=NULL
+# apreq_param | apreq_xs_request_get |
 
-MODULE=Apache::Request PACKAGE=Apache::Request
- DEFINE_env     | apreq_xs_request_env |
- DEFINE_args    | apreq_xs_request_args_get |
- DEFINE_body    | apreq_xs_request_body_get |
- DEFINE_config  | apreq_xs_request_config |
- DEFINE_parse   | apreq_xs_request_parse |
+#MODULE=Apache::Request PACKAGE=Apache::Request
+# DEFINE_env     | apreq_xs_request_env |
+# DEFINE_args    | apreq_xs_request_args_get |
+# DEFINE_body    | apreq_xs_request_body_get |
+# DEFINE_config  | apreq_xs_request_config |
+# DEFINE_parse   | apreq_xs_request_parse |
 
-MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Table_
- DEFINE_get     | apreq_xs_table_get |
- DEFINE_FETCH   | apreq_xs_table_FETCH |
- DEFINE_set     | apreq_xs_table_param_set |
- DEFINE_STORE   | apreq_xs_table_param_set |
- DEFINE_add     | apreq_xs_table_param_add |
- DEFINE_new     | apreq_xs_table_request_make |
- DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
- DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
- DEFINE_do       | apreq_xs_table_do |
+#MODULE=Apache::Request PACKAGE=Apache::Request::Table PREFIX=Apache__Request__Table_
+# DEFINE_get     | apreq_xs_table_get |
+# DEFINE_FETCH   | apreq_xs_table_FETCH |
+# DEFINE_set     | apreq_xs_table_param_set |
+# DEFINE_STORE   | apreq_xs_table_param_set |
+# DEFINE_add     | apreq_xs_table_param_add |
+# DEFINE_new     | apreq_xs_table_request_make |
+# DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
+# DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
+# DEFINE_do       | apreq_xs_table_do |
 
 ##########  Apache::Upload:: Functions  ##########
 
-MODULE=Apache::Upload PACKAGE=Apache::Upload PREFIX=Apache__Upload_
- const char *:DEFINE_name        | apreq_param_name(apreq_xs_sv2param(sv)) | SV *:sv
- char *:DEFINE_filename          | apreq_param_value(apreq_xs_sv2param(sv)) | SV *:sv
- DEFINE_env                      | apreq_xs_upload_env |
- DEFINE_link                     | apreq_xs_upload_link |
- DEFINE_slurp                    | apreq_xs_upload_slurp |
- DEFINE_size                     | apreq_xs_upload_size |
- DEFINE_type                     | apreq_xs_upload_type |
- DEFINE_tempname                 | apreq_xs_upload_tempname |
- DEFINE_make                     | apreq_xs_upload_make |
+#MODULE=Apache::Upload PACKAGE=Apache::Upload PREFIX=Apache__Upload_
+# const char *:DEFINE_name        | apreq_param_name(apreq_xs_sv2param(sv)) | SV *:sv
+# char *:DEFINE_filename          | apreq_param_value(apreq_xs_sv2param(sv)) | SV *:sv
+# DEFINE_env                      | apreq_xs_upload_env |
+# DEFINE_link                     | apreq_xs_upload_link |
+# DEFINE_slurp                    | apreq_xs_upload_slurp |
+# DEFINE_size                     | apreq_xs_upload_size |
+# DEFINE_type                     | apreq_xs_upload_type |
+# DEFINE_tempname                 | apreq_xs_upload_tempname |
+# DEFINE_make                     | apreq_xs_upload_make |
 
-MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table_
- DEFINE_get     | apreq_xs_upload_table_get |
- DEFINE_FETCH   | apreq_xs_upload_table_FETCH |
- DEFINE_set     | apreq_xs_table_param_set |
- DEFINE_STORE   | apreq_xs_table_param_set |
- DEFINE_add     | apreq_xs_table_param_add |
- DEFINE_new     | apreq_xs_table_request_make |
- DEFINE_NEXTKEY  | apreq_xs_upload_table_NEXTKEY |
- DEFINE_FIRSTKEY | apreq_xs_upload_table_NEXTKEY |
- DEFINE_do       | apreq_xs_upload_table_do |
+#MODULE=Apache::Upload PACKAGE=Apache::Upload::Table PREFIX=Apache__Upload__Table_
+# DEFINE_get     | apreq_xs_upload_table_get |
+# DEFINE_FETCH   | apreq_xs_upload_table_FETCH |
+# DEFINE_set     | apreq_xs_table_param_set |
+# DEFINE_STORE   | apreq_xs_table_param_set |
+# DEFINE_add     | apreq_xs_table_param_add |
+# DEFINE_new     | apreq_xs_table_request_make |
+# DEFINE_NEXTKEY  | apreq_xs_upload_table_NEXTKEY |
+# DEFINE_FIRSTKEY | apreq_xs_upload_table_NEXTKEY |
+# DEFINE_do       | apreq_xs_upload_table_do |
 
-MODULE=Apache::Upload PACKAGE=Apache::Request PREFIX=Apache__Request_
- DEFINE_upload  | apreq_xs_request_upload_get |
+#MODULE=Apache::Upload PACKAGE=Apache::Request PREFIX=Apache__Request_
+# DEFINE_upload  | apreq_xs_request_upload_get |
 
-MODULE=Apache::Upload PACKAGE=Apache::Upload::Brigade PREFIX=Apache__Upload__Brigade_
- DEFINE_new | apreq_xs_upload_brigade_copy |
- DEFINE_TIEHANDLE | apreq_xs_upload_brigade_copy |
- DEFINE_READ | apreq_xs_upload_brigade_read |
- DEFINE_READLINE | apreq_xs_upload_brigade_readline |
+#MODULE=Apache::Upload PACKAGE=Apache::Upload::Brigade PREFIX=Apache__Upload__Brigade_
+# DEFINE_new | apreq_xs_upload_brigade_copy |
+# DEFINE_TIEHANDLE | apreq_xs_upload_brigade_copy |
+# DEFINE_READ | apreq_xs_upload_brigade_read |
+# DEFINE_READLINE | apreq_xs_upload_brigade_readline |
 
-MODULE=Apache::Upload PACKAGE=Apache::Upload::IO  PREFIX=Apache__Upload__IO_
- DEFINE_read | apreq_xs_upload_brigade_read |
- DEFINE_readline | apreq_xs_upload_brigade_readline |
+#MODULE=Apache::Upload PACKAGE=Apache::Upload::IO  PREFIX=Apache__Upload__IO_
+# DEFINE_read | apreq_xs_upload_brigade_read |
+# DEFINE_readline | apreq_xs_upload_brigade_readline |
 
 ##########  Apache::Cookie:: Functions  ##########
 
-MODULE=Apache::Cookie PACKAGE=Apache::Cookie
- DEFINE_as_string  | apreq_xs_cookie_as_string |
- DEFINE_make       | apreq_xs_make_cookie      | 
- DEFINE_expires    | apreq_xs_cookie_expires   |
- DEFINE_set_attr   | apreq_xs_cookie_set_attr  |
- DEFINE_env        | apreq_xs_cookie_env  |
- DEFINE_encode     | apreq_xs_encode |
- DEFINE_decode     | apreq_xs_decode |
- const char *:DEFINE_name | apreq_cookie_name(c)  | apreq_cookie_t *:c
- const char *:DEFINE_raw_value| apreq_cookie_value(c) | apreq_cookie_t *:c
- apr_status_t:DEFINE_bake | apreq_cookie_bake (apreq_xs_sv2cookie(c), apreq_xs_sv2env(SvRV(c))) | SV *:c
- apr_status_t:DEFINE_bake2| apreq_cookie_bake2(apreq_xs_sv2cookie(c), apreq_xs_sv2env(SvRV(c))) | SV *:c
+#MODULE=Apache::Cookie PACKAGE=Apache::Cookie
+# DEFINE_as_string  | apreq_xs_cookie_as_string |
+# DEFINE_make       | apreq_xs_make_cookie      | 
+# DEFINE_expires    | apreq_xs_cookie_expires   |
+# DEFINE_set_attr   | apreq_xs_cookie_set_attr  |
+# DEFINE_env        | apreq_xs_cookie_env  |
+# DEFINE_encode     | apreq_xs_encode |
+# DEFINE_decode     | apreq_xs_decode |
+# const char *:DEFINE_name | apreq_cookie_name(c)  | apreq_cookie_t *:c
+# const char *:DEFINE_raw_value| apreq_cookie_value(c) | apreq_cookie_t *:c
+# apr_status_t:DEFINE_bake | apreq_cookie_bake (apreq_xs_sv2cookie(c), apreq_xs_sv2env(SvRV(c))) | SV *:c
+# apr_status_t:DEFINE_bake2| apreq_cookie_bake2(apreq_xs_sv2cookie(c), apreq_xs_sv2env(SvRV(c))) | SV *:c
 
-MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar PREFIX=Apache__Cookie__Jar_
- DEFINE_jar        | apreq_xs_jar     |
- DEFINE_env        | apreq_xs_jar_env |
- DEFINE_cookies    | apreq_xs_jar_get |
- DEFINE_get        | apreq_xs_jar_get |
- DEFINE_config     | apreq_xs_jar_config |
+#MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Jar PREFIX=Apache__Cookie__Jar_
+# DEFINE_jar        | apreq_xs_jar     |
+# DEFINE_env        | apreq_xs_jar_env |
+# DEFINE_cookies    | apreq_xs_jar_get |
+# DEFINE_get        | apreq_xs_jar_get |
+# DEFINE_config     | apreq_xs_jar_config |
 
-MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table PREFIX=Apache__Cookie__Table_
- DEFINE_get        | apreq_xs_table_get |
- DEFINE_FETCH      | apreq_xs_table_FETCH |
- DEFINE_set     | apreq_xs_table_cookie_set |
- DEFINE_STORE   | apreq_xs_table_cookie_set |
- DEFINE_add     | apreq_xs_table_cookie_add |
- DEFINE_new     | apreq_xs_table_jar_make |
- DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
- DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
- DEFINE_do       | apreq_xs_table_do |
+#MODULE=Apache::Cookie PACKAGE=Apache::Cookie::Table PREFIX=Apache__Cookie__Table_
+# DEFINE_get        | apreq_xs_table_get |
+# DEFINE_FETCH      | apreq_xs_table_FETCH |
+# DEFINE_set     | apreq_xs_table_cookie_set |
+# DEFINE_STORE   | apreq_xs_table_cookie_set |
+# DEFINE_add     | apreq_xs_table_cookie_add |
+# DEFINE_new     | apreq_xs_table_jar_make |
+# DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
+# DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
+# DEFINE_do       | apreq_xs_table_do |
 
 ##########  Utility Functions  ##########
 
@@ -103,8 +103,63 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
 # apreq_expires
 
 
+#################### APR::Request stuff ####################
+
+MODULE=APR::Request  PACKAGE=APR::Request PREFIX=apreq_
+apreq_hook_add
+apreq_header_in
+apreq_header_out
+
+MODULE=APR::Request  PACKAGE=APR::Request PREFIX=APR__Request_
+DEFINE_parse | apreq_xs_parse |
+
+MODULE=APR::Request::Apache2 PACKAGE=APR::Request::Apache2 PREFIX=APR__Request__Apache2_
+apreq_xs_handle_apache2_t *:DEFINE_new | apreq_handle_apache2 (r) | const char *:class, request_rec *:r
+DEFINE_param | apreq_xs_apache2_param |
+
+MODULE=APR::Request::CGI PACKAGE=APR::Request::CGI PREFIX=APR__Request__CGI_
+apreq_xs_handle_cgi_t *:DEFINE_new | apreq_handle_cgi (p) | const char *:class, apr_pool_t *:p
+DEFINE_param | apreq_xs_cgi_param |
 
 
+#################### APR::Request::Cookie stuff ####################
+MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie PREFIX=apreq_cookie_
+apreq_cookie_bake | (c, req) | apreq_cookie_t *:c, req=apreq_xs_sv2handle(aTHX_ ST(0))
+apreq_cookie_bake2| (c, req) | apreq_cookie_t *:c, req=apreq_xs_sv2handle(aTHX_ ST(0))
+apreq_cookie_expires
+
+MODULE=APR::Request::Cookie PACKAGE=APR::Request PREFIX=APR__Request_
+DEFINE_jar | apreq_xs_jar |
+
+MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie::Table PREFIX=APR__Request__Cookie__Table_
+DEFINE_get      | apreq_xs_table_FETCH |
+DEFINE_FETCH    | apreq_xs_table_FETCH |
+#DEFINE_new      | apreq_xs_table_make |
+DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
+DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
+#DEFINE_do       | apreq_xs_table_do |
 
 
+#################### APR::Request::Param stuff ####################
 
+MODULE=APR::Request::Param PACKAGE=APR::Request PREFIX=APR__Request_
+DEFINE_args   | apreq_xs_args |
+DEFINE_body   | apreq_xs_body |
+
+MODULE=APR::Request::Param PACKAGE=APR::Request::Param::Table PREFIX=APR__Request__Param__Table_
+DEFINE_get      | apreq_xs_table_FETCH |
+DEFINE_FETCH    | apreq_xs_table_FETCH |
+#DEFINE_new      | apreq_xs_table_make |
+DEFINE_NEXTKEY  | apreq_xs_table_NEXTKEY |
+DEFINE_FIRSTKEY | apreq_xs_table_NEXTKEY |
+#DEFINE_do       | apreq_xs_table_do |
+
+MODULE=APR::Request::Param PACKAGE=APR::Request::Brigade PREFIX=APR__Request__Brigade_
+DEFINE_new | apreq_xs_brigade_copy |
+DEFINE_TIEHANDLE | apreq_xs_brigade_copy |
+DEFINE_READ | apreq_xs_brigade_read |
+DEFINE_READLINE | apreq_xs_brigade_readline |
+
+MODULE=APR::Request::Param PACKAGE=APR::Request::Brigade::IO  PREFIX=APR__Request__Brigade__IO_
+DEFINE_read | apreq_xs_brigade_read |
+DEFINE_readline | apreq_xs_brigade_readline |

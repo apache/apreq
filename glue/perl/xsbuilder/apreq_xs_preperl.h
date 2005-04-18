@@ -1,5 +1,5 @@
 /*
-**  Copyright 2004  The Apache Software Foundation
+**  Copyright 2004-2005  The Apache Software Foundation
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -18,6 +18,16 @@
 #define APREQ_XS_PREPERL_H
 
 #define PERL_NO_GET_CONTEXT /* we want efficiency under ithreads */
+
+/* some redefines needed for Win32 */
+#ifdef WIN32
+#   define uid_t perl_uid_t
+#   define gid_t perl_gid_t
+#   ifdef exit
+#      define perl_exit exit
+#      undef exit
+#   endif
+#endif
 
 /**
  * @file apreq_xs_preperl.h

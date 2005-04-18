@@ -6,7 +6,7 @@ perl_config:
 	cd perl; @PERL@ ../../build/xsbuilder.pl run
 
 perl/Makefile: perl/xsbuilder perl/Makefile.PL
-	cd perl; @PERL@ Makefile.PL -apxs @APACHE2_APXS@
+	cd perl; @PERL@ Makefile.PL -apxs @APACHE2_APXS@ @PERL_OPTS@
 
 perl_glue: perl/Makefile
 	cd perl; $(MAKE)

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ##
-##  Copyright 2003-2004  The Apache Software Foundation
+##  Copyright 2003-2005  The Apache Software Foundation
 ##
 ##  Licensed under the Apache License, Version 2.0 (the "License");
 ##  you may not use this file except in compliance with the License.
@@ -20,17 +20,16 @@
 # APR-util script designed to allow easy command line access to APR-util
 # configuration parameters.
 
-APREQ_DOTTED_VERSION="@APREQ_DOTTED_VERSION@"
-
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 bindir="@bindir@"
 libdir="@libdir@"
 includedir="@includedir@/@APREQ_LIBNAME@"
 
-LIBS="@APREQ_EXPORT_LIBS@"
-INCLUDES="@APREQ_INCLUDES@"
-LDFLAGS="@APREQ_LDFLAGS@"
+LIBS="@APR_LIBS@"
+LDFLAGS="@APR_LDFLAGS@"
+INCLUDES="@APR_INCLUDES@"
+LDFLAGS="@APR_LDFLAGS@"
 
 APREQ_LIBNAME="@APREQ_LIBNAME@"
 
@@ -53,10 +52,9 @@ Known values for OPTION are:
   --link-ld         print link switch(es) for linking to libapreq2
   --link-libtool    print the libtool inputs for linking to libapreq2
   --la-file         print the path to the library's .la file, if available
-  --library-version print the libapreq2 library version as a dotted triple
-  --package-version print the version of the distribution
-  --package-name    print the distribution file's name
-  --package-title   print the full name of the release
+  --library-version print the API version as a dotted triple
+  --libtool-version print the ABI version in a libtool-compatible format
+  --package-version print the version number of the distribution
   --help            print this help
 
 When linking with libtool, an application should do something like:
@@ -100,10 +98,11 @@ else
     location=build
 fi
 
+
 if test "$location" = "installed"; then
     LA_FILE="$libdir/lib${APREQ_LIBNAME}.la"
 else
-    LA_FILE="$thisdir/src/lib${APREQ_LIBNAME}.la"
+    LA_FILE="$thisdir/library/lib${APREQ_LIBNAME}.la"
 fi
 
 flags=""
@@ -124,18 +123,6 @@ while test $# -gt 0; do
     echo $prefix
     exit 0
     ;;
-    --package-name)
-    echo "@PACKAGE@-@VERSION@.tar.gz"
-    exit 0
-    ;;
-    --package-title)
-    echo "@PACKAGE_STRING@"
-    exit 0
-    ;;
-    --package-version)
-    echo "@VERSION@"
-    exit 0
-    ;;
     --bindir)
     echo $bindir
     exit 0
@@ -147,10 +134,10 @@ while test $# -gt 0; do
     if test "$location" = "installed"; then
         flags="$includedir"
     elif test "$location" = "source"; then
-        flags="$APREQ_SOURCE_DIR/src"
+        flags="$APREQ_SOURCE_DIR/include"
     else
         # this is for VPATH builds
-        flags="$thisdir/include $APREQ_SOURCE_DIR/src"
+        flags="$thisdir/include $APREQ_SOURCE_DIR/include"
     fi
     echo $flags
     exit 0
@@ -159,10 +146,10 @@ while test $# -gt 0; do
     if test "$location" = "installed"; then
         flags="$flags -I$includedir $INCLUDES"
     elif test "$location" = "source"; then
-        flags="$flags -I$APREQ_SOURCE_DIR/src $INCLUDES"
+        flags="$flags -I$APREQ_SOURCE_DIR/include $INCLUDES"
     else
         # this is for VPATH builds
-        flags="$flags -I$thisdir/include -I$APREQ_SOURCE_DIR/src $INCLUDES"
+        flags="$flags -I$thisdir/include -I$APREQ_SOURCE_DIR/include $INCLUDES"
     fi
     ;;
     --ldflags)
@@ -173,7 +160,15 @@ while test $# -gt 0; do
     exit 0
     ;;
     --library-version)
-    echo $APREQ_DOTTED_VERSION
+    echo @APREQ_DOTTED_VERSION@
+    exit 0
+    ;;
+    --libtool-version)
+    echo @APREQ_LIBTOOL_VERSION@
+    exit 0
+    ;;
+    --package-version)
+    echo "@VERSION@"
     exit 0
     ;;
     --link-ld)
@@ -181,7 +176,7 @@ while test $# -gt 0; do
         ### avoid using -L if libdir is a "standard" location like /usr/lib
         flags="$flags -L$libdir -l$APREQ_LIBNAME"
     else
-        flags="$flags -L$thisdir/src -l$APREQ_LIBNAME"
+        flags="$flags -L$thisdir/library/.libs -l$APREQ_LIBNAME"
     fi
     ;;
     --link-libtool)
@@ -193,7 +188,7 @@ while test $# -gt 0; do
         flags="$flags $LA_FILE"
     elif test "$location" = "installed"; then
         ### avoid using -L if libdir is a "standard" location like /usr/lib
-        flags="$flags -L$libdir -l$APREQ_LIBNAME"
+        flags="$flags -L$libdir -l$APREQ_LIBNAME $apreq_libs"
     else
         flags="$flags $LA_FILE"
     fi

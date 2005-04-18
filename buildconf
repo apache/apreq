@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2004 The Apache Software Foundation
+# Copyright 2004-2005 The Apache Software Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,11 @@
 
 perl="perl"
 libtool="libtool"
+aclocal="aclocal"
+automake="automake"
+autoconf="autoconf"
+autoheader="autoheader"
+
 
 while test $# -gt 0 
 do
@@ -36,6 +41,18 @@ do
   --with-libtool=*)
   libtool=$optarg
   ;;
+  --with-aclocal=*)
+  aclocal=$optarg
+  ;;
+  --with-automake=*)
+  automake=$optarg
+  ;;
+  --with-autoconf=*)
+  autoconf=$optarg
+  ;;
+  --with-autoheader=*)
+  autoheader=$optarg
+  ;;
   esac
 
   shift
@@ -51,15 +68,16 @@ rm -rf autom4te*.cache
 
 echo "checking buildconf prereqs";
 $perl build/version_check.pl libtool $libtool  || exit 1
-$perl build/version_check.pl autoconf  || exit 1
-$perl build/version_check.pl automake  || exit 1
+$perl build/version_check.pl autoconf $autoconf  || exit 1
+$perl build/version_check.pl automake $automake  || exit 1
 $perl build/version_check.pl ExtUtils::XSBuilder || exit 1
+$perl build/version_check.pl Test::Inline || exit 1
 
 echo "running $libtoolize" && $libtoolize && \
-echo "running aclocal"  && aclocal && \
-echo "running autoconf" && autoconf && \
-echo "running autoheader" && autoheader && \
-echo "running automake -a -c" && automake -a -c && \
+echo "running $aclocal"  && $aclocal && \
+echo "running $autoconf" && $autoconf && \
+echo "running $autoheader" && $autoheader && \
+echo "running $automake -a -c" && $automake -a -c && \
 echo "running xsbuilder" && (cd glue/perl && $perl ../../build/xsbuilder.pl) && \
 echo "buildconf successful."
 

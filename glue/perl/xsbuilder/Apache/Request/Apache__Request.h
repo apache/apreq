@@ -1,5 +1,5 @@
 /*
-**  Copyright 2003-2004  The Apache Software Foundation
+**  Copyright 2003-2005  The Apache Software Foundation
 **
 **  Licensed under the Apache License, Version 2.0 (the "License");
 **  you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ static apr_status_t eval_upload_hook(pTHX_ apreq_param_t *upload,
 
     if (SvTRUE(ERRSV)) {
         Perl_warn(aTHX_ "Upload hook failed: %s", SvPV_nolen(ERRSV));
-        return APR_EGENERAL;
+        return APREQ_ERROR_GENERAL;
     }
     return APR_SUCCESS;
 }
@@ -279,7 +279,7 @@ static apr_status_t apreq_xs_upload_hook(APREQ_HOOK_ARGS)
     }
 
     if (hook->next)
-        s = APREQ_RUN_HOOK(hook->next, env, param, bb);
+        s = apreq_run_hook(hook->next, env, param, bb);
 
     return s;
 }

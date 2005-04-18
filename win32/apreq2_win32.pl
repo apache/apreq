@@ -15,7 +15,7 @@ BEGIN {
 my $license = <<'END';
 # ====================================================================
 #
-#  Copyright 2003-2004  The Apache Software Foundation
+#  Copyright 2003-2005  The Apache Software Foundation
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ foreach (qw(bin lib include build)) {
     $ap_dir{$_} = catdir $prefix, $_;
 }
 
-my $src_version = catfile $apreq_home, 'src', 'apreq_version.h';
+my $src_version = catfile $apreq_home, 'include', 'apreq_version.h';
 my $apache_version = catfile $ap_dir{include}, 'apreq_version.h';
 
 my $apreq_version = -e $src_version ? $src_version : $apache_version;

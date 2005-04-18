@@ -35,7 +35,7 @@ my $cfg = $debug ? 'Debug' : 'Release';
 check_depends();
 
 my @tests = qw(cookie parsers params version);
-my @test_files = map {catfile('t', "$_.t")} @tests;
+my @test_files = map {catfile('library', 't', "$_.t")} @tests;
 generate_tests($apreq_home, \@tests);
 
 my %apr_libs;
@@ -67,6 +67,7 @@ PERL=$^X
 RM_F=\$(PERL) -MExtUtils::Command -e rm_f
 DOXYGEN_CONF=\$(APREQ_HOME)\\build\\doxygen.conf.win32
 TEST_FILES = @test_files
+
 END
 
 print $make $_ while (<DATA>);
@@ -82,10 +83,8 @@ TEST: $(LIBAPREQ) $(MOD)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(APREQ2_TEST).mak CFG="$(APREQ2_TEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
         set PATH=$(APREQ_HOME)\win32\libs;$(APACHE)\bin;$(PATH)
         $(PERL) "-MExtUtils::Command::MM" "-e" "test_harness()" $(TEST_FILES)
-        cd $(APREQ_HOME)
+	cd $(APREQ_HOME)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(CGITEST).mak CFG="$(CGITEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
-        if not exist "$(APREQ_ENV)\t\cgi-bin" mkdir "$(APREQ_ENV)\t\cgi-bin"
-        copy $(LIBDIR)\test_cgi.exe $(APREQ_ENV)\t\cgi-bin\test_cgi.exe
         cd $(APREQ_HOME)
 END
 
@@ -95,8 +94,6 @@ CLEAN:
         $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
         cd $(TDIR)
         $(RM_F) *.pch *.exe *.exp *.lib *.pdb *.ilk *.idb *.so *.dll *.obj
-        cd $(APREQ_ENV)
-        $(PERL) t\TEST.PL -clean
         cd $(APREQ_HOME)
 !IF EXIST("$(PERLGLUE)\Makefile")
         cd $(PERLGLUE)
@@ -107,12 +104,12 @@ END
 
 if ($apxs) {
     $test .= << "END";
-        cd \$(APREQ_ENV)
+        cd \$(APREQ_MODULE)
         \$(PERL) t\\TEST.PL -apxs $apxs
         cd \$(APREQ_HOME)
 END
     $clean .= << 'END';
-        cd $(APREQ_ENV)
+        cd $(APREQ_MODULE)
         $(PERL) t\TEST.PL -clean
         cd $(APREQ_HOME)
 END
@@ -347,7 +344,7 @@ sub check_depends {
 
 sub generate_tests {
   my ($top, $test_files) = @_;
-  my $t = catdir $top, 't';
+  my $t = catdir $top, 'library', 't';
   foreach my $test(@$test_files) {
     my $file = catfile $t, $test;
     open my $fh, '>', "$file.t" || die "Cannot open $file.t: $!";
@@ -411,7 +408,7 @@ __DATA__
 LIBAPREQ=libapreq2
 APREQ2_TEST=apreq2_test
 CGITEST=test_cgi
-MOD=mod_apreq
+MOD=mod_apreq2
 
 !IF "$(CFG)" != "Release" && "$(CFG)" != "Debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
@@ -444,8 +441,8 @@ CFG_HOME=$(APREQ_HOME)\win32
 LIBDIR=$(CFG_HOME)\libs
 PERLGLUE=$(APREQ_HOME)\glue\perl
 APACHE_LIB=$(APACHE)\lib
-APREQ_ENV=$(APREQ_HOME)\env
-TDIR=$(APREQ_HOME)\t
+TDIR=$(APREQ_HOME)\library\t
+APREQ_MODULE=$(APREQ_HOME)\module
 
 ALL : "$(LIBAPREQ)"
 

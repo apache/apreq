@@ -103,6 +103,7 @@ $body = POST_BODY("$script?foo=1", content =>
 ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end", 
          "simple post");
 
+
 $body = UPLOAD_BODY("$script?foo=1", content => $filler);
 ok t_cmp($body, "\tfoo => 1$line_end", 
          "simple upload");
@@ -206,19 +207,18 @@ use strict;
 use File::Basename;
 use warnings FATAL => 'all';
 use blib;
-use Apache2;
 use APR;
 use APR::Pool;
-use Apache::Request;
-use Apache::Cookie;
-use Apache::Upload;
+use APR::Request::Param;
+use APR::Request::Cookie;
+use APR::Request::CGI;
 use File::Spec;
 require File::Basename;
 
 my $p = APR::Pool->new();
 
-apreq_log("Creating Apache::Request object");
-my $req = Apache::Request->new($p);
+apreq_log("Creating APR::Request::CGI object");
+my $req = APR::Request::CGI->new($p);
 
 my $foo = $req->param("foo");
 my $bar = $req->param("bar");
@@ -240,17 +240,21 @@ if ($foo || $bar) {
 }
     
 elsif ($test && $key) {
-    my %cookies = Apache::Cookie->fetch($p);
+    my $jar = $req->jar;
+    $jar->cookie_class("APR::Request::Cookie");
+    my %cookies = %$jar;
     apreq_log("Fetching cookie $key");
     if ($cookies{$key}) {
         if ($test eq "bake") {
+            $cookies{$key}->is_tainted(0);
             $cookies{$key}->bake;
         }
         elsif ($test eq "bake2") {
+            $cookies{$key}->is_tainted(0);
             $cookies{$key}->bake2;
         }
         print "Content-Type: text/plain\n\n";
-        print $cookies{$key}->value;
+        print APR::Request::decode($cookies{$key}->value);
     }
 }
 
@@ -258,40 +262,43 @@ elsif ($method) {
     my $temp_dir = File::Spec->tmpdir;
     my $has_md5  = $req->args('has_md5');
     require Digest::MD5 if $has_md5;
-    my $upload = $req->upload(($req->upload)[0]);
-    my $type = $upload->type;
-    my $basename = File::Basename::basename($upload->filename);
+    my $body = $req->body;
+    $body->param_class("APR::Request::Param");
+    my ($param) = values %{$body->uploads($p)};
+    my $type = $param->upload_type;
+    my $basename = File::Basename::basename($param->upload_filename);
     my ($data, $fh);
 
     if ($method eq 'slurp') {
-        $upload->slurp($data);
+        $param->upload_slurp($data);
     }
     elsif ($method eq 'fh') {
-        read $upload->fh, $data, $upload->size;
+        read $param->upload_fh, $data, $param->upload_size;
     }
     elsif ($method eq 'tempname') {
-        my $name = $upload->tempname;
+        my $name = $param->upload_tempname;
         open $fh, "<", $name or die "Can't open $name: $!";
         binmode $fh;
-        read $fh, $data, $upload->size;
+        read $fh, $data, $param->upload_size;
         close $fh;
     }
     elsif ($method eq 'link') {
         my $link_file = File::Spec->catfile($temp_dir, "linkfile");
         unlink $link_file if -f $link_file;
-        $upload->link($link_file) or die "Can't link to $link_file: $!";
+        $param->upload_link($link_file) or die "Can't link to $link_file: $!";
         open $fh, "<", $link_file or die "Can't open $link_file: $!";
         binmode $fh;
-        read $fh, $data, $upload->size;
+        read $fh, $data, $param->upload_size;
         close $fh;
         unlink $link_file if -f $link_file;
     }
     elsif ($method eq 'io') {
-        read $upload->io, $data, $upload->size;
+        read $param->upload_io, $data, $param->upload_size;
     }
     else  {
         die "unknown method: $method";
     }
+
     my $temp_file = File::Spec->catfile($temp_dir, $basename);
     unlink $temp_file if -f $temp_file;
     open my $wfh, ">", $temp_file or die "Can't open $temp_file: $!";

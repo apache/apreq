@@ -20,7 +20,8 @@ my $cwd = WIN32 ?
 
 $cwd =~ m{^(.+)/glue/perl$} or die "Can't find base directory";
 my $base_dir = $1;
-my $src_dir = "$base_dir/src";
+my $inc_dir = "$base_dir/include";
+my $mod_dir = "$base_dir/module";
 my $xs_dir = "$base_dir/glue/perl/xsbuilder";
 
 sub slurp($$)
@@ -39,7 +40,7 @@ sub c_macro
     my ($name, $header) = @_;
     my $src;
     if (defined $header) {
-        slurp local $_ => "$src_dir/$header";
+        slurp local $_ => "$inc_dir/$header";
         /^#define $name\s*\(([^)]+)\)\s+(.+?[^\\])$/ms
             or die "Can't find definition for '$name': $_";
         my $def = $2;
@@ -62,7 +63,7 @@ sub c_macro
 
 package My::ParseSource;
 use constant WIN32 => ($^O =~ /Win32/i);
-my @dirs = ("$base_dir/src", "$base_dir/glue/perl/xsbuilder");
+my @dirs = ("$inc_dir", "$mod_dir/apache2/", "$base_dir/glue/perl/xsbuilder");
 use base qw/ExtUtils::XSBuilder::ParseSource/;
 
 
@@ -73,8 +74,8 @@ system("touch $base_dir/glue/perl/xsbuilder") == 0
     unless WIN32;
 
 
-sub package {'Apache::libapreq2'}
-sub unwanted_includes {[qw/apreq_tables.h apreq_config.h/]}
+sub package {'APR::Request'}
+sub unwanted_includes {[qw/apreq_config.h apreq_private_apache2.h/]}
 
 # ParseSource.pm v 0.23 bug: line 214 should read
 # my @dirs = @{$self->include_dirs};
@@ -115,10 +116,12 @@ sub preprocess
 
     for ($_[1]) {
         ::c_macro("APREQ_DECLARE", "apreq.h")->();
-        ::c_macro("APREQ_DECLARE_HOOK", "apreq_params.h")->();
-        ::c_macro("APREQ_DECLARE_PARSER", "apreq_params.h")->();
+        ::c_macro("APREQ_DECLARE_HOOK", "apreq_parser.h")->();
+        ::c_macro("APREQ_DECLARE_PARSER", "apreq_parser.h")->();
         ::c_macro("APR_DECLARE")->();
         ::c_macro("XS")-> ();
+        s/APR_INLINE//g;
+        s/static//g;
     }
 }
 

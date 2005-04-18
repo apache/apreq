@@ -7,51 +7,39 @@
 #   data[1]
 #</apreq_value_t>
 
-<apreq_param_t MODULE=Apache::Upload>
+<apreq_param_t MODULE=APR::Request::Param>
    info
-   bb
+   upload
 !   v
 </apreq_param_t>
 
-<apreq_request_t MODULE=Apache::Request>
-!   args
-!   body
-!   parser
-!   cfg
-!  env
-   args_status
-   body_status
-</apreq_request_t>
+<apreq_handle_t MODULE=APR::Request::Handle>
+! module
+</apreq_handle_t>
 
-<apreq_cookie_t MODULE=Apache::Cookie>
-  version
+<apreq_cookie_t MODULE=APR::Request::Cookie>
   path
   domain
   port
-  secure
   comment
   commentURL
 ! max_age
+! flags
 !  v
 </apreq_cookie_t>
 
-<apreq_jar_t MODULE=Apache::Cookie>
-! cookies
-!  env
-  status
-</apreq_jar_t>
-
-
-
-<apreq_hook_t MODULE=Apache::Request>
+<apreq_hook_t MODULE=APR::Request::Hook>
 !  hook
 !  next
 !  ctx
 </apreq_hook_t>
 
-<apreq_parser_t MODULE=Apache::Request>
+<apreq_parser_t MODULE=Apache::Request::Parser>
 !  parser
 !  content_type
 !  hook
 > ctx
 </apreq_parser_t>
+
+<apr_table_t MODULE=APR::Request::Table>
+</apr_table_t>

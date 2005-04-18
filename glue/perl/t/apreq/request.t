@@ -20,6 +20,7 @@ my $location = "/TestApReq__request";
              "basic param");
 }
 
+
 for my $test (qw/slurp bb tempname link fh io bad;query=string%%/) {
     # upload a string as a file
     my $value = ('DataUpload' x 10 . "\n") x 1_000;
@@ -33,18 +34,24 @@ for my $test (qw/slurp bb tempname link fh io bad;query=string%%/) {
     ok t_cmp($i, length($value), "basic upload length");    
 }
 
+
 {
     my $value = 'DataUpload' x 100;
     my $result = UPLOAD_BODY("$location?test=type", content => $value); 
     ok t_cmp($result, "text/plain", "type");
 }
+
 {
+    skip 1, "- hook API not yet implemented";
+    last;
     my $value = 'DataUpload' x 100;
     my $result = UPLOAD_BODY("$location?test=hook", content => $value); 
     ok t_cmp($result, $value, "type");
 }
+
 {
     my $value = 'DataUpload' x 100;
-    my $result = UPLOAD_BODY("$location?test=disable_uploads", content => $value); 
+    my $result = UPLOAD_BODY("$location?test=disable_uploads;foo=bar1;foo=bar2", 
+        content => $value); 
     ok t_cmp($result, "ok", "disabled uploads");
 }

@@ -9,10 +9,18 @@ $path = $tool unless defined $path;
 sub exe_version { scalar qx/$path -v/ }
 sub gnu_version { scalar qx/$path --version/ }
 
-sub xsb_version { 
-    package ExtUtils::XSBuilder;
-    require ExtUtils::XSBuilder;
-    return our $VERSION;
+sub xsb_version {
+    eval {
+        require ExtUtils::XSBuilder;
+    };
+    $@ ? return '' : return $ExtUtils::XSBuilder::VERSION;
+}
+
+sub ti_version {
+    eval {
+        require Test::Inline;
+    };
+    @$ ? return '' : return $Test::Inline::VERSION;
 }
 
 sub a_t_version {
@@ -32,11 +40,7 @@ sub mm_version {
 
 sub mp2_version {
     eval {
-        require Apache2;
-        require mod_perl;
-        $mod_perl::VERSION;
-    } or do {
-        require mod_perl;
+        require mod_perl2;
         $mod_perl::VERSION;
     };
 }
@@ -44,7 +48,7 @@ sub mp2_version {
 my %svn = (
                 libtool => { version => "1.4.3",   test => \&gnu_version },
                autoconf => { version => "2.53",    test => \&gnu_version },
-               automake => { version => "1.4.0",   test => \&gnu_version },
+               automake => { version => "1.6.0",   test => \&gnu_version },
                 doxygen => { version => "1.2",     test => \&gnu_version },
                    perl => { version => "5.6.1",   test => \&gnu_version },
   "ExtUtils::XSBuilder" => { version => "0.23",    test => \&xsb_version },
@@ -69,6 +73,10 @@ my %perl_glue = (
   "ExtUtils::MakeMaker" => { version => "6.15",    test => \&mm_version },
            "Test::More" => { version => "0.47",    test => \&tm_version },
                 );
+
+my %test = (
+            "Test::Inline" => { version => "0.16", test => \&ti_version },
+           );
 
 sub print_prereqs ($$) {
     my ($preamble, $prereq) = @_;
@@ -131,13 +139,13 @@ EOT
 
 # test prerequisites from the command-line arguments
 
-my %prereq = (%svn, %build, %perl_glue);
+my %prereq = (%svn, %build, %perl_glue, %test);
 die "$0 failed: unknown tool '$tool'.\n" unless $prereq{$tool};
 my $version = $prereq{$tool}->{version};
 my @version = split /\./, $version;
 
 $_ = $prereq{$tool}->{test}->();
-die "$0 failed: no version_string found in '$_'.\n" unless /(\d[.\d]+)/;
+die "$0 failed: no version_string found in '$_' for '$tool'.\n" unless /(\d[.\d]+)/;
 my $saw = $1;
 my @saw = split /\./, $saw;
 $_ = 0 for @saw[@saw .. $#version]; # ensure @saw has enough entries
