@@ -32,6 +32,15 @@ SV *as_string(hv, p1=NULL, p2=NULL)
     RETVAL
 
 BOOT:
+    {
+        apr_version_t version;
+        apr_version(&version);
+        if (version.major != APR_MAJOR_VERSION)
+            Perl_croak(aTHX_ "Can't load module APR::Request::Error : "
+                             "wrong libapr major version "
+                             "(expected %d, saw %d)",
+                              APR_MAJOR_VERSION, version.major);
+    }
     /* register the overloading (type 'A') magic */
     PL_amagic_generation++;
     /* The magic for overload gets a GV* via gv_fetchmeth as */

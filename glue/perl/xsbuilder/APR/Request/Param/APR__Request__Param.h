@@ -1,3 +1,4 @@
+#include "apreq_xs_tables.h"
 
 #if (PERL_VERSION >= 8) /* MAGIC ITERATOR REQUIRES 5.8 */
 

@@ -1,4 +1,3 @@
-#include "apreq_xs_tables.h"
 #define TABLE_CLASS "APR::Request::Cookie::Table"
 
 static int apreq_xs_table_keys(void *data, const char *key, const char *val)
@@ -232,6 +231,16 @@ value(obj, p1=NULL, p2=NULL)
 
 
 BOOT:
+    {
+        apr_version_t version;
+        apr_version(&version);
+        if (version.major != APR_MAJOR_VERSION)
+            Perl_croak(aTHX_ "Can't load module APR::Request::Cookie : "
+                             "wrong libapr major version "
+                             "(expected %d, saw %d)",
+                              APR_MAJOR_VERSION, version.major);
+    }
+
     /* register the overloading (type 'A') magic */
     PL_amagic_generation++;
     /* The magic for overload gets a GV* via gv_fetchmeth as */
