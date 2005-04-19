@@ -26,6 +26,9 @@
 /* backward compatibility macros support */
 #include "ppport.h"
 
+/* apr version info for modules */
+#include "apr_version.h"
+
 /* ExtUtils::XSBuilder::ParseSoure trickery... */
 typedef apreq_handle_t apreq_xs_handle_cgi_t;
 typedef apreq_handle_t apreq_xs_handle_apache2_t;
