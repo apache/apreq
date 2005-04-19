@@ -4,10 +4,11 @@
 
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
+
 - C API [joes]
   Add apreq_cp1252_to_utf8().
 
-- C. Perl API [joes]
+- C, Perl API [joes]
   Add charset support for params and couple the SvUTF8 flag
   to the param's taint flag.
 
