@@ -7,8 +7,9 @@
 - C API [joes]
   Add apreq_cp1252_to_utf8().
 
-- C API [joes]
-  Add charset support for params.
+- C. Perl API [joes]
+  Add charset support for params and couple the SvUTF8 flag
+  to the param's taint flag.
 
 - C API [joes]
   Replace v->size with v->nlen + v->dlen.

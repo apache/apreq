@@ -146,7 +146,11 @@ static SV *apreq_xs_param2sv(pTHX_ apreq_param_t *p,
         SV *rv = newSVpvn(p->v.data, p->v.dlen);
         if (apreq_param_is_tainted(p))
             SvTAINTED_on(rv);
-        if (apreq_param_charset_get(p) == APREQ_CHARSET_UTF8)
+        else if (apreq_param_charset_get(p) == APREQ_CHARSET_UTF8)
+            /* Setting the UTF8 flag on non-utf8 data is a security hole.
+             * Let's see if coupling that decision with taintedness helps
+             * resolve this issue.
+             */
             SvUTF8_on(rv);
         return rv;
     }
