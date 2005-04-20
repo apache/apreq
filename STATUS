@@ -10,12 +10,6 @@ Contributors looking for a mission:
 
 CURRENT RELEASE NOTES:
 
-    - This is the multi-env-unstable branch.  It is a work-in-progress
-      which attempts to refactor our C interfaces to provide a more 
-      robust module API.  This refactoring effort will propagate 
-      into the perl glue as well, once the C API changes settle into 
-      place.
-
     - This is a developer release, indicated by the "-dev" suffix on the
       version string. We believe the core interfaces to be stable, but some
       portions of the API may still need significant modification. Thus,
@@ -29,7 +23,8 @@ CURRENT RELEASE NOTES:
 
 RELEASE SHOWSTOPPERS:
 
-    - The api docs and perl glue are currently broken.
+    - The api docs are currently broken, and the perl glue is missing
+      UPLOAD_HOOK.
 
 
 CURRENT VOTES:
@@ -49,6 +44,10 @@ CURRENT VOTES:
 
 
 TODO:
+
+    - Determine whether or not its goodness for the perl glue to ever set 
+      the SvUTF8 flag on a param.  The current code ties this action to the 
+      apreq_param_is_tainted flag.
 
     - Introduce APR::Request::Parser and APR::Request::Hook.  Implement
       Apache2::Request::new's UPLOAD_HOOK using them.
