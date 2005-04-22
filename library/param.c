@@ -36,7 +36,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
 
     param = apr_palloc(p, nlen + vlen + 1 + sizeof *param);
 
-    if (param == NULL || nlen == 0)
+    if (param == NULL)
         return NULL;
 
     param->info = NULL;

@@ -37,6 +37,11 @@ static char form_data[] =
 "content-disposition: form-data; name=\"pics\"; filename=\"file1.txt\"" CRLF
 "Content-Type: text/plain" CRLF CRLF
 "... contents of file1.txt ..." CRLF CRLF
+"--AaB03x" CRLF
+"content-disposition: form-data; name=\"\"" CRLF
+"content-type: text/plain;charset=windows-1250" CRLF
+"content-transfer-encoding: quoted-printable" CRLF CRLF
+"Joe owes =80100." CRLF
 "--AaB03x--" CRLF;
 
 static char xml_data[] =
@@ -221,7 +226,7 @@ static void parse_multipart(dAT)
             AT_int_eq(rv, (j < strlen(form_data)) ? APR_INCOMPLETE : APR_SUCCESS);
             rv = apreq_parser_run(parser, body, tail);
             AT_int_eq(rv, APR_SUCCESS);
-            AT_int_eq(apr_table_elts(body)->nelts, 2);
+            AT_int_eq(apr_table_elts(body)->nelts, 3);
 
             val = apr_table_get(body,"field1");
             AT_str_eq(val, "Joe owes =80100.");

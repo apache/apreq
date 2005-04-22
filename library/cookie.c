@@ -134,7 +134,7 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
 
     c = apr_palloc(p, nlen + vlen + 1 + sizeof *c);
 
-    if (c == NULL || nlen == 0)
+    if (c == NULL)
         return NULL;
 
     *(const apreq_value_t **)&v = &c->v;
@@ -144,8 +144,8 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
     v->data[vlen] = 0;
     v->dlen = vlen;
     v->name = v->data + vlen + 1;
-    if (name != NULL)
-        memcpy (v->name, name, nlen);
+    if (nlen && name != NULL)
+        memcpy(v->name, name, nlen);
     v->name[nlen] = 0;
     v->nlen = nlen;
     /* session cookie is the default */

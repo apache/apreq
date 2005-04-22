@@ -24,7 +24,7 @@
 static const char nscookies[] = "a=1; foo=bar; fl=left; fr=right;bad; "
                                 "ns=foo=1&bar=2,frl=right-left; "
                                 "flr=left-right; fll=left-left; "
-                                "good_one=1;bad";
+                                "good_one=1;=;bad";
 
 static const char rfccookies[] = "$Version=1; first=a;$domain=quux;second=be,"
                                  "$Version=1;third=cie";
@@ -70,6 +70,7 @@ static void jar_get_ns(dAT)
     AT_str_eq(apr_table_get(jar,"frl"), "right-left");
     AT_str_eq(apr_table_get(jar,"flr"), "left-right");
     AT_str_eq(apr_table_get(jar,"fll"), "left-left");
+    AT_is_null(apr_table_get(jar,""));
 }
 
 
@@ -177,7 +178,7 @@ int main(int argc, char *argv[])
     at_test_t test_list [] = {
         { dT(jar_make, 4) },
         { dT(jar_get_rfc, 6), "1 3 5" },
-        { dT(jar_get_ns, 9) },
+        { dT(jar_get_ns, 10) },
         { dT(netscape_cookie, 7) },
         { dT(rfc_cookie, 6) },
         { dT(ua_version, 2) }
