@@ -45,9 +45,11 @@ CURRENT VOTES:
 
 TODO:
 
-    - Determine whether or not its goodness for the perl glue to ever set 
-      the SvUTF8 flag on a param.  The current code ties this action to the 
-      apreq_param_is_tainted flag.
+    - Clean up the hook API wrt "final pass" semantics.  Right now
+      there are two possibilities: either the final bucket is an eos,
+      or the passed brigade is NULL.  That blows.  IMO the first 
+      condition is more natural, but it puts more work on parser 
+      writers because they need to keep an eos lying bucket around.
 
     - Introduce APR::Request::Parser and APR::Request::Hook.  Implement
       Apache2::Request::new's UPLOAD_HOOK using them.
@@ -63,7 +65,7 @@ TODO:
       and glue subdirs.  The libtool workaround (for OSX IIRC) 
       that copies module/.libs to module/t is especially bogus.
 
-    - Consider dropping ExtUtils::XSBuilder as the C API is fairly
+    - Drop ExtUtils::XSBuilder as the C API is fairly
       stable now.  The header parsing + xs generation stuff may be too 
       difficult for the community to maintain over ordinary .xs files.
 
@@ -73,15 +75,6 @@ TODO:
       upgrade these tests to use the Apache::Test framework.
 
     - Fix all the "//apreq_log" comments in the cgi tests.
-
-    - Let hooks interrupt parsers via APREQ_ERROR_INTERRUPT.  
-      Need a delete_hook method to make interrupts a useful
-      way of tuning parser behavior.
-
-      [joes] Interrupts may not be worth the extra effort, so I don't 
-             plan to pursue this.  We have more important issues 
-             to deal with prior to release, and nobody has ever 
-             asked for this feature in apreq2.
 
     - Add a "memory_limit" setting to apreq_parser_t and apreq_module_t, 
       which will control how much pool allocation the parser may use.
@@ -115,6 +108,14 @@ OPEN ISSUES:
 
     - Should we bundle an apr-based "application/xml" parser?  
       If so, how should we parse the xml data into an apr_table?
+
+    - Determine whether or not it's good for the perl glue to ever set 
+      the SvUTF8 flag on a param.  The current code ties this action to the 
+      apreq_param_is_tainted flag.
+
+    - Should we let hooks interrupt parsers via APREQ_ERROR_INTERRUPT?
+      That'd need a delete_hook method to make interrupts a useful
+      way of tuning parser behavior.
 
 
 BUGS:
