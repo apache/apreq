@@ -1,5 +1,5 @@
 AM_CPPFLAGS = @APR_INCLUDES@
-SUBDIRS = apache2 apache
+SUBDIRS = apache2
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
 EXTRA_DIST = t c-modules
 
