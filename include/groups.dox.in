@@ -21,8 +21,8 @@
  */
 
 /**
- * @defgroup apreq_env Environment Modules
- * @brief Environments included in @PACKAGE@-@VERSION@.
+ * @defgroup apreq_module Modules
+ * @brief apreq2 modules included in @PACKAGE@-@VERSION@.
  *
  * XXX
  */

@@ -5,6 +5,9 @@
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
 
+- C API [joes]
+  s/APREQ/APREQ2/g in webserver configuration directives.
+
 - C API [Igor Shevchenko, Philip Gollucci]
   Fix segfault in mfd parser caused by parts w/ empty param names.
 

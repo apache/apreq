@@ -30,95 +30,6 @@
 #include "apreq_error.h"
 #include "apreq_util.h"
 
-/**
- * @defgroup mod_apreq Apache 2.X Filter Module
- * @ingroup apreq_env
- * @brief mod_apreq - DSO that ties libapreq2 to Apache 2.X.
- *
- * mod_apreq provides the "APREQ" input filter for using libapreq2
- * (and allow its parsed data structures to be shared) within
- * the Apache 2.X webserver.  Using it, libapreq2 works properly
- * in every phase of the HTTP request, from translation handlers 
- * to output filters, and even for subrequests / internal redirects.
- *
- * <hr>
- *
- * <h2>Activating mod_apreq in Apache 2.X</h2>
- *
- * Normally the installation process triggered by
- * <code>% make install</code>
- * will make the necessary changes to httpd.conf for you. In any case,
- * after installing the mod_apreq.so module, be sure your webserver's
- * httpd.conf activates it on startup with a LoadModule directive, e.g.
- * @code
- *
- *     LoadModule    modules/mod_apreq.so
- *
- * @endcode
- *
- * The mod_apreq2 filter is named "apreq2", and may be used in Apache's
- * input filter directives, e.g.
- * @code
- *
- *     AddInputFilter APREQ         # or
- *     SetInputFilter APREQ
- *
- * @endcode
- *
- * However, this is not required because libapreq2 will add the filter (only)
- * if it's necessary.  You just need to ensure that your module instantiates
- * an apreq_request_t using apreq_request() <em>before the content handler
- * ultimately reads from the input filter chain</em>.  It is important to
- * recognize that no matter how the input filters are initially arranged,
- * the APREQ filter will attempt to reposition itself to be the last input filter
- * to read the data.
- *
- * If you want to use other input filters to transform the incoming HTTP
- * request data, is important to register those filters with Apache
- * as having type AP_FTYPE_CONTENT_SET or AP_FTYPE_RESOURCE.  Due to the 
- * limitations of Apache's current input filter design, types higher than 
- * AP_FTYPE_CONTENT_SET may not work properly whenever the apreq filter is active.
- *
- * This is especially true when a content handler uses libapreq2 to parse 
- * some of the post data before doing an internal redirect.  Any input filter
- * subsequently added to the redirected request will bypass the original apreq 
- * filter (and therefore lose access to some of the original post data), unless 
- * its type is less than the type of the apreq filter (currently AP_FTYPE_PROTOCOL-1).
- *
- *
- * <h2>Server Configuration Directives</h2>
- *
- * <TABLE class="qref"><CAPTION>Per-directory commands for mod_apreq</CAPTION>
- * <TR><TH>Directive</TH><TH>Context</TH><TH>Default</TH><TH>Description</TH></TR>
- * <TR class="odd"><TD>APREQ_ReadLimit</TD><TD>directory</TD><TD>-1 (Unlimited)</TD><TD>
- * Maximum number of bytes mod_apreq will send off to libapreq for parsing.  
- * mod_apreq will log this event and remove itself from the filter chain.
- * The APREQ_ERROR_GENERAL error will be reported to libapreq2 users via the return 
- * value of apreq_env_read().
- * </TD></TR>
- * <TR><TD>APREQ_BrigadeLimit</TD><TD>directory</TD><TD> #APREQ_MAX_BRIGADE_LEN </TD><TD>
- * Maximum number of bytes apreq will allow to accumulate
- * within a brigade.  Excess data will be spooled to a
- * file bucket appended to the brigade.
- * </TD></TR>
- * <TR class="odd"><TD>APREQ_TempDir</TD><TD>directory</TD><TD>NULL</TD><TD>
- * Sets the location of the temporary directory apreq will use to spool
- * overflow brigade data (based on the APREQ_BrigadeLimit setting).
- * If left unset, libapreq2 will select a platform-specific location via apr_temp_dir_get().
- * </TD></TR>
- * </TABLE>
- *
- * <h2>Implementation Details</h2>
- * <pre>
- * XXX apreq as a normal input filter
- * XXX apreq as a "virtual" content handler.
- * XXX apreq as a transparent "tee".
- * XXX apreq parser registration in post_config
- * </pre>
- * @{
- */
-
-
 static void *apreq_create_dir_config(apr_pool_t *p, char *d)
 {
     /* d == OR_ALL */
@@ -187,11 +98,11 @@ static const char *apreq_set_brigade_limit(cmd_parms *cmd, void *data,
 
 static const command_rec apreq_cmds[] =
 {
-    AP_INIT_TAKE1("APREQ_TempDir", apreq_set_temp_dir, NULL, OR_ALL,
+    AP_INIT_TAKE1("APREQ2_TempDir", apreq_set_temp_dir, NULL, OR_ALL,
                   "Default location of temporary directory"),
-    AP_INIT_TAKE1("APREQ_ReadLimit", apreq_set_read_limit, NULL, OR_ALL,
+    AP_INIT_TAKE1("APREQ2_ReadLimit", apreq_set_read_limit, NULL, OR_ALL,
                   "Maximum amount of data that will be fed into a parser."),
-    AP_INIT_TAKE1("APREQ_BrigadeLimit", apreq_set_brigade_limit, NULL, OR_ALL,
+    AP_INIT_TAKE1("APREQ2_BrigadeLimit", apreq_set_brigade_limit, NULL, OR_ALL,
                   "Maximum in-memory bytes a brigade may use."),
     { NULL }
 };

@@ -18,7 +18,7 @@
 #if CONFIG_FOR_HTTPD_TEST
 
 <Location /apreq_request_test>
-   APREQ_ReadLimit 500K
+   APREQ2_ReadLimit 500K
    SetHandler apreq_request_test
 </Location>
 
