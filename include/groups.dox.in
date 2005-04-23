@@ -61,33 +61,21 @@
  */
 
 /**
- * @defgroup apreq_xs_request Apache::Request
+ * @defgroup apreq_xs_request Apache2::Request
  * @ingroup apreq_xs
  * @htmlinclude Request.html
  */
 
 /**
- * @defgroup apreq_xs_upload Apache::Upload
+ * @defgroup apreq_xs_upload Apache2::Upload
  * @ingroup apreq_xs
  * @htmlinclude Upload.html
  */
 
 /**
- * @defgroup apreq_xs_cookie Apache::Cookie
+ * @defgroup apreq_xs_cookie Apache2::Cookie
  * @ingroup apreq_xs
  * @htmlinclude Cookie.html
- */
-
-/**
- * @defgroup apreq_xs_table Table Classes
- * @ingroup apreq_xs
- * @htmlinclude Table.html
- */
-
-/**
- * @defgroup apreq_xs_error Error Classes
- * @ingroup apreq_xs
- * @htmlinclude Error.html
  */
 
 /**

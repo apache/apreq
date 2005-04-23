@@ -117,19 +117,18 @@ sub new {
 
 __END__
 
-Apache::Cookie, Apache::Cookie::Jar - HTTP Cookies Class
+=head1 NAME
+
+Apache2::Cookie, Apache2::Cookie::Jar - HTTP Cookies Class
 
 =for testing
-    use Apache::Cookie;
+    use Apache2::Cookie;
     use APR::Pool;
     # use $r instead of $p here, so doc examples reflect mp2 env, not CGI/test env
     $r = APR::Pool->new; 
-    $j = Apache::Cookie::Jar->new($r);
-    $j->cookies->{foo} = Apache::Cookie->new($r, name => "foo", value => "1");
-    $j->cookies->add( Apache::Cookie->new($r, name => "bar", value => "2") );
-    # We must disable bake and bake2 in the api tests, 
-    # since they write directly to fd 1 via apr_file_write().
-    *Apache::Cookie::bake = *Apache::Cookie::bake2 = *Apache::Cookie::as_string;
+    $j = Apache2::Cookie::Jar->new($r);
+    $j->cookies->{foo} = Apache2::Cookie->new($r, name => "foo", value => "1");
+    $j->cookies->add( Apache2::Cookie->new($r, name => "bar", value => "2") );
 
 
 
@@ -139,12 +138,12 @@ Apache::Cookie, Apache::Cookie::Jar - HTTP Cookies Class
 
 =for example begin
 
-    use Apache::Cookie;
+    use Apache2::Cookie;
 
-    $j = Apache::Cookie::Jar->new($r);
+    $j = Apache2::Cookie::Jar->new($r);
     $c_in = $j->cookies("foo");         # get cookie from request headers
 
-    $c_out = Apache::Cookie->new($r, 
+    $c_out = Apache2::Cookie->new($r, 
                                   -name  => "mycookie",
                                   -value => $c_in->name );
 
@@ -164,24 +163,21 @@ Apache::Cookie, Apache::Cookie::Jar - HTTP Cookies Class
 =head1 DESCRIPTION
 
 
-The 2.X Apache::Cookie module is based on the original 1.X versions, which mimic 
+The Apache2::Cookie module is based on the original 1.X versions, which mimic 
 the CGI::Cookie API.  The current version of this module includes several packages 
-and methods which are patterned after Apache::Request, yet remain largely 
+and methods which are patterned after Apache2::Request, yet remain largely 
 backwards-compatible with the original 1.X API (see the L<PORTING from 1.X> section 
 below for known issues).
 
-This manpage documents the Apache::Cookie and Apache::Cookie::Jar packages.  
-Apache::Cookie::Error, Apache::Cookie::Jar::Error and Apache::Cookie::Table
-are also provided by this module but documented elsewhere (related manpages
-listed in L<SEE ALSO>).
+This manpage documents the Apache2::Cookie and Apache2::Cookie::Jar packages.
 
 
 
 
-=head1 Apache::Cookie::Jar
+=head1 Apache2::Cookie::Jar
 
-This class collects Apache::Cookie objects into a lookup table.  It plays
-the same role for accessing the incoming cookies as Apache::Request does for 
+This class collects Apache2::Cookie objects into a lookup table.  It plays
+the same role for accessing the incoming cookies as Apache2::Request does for
 accessing the incoming params and file uploads.
 
 
@@ -189,13 +185,13 @@ accessing the incoming params and file uploads.
 
 =head2 new
 
-    Apache::Cookie::Jar->new($env, %args)
+    Apache2::Cookie::Jar->new($env, %args)
 
 Class method that retrieves the parsed cookie jar from the current 
 environment.  An optional VALUE_CLASS => $class argument instructs
 the jar to bless any returned cookies into $class instead
-of Apache::Cookie.  This feature is meant to be useful in situations 
-where C<Apache::Cookie::thaw()> is unable to correctly interpret an incoming
+of Apache2::Cookie.  This feature is meant to be useful in situations 
+where C<Apache2::Cookie::thaw()> is unable to correctly interpret an incoming
 cookie's serialization.  Users can simply override C<thaw> in an
 application-specific subclass and pass that subclass's name as the 
 VALUE_CLASS argument:
@@ -204,16 +200,16 @@ VALUE_CLASS argument:
 
     {
         package FOO;
-        @ISA= 'Apache::Cookie';
+        @ISA= 'Apache2::Cookie';
     }
-    my $jar = Apache::Cookie::Jar->new($r, VALUE_CLASS => "FOO");
+    my $jar = Apache2::Cookie::Jar->new($r, VALUE_CLASS => "FOO");
     ok $jar->cookies("foo")->isa("FOO");
     ok $jar->cookies->{bar}->isa("FOO");
 
 =for example end
 
 =for example_testing
-    ok $jar->isa("Apache::Cookie::Jar");
+    ok $jar->isa("Apache2::Cookie::Jar");
     $jar->cookies->do(sub { ok $_[1]->isa("FOO"); });
     map { ok $_->isa("FOO") } values %{$jar->cookies};
 
@@ -230,7 +226,7 @@ context the first such cookie is returned, and in list context the
 full list of such cookies are returned.
 
 If the $key argument is omitted, C<< scalar $jar->cookies() >> will 
-return an Apache::Cookie::Table object containing all the cookies in 
+return an APR::Request::Cookie::Table object containing all the cookies in 
 the jar.  Modifications to the this object will affect the jar's 
 internal I<cookies> table in C<apreq_jar_t>, so their impact will 
 be noticed by all libapreq2 applications during this request.
@@ -239,18 +235,18 @@ In list context C<< $jar->cookies() >> returns the list of names
 for all the cookies in the jar.  The order corresponds to the 
 order in which the cookies appeared in the incoming "Cookie" header.
 
-This method will throw an Apache::Cookie::Jar::Error object into $@ if
-the returned value(s) may be unreliable.  In particular, note that 
+This method will throw an C<< APR::Request::Error >> object into $@ if
+the returned value(s) could be unreliable.  In particular, note that
 C<< scalar $jar->cookies("foo") >> will not croak if it can locate
-the a "foo" cookie within the jar's parsed cookie table, even if the 
+the a "foo" cookie within the jar's parsed cookie table, even if the
 cookie parser has failed (the cookies are parsed in the same order
-as they appeared in the "Cookie" header). In all other circumstances 
-C<cookies> will croak if the parser failed to successfully parse the 
+as they appeared in the "Cookie" header). In all other circumstances
+C<cookies> will croak if the parser failed to successfully parse the
 "Cookie" header.
 
 =for example begin
 
-    $c = Apache::Cookie->new($r, name => "foo", value => 3);
+    $c = Apache2::Cookie->new($r, name => "foo", value => 3);
     $j->cookies->add($c);
 
     $cookie = $j->cookies("foo");  # first foo cookie
@@ -283,7 +279,7 @@ APR_SUCCESS on success, error otherwise.
     $j->status(-1);
     ok $j->status == -1;
     eval { @cookies = $j->cookies("foo") };   # croaks
-    ok $@->isa("Apache::Cookie::Jar::Error");
+    ok $@->isa("Apache2::Cookie::Jar::Error");
     $j->status(0);
 
 =for example end
@@ -296,42 +292,20 @@ APR_SUCCESS on success, error otherwise.
 
 
 
-=head2 env
-
-    Apache::Cookie::Jar->env()
-    $jar->env()
-
-As a class method C<< Apache::Cookie::Jar->env >> returns
-the environment class associated with Apache::Cookie::Jar. 
-As an object method, C<< $jar->env >> returns the environment 
-object which first created the $jar (via C<new>).
-
-=for example begin
-
-    ok $j->env->isa(Apache::Cookie::Jar->env);
-
-=for example end
-
-=for example_testing
-    ok (Apache::Cookie::Jar->env eq "APR::Pool", 'env() isa APR::Pool');
-
-
-
-
-=head1 Apache::Cookie
+=head1 Apache2::Cookie
 
 
 
 
 =head2 new
 
-    Apache::Cookie->new($env, %args)
+    Apache2::Cookie->new($env, %args)
 
 Just like CGI::Cookie::new, but requires an additional environment argument:
 
 =for example begin
 
-    $cookie = Apache::Cookie->new($r,
+    $cookie = Apache2::Cookie->new($r,
                              -name    =>  'foo', 
                              -value   =>  'bar', 
                              -expires =>  '+3M', 
@@ -350,7 +324,7 @@ Just like CGI::Cookie::new, but requires an additional environment argument:
     ok $cookie->secure == 1,                '$cookie->secure == 1';
 
 The C<-value> argument may be either an arrayref, a hashref, or
-a string.  C<Apache::Cookie::freeze> encodes this argument into the 
+a string.  C<Apache2::Cookie::freeze> encodes this argument into the 
 cookie's raw value.
 
 
@@ -358,15 +332,15 @@ cookie's raw value.
 
 =head2 freeze
 
-    Apache::Cookie->freeze($value)
+    Apache2::Cookie->freeze($value)
 
-Helper function (for C<new>) that serializes a new cookie's value in a 
-manner compatible with CGI::Cookie (and Apache::Cookie 1.X).  This class 
+Helper function (for C<new>) that serializes a new cookie's value in a
+manner compatible with CGI::Cookie (and Apache2::Cookie 1.X).  This class
 method accepts an arrayref, hashref, or normal perl string in $value.
 
 =for example begin
 
-    $value = Apache::Cookie->freeze(["2+2", "=4"]);
+    $value = Apache2::Cookie->freeze(["2+2", "=4"]);
 
 =for example end
 
@@ -378,19 +352,19 @@ method accepts an arrayref, hashref, or normal perl string in $value.
 
 =head2 thaw
 
-    Apache::Cookie->thaw($value)
+    Apache2::Cookie->thaw($value)
     $cookie->thaw()
 
 
 This is the helper method (for C<value>) responsible for decoding the 
 raw value of a cookie.  An optional argument $value may be used in
 place of the cookie's raw value.  This method can also decode cookie 
-values created using CGI::Cookie or Apache::Cookie 1.X.
+values created using CGI::Cookie or Apache2::Cookie 1.X.
 
 =for example begin
 
     print $cookie->thaw;                    # prints "bar"
-    @values = Apache::Cookie->thaw($value); # ( "2+2", "=4" )
+    @values = Apache2::Cookie->thaw($value); # ( "2+2", "=4" )
 
 =for example end
 
@@ -407,7 +381,7 @@ values created using CGI::Cookie or Apache::Cookie 1.X.
 
     $cookie->as_string()
 
-Format the cookie object as a string.  The quote-operator for Apache::Cookie 
+Format the cookie object as a string.  The quote-operator for Apache2::Cookie 
 is overloaded to run this method whenever a cookie appears in quotes.
 
 
@@ -455,13 +429,13 @@ Get the (unswizzled) value of the cookie:
 
 Note: if the cookie's value was created using a  C<freeze> method, 
 one way to reconstitute the object is by subclassing 
-Apache::Cookie with a package that provides the associated C<thaw> sub:
+Apache2::Cookie with a package that provides the associated C<thaw> sub:
 
 =for example begin
 
     {
         package My::COOKIE;
-        @ISA = 'Apache::Cookie'; 
+        @ISA = 'Apache2::Cookie'; 
         sub thaw { my $val = shift->raw_value; $val =~ tr/a-z/A-Z/; $val }
     }
 
@@ -495,7 +469,7 @@ Gets the raw (opaque) value string as it appears in the incoming
 
 =head2 bake
 
-    $cookie->bake()
+    $cookie->bake($r)
 
 Adds a I<Set-Cookie> header to the outgoing headers table.
 
@@ -504,7 +478,7 @@ Adds a I<Set-Cookie> header to the outgoing headers table.
 
 =head2 bake2
 
-    $cookie->bake2()
+    $cookie->bake2($r)
 
 Adds a I<Set-Cookie2> header to the outgoing headers table.
 
@@ -668,15 +642,15 @@ Get or set the commentURL field of an RFC (Version > 0) cookie.
 
 =head2 fetch
 
-    Apache::Cookie->fetch($r)
+    Apache2::Cookie->fetch($r)
 
 Fetch and parse the incoming I<Cookie> header:
 
 =for example begin
 
-    my $cookies = Apache::Cookie->fetch($r); # Apache::Cookie::Table ref
+    my $cookies = Apache2::Cookie->fetch($r); # APR::Request::Cookie::Table ref
 
-    my %cookies = Apache::Cookie->fetch($r);
+    my %cookies = Apache2::Cookie->fetch($r);
 
 =for example end
 
@@ -695,13 +669,13 @@ Changes to the 1.X API:
 
 =over 4
 
-=item * C<Apache::Cookie::fetch> now expects an C<$r> object as (second) 
-        argument, although this isn't necessary in mod_perl 2 if 
-        C<Apache::RequestUtil> is loaded.
+=item * C<Apache2::Cookie::fetch> now expects an C<$r> object as (second) 
+        argument, although this isn't necessary in mod_perl 2 if
+        C<Apache2::RequestUtil> is loaded.
 
-=item * C<Apache::Cookie::parse> is gone.
+=item * C<Apache2::Cookie::parse> is gone.
 
-=item * C<Apache::Cookie::new> no longer encodes the supplied cookie name.  
+=item * C<Apache2::Cookie::new> no longer encodes the supplied cookie name.
 
 =item * C<name()> and C<value()> no longer accept a "set" argument. In other words,
         neither a cookie's name, nor its value, may be modified.  A new cookie
@@ -714,9 +688,8 @@ Changes to the 1.X API:
 
 =head1 SEE ALSO
 
-L<Apache::Cookie::Table>, L<Apache::Cookie::Error>, 
-L<Apache::Cookie::Jar::Error>, L<Apache::Request>,
-CGI::Cookie(3)
+L<Apache2::Request>, L<APR::Request::Cookie>,
+L<APR::Request::Error>, CGI::Cookie(3)
 
 
 

@@ -13,7 +13,7 @@ APU_DOX = (cd $(APU_SRCDIR); cat docs/doxygen.conf - | doxygen -)
 APR_DOX = (cd $(APR_SRCDIR); cat docs/doxygen.conf - | doxygen -)
 SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi, s(href="/Apache(?:/\w+)*/([^/]+).html")(href="group__apreq__xs__\L$$1.html")g
 EUM=ExtUtils::Manifest
-POD_DIR=glue/perl/docs
+POD_DIR=glue/perl/lib/Apache2
 bin_SCRIPTS = apreq2-config
 CLEANFILES = $(bin_SCRIPTS)
 
@@ -56,10 +56,10 @@ docs_install: docs
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
 	cp -a docs $(DESTDIR)$(pkgdatadir)
 
-%.html: $(POD_DIR)/%.pod Makefile.am 
+%.html: $(POD_DIR)/%.pm Makefile.am 
 	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
 
-pod2html :: Request.html Cookie.html Upload.html Table.html Error.html FAQ.html
+pod2html :: Request.html Cookie.html Upload.html FAQ.html
 
 FAQ.html: Makefile.am FAQ.pod
 	pod2html < FAQ.pod | perl -0777 -pe '$(SED_BODY_TAG)' > FAQ.html

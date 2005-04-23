@@ -33,18 +33,19 @@ sub disable_uploads {
 1;
 
 __END__
+
 =head1 NAME
 
-Apache::Request - Methods for dealing with client request data
+Apache2::Request - Methods for dealing with client request data
 
 
 =for testing
-    use Apache::Request;
-    use Apache::Upload;
+    use Apache2::Request;
+    use Apache2::Upload;
     use APR::Pool;
     $r = APR::Pool->new;
-    $req = Apache::Request->new($r);
-    $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
+    $req = Apache2::Request->new($r);
+    $u = Apache2::Upload->new($r, name => "foo", file => __FILE__);
     $req->body_status(0);
     $req->parse;
     $req->body->add($u);
@@ -59,15 +60,15 @@ Apache::Request - Methods for dealing with client request data
 
 =for example begin
 
-    use Apache::Request;
-    $req = Apache::Request->new($r);
+    use Apache2::Request;
+    $req = Apache2::Request->new($r);
     @foo = $req->param("foo");
     $bar = $req->args("bar");
 
 =for example end
 
 =for example_testing
-    ok $req->isa("Apache::Request");
+    ok $req->isa("Apache2::Request");
     is "@foo", join " ", 1, 3, __FILE__;
     is $bar, 2;
 
@@ -76,28 +77,25 @@ Apache::Request - Methods for dealing with client request data
 
 =head1 DESCRIPTION
 
-The Apache::Request module provides methods for parsing GET and POST parameters
+The Apache2::Request module provides methods for parsing GET and POST parameters
 encoded with either I<application/x-www-form-urlencoded> or I<multipart/form-data>.
-Although Apache::Request provides a few new APIs for accessing the parsed data,
+Although Apache2::Request provides a few new APIs for accessing the parsed data,
 it remains largely backwards-compatible with the original 1.X API.  See the
 L<PORTING from 1.X> section below for a list of known issues.
 
-This manpage documents the Apache::Request package.  Apache::Request::Table 
-and Apache::Request::Error are also provided by this module, but are 
-documented elsewhere.  Please read the L<SEE ALSO> section below for a list
-of related manpages.
+This manpage documents the Apache2::Request package.
 
 
 
 
-=head1 Apache::Request
+=head1 Apache2::Request
 
 The interface is designed to mimic the CGI.pm routines for parsing
 query parameters. The main differences are 
 
 =over 4
 
-=item * C<Apache::Request::new> takes an environment-specific
+=item * C<Apache2::Request::new> takes an environment-specific
         object C<$r> as (second) argument.  Newer versions of CGI.pm also accept
         this syntax within modperl.
 
@@ -113,25 +111,25 @@ query parameters. The main differences are
 
 =head2 new
 
-    Apache::Request->new($r, %args)
+    Apache2::Request->new($r, %args)
 
-Creates a new Apache::Request object.
+Creates a new Apache2::Request object.
 
 
 =for example begin
 
-    my $req = Apache::Request->new($r, POST_MAX => "1M");
+    my $req = Apache2::Request->new($r, POST_MAX => "1M");
 
 
 =for example end
 
 =for example_testing
     ok ref $req;
-    ok $req->isa("Apache::Request");
+    ok $req->isa("Apache2::Request");
 
 
-With mod_perl2, the environment object $r must be an Apache::RequestRec
-object.  In that case, all methods from Apache::RequestRec are inherited.
+With mod_perl2, the environment object $r must be an Apache2::RequestRec
+object.  In that case, all methods from Apache2::RequestRec are inherited.
 In the (default) CGI environment, $r must be an APR::Pool object.
 
 The following args are optional:
@@ -157,14 +155,14 @@ file system as the final destination file:
 
 =for example begin
 
- use Apache::Upload;
- my $req = Apache::Request->new($r, TEMP_DIR => "/home/httpd/tmp");
+ use Apache2::Upload;
+ my $req = Apache2::Request->new($r, TEMP_DIR => "/home/httpd/tmp");
  my $upload = $req->upload('file');
  $upload->link("/home/user/myfile");
 
 =for example end
 
-For more details on C<link>, see L<Apache::Upload>.
+For more details on C<link>, see L<Apache2::Upload>.
 
 
 =item * C<HOOK_DATA>
@@ -188,10 +186,10 @@ $upload->fh after the hook exits.
     warn "$hook_data: got $data_len bytes for " . $upload->name;
   };
 
-  my $req = Apache::Request->new($r, 
-                                 HOOK_DATA => "Note",
-                                 UPLOAD_HOOK => $transparent_hook,
-                                );
+  my $req = Apache2::Request->new($r, 
+                                  HOOK_DATA => "Note",
+                                  UPLOAD_HOOK => $transparent_hook,
+                                 );
 
 =for example end
 
@@ -203,13 +201,13 @@ $upload->fh after the hook exits.
 
 =head2 instance
 
-    Apache::Request->instance($r)
+    Apache2::Request->instance($r)
 
-The default (and only) behavior of I<Apache::Request> is to intelligently
+The default (and only) behavior of I<Apache2::Request> is to intelligently
 cache B<POST> data for the duration of the request.  Thus there is no longer
-the need for a separate C<instance()> method as existed in I<Apache::Request>
+the need for a separate C<instance()> method as existed in I<Apache2::Request>
 for Apache 1.3 - all B<POST> data is always available from each and every 
-I<Apache::Request> object created during the request's lifetime.
+I<Apache2::Request> object created during the request's lifetime.
 
 However an C<instance()> method is aliased to C<new()> in this release
 to ease the pain of porting from 1.X to 2.X.
@@ -236,7 +234,7 @@ mimicing the OO interface of C<CGI::param>.
 
     # the following differ slightly from CGI.pm
 
-    # returns ref to Apache::Request::Table object representing 
+    # returns ref to APR::Request::Param::Table object representing 
     # all (args + body) params
     my $table = $req->param;
     @table_keys = keys %$table;
@@ -269,7 +267,7 @@ Observe that C<< scalar $req->param("foo") >> will not raise
 an exception if it can locate "foo" in the existing body or
 args tables, even if the query-string parser or the body parser
 has failed.  In all other circumstances C<param> will throw an
-Apache::Request::Error object into $@ should either parser fail.
+Apache2::Request::Error object into $@ should either parser fail.
 
 =for example begin
 
@@ -279,10 +277,10 @@ Apache::Request::Error object into $@ should either parser fail.
     $foo = $req->param("foo");
     ok $foo == 1;
     eval { @foo = $req->param("foo") };
-    ok $@->isa("Apache::Request::Error");
+    ok $@->isa("Apache2::Request::Error");
     undef $@;
     eval { my $not_found = $req->param("non-existent-param") };
-    ok $@->isa("Apache::Request::Error");
+    ok $@->isa("Apache2::Request::Error");
 
     $req->args_status(0); # reset query-string parser state to "success"
 
@@ -312,55 +310,13 @@ release.
 
 
 
-=head2 args
-
-    $req->args()
-    $req->args($name)
-
-Returns an I<Apache::Request::Table> object containing the query-string 
-parameters of the I<Apache::Request> object.
-
-=for example begin
-
-   my $args = $req->args;
-
-=for example end
-
-=for example_testing
-    my $n = 0;
-    while (($a, $b) = each %$args) {
-        is $a, (qw/foo bar foo/)[$n];
-        is $b, ++$n;
-    }
-
-An optional name parameter can be passed to return the query string
-parameter associated with the given name:
-
-=for example begin
-
-    my $foo_arg = $req->args("foo");
-
-=for example end
-
-=for example_testing
-    is $foo_arg, 1;
-
-More generally, C<args()> follows the same pattern as C<param()>
-with respect to its return values and argument list.  The main difference
-is that modifications to the C<< scalar $req->args() >> table affect
-the underlying apr_table_t attribute in apreq_request_t, so their impact
-will be noticed by all libapreq2 applications during this request.
-
-
-
-
 =head2 body
 
     $req->body()
     $req->body($name)
 
-Returns an I<Apache::Request::Table> object containing the POST data 
-parameters of the I<Apache::Request> object.
+Returns an I<APR::Request::Param::Table> object containing the POST data
+parameters of the I<Apache2::Request> object.
 
 =for example begin
 
@@ -399,18 +355,18 @@ will be noticed by all libapreq2 applications during this request.
     $req->upload()
     $req->upload($name)
 
-Requires C<Apache::Upload>.  With no arguments, this method
-returns an I<Apache::Upload::Table> object in scalar context, 
-or the names of all I<Apache::Upload> objects in list context.
+Requires C<Apache2::Upload>.  With no arguments, this method
+returns an I<APR::Request::Param::Table> object in scalar context, 
+or the names of all I<Apache2::Upload> objects in list context.
 
-An optional name parameter can be passed to return the I<Apache::Upload>
+An optional name parameter can be passed to return the I<Apache2::Upload>
 object associated with the given name:
 
     my $upload = $req->upload($name);
 
 More generally, C<upload()> follows the same pattern as C<param()>
 with respect to its return values and argument list.  The main difference
-is that its returned values are Apache::Upload object refs, not 
+is that its returned values are Apache2::Upload object refs, not 
 simple scalars.
 
 Note: modifications to the C<< scalar $req->upload() >> table only
@@ -477,7 +433,7 @@ C<(args_status, body_status)>.
     $req->parse()
 
 Forces the request to be parsed immediately.  In void context,
-this will throw an Apache::Request::Error should the either the
+this will throw an APR::Request::Error should the either the
 query-string or body parser fail. In all other contexts it will
 return the two parsers' combined I<APR> status code 
 
@@ -492,7 +448,7 @@ in a mod_perl content handler it is more efficient to write
 
     sub handler {
         my $r = shift;
-        my $req = Apache::Request->new($r);
+        my $req = Apache2::Request->new($r);
         $r->discard_request_body;   # efficiently parses the request body
         my $parser_status = $req->body_status;
 
@@ -501,27 +457,27 @@ in a mod_perl content handler it is more efficient to write
 
 Calling C<< $r->discard_request_body >> outside the content handler
 is generally a mistake, so use C<< $req->parse >> there, but 
-B<only as a last resort>.  The Apache::Request API is B<designed> 
+B<only as a last resort>.  The Apache2::Request API is B<designed> 
 around a lazy-parsing scheme, so calling C<parse> should not
 affect the behavior of any other methods.
 
 
 
 
-=head1 SUBCLASSING Apache::Request
+=head1 SUBCLASSING Apache2::Request
 
 If the instances of your subclass are hash references then you can actually
-inherit from Apache::Request as long as the Apache::Request object is stored in
-an attribute called "r" or "_r". (The Apache::Request class effectively does the
+inherit from Apache2::Request as long as the Apache2::Request object is stored in
+an attribute called "r" or "_r". (The Apache2::Request class effectively does the
 delegation for you automagically, as long as it knows where to find the
-Apache::Request object to delegate to.)  For example:
+Apache2::Request object to delegate to.)  For example:
 
 	package MySubClass;
-	use Apache::Request;
-	our @ISA = qw(Apache::Request);
+	use Apache2::Request;
+	our @ISA = qw(Apache2::Request);
 	sub new {
 		my($class, @args) = @_;
-		return bless { r => Apache::Request->new(@args) }, $class;
+		return bless { r => Apache2::Request->new(@args) }, $class;
 	}
 
 
@@ -530,18 +486,18 @@ Apache::Request object to delegate to.)  For example:
 =head1 PORTING from 1.X
 
 This is the complete list of changes to existing methods 
-from Apache::Request 1.X.  These issues need to be 
+from Apache2::Request 1.X.  These issues need to be 
 addressed when porting 1.X apps to the new 2.X API.
 
 
 =over 4
 
-=item * Apache::Upload is now a separate module.  Applications
-        requiring the upload API must C<use Apache::Upload> in 2.X.
+=item * Apache2::Upload is now a separate module.  Applications
+        requiring the upload API must C<use Apache2::Upload> in 2.X.
         This is easily addressed by preloading the modules during 
         server startup.
 
-=item * You must use the C<Apache::Request::Table> API via 
+=item * You must use the C<Apache2::Request::Table> API via 
         C<< scalar $req->args >> or C<< scalar $req->body >> 
         to assign new parameters to the request.  You may 
         no longer use the two-argument method calls; e.g.
@@ -576,8 +532,8 @@ addressed when porting 1.X apps to the new 2.X API.
 
 =head1 SEE ALSO
 
-L<Apache::Request::Table>, L<Apache::Request::Error>, L<Apache::Upload>,
-L<Apache::Cookie>, APR::Table(3).
+L<APR::Request::Param>, L<APR::Request::Error>, L<Apache2::Upload>,
+L<Apache2::Cookie>, APR::Table(3).
 
 
 

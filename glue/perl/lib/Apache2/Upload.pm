@@ -29,14 +29,14 @@ __END__
 
 =head1 NAME
 
-Apache::Upload - Methods for dealing with file uploads.
+Apache2::Upload - Methods for dealing with file uploads.
 
 =for testing
     use APR::Pool;
-    use Apache::Upload;
+    use Apache2::Upload;
     $r = APR::Pool->new;
-    $req = Apache::Request->new($r);
-    $u = Apache::Upload->new($r, name => "foo", file => __FILE__);
+    $req = Apache2::Request->new($r);
+    $u = Apache2::Upload->new($r, name => "foo", file => __FILE__);
     $req->body_status(0);
     $req->parse;
     $req->body->add(foo => "bar"); # dummy param with same name as upload
@@ -58,9 +58,9 @@ Apache::Upload - Methods for dealing with file uploads.
 
 =for example begin
 
-    use Apache::Upload;
+    use Apache2::Upload;
 
-    $req = Apache::Request->new($r);
+    $req = Apache2::Request->new($r);
     $upload = $req->upload("foo");
     $size = $upload->size;
 
@@ -90,21 +90,18 @@ Apache::Upload - Methods for dealing with file uploads.
 
 =head1 DESCRIPTION
 
-Apache::Upload is a new module based on the original package included
-in Apache::Request 1.X.  Users requiring the upload API must now 
-C<use Apache::Upload>, which adds the C<upload> method to Apache::Request.
-Apache::Upload is largely backwards-compatible with the original 1.X API.
+Apache2::Upload is a new module based on the original package included
+in Apache2::Request 1.X.  Users requiring the upload API must now 
+C<use Apache2::Upload>, which adds the C<upload> method to Apache2::Request.
+Apache2::Upload is largely backwards-compatible with the original 1.X API.
 See the L<PORTING from 1.X> section below for a list of known issues.
 
-This manpage documents the Apache::Upload and Apache::Upload::Brigade packages.  
-Apache::Upload::Table and Apache::Upload::Error are also provided by this module, 
-but are documented elsewhere.  For a list of related manpages, read the L<SEE ALSO> 
-section below.
+This manpage documents the Apache2::Upload package.
 
 
 
 
-=head1 Apache::Upload
+=head1 Apache2::Upload
 
 
 
@@ -151,14 +148,14 @@ which contains the full contents of the upload.
 
 Creates a tied IO handle.  This method is a more efficient version 
 of C<fh>, but with C<io> the handle ref returned is not seekable.  
-It is tied to an Apache::Upload::Brigade object, so you may use the 
+It is tied to an APR::Request::Brigade object, so you may use the 
 brigade API on the tied object if you want to manipulate the IO stream 
 (beyond simply reading from it).
 
 The returned reference is actually an object which has C<read> and 
 C<readline> methods available.  However these methods are just 
 syntactic sugar for the underlying C<READ> and C<READLINE> methods from 
-Apache::Upload::Brigade.  
+APR::Request::Brigade.  
 
 =for example begin
 
@@ -234,7 +231,7 @@ C<$table> represents.
 
     $upload->type()
 
-Returns the MIME type of the given I<Apache::Upload> object.
+Returns the MIME type of the given I<Apache2::Upload> object.
 
 =for example begin
 
@@ -317,7 +314,7 @@ Provides the name of the spool file.
 
 
 
-=head1 Apache::Upload::Brigade
+=head1 APR::Request::Brigade
 
 
 This class is derived from APR::Brigade, providing additional
@@ -332,16 +329,16 @@ read-only socket.
 
 =head2 TIEHANDLE
 
-    Apache::Upload::Brigade->TIEHANDLE($bb)
+    APR::Request::Brigade->TIEHANDLE($bb)
 
 Creates a copy of the bucket brigade represented by $bb, and
-blesses that copy into the Apache::Upload::Brigade class.  This
+blesses that copy into the APR::Request::Brigade class.  This
 provides syntactic sugar for using perl's builtin C<read>, C<readline>,
 and C<< <> >> operations on handles tied to this package:
 
     use Symbol;
     $fh = gensym;
-    tie *$fh, "Apache::Upload:Brigade", $bb;
+    tie *$fh, "APR::Request:Brigade", $bb;
     print while <$fh>;
 
 
@@ -377,7 +374,7 @@ linefeeds (the '\012' character), but we may eventually use C<$/> instead.
 =over 4
 
 =item * C<< $upload->next() >> is no longer available;  please use the 
-C<< Apache::Upload::Table >> API when iterating over upload entries.
+C<< APR::Request::Param::Table >> API when iterating over upload entries.
 
 =item * C<info($header_name)> is replaced by C<info($set)>.
 
@@ -390,7 +387,7 @@ C<< Apache::Upload::Table >> API when iterating over upload entries.
 
 =head1 SEE ALSO
 
-L<Apache::Upload::Table>, L<Apache::Upload::Error>, L<Apache::Request>,
+L<APR::Request::Param::Table>, L<APR::Request::Error>, L<Apache2::Request>,
 APR::Table(3)
 
 
