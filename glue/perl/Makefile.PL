@@ -180,6 +180,8 @@ sub copy_docs {
     my @lines;
     my $dfs = '$(DIRFILESEP)';
 
+    return; # XXX FIXME when APR::Request gets documentation
+
     foreach my $file (@_) {
         my @dirs;
         $file =~ /(\w+\.pod)$/ or next;
