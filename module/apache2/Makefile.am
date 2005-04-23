@@ -1,6 +1,6 @@
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
-mod_apreq2_la_LDFLAGS = -export-dynamic -module -avoid-version @APR_LTFLAGS@ \
-                        `@APREQ_CONFIG@ --link-libtool --libs`
+mod_apreq2_la_LDFLAGS = -export-dynamic -module -avoid-version \
+                        `@APREQ_CONFIG@ --link-libtool --libs` @APR_LTFLAGS@
 mod_apreq2_la_SOURCES = apreq_private_apache2.h handle.c filter.c
 
 pkgcfgdir = `@APACHE2_APXS@ -q SYSCONFDIR`

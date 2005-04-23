@@ -16,8 +16,8 @@ APACHE1_INCLUDES = -I`@APACHE1_APXS@ -q INCLUDEDIR`
 endif
 
 
-mod_apreq2_la_LDFLAGS = -export-dynamic -module -avoid-version @APR_LTFLAGS@ \
-                        `@APREQ_CONFIG@ --link-libtool --libs`
+mod_apreq2_la_LDFLAGS = -export-dynamic -module -avoid-version \
+                        `@APREQ_CONFIG@ --link-libtool --libs` @APR_LTFLAGS@
 mod_apreq2_la_SOURCES = apreq_private_apache.h handle.c command.c
 
 
