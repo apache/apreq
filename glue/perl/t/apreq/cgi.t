@@ -246,12 +246,10 @@ elsif ($test && $key) {
     apreq_log("Fetching cookie $key");
     if ($cookies{$key}) {
         if ($test eq "bake") {
-            $cookies{$key}->is_tainted(0);
-            $cookies{$key}->bake;
+            printf "Set-Cookie: %s\n", $cookies{$key}->as_string;
         }
         elsif ($test eq "bake2") {
-            $cookies{$key}->is_tainted(0);
-            $cookies{$key}->bake2;
+            printf "Set-Cookie2: %s\n", $cookies{$key}->as_string;
         }
         print "Content-Type: text/plain\n\n";
         print APR::Request::decode($cookies{$key}->value);

@@ -164,21 +164,6 @@ static void cgi_log_error(const char *file, int line, int level,
 
 }
 
-static apr_status_t cgi_header_out(apreq_handle_t *env, const char *name,
-                                   char *value)
-{
-    struct cgi_handle *handle = (struct cgi_handle *)env;
-    apr_pool_t *p = handle->pool;
-    apr_file_t *out;
-    int bytes;
-    apr_status_t s = apr_file_open_stdout(&out, p);
-    cgi_log_error(CGILOG_MARK, CGILOG_DEBUG, s, env, 
-                  "Setting header: %s => %s", name, value);
-    bytes = apr_file_printf(out, "%s: %s" CRLF, name, value);
-    apr_file_flush(out);
-    return bytes > 0 ? APR_SUCCESS : APREQ_ERROR_GENERAL;
-}
-
 
 APR_INLINE
 static const char *cgi_query_string(apreq_handle_t *env)

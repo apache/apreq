@@ -5,6 +5,17 @@
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
 
+- Perl API [joes]
+  Move bake, bake2 to Apache2::Cookie, now requiring
+  an extra $r argument.  Also ""-operator is mapped
+  to as_string() for Apache2::Cookie;  but APR::Request::Cookie
+  maps it to value().
+
+- C API [joes]
+  Remove header_in & header_out from apreq_module_t.
+  Remove apreq_ua_cookie_version() and apreq_cookie_bake*().
+  Remove cookie2 argument to apreq_handle_custom().
+
 - C API [joes]
   s/APREQ/APREQ2/g in webserver configuration directives.
 

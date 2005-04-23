@@ -30,6 +30,13 @@ static int dump_table(void *count, const char *key, const char *value)
     return 1;
 }
 
+#define cookie_bake(c) apr_file_printf(out, "Set-Cookie: %s\n", \
+                                          apreq_cookie_as_string(c, pool))
+
+#define cookie_bake2(c) apr_file_printf(out, "Set-Cookie2: %s\n", \
+                                          apreq_cookie_as_string(c, pool))
+
+
 int main(int argc, char const * const * argv)
 {
     apr_pool_t *pool;
@@ -57,10 +64,6 @@ int main(int argc, char const * const * argv)
 
     apr_file_open_stdout(&out, pool);
 
-//    apreq_log(APREQ_DEBUG 0, env, "%s", "Creating apreq_request");
-
-//    apreq_log(APREQ_DEBUG 0, env, "%s", "Fetching the parameters");
-
     foo = apreq_param(req, "foo");
     bar = apreq_param(req, "bar");
 
@@ -72,11 +75,9 @@ int main(int argc, char const * const * argv)
 
         if (foo) {
             apr_file_printf(out, "\t%s => %s\n", "foo", foo->v.data);
-//            apreq_log(APREQ_DEBUG 0, env, "%s => %s", "foo", foo->v.data);
         }
         if (bar) {
             apr_file_printf(out, "\t%s => %s\n", "bar", bar->v.data);
-//            apreq_log(APREQ_DEBUG 0, env, "%s => %s", "bar", bar->v.data);
         }
     }
     
@@ -85,22 +86,17 @@ int main(int argc, char const * const * argv)
         char *dest;
         apr_size_t dlen;
 
-//        apreq_log(APREQ_DEBUG 0, env, "Fetching Cookie %s", key->v.data);
         cookie = apreq_cookie(req, key->v.data);
 
         if (cookie == NULL) {
-//            apreq_log(APREQ_DEBUG APR_EGENERAL, env,
-//                      "No cookie for %s found!", key->v.data);
             exit(-1);
         }
 
         if (strcmp(test->v.data, "bake") == 0) {
-            apreq_cookie_tainted_off(cookie);
-            apreq_cookie_bake(cookie, req);
+            cookie_bake(cookie);
         }
         else if (strcmp(test->v.data, "bake2") == 0) {
-            apreq_cookie_tainted_off(cookie);
-            apreq_cookie_bake2(cookie, req);
+            cookie_bake2(cookie);
         }
 
         apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
@@ -109,9 +105,6 @@ int main(int argc, char const * const * argv)
                          cookie->v.dlen) == APR_SUCCESS)
             apr_file_printf(out, "%s", dest);
         else {
-//            apreq_log(APREQ_ERROR APR_EGENERAL, env,
-//                      "Bad cookie encoding: %s", 
-//                      cookie->v.data);
             exit(-1);
         }
     }
@@ -121,10 +114,7 @@ int main(int argc, char const * const * argv)
         int count = 0;
         apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
 
-//        apreq_log(APREQ_DEBUG 0, env, "Fetching all parameters");
-
         if (params == NULL) {
-//            apreq_log(APREQ_ERROR APR_EGENERAL, env, "No parameters found!");
             exit(-1);
         }
         apr_table_do(dump_table, &count, params, NULL);

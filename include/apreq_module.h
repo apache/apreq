@@ -89,11 +89,6 @@ typedef struct apreq_module_t {
     /** set the directory used by the parser for temporary files */
     apr_status_t (*temp_dir_set)(apreq_handle_t *, const char *);
 
-    /** get the value of a request header */
-    const char *(*header_in)(apreq_handle_t *,const char *);
-    /** send a response header */
-    apr_status_t (*header_out)(apreq_handle_t *, const char *,char *);
-
 } apreq_module_t;
 
 
@@ -257,38 +252,6 @@ apr_status_t apreq_hook_add(apreq_handle_t *req, apreq_hook_t *hook)
 
 
 /**
- * Fetch the header value (joined by ", " if there are multiple headers)
- * for a given header name.
- *
- * @param req  The request handle.
- * @param name The header name.
- *
- * @return     The value of the header, or NULL if not found.
- */
-static APR_INLINE
-const char *apreq_header_in(apreq_handle_t *req, const char *name)
-{
-    return req->module->header_in(req, name);
-}
-
-
-/**
- * Add a header field to the environment's outgoing response headers
- *
- * @param req  The request handle
- * @param name The name of the outgoing header.
- * @param val  Value of the outgoing header.
- *
- * @return     APR_SUCCESS or module-specific error code.
- */
-static APR_INLINE
-apr_status_t apreq_header_out(apreq_handle_t *req,
-                              const char *name, char *val)
-{
-    return req->module->header_out(req, name, val);
-}
-
-/**
  * Set the active brigade limit.
  *
  * @param req   The handle.
@@ -402,7 +365,7 @@ apr_status_t apreq_temp_dir_get(apreq_handle_t *req, const char **path)
   pre##_brigade_limit_get, pre##_brigade_limit_set,     \
   pre##_read_limit_get,    pre##_read_limit_set,        \
   pre##_temp_dir_get,      pre##_temp_dir_set,          \
-  pre##_header_in,         pre##_header_out }
+  }
 
 
 /**
@@ -426,7 +389,6 @@ APREQ_DECLARE(apreq_handle_t*) apreq_handle_cgi(apr_pool_t *pool);
  * @param pool         allocates the parse data,
  * @param query_string parsed into args table
  * @param cookie       value of the request "Cookie" header
- * @param cookie2      value of the request "Cookie2" header
  * @param parser       parses the request body
  * @param read_limit   maximum bytes to read from the body
  * @param in           brigade containing the request body
@@ -436,7 +398,6 @@ APREQ_DECLARE(apreq_handle_t*) apreq_handle_cgi(apr_pool_t *pool);
 APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
                                                    const char *query_string,
                                                    const char *cookie,
-                                                   const char *cookie2,
                                                    apreq_parser_t *parser,
                                                    apr_uint64_t read_limit,
                                                    apr_bucket_brigade *in);

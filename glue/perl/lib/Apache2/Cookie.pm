@@ -1,7 +1,11 @@
 package Apache2::Cookie;
+use APR::Table;
+use APR::Pool;
 use APR::Request::Cookie;
 use APR::Request::Apache2;
 use APR::Request qw/encode decode/;
+use Apache2::RequestRec;
+use overload '""' => sub { shift->as_string() }, fallback => 1;
 
 push our @ISA, "APR::Request::Cookie";
 
@@ -20,9 +24,7 @@ sub new {
         $k =~ s/^-//;
         $cookie->$k($v);
     }
-    $r = APR::Request::Apache2->new($r) unless $r->isa("APR::Request");
-    $cookie->bind_handle($r);
-    $cookie;
+    return $cookie;
 }
 
 
@@ -68,14 +70,26 @@ sub freeze {
 }
 
 sub thaw {
-    my $self = shift;
-    my @rv = split /&/, @_ ? shift : "$self";
+    my $c = shift;
+    my @rv = split /&/, @_ ? shift : $c->SUPER::value;
     return wantarray ? map decode($_), @rv : decode($rv[0]);
 }
 
 sub value {
     return shift->thaw;
 }
+
+sub bake {
+    my ($c, $r) = @_;
+    $r->err_headers_out->add("Set-Cookie", $c->as_string);
+}
+
+sub bake2 {
+    my ($c, $r) = @_;
+    die "Can't bake2 a Netscape cookie: $c" unless $c->version > 0;
+    $r->err_headers_out->add("Set-Cookie2", $c->as_string);
+}
+
 
 package Apache2::Cookie::Jar;
 use APR::Request::Apache2;

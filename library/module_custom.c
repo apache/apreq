@@ -250,40 +250,11 @@ static apr_status_t custom_temp_dir_set(apreq_handle_t *env,
 }
 
 
-
-
-static const char *custom_header_in(apreq_handle_t *env,
-                                    const char *name)
-{
-    struct custom_handle *handle = (struct custom_handle*)env;
-
-    if (strcasecmp(name, "Content-Type") == 0)
-        return handle->parser->content_type;
-    else if (strcasecmp(name, "Cookie") == 0)
-        return handle->cookie_header;
-    else if (strcasecmp(name, "Cookie2") == 0)
-        return handle->cookie2_header;
-    else
-        return NULL;
-}
-
-static apr_status_t custom_header_out(apreq_handle_t *env, const char *name,
-                                      char *value)
-{
-    (void)env;
-    (void)name;
-    (void)value;
-
-    return APR_ENOTIMPL;
-}
-
-
 static APREQ_MODULE(custom, 20050130);
 
 APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
                                                        const char *query_string,
                                                        const char *cookie,
-                                                       const char *cookie2,
                                                        apreq_parser_t *parser,
                                                        apr_uint64_t read_limit,
                                                        apr_bucket_brigade *in)
@@ -292,7 +263,6 @@ APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
     handle = apr_palloc(pool, sizeof(*handle));
     handle->env.module = &custom_module;
     handle->cookie_header = cookie;
-    handle->cookie2_header = cookie2;
     handle->read_limit = read_limit;
     handle->parser = parser;
     handle->in = in;

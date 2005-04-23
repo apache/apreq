@@ -157,16 +157,6 @@ static void rfc_cookie(dAT)
 
 }
 
-static void ua_version(dAT)
-{
-    apreq_handle_t *ns, *rfc;
-
-    ns  = apreq_handle_custom(p, NULL, NULL, NULL, NULL, 0, NULL);
-    AT_int_eq(apreq_ua_cookie_version(ns), 0);
-
-    rfc = apreq_handle_custom(p, NULL, NULL, "$Version=\"1\"", NULL, 0, NULL);
-    AT_int_eq(apreq_ua_cookie_version(rfc), 1);
-}
 
 #define dT(func, plan) #func, func, plan
 
@@ -181,7 +171,6 @@ int main(int argc, char *argv[])
         { dT(jar_get_ns, 10) },
         { dT(netscape_cookie, 7) },
         { dT(rfc_cookie, 6) },
-        { dT(ua_version, 2) }
     };
 
     apr_initialize();

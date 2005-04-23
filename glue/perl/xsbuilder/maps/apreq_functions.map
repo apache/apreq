@@ -107,8 +107,6 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
 
 MODULE=APR::Request  PACKAGE=APR::Request PREFIX=apreq_
 apreq_hook_add
-apreq_header_in
-apreq_header_out
 
 MODULE=APR::Request  PACKAGE=APR::Request PREFIX=APR__Request_
 DEFINE_parse | apreq_xs_parse |
@@ -124,8 +122,6 @@ DEFINE_param | apreq_xs_cgi_param |
 
 #################### APR::Request::Cookie stuff ####################
 MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie PREFIX=apreq_cookie_
-apreq_cookie_bake | (c, req) | apreq_cookie_t *:c, req=apreq_xs_sv2handle(aTHX_ ST(0))
-apreq_cookie_bake2| (c, req) | apreq_cookie_t *:c, req=apreq_xs_sv2handle(aTHX_ ST(0))
 apreq_cookie_expires
 
 MODULE=APR::Request::Cookie PACKAGE=APR::Request PREFIX=APR__Request_

@@ -72,12 +72,12 @@ static int apreq_cookie_test_handler(request_rec *r)
     ap_set_content_type(r, "text/plain");
 
     if (strcmp(test, "bake") == 0) {
-        apreq_cookie_tainted_off(cookie);
-        s = apreq_cookie_bake(cookie, req);
+        apr_table_add(r->headers_out, "Set-Cookie",
+                      apreq_cookie_as_string(cookie, r->pool));
     }
     else if (strcmp(test, "bake2") == 0) {
-        apreq_cookie_tainted_off(cookie);
-        s = apreq_cookie_bake2(cookie, req);
+        apr_table_add(r->headers_out, "Set-Cookie2",
+                      apreq_cookie_as_string(cookie, r->pool));
     }
     else {
         size = strlen(cookie->v.data);
@@ -86,9 +86,6 @@ static int apreq_cookie_test_handler(request_rec *r)
         if (s == APR_SUCCESS)
             ap_rprintf(r, "%s", dest);
     }
-
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, s, r, 
-                  "finished cookie tests");
 
     return OK;
 }

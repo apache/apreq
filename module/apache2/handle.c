@@ -134,20 +134,6 @@ static apreq_param_t *apache2_args_get(apreq_handle_t *env, const char *name)
 }
 
 
-static const char *apache2_header_in(apreq_handle_t *env, const char *name)
-{
-    struct apache2_handle *handle = (struct apache2_handle *)env;
-    return apr_table_get(handle->r->headers_in, name);
-}
-
-static apr_status_t apache2_header_out(apreq_handle_t *env,
-                                       const char *name, char *value)
-{
-    struct apache2_handle *handle = (struct apache2_handle *)env;
-    apr_table_add(handle->r->err_headers_out, name, value);
-    return APR_SUCCESS;
-}
-
 static apr_status_t apache2_body(apreq_handle_t *req, const apr_table_t **t)
 {
     ap_filter_t *f = get_apreq_filter(req);

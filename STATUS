@@ -77,8 +77,6 @@ TODO:
       error status should be both tested & documented.  Also
       upgrade these tests to use the Apache::Test framework.
 
-    - Fix all the "//apreq_log" comments in the cgi tests.
-
     - Add a "memory_limit" setting to apreq_parser_t and apreq_module_t, 
       which will control how much pool allocation the parser may use.
 

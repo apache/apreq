@@ -21,12 +21,10 @@ sub handler {
 
     if ($key and $cookies{$key}) {
         if ($test eq "bake") {
-            $cookies{$key}->is_tainted(0);
-            $cookies{$key}->bake;
+            $cookies{$key}->bake($r);
         }
         elsif ($test eq "bake2") {
-            $cookies{$key}->is_tainted(0);
-            $cookies{$key}->bake2;
+            $cookies{$key}->bake2($r);
         }
         $r->print($cookies{$key}->value);
     }
@@ -35,7 +33,7 @@ sub handler {
         @expires = ("expires", $req->APR::Request::args('expires'))
             if $req->APR::Request::args('expires');
         my $cookie = Apache2::Cookie->new($r, name => "foo",
-                                              value => "bar", @expires);
+                                             value => "bar", @expires);
         if ($test eq "bake") {
             $cookie->bake($req);
         }
