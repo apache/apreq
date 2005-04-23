@@ -1,7 +1,7 @@
 AM_CPPFLAGS = @APR_INCLUDES@
 SUBDIRS = apache2
 TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/TEST")
-EXTRA_DIST = t c-modules
+EXTRA_DIST = t apache
 
 noinst_PROGRAMS = test_cgi
 test_cgi_LDFLAGS =  `@APREQ_CONFIG@ --link-libtool --libs` @APR_LTFLAGS@

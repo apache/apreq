@@ -23,7 +23,7 @@ else
 PERL_TEST = 
 endif
 
-release: reconfig docs_clean docs pod2test distdir
+release: reconfig docs_clean docs distdir
 	@PERL@ build/version_check.pl > $(distdir)/PREREQUISITES
 	@PERL@ build/version_check.pl -version=@PACKAGE_VERSION@ > $(distdir)/META.yml
 	echo MANIFEST > $(distdir)/MANIFEST
@@ -41,7 +41,7 @@ release_test:
 	@echo "$(distdir).tar.gz is kosher."
 
 reconfig:
-	./buildconf
+	./buildconf --with-automake=automake-1.6 --with-aclocal=aclocal-1.6
 	./config.nice
 
 docs_clean:
