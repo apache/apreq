@@ -94,7 +94,7 @@
 
 ##########  Utility Functions  ##########
 
-MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
+#MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
 # apreq_log
 # apreq_join
 # apreq_index
@@ -106,7 +106,8 @@ MODULE=Apache::Request PACKAGE=Apache::Request::Util PREFIX=apreq_
 #################### APR::Request stuff ####################
 
 MODULE=APR::Request  PACKAGE=APR::Request PREFIX=apreq_
-apreq_hook_add
+apreq_cp1252_to_utf8
+#apreq_hook_add
 
 MODULE=APR::Request  PACKAGE=APR::Request PREFIX=APR__Request_
 DEFINE_parse | apreq_xs_parse |
