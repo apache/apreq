@@ -136,6 +136,7 @@ sub handler {
         $r->print($upload->type);
     }
     elsif ($test eq 'disable_uploads') {
+        require APR::Request::Error;
         $req->disable_uploads(1);
         eval {my $upload = $req->upload('HTTPUPLOAD')};
         if (ref $@ eq "APR::Request::Error") {
