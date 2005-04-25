@@ -1,4 +1,5 @@
 APR::Pool	T_POOLOBJ
+APR::BucketAlloc	T_PTROBJ
 APR::Request::Apache2	T_APREQ_HANDLE_APACHE2
 APR::Request::Cookie	T_APREQ_COOKIE
 APR::Request::Param::Table	T_APREQ_TABLE

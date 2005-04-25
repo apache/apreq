@@ -5,7 +5,7 @@
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
 
-- C API [joes]
+- C, Perl API [joes]
   Add pool, bucket_alloc to apreq_handle_t.
 
 - Perl API [joes]

@@ -186,14 +186,14 @@ body_status(req)
     RETVAL
 
 SV*
-disable_uploads(req, pool)
+disable_uploads(req)
     APR::Request req
     APR::Pool pool
   PREINIT:
     apreq_hook_t *h;
     apr_status_t s;
   CODE:
-    h = apreq_hook_make(pool, apreq_hook_disable_uploads, NULL, NULL);
+    h = apreq_hook_make(req->pool, apreq_hook_disable_uploads, NULL, NULL);
     s = apreq_hook_add(req, h);
     RETVAL = apreq_xs_error2sv(aTHX_ s);
 
@@ -201,9 +201,8 @@ disable_uploads(req, pool)
     RETVAL
 
 void
-upload_hook(obj, pool, sub)
+upload_hook(obj, sub)
     SV *obj
-    APR::Pool pool
     SV *sub
   PREINIT:
     struct hook_ctx *ctx;
@@ -211,7 +210,9 @@ upload_hook(obj, pool, sub)
     apreq_handle_t *req;
   CODE:
     obj = apreq_xs_sv2object(aTHX_ obj, "APR::Request", 'r');
-    ctx = apr_palloc(pool, sizeof *ctx);
+    iv = SvIVX(obj);
+    req = INT2PTR(apreq_handle_t *, iv);
+    ctx = apr_palloc(req->pool, sizeof *ctx);
     ctx->hook = newSVsv(sub);
     ctx->bucket_data = newSV(8000);
     ctx->parent = SvREFCNT_inc(obj);
@@ -220,10 +221,21 @@ upload_hook(obj, pool, sub)
     ctx->perl = aTHX;
 #endif
 
-    iv = SvIVX(obj);
-    req = INT2PTR(apreq_handle_t *, iv);
-    apreq_hook_add(req, apreq_hook_make(pool, apreq_xs_upload_hook, NULL, ctx));
-    apr_pool_cleanup_register(pool, ctx, upload_hook_cleanup, NULL);
+    apreq_hook_add(req, apreq_hook_make(req->pool, apreq_xs_upload_hook, NULL, ctx));
+    apr_pool_cleanup_register(req->pool, ctx, upload_hook_cleanup, NULL);
+
+
+APR::Pool
+pool(req)
+    APR::Request req
+  CODE:
+    RETVAL = req->pool;
+
+APR::BucketAlloc
+bucket_alloc(req)
+    APR::Request req
+  CODE:
+    RETVAL = req->bucket_alloc;
 
 BOOT:
     {
