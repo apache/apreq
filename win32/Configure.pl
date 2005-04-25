@@ -52,9 +52,19 @@ foreach (qw(apr apu)) {
     }
 }
 
+my $version_check = catfile $apreq_home, 'build', 'version_check.pl';
+my $cmd = join ' ', ($^X, $version_check, 'perl_prereqs');
+chomp(my $prereq_string = qx{$cmd});
+
 open(my $make, '>Makefile') or die qq{Cannot open Makefile: $!};
 print $make <<"END";
 # Microsoft Developer Studio Generated NMAKE File.
+#   The following is a trick to get CPAN clients to follow prerequisites:
+#
+#    $prereq_string
+#
+
+# --- MakeMaker post_initialize section:
 
 APREQ_HOME=$apreq_home
 APR_LIB=$apr_libs{apr}
