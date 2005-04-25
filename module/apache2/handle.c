@@ -31,76 +31,76 @@
 
 
 APR_INLINE
-static ap_filter_t *get_apreq_filter(apreq_handle_t *env)
+static ap_filter_t *get_apreq_filter(apreq_handle_t *handle)
 {
-    struct apache2_handle *handle = (struct apache2_handle *)env;
+    struct apache2_handle *req = (struct apache2_handle *)handle;
 
-    if (handle->f == NULL) {
-        handle->f = ap_add_input_filter(APREQ_FILTER_NAME, NULL, 
-                                        handle->r, 
-                                        handle->r->connection);
+    if (req->f == NULL) {
+        req->f = ap_add_input_filter(APREQ_FILTER_NAME, NULL, 
+                                     req->r, 
+                                     req->r->connection);
         /* ap_add_input_filter does not guarantee cfg->f == r->input_filters,
          * so we reposition the new filter there as necessary.
          */
-        apreq_filter_relocate(handle->f); 
+        apreq_filter_relocate(req->f); 
     }
 
-    return handle->f;
+    return req->f;
 }
 
 
-static apr_status_t apache2_jar(apreq_handle_t *env, const apr_table_t **t)
+static apr_status_t apache2_jar(apreq_handle_t *handle, const apr_table_t **t)
 {
-    struct apache2_handle *handle = (struct apache2_handle*)env;
-    request_rec *r = handle->r;
+    struct apache2_handle *req = (struct apache2_handle*)handle;
+    request_rec *r = req->r;
 
-    if (handle->jar_status == APR_EINIT) {
+    if (req->jar_status == APR_EINIT) {
         const char *cookies = apr_table_get(r->headers_in, "Cookie");
         if (cookies != NULL) {
-            handle->jar = apr_table_make(handle->r->pool, APREQ_DEFAULT_NELTS);
-            handle->jar_status = 
-                apreq_parse_cookie_header(r->pool, handle->jar, cookies);
+            req->jar = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
+            req->jar_status = 
+                apreq_parse_cookie_header(handle->pool, req->jar, cookies);
         }
         else
-            handle->jar_status = APREQ_ERROR_NODATA;
+            req->jar_status = APREQ_ERROR_NODATA;
     }
 
-    *t = handle->jar;
-    return handle->jar_status;
+    *t = req->jar;
+    return req->jar_status;
 }
 
-static apr_status_t apache2_args(apreq_handle_t *env, const apr_table_t **t)
+static apr_status_t apache2_args(apreq_handle_t *handle, const apr_table_t **t)
 {
-    struct apache2_handle *handle = (struct apache2_handle*)env;
-    request_rec *r = handle->r;
+    struct apache2_handle *req = (struct apache2_handle*)handle;
+    request_rec *r = req->r;
 
-    if (handle->args_status == APR_EINIT) {
+    if (req->args_status == APR_EINIT) {
         if (r->args != NULL) {
-            handle->args = apr_table_make(handle->r->pool, APREQ_DEFAULT_NELTS);
-            handle->args_status = 
-                apreq_parse_query_string(r->pool, handle->args, r->args);
+            req->args = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
+            req->args_status = 
+                apreq_parse_query_string(handle->pool, req->args, r->args);
         }
         else
-            handle->args_status = APREQ_ERROR_NODATA;
+            req->args_status = APREQ_ERROR_NODATA;
     }
 
-    *t = handle->args;
-    return handle->args_status;
+    *t = req->args;
+    return req->args_status;
 }
 
 
 
 
-static apreq_cookie_t *apache2_jar_get(apreq_handle_t *env, const char *name)
+static apreq_cookie_t *apache2_jar_get(apreq_handle_t *handle, const char *name)
 {
-    struct apache2_handle *handle = (struct apache2_handle *)env;
+    struct apache2_handle *req = (struct apache2_handle *)handle;
     const apr_table_t *t;
     const char *val;
 
-    if (handle->jar_status == APR_EINIT)
-        apache2_jar(env, &t);
+    if (req->jar_status == APR_EINIT)
+        apache2_jar(handle, &t);
     else
-        t = handle->jar;
+        t = req->jar;
 
     if (t == NULL)
         return NULL;
@@ -112,16 +112,16 @@ static apreq_cookie_t *apache2_jar_get(apreq_handle_t *env, const char *name)
     return apreq_value_to_cookie(val);
 }
 
-static apreq_param_t *apache2_args_get(apreq_handle_t *env, const char *name)
+static apreq_param_t *apache2_args_get(apreq_handle_t *handle, const char *name)
 {
-    struct apache2_handle *handle = (struct apache2_handle *)env;
+    struct apache2_handle *req = (struct apache2_handle *)handle;
     const apr_table_t *t;
     const char *val;
 
-    if (handle->args_status == APR_EINIT)
-        apache2_args(env, &t);
+    if (req->args_status == APR_EINIT)
+        apache2_args(handle, &t);
     else
-        t = handle->args;
+        t = req->args;
 
     if (t == NULL)
         return NULL;
@@ -134,9 +134,9 @@ static apreq_param_t *apache2_args_get(apreq_handle_t *env, const char *name)
 }
 
 
-static apr_status_t apache2_body(apreq_handle_t *req, const apr_table_t **t)
+static apr_status_t apache2_body(apreq_handle_t *handle, const apr_table_t **t)
 {
-    ap_filter_t *f = get_apreq_filter(req);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)
@@ -160,9 +160,9 @@ static apr_status_t apache2_body(apreq_handle_t *req, const apr_table_t **t)
     return ctx->body_status;
 }
 
-static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
+static apreq_param_t *apache2_body_get(apreq_handle_t *handle, const char *name)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
     const char *val;
     apreq_hook_t *h;
@@ -200,7 +200,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
            param while prefetching the body */
 
         if (ctx->find_param == NULL)
-            ctx->find_param = apreq_hook_make(f->r->pool, 
+            ctx->find_param = apreq_hook_make(handle->pool, 
                                               apreq_hook_find_param, 
                                               NULL, NULL);
         h = ctx->find_param;
@@ -237,10 +237,10 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *env, const char *name)
 }
 
 static
-apr_status_t apache2_parser_get(apreq_handle_t *env, 
+apr_status_t apache2_parser_get(apreq_handle_t *handle, 
                                   const apreq_parser_t **parser)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx = f->ctx;
 
     if (ctx == NULL) {
@@ -252,10 +252,10 @@ apr_status_t apache2_parser_get(apreq_handle_t *env,
 }
 
 static
-apr_status_t apache2_parser_set(apreq_handle_t *env, 
+apr_status_t apache2_parser_set(apreq_handle_t *handle, 
                                 apreq_parser_t *parser)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)
@@ -274,10 +274,10 @@ apr_status_t apache2_parser_set(apreq_handle_t *env,
 
 
 static
-apr_status_t apache2_hook_add(apreq_handle_t *env,
+apr_status_t apache2_hook_add(apreq_handle_t *handle,
                               apreq_hook_t *hook)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)
@@ -302,10 +302,10 @@ apr_status_t apache2_hook_add(apreq_handle_t *env,
 }
 
 static
-apr_status_t apache2_brigade_limit_set(apreq_handle_t *env,
+apr_status_t apache2_brigade_limit_set(apreq_handle_t *handle,
                                        apr_size_t bytes)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)
@@ -322,10 +322,10 @@ apr_status_t apache2_brigade_limit_set(apreq_handle_t *env,
 }
 
 static
-apr_status_t apache2_brigade_limit_get(apreq_handle_t *env,
+apr_status_t apache2_brigade_limit_get(apreq_handle_t *handle,
                                        apr_size_t *bytes)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)
@@ -337,10 +337,10 @@ apr_status_t apache2_brigade_limit_get(apreq_handle_t *env,
 }
 
 static
-apr_status_t apache2_read_limit_set(apreq_handle_t *env,
+apr_status_t apache2_read_limit_set(apreq_handle_t *handle,
                                     apr_uint64_t bytes)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)
@@ -357,10 +357,10 @@ apr_status_t apache2_read_limit_set(apreq_handle_t *env,
 }
 
 static
-apr_status_t apache2_read_limit_get(apreq_handle_t *env,
+apr_status_t apache2_read_limit_get(apreq_handle_t *handle,
                                     apr_uint64_t *bytes)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)
@@ -372,10 +372,10 @@ apr_status_t apache2_read_limit_get(apreq_handle_t *env,
 }
 
 static
-apr_status_t apache2_temp_dir_set(apreq_handle_t *env,
+apr_status_t apache2_temp_dir_set(apreq_handle_t *handle,
                                   const char *path)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)
@@ -385,7 +385,7 @@ apr_status_t apache2_temp_dir_set(apreq_handle_t *env,
     // init vs incomplete state?
     if (ctx->temp_dir == NULL && ctx->bytes_read == 0) {
         if (path != NULL)
-            ctx->temp_dir = apr_pstrdup(f->r->pool, path);
+            ctx->temp_dir = apr_pstrdup(handle->pool, path);
         return APR_SUCCESS;
     }
 
@@ -393,10 +393,10 @@ apr_status_t apache2_temp_dir_set(apreq_handle_t *env,
 }
 
 static
-apr_status_t apache2_temp_dir_get(apreq_handle_t *env,
+apr_status_t apache2_temp_dir_get(apreq_handle_t *handle,
                                   const char **path)
 {
-    ap_filter_t *f = get_apreq_filter(env);
+    ap_filter_t *f = get_apreq_filter(handle);
     struct filter_ctx *ctx;
 
     if (f->ctx == NULL)
@@ -407,30 +407,32 @@ apr_status_t apache2_temp_dir_get(apreq_handle_t *env,
     return APR_SUCCESS;
 }
 
-static APREQ_MODULE(apache2, 20050315);
+static APREQ_MODULE(apache2, 20050425);
 
 APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r)
 {
-    struct apache2_handle *handle =
+    struct apache2_handle *req =
         ap_get_module_config(r->request_config, &apreq_module);
 
-    if (handle != NULL) {
-        get_apreq_filter(&handle->env);
-        return &handle->env;
+    if (req != NULL) {
+        get_apreq_filter(&req->handle);
+        return &req->handle;
     }
 
-    handle = apr_palloc(r->pool, sizeof *handle);
-    ap_set_module_config(r->request_config, &apreq_module, handle);
+    req = apr_palloc(r->pool, sizeof *req);
+    ap_set_module_config(r->request_config, &apreq_module, req);
 
-    handle->env.module = &apache2_module;
-    handle->r = r;
+    req->handle.module = &apache2_module;
+    req->handle.pool = r->pool;
+    req->handle.bucket_alloc = r->connection->bucket_alloc;
+    req->r = r;
 
-    handle->args_status = handle->jar_status = APR_EINIT;
-    handle->args = handle->jar = NULL;
+    req->args_status = req->jar_status = APR_EINIT;
+    req->args = req->jar = NULL;
 
-    handle->f = NULL;
+    req->f = NULL;
 
-    get_apreq_filter(&handle->env);
-    return &handle->env;
+    get_apreq_filter(&req->handle);
+    return &req->handle;
 
 }

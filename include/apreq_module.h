@@ -40,6 +40,11 @@
 typedef struct apreq_handle_t {
     /** the apreq module which implements this handle */
     const struct apreq_module_t *module;
+    /** the pool which defines the lifetime of the parsed data */
+    apr_pool_t *pool;
+    /** the allocator, which persists at least as long as the pool */
+    apr_bucket_alloc_t *bucket_alloc;
+
 } apreq_handle_t;
 
 /**

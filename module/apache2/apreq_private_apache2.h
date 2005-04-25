@@ -9,7 +9,7 @@ struct dir_config {
 
 /* The "warehouse", stored in r->request_config */
 struct apache2_handle {
-    apreq_handle_t      env;
+    apreq_handle_t      handle;
     request_rec        *r;
     apr_table_t        *jar, *args;
     apr_status_t        jar_status, args_status;

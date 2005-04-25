@@ -5,6 +5,9 @@
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
 
+- C API [joes]
+  Add pool, bucket_alloc to apreq_handle_t.
+
 - Perl API [joes]
   Drop $data argument from UPLOAD_HOOK, and also drop HOOK_DATA option.
   Perl folks should use a closure instead of passing in context data.

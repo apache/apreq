@@ -42,10 +42,7 @@
 
 
 struct cgi_handle {
-    struct apreq_handle_t    env;
-
-    apr_pool_t                  *pool;
-    apr_bucket_alloc_t          *bucket_alloc;
+    struct apreq_handle_t       handle;
 
     apr_table_t                 *jar, *args, *body;
     apr_status_t                 jar_status,
@@ -85,10 +82,9 @@ static const TRANS priorities[] = {
     {NULL,      -1},
 };
  
-static const char *cgi_header_in(apreq_handle_t *env,
+static const char *cgi_header_in(apreq_handle_t *handle,
                                  const char *name)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
     apr_pool_t *p = handle->pool;
     char *key = apr_pstrcat(p, "HTTP_", name, NULL);
     char *k, *value = NULL;
@@ -114,10 +110,9 @@ static const char *cgi_header_in(apreq_handle_t *env,
 
 
 static void cgi_log_error(const char *file, int line, int level,
-                          apr_status_t status, apreq_handle_t *env,
+                          apr_status_t status, apreq_handle_t *handle,
                           const char *fmt, ...)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
     apr_pool_t *p = handle->pool;
     char buf[256];
     char *log_level_string, *ra;
@@ -166,221 +161,220 @@ static void cgi_log_error(const char *file, int line, int level,
 
 
 APR_INLINE
-static const char *cgi_query_string(apreq_handle_t *env)
+static const char *cgi_query_string(apreq_handle_t *handle)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
     char *value = NULL, qs[] = "QUERY_STRING";
     apr_env_get(&value, qs, handle->pool);
     return value;
 }
 
 
-static void init_body(apreq_handle_t *env)
+static void init_body(apreq_handle_t *handle)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
-    const char *cl_header = cgi_header_in(env, "Content-Length");
+    struct cgi_handle *req = (struct cgi_handle *)handle;
+    const char *cl_header = cgi_header_in(handle, "Content-Length");
     apr_bucket_alloc_t *ba = handle->bucket_alloc;
     apr_pool_t *pool = handle->pool;
     apr_file_t *file;
     apr_bucket *eos, *pipe;
 
-    handle->body  = apr_table_make(pool, APREQ_DEFAULT_NELTS);
+    req->body  = apr_table_make(pool, APREQ_DEFAULT_NELTS);
 
     if (cl_header != NULL) {
         char *dummy;
         apr_int64_t content_length = apr_strtoi64(cl_header, &dummy, 0);
 
         if (dummy == NULL || *dummy != 0) {
-            handle->body_status = APREQ_ERROR_BADHEADER;
-            cgi_log_error(CGILOG_MARK, CGILOG_ERR, handle->body_status, env,
+            req->body_status = APREQ_ERROR_BADHEADER;
+            cgi_log_error(CGILOG_MARK, CGILOG_ERR, req->body_status, handle,
                           "Invalid Content-Length header (%s)", cl_header);
             return;
         }
-        else if ((apr_uint64_t)content_length > handle->read_limit) {
-            handle->body_status = APREQ_ERROR_OVERLIMIT;
-            cgi_log_error(CGILOG_MARK, CGILOG_ERR, handle->body_status, env,
+        else if ((apr_uint64_t)content_length > req->read_limit) {
+            req->body_status = APREQ_ERROR_OVERLIMIT;
+            cgi_log_error(CGILOG_MARK, CGILOG_ERR, req->body_status, handle,
                           "Content-Length header (%s) exceeds configured "
                           "max_body limit (%" APR_UINT64_T_FMT ")", 
-                          cl_header, handle->read_limit);
+                          cl_header, req->read_limit);
             return;
         }
     }
 
-    if (handle->parser == NULL) {
-        const char *ct_header = cgi_header_in(env, "Content-Type");
+    if (req->parser == NULL) {
+        const char *ct_header = cgi_header_in(handle, "Content-Type");
 
         if (ct_header != NULL) {
             apreq_parser_function_t pf = apreq_parser(ct_header);
 
             if (pf != NULL) {
-                handle->parser = apreq_parser_make(handle->pool,
-                                                   ba,
-                                                   ct_header, 
-                                                   pf,
-                                                   handle->brigade_limit,
-                                                   handle->temp_dir,
-                                                   handle->hook_queue,
-                                                   NULL);
+                req->parser = apreq_parser_make(pool,
+                                                ba,
+                                                ct_header, 
+                                                pf,
+                                                req->brigade_limit,
+                                                req->temp_dir,
+                                                req->hook_queue,
+                                                NULL);
             }
             else {
-                handle->body_status = APREQ_ERROR_NOPARSER;
+                req->body_status = APREQ_ERROR_NOPARSER;
                 return;
             }
         }
         else {
-            handle->body_status = APREQ_ERROR_NOHEADER;
+            req->body_status = APREQ_ERROR_NOHEADER;
             return;
         }
     }
     else {
-        if (handle->parser->brigade_limit > handle->brigade_limit)
-            handle->parser->brigade_limit = handle->brigade_limit;
-        if (handle->temp_dir != NULL)
-            handle->parser->temp_dir = handle->temp_dir;
-        if (handle->hook_queue != NULL)
-            apreq_parser_add_hook(handle->parser, handle->hook_queue);
+        if (req->parser->brigade_limit > req->brigade_limit)
+            req->parser->brigade_limit = req->brigade_limit;
+        if (req->temp_dir != NULL)
+            req->parser->temp_dir = req->temp_dir;
+        if (req->hook_queue != NULL)
+            apreq_parser_add_hook(req->parser, req->hook_queue);
     }
 
-    handle->hook_queue = NULL;
-    handle->in         = apr_brigade_create(pool, ba);
-    handle->tmpbb      = apr_brigade_create(pool, ba);
+    req->hook_queue = NULL;
+    req->in         = apr_brigade_create(pool, ba);
+    req->tmpbb      = apr_brigade_create(pool, ba);
 
     apr_file_open_stdin(&file, pool); // error status?    
     pipe = apr_bucket_pipe_create(file, ba);
     eos = apr_bucket_eos_create(ba);
-    APR_BRIGADE_INSERT_HEAD(handle->in, pipe);
-    APR_BRIGADE_INSERT_TAIL(handle->in, eos);
+    APR_BRIGADE_INSERT_HEAD(req->in, pipe);
+    APR_BRIGADE_INSERT_TAIL(req->in, eos);
 
-    handle->body_status = APR_INCOMPLETE;
+    req->body_status = APR_INCOMPLETE;
 
 }
 
-static apr_status_t cgi_read(apreq_handle_t *env,
+static apr_status_t cgi_read(apreq_handle_t *handle,
                              apr_off_t bytes)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
     apr_bucket *e;
     apr_status_t s;
 
-    if (handle->body_status == APR_EINIT)
-        init_body(env);
+    if (req->body_status == APR_EINIT)
+        init_body(handle);
 
-    if (handle->body_status != APR_INCOMPLETE)
-        return handle->body_status;
+    if (req->body_status != APR_INCOMPLETE)
+        return req->body_status;
 
 
-    switch (s = apr_brigade_partition(handle->in, bytes, &e)) {
+    switch (s = apr_brigade_partition(req->in, bytes, &e)) {
         apr_off_t len;
 
     case APR_SUCCESS:
 
-        apreq_brigade_move(handle->tmpbb, handle->in, e);
-        handle->bytes_read += bytes;
+        apreq_brigade_move(req->tmpbb, req->in, e);
+        req->bytes_read += bytes;
 
-        if (handle->bytes_read > handle->read_limit) {
-            handle->body_status = APREQ_ERROR_OVERLIMIT;
-            cgi_log_error(CGILOG_MARK, CGILOG_ERR, handle->body_status,
-                          env, "Bytes read (%" APR_UINT64_T_FMT
+        if (req->bytes_read > req->read_limit) {
+            req->body_status = APREQ_ERROR_OVERLIMIT;
+            cgi_log_error(CGILOG_MARK, CGILOG_ERR, req->body_status,
+                          handle, "Bytes read (%" APR_UINT64_T_FMT
                           ") exceeds configured limit (%" APR_UINT64_T_FMT ")",
-                          handle->bytes_read, handle->read_limit);
+                          req->bytes_read, req->read_limit);
             break;
         }
 
-        handle->body_status =
-            apreq_parser_run(handle->parser, handle->body, handle->tmpbb);
-        apr_brigade_cleanup(handle->tmpbb);
+        req->body_status =
+            apreq_parser_run(req->parser, req->body, req->tmpbb);
+        apr_brigade_cleanup(req->tmpbb);
         break;
 
 
     case APR_INCOMPLETE:
 
-        apreq_brigade_move(handle->tmpbb, handle->in, e);
-        s = apr_brigade_length(handle->tmpbb, 1, &len);
+        apreq_brigade_move(req->tmpbb, req->in, e);
+        s = apr_brigade_length(req->tmpbb, 1, &len);
 
         if (s != APR_SUCCESS) {
-            handle->body_status = s;
+            req->body_status = s;
             break;
         }
-        handle->bytes_read += len;
+        req->bytes_read += len;
 
-        if (handle->bytes_read > handle->read_limit) {
-            handle->body_status = APREQ_ERROR_OVERLIMIT;
-            cgi_log_error(CGILOG_MARK, CGILOG_ERR, handle->body_status, env,
+        if (req->bytes_read > req->read_limit) {
+            req->body_status = APREQ_ERROR_OVERLIMIT;
+            cgi_log_error(CGILOG_MARK, CGILOG_ERR, req->body_status, handle,
                           "Bytes read (%" APR_UINT64_T_FMT
                           ") exceeds configured limit (%" APR_UINT64_T_FMT ")",
-                          handle->bytes_read, handle->read_limit);
+                          req->bytes_read, req->read_limit);
             
             break;
         }
 
-        handle->body_status =
-            apreq_parser_run(handle->parser, handle->body, handle->tmpbb);
-        apr_brigade_cleanup(handle->tmpbb);
+        req->body_status =
+            apreq_parser_run(req->parser, req->body, req->tmpbb);
+        apr_brigade_cleanup(req->tmpbb);
         break;
 
     default:
-        handle->body_status = s;
+        req->body_status = s;
     }
 
-    return handle->body_status;
+    return req->body_status;
 }
 
 
 
-static apr_status_t cgi_jar(apreq_handle_t *env,
+static apr_status_t cgi_jar(apreq_handle_t *handle,
                             const apr_table_t **t)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
 
-    if (handle->jar_status == APR_EINIT) {
-        const char *cookies = cgi_header_in(env, "Cookie");
+    if (req->jar_status == APR_EINIT) {
+        const char *cookies = cgi_header_in(handle, "Cookie");
         if (cookies != NULL) {
-            handle->jar = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
-            handle->jar_status = 
-                apreq_parse_cookie_header(handle->pool, handle->jar, cookies);
+            req->jar = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
+            req->jar_status = 
+                apreq_parse_cookie_header(handle->pool, req->jar, cookies);
         }
         else
-            handle->jar_status = APREQ_ERROR_NODATA;
+            req->jar_status = APREQ_ERROR_NODATA;
     }
 
-    *t = handle->jar;
-    return handle->jar_status;
+    *t = req->jar;
+    return req->jar_status;
 }
 
-static apr_status_t cgi_args(apreq_handle_t *env,
+static apr_status_t cgi_args(apreq_handle_t *handle,
                              const apr_table_t **t)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
 
-    if (handle->args_status == APR_EINIT) {
-        const char *query_string = cgi_query_string(env);
-        if (query_string != NULL) {
-            handle->args = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
-            handle->args_status = 
-                apreq_parse_query_string(handle->pool, handle->args, query_string);
+    if (req->args_status == APR_EINIT) {
+        const char *qs = cgi_query_string(handle);
+        if (qs != NULL) {
+            req->args = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
+            req->args_status = 
+                apreq_parse_query_string(handle->pool, req->args, qs);
         }
         else
-            handle->args_status = APREQ_ERROR_NODATA;
+            req->args_status = APREQ_ERROR_NODATA;
     }
 
-    *t = handle->args;
-    return handle->args_status;
+    *t = req->args;
+    return req->args_status;
 }
 
 
 
 
-static apreq_cookie_t *cgi_jar_get(apreq_handle_t *env,
+static apreq_cookie_t *cgi_jar_get(apreq_handle_t *handle,
                                    const char *name)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
     const apr_table_t *t;
     const char *val;
 
-    if (handle->jar_status == APR_EINIT)
-        cgi_jar(env, &t);
+    if (req->jar_status == APR_EINIT)
+        cgi_jar(handle, &t);
     else
-        t = handle->jar;
+        t = req->jar;
 
     if (t == NULL)
         return NULL;
@@ -392,17 +386,17 @@ static apreq_cookie_t *cgi_jar_get(apreq_handle_t *env,
     return apreq_value_to_cookie(val);
 }
 
-static apreq_param_t *cgi_args_get(apreq_handle_t *env,
+static apreq_param_t *cgi_args_get(apreq_handle_t *handle,
                                    const char *name)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
     const apr_table_t *t;
     const char *val;
 
-    if (handle->args_status == APR_EINIT)
-        cgi_args(env, &t);
+    if (req->args_status == APR_EINIT)
+        cgi_args(handle, &t);
     else
-        t = handle->args;
+        t = req->args;
 
     if (t == NULL)
         return NULL;
@@ -416,39 +410,40 @@ static apreq_param_t *cgi_args_get(apreq_handle_t *env,
 
 
 
-static apr_status_t cgi_body(apreq_handle_t *env,
+static apr_status_t cgi_body(apreq_handle_t *handle,
                              const apr_table_t **t)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
 
-    switch (handle->body_status) {
+    switch (req->body_status) {
 
     case APR_EINIT:
-        init_body(env);
-        if (handle->body_status != APR_INCOMPLETE)
+        init_body(handle);
+        if (req->body_status != APR_INCOMPLETE)
             break;
 
     case APR_INCOMPLETE:
-        while (cgi_read(env, APREQ_DEFAULT_READ_BLOCK_SIZE) == APR_INCOMPLETE)
+        while (cgi_read(handle, APREQ_DEFAULT_READ_BLOCK_SIZE)
+               == APR_INCOMPLETE)
             ;   /*loop*/
     }
 
-    *t = handle->body;
-    return handle->body_status;
+    *t = req->body;
+    return req->body_status;
 }
 
-static apreq_param_t *cgi_body_get(apreq_handle_t *env, 
+static apreq_param_t *cgi_body_get(apreq_handle_t *handle, 
                                    const char *name)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
     const char *val;
     apreq_hook_t *h;
 
-    switch (handle->body_status) {
+    switch (req->body_status) {
 
     case APR_SUCCESS:
 
-        val = apr_table_get(handle->body, name);
+        val = apr_table_get(req->body, name);
         if (val != NULL)
             return apreq_value_to_param(val);
         return NULL;
@@ -456,48 +451,48 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *env,
 
     case APR_EINIT:
 
-        init_body(env);
-        if (handle->body_status != APR_INCOMPLETE)
+        init_body(handle);
+        if (req->body_status != APR_INCOMPLETE)
             return NULL;
-        cgi_read(env, APREQ_DEFAULT_READ_BLOCK_SIZE);
+        cgi_read(handle, APREQ_DEFAULT_READ_BLOCK_SIZE);
 
 
     case APR_INCOMPLETE:
 
-        val = apr_table_get(handle->body, name);
+        val = apr_table_get(req->body, name);
         if (val != NULL)
             return apreq_value_to_param(val);
 
         /* Not seen yet, so we need to scan for 
            param while prefetching the body */
 
-        if (handle->find_param == NULL)
-            handle->find_param = apreq_hook_make(handle->pool, 
-                                                 apreq_hook_find_param, 
-                                                 NULL, NULL);
-        h = handle->find_param;
-        h->next = handle->parser->hook;
-        handle->parser->hook = h;
+        if (req->find_param == NULL)
+            req->find_param = apreq_hook_make(handle->pool, 
+                                              apreq_hook_find_param, 
+                                              NULL, NULL);
+        h = req->find_param;
+        h->next = req->parser->hook;
+        req->parser->hook = h;
         *(const char **)&h->ctx = name;
 
         do {
-            cgi_read(env, APREQ_DEFAULT_READ_BLOCK_SIZE);
+            cgi_read(handle, APREQ_DEFAULT_READ_BLOCK_SIZE);
             if (h->ctx != name) {
-                handle->parser->hook = h->next;
+                req->parser->hook = h->next;
                 return h->ctx;
             }
-        } while (handle->body_status == APR_INCOMPLETE);
+        } while (req->body_status == APR_INCOMPLETE);
 
-        handle->parser->hook = h->next;
+        req->parser->hook = h->next;
         return NULL;
 
 
     default:
 
-        if (handle->body == NULL)
+        if (req->body == NULL)
             return NULL;
 
-        val = apr_table_get(handle->body, name);
+        val = apr_table_get(req->body, name);
         if (val != NULL)
             return apreq_value_to_param(val);
         return NULL;
@@ -507,36 +502,36 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *env,
     return NULL;
 }
 
-static apr_status_t cgi_parser_get(apreq_handle_t *env, 
+static apr_status_t cgi_parser_get(apreq_handle_t *handle, 
                                    const apreq_parser_t **parser)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
 
-    *parser = handle->parser;
+    *parser = req->parser;
     return APR_SUCCESS;
 }
 
-static apr_status_t cgi_parser_set(apreq_handle_t *env, 
+static apr_status_t cgi_parser_set(apreq_handle_t *handle, 
                                    apreq_parser_t *parser)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
 
-    if (handle->parser == NULL) {
+    if (req->parser == NULL) {
 
-        if (handle->hook_queue != NULL) {
-            apr_status_t s = apreq_parser_add_hook(parser, handle->hook_queue);
+        if (req->hook_queue != NULL) {
+            apr_status_t s = apreq_parser_add_hook(parser, req->hook_queue);
             if (s != APR_SUCCESS)
                 return s;
         }
-        if (handle->temp_dir != NULL) {
-            parser->temp_dir = handle->temp_dir;
+        if (req->temp_dir != NULL) {
+            parser->temp_dir = req->temp_dir;
         }
-        if (handle->brigade_limit < parser->brigade_limit) {
-            parser->brigade_limit = handle->brigade_limit;
+        if (req->brigade_limit < parser->brigade_limit) {
+            parser->brigade_limit = req->brigade_limit;
         }
 
-        handle->hook_queue = NULL;
-        handle->parser = parser;
+        req->hook_queue = NULL;
+        req->parser = parser;
         return APR_SUCCESS;
     }
     else
@@ -544,34 +539,34 @@ static apr_status_t cgi_parser_set(apreq_handle_t *env,
 }
 
 
-static apr_status_t cgi_hook_add(apreq_handle_t *env,
+static apr_status_t cgi_hook_add(apreq_handle_t *handle,
                                      apreq_hook_t *hook)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
 
-    if (handle->parser != NULL) {
-        return apreq_parser_add_hook(handle->parser, hook);
+    if (req->parser != NULL) {
+        return apreq_parser_add_hook(req->parser, hook);
     }
-    else if (handle->hook_queue != NULL) {
-        apreq_hook_t *h = handle->hook_queue;
+    else if (req->hook_queue != NULL) {
+        apreq_hook_t *h = req->hook_queue;
         while (h->next != NULL)
             h = h->next;
         h->next = hook;
     }
     else {
-        handle->hook_queue = hook;
+        req->hook_queue = hook;
     }
     return APR_SUCCESS;
 
 }
 
-static apr_status_t cgi_brigade_limit_set(apreq_handle_t *env,
+static apr_status_t cgi_brigade_limit_set(apreq_handle_t *handle,
                                           apr_size_t bytes)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
-    apr_size_t *limit = (handle->parser == NULL) 
-                      ? &handle->brigade_limit 
-                      : &handle->parser->brigade_limit;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
+    apr_size_t *limit = (req->parser == NULL) 
+                      ? &req->brigade_limit 
+                      : &req->parser->brigade_limit;
 
     if (*limit > bytes) {
         *limit = bytes;
@@ -581,24 +576,24 @@ static apr_status_t cgi_brigade_limit_set(apreq_handle_t *env,
     return APREQ_ERROR_MISMATCH;
 }
 
-static apr_status_t cgi_brigade_limit_get(apreq_handle_t *env,
+static apr_status_t cgi_brigade_limit_get(apreq_handle_t *handle,
                                           apr_size_t *bytes)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
-    *bytes = (handle->parser == NULL) 
-           ?  handle->brigade_limit 
-           :  handle->parser->brigade_limit;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
+    *bytes = (req->parser == NULL) 
+           ?  req->brigade_limit 
+           :  req->parser->brigade_limit;
 
     return APR_SUCCESS;
 }
 
-static apr_status_t cgi_read_limit_set(apreq_handle_t *env,
+static apr_status_t cgi_read_limit_set(apreq_handle_t *handle,
                                        apr_uint64_t bytes)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
 
-    if (handle->read_limit > bytes && handle->bytes_read < bytes) {
-        handle->read_limit = bytes;
+    if (req->read_limit > bytes && req->bytes_read < bytes) {
+        req->read_limit = bytes;
         return APR_SUCCESS;
     }
 
@@ -606,25 +601,25 @@ static apr_status_t cgi_read_limit_set(apreq_handle_t *env,
 }
 
 
-static apr_status_t cgi_read_limit_get(apreq_handle_t *env,
+static apr_status_t cgi_read_limit_get(apreq_handle_t *handle,
                                        apr_uint64_t *bytes)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
-    *bytes = handle->read_limit;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
+    *bytes = req->read_limit;
     return APR_SUCCESS;
 }
 
 
-static apr_status_t cgi_temp_dir_set(apreq_handle_t *env,
+static apr_status_t cgi_temp_dir_set(apreq_handle_t *handle,
                                      const char *path)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
-    const char **temp_dir = (handle->parser == NULL) 
-                          ? &handle->temp_dir
-                          : &handle->parser->temp_dir;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
+    const char **temp_dir = (req->parser == NULL) 
+                          ? &req->temp_dir
+                          : &req->parser->temp_dir;
 
 
-    if (*temp_dir == NULL && handle->bytes_read == 0) {
+    if (*temp_dir == NULL && req->bytes_read == 0) {
         if (path != NULL)
             *temp_dir = apr_pstrdup(handle->pool, path);
         return APR_SUCCESS;
@@ -634,13 +629,13 @@ static apr_status_t cgi_temp_dir_set(apreq_handle_t *env,
 }
 
 
-static apr_status_t cgi_temp_dir_get(apreq_handle_t *env,
+static apr_status_t cgi_temp_dir_get(apreq_handle_t *handle,
                                      const char **path)
 {
-    struct cgi_handle *handle = (struct cgi_handle *)env;
-    *path = (handle->parser == NULL)
-           ?  handle->temp_dir 
-           :  handle->parser->temp_dir;
+    struct cgi_handle *req = (struct cgi_handle *)handle;
+    *path = (req->parser == NULL)
+           ? req->temp_dir 
+           : req->parser->temp_dir;
     return APR_SUCCESS;
 }
 
@@ -655,12 +650,12 @@ static apr_status_t ba_cleanup(void *data)
 }
 #endif
 
-static APREQ_MODULE(cgi, 20050312);
+static APREQ_MODULE(cgi, 20050425);
 
 APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
 {
     apr_bucket_alloc_t *ba;
-    struct cgi_handle *handle;
+    struct cgi_handle *req;
     void *data;
     
     apr_pool_userdata_get(&data, USER_DATA_KEY, pool);
@@ -668,26 +663,26 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
     if (data != NULL)
         return data;
 
-    handle = apr_pcalloc(pool, sizeof *handle);
+    req = apr_pcalloc(pool, sizeof *req);
     ba = apr_bucket_alloc_create(pool);
 
     /* check pool's userdata first. */
 
-    handle->env.module    = &cgi_module;
-    handle->pool          = pool;
-    handle->bucket_alloc  = ba;
-    handle->read_limit    = (apr_uint64_t) -1;
-    handle->brigade_limit = APREQ_DEFAULT_BRIGADE_LIMIT;
+    req->handle.module        = &cgi_module;
+    req->handle.pool          = pool;
+    req->handle.bucket_alloc  = ba;
+    req->read_limit           = (apr_uint64_t) -1;
+    req->brigade_limit        = APREQ_DEFAULT_BRIGADE_LIMIT;
 
-    handle->args_status = 
-        handle->jar_status = 
-            handle->body_status = APR_EINIT;
+    req->args_status = 
+        req->jar_status = 
+            req->body_status = APR_EINIT;
 
-    apr_pool_userdata_setn(&handle->env, USER_DATA_KEY, NULL, pool);
+    apr_pool_userdata_setn(&req->handle, USER_DATA_KEY, NULL, pool);
 
 #ifdef APR_POOL_DEBUG
     apr_pool_cleanup_register(pool, ba, ba_cleanup, ba_cleanup);
 #endif
 
-    return &handle->env;
+    return &req->handle;
 }
