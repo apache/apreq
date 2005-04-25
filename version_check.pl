@@ -93,6 +93,21 @@ sub print_prereqs ($$) {
     }
 }
 
+sub perl_prereqs {
+    my @prereqs = map {"$_ => q[$perl_glue{$_}->{version}]"} 
+        grep {!m{perl}} keys %perl_glue;
+    my $prereq_string = '';
+    if (@prereqs) {
+      $prereq_string = 'PREREQ_PM => { ' . (join ', ', @prereqs) . ' }'; 
+    }
+    return $prereq_string;
+}
+
+if ($path eq 'perl_prereqs') {
+    print perl_prereqs();
+    exit;
+}
+
 if (@ARGV == 0) {
 
     if ($opts{version}) {      # generate META.yml file content
