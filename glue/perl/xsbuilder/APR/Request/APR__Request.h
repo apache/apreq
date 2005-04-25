@@ -54,7 +54,7 @@ static apr_status_t eval_upload_hook(pTHX_ apreq_param_t *upload,
     STRLEN len = SvPOK(sv) ? SvCUR(sv) : 0;
 
     PUSHMARK(SP);
-    EXTEND(SP, 4);
+    EXTEND(SP, 3);
     ENTER;
     SAVETMPS;
 
