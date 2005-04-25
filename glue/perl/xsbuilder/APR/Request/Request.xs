@@ -188,7 +188,6 @@ body_status(req)
 SV*
 disable_uploads(req)
     APR::Request req
-    APR::Pool pool
   PREINIT:
     apreq_hook_t *h;
     apr_status_t s;

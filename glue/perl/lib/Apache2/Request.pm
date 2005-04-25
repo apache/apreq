@@ -23,13 +23,10 @@ sub new {
 }
 
 sub hook_data {die "hook_data not implemented"}
-sub upload_hook {
-    my ($req, $code) = @_;
-    $req->APR::Request::upload_hook($req->pool, $code);
-}
+
 sub disable_uploads {
     my ($req, $toggle) = @_;
-    $req->APR::Request::disable_uploads($req->pool) if $toggle;
+    $req->SUPER::disable_uploads if $toggle;
 }
 
 1;

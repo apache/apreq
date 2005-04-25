@@ -17,7 +17,7 @@ use File::Spec;
 my $data;
 
 sub hook {
-    my ($upload, $buffer, $len, $hook_data) = @_;
+    my ($upload, $buffer, $len) = @_;
     warn "$upload saw EOS" and return unless defined $buffer;
 
     die "BAD UPLOAD ARGS" unless length $buffer == $len;
