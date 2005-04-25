@@ -15,42 +15,43 @@ sub test_prereq {
 
 test_prereq perl => PERL_PATH;
 
+my %opts;
+undef @opts{qw(with-apache2-apxs with-apache1-apxs with-apache2-src
+               with-perl with-apache2-httpd
+               with-apr-config with-apu-config apxs)};
+undef $opts{'with-apache2'} if (WIN32);
+
+my @flags = qw/enable-maintainer-mode enable-perl-glue disable-perl-glue/;
+my %args;
+# grab from @ARGV only the options that we expect
+GetOptions(\%args, (map "$_=s", keys %opts), @flags);
+
+$args{"with-perl"} = PERL_PATH;
+my $opts = "";
+$opts .= "--enable-maintainer-mode " if $args{"enable-maintainer-mode"};
+
+unless (exists $args{"disable-perl-glue"}) {
+    $opts .= "--enable-perl-glue ";
+    test_prereq "mod_perl";
+    test_prereq "Apache::Test";
+    test_prereq "ExtUtils::MakeMaker";
+    test_prereq "ExtUtils::XSBuilder";
+    test_prereq "Test::More";
+}
+
+delete @args{@flags};
+$args{"with-apache2-apxs"} = delete $args{apxs}
+    if exists $args{apxs} and not exists $args{"with-apache2-apxs"};
+
+$args{"with-perl-opts"} = "@ARGV" if @ARGV;
+
 if (WIN32) {
-    push @ARGV, '--with-perl=' . PERL_PATH;
-    my @args = (PERL_PATH, 'win32/Configure.pl', @ARGV);
+    my @opts = map{qq/--$_="$args{$_}"/} keys %args;
+    my @args = (PERL_PATH, 'win32/Configure.pl', @opts);
     print "@args\n";
     system(@args) == 0 or die "system @args failed: $?";
 }
 else {
-    my %opts;
-    undef @opts{qw(with-apache2-apxs with-apache1-apxs with-apache2-src
-                   with-perl with-apache2-httpd
-                   with-apr-config with-apu-config apxs)};
-
-    my @flags = qw/enable-maintainer-mode enable-perl-glue disable-perl-glue/;
-    my %args;
-    # grab from @ARGV only the options that we expect
-    GetOptions(\%args, (map "$_=s", keys %opts), @flags);
-
-    $args{"with-perl"} = PERL_PATH;
-    my $opts = "";
-    $opts .= "--enable-maintainer-mode " if $args{"enable-maintainer-mode"};
-
-    unless (exists $args{"disable-perl-glue"}) {
-        $opts .= "--enable-perl-glue ";
-        test_prereq "mod_perl";
-        test_prereq "Apache::Test";
-        test_prereq "ExtUtils::MakeMaker";
-        test_prereq "ExtUtils::XSBuilder";
-        test_prereq "Test::More";
-    }
-
-    delete @args{@flags};
-    $args{"with-apache2-apxs"} = delete $args{apxs}
-        if exists $args{apxs} and not exists $args{"with-apache2-apxs"};
-
-    $args{"with-perl-opts"} = "@ARGV" if @ARGV;
-
     $opts .= join " ", map {qq/--$_="$args{$_}"/} keys %args;
 
     my $cmd = "./configure $opts";

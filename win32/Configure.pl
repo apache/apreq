@@ -32,8 +32,6 @@ my $doxygen = which('doxygen');
 my $doxysearch = which('doxysearch');
 my $cfg = $debug ? 'Debug' : 'Release';
 
-check_depends();
-
 my @tests = qw(cookie parsers params version);
 my @test_files = map {catfile('library', 't', "$_.t")} @tests;
 generate_tests($apreq_home, \@tests);
@@ -317,29 +315,6 @@ END
     print $def $preamble;
     print $def $_, "\n" for (sort keys %fns);
     close $def;
-}
-
-sub check_depends {
-    my $rep = $] < 5.008 ? 
-        'http://theoryx5.uwinnipeg.ca/ppmpackages' :
-            'http://theoryx5.uwinnipeg.ca/ppms';
-    eval {require Apache2;};
-    for my $mod (qw(ExtUtils::XSBuilder Apache::Test)) {
-        eval "require $mod";
-        if ($@) {
-            if ($] < 5.008 and $mod eq 'ExtUtils::XSBuilder') {
-                warn "Perl 5.8 or higher is required for the Perl glue\n";
-                next;
-            }
-            print "I could not find $mod. ";
-            my $ans = prompt('Would you like to install it?', 'yes');
-            next unless $ans =~ /^y/i;
-            (my $ppd = $mod) =~ s!(\w+)::(\w+)!$1-$2.ppd!;
-            my @args = ('ppm', 'install', "$rep/$ppd");
-            system(@args) == 0
-                or warn "system @args failed: $?";
-        }
-    }
 }
 
 sub generate_tests {
