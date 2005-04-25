@@ -22,8 +22,7 @@ CURRENT RELEASE NOTES:
 
 RELEASE SHOWSTOPPERS:
 
-    - The api docs are currently broken, and the perl glue is missing
-      UPLOAD_HOOK.
+    - The api docs are currently incorrect.
 
 
 CURRENT VOTES:

@@ -125,7 +125,7 @@ sub handler {
     }
     elsif ($test eq 'hook') {
         $data = "";
-        $req->config(UPLOAD_HOOK => \&hook);
+        $req->upload_hook(\&hook);
         $req->parse;
         $r->print($data);
     }
@@ -136,7 +136,7 @@ sub handler {
         $r->print($upload->type);
     }
     elsif ($test eq 'disable_uploads') {
-        $req->disable_uploads;
+        $req->disable_uploads(1);
         eval {my $upload = $req->upload('HTTPUPLOAD')};
         if (ref $@ eq "APR::Request::Error") {
             my $args = $@->{_r}->args('test'); # checks _r is an object ref

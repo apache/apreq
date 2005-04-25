@@ -22,12 +22,14 @@ sub new {
     return $req;
 }
 
-sub hook_data {die "hook_data not implemented yet"}
-sub upload_hook {die "upload_hook not implemented yet"}
+sub hook_data {die "hook_data not implemented"}
+sub upload_hook {
+    my ($req, $code) = @_;
+    $req->APR::Request::upload_hook($req->pool, $code);
+}
 sub disable_uploads {
-    my ($req, $pool) = @_;
-    $pool ||= $req->pool;
-    $req->APR::Request::disable_uploads($pool);
+    my ($req, $toggle) = @_;
+    $req->APR::Request::disable_uploads($req->pool) if $toggle;
 }
 
 1;

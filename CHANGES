@@ -6,6 +6,10 @@
 
 
 - Perl API [joes]
+  Drop $data argument from UPLOAD_HOOK, and also drop HOOK_DATA option.
+  Perl folks should use a closure instead of passing in context data.
+
+- Perl API [joes]
   Move bake, bake2 to Apache2::Cookie, now requiring
   an extra $r argument.  Also ""-operator is mapped
   to as_string() for Apache2::Cookie;  but APR::Request::Cookie

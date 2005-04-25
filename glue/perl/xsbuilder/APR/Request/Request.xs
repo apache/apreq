@@ -1,28 +1,3 @@
-static XS(apreq_xs_parse)
-{
-    dXSARGS;
-    apreq_handle_t *req;
-    apr_status_t s;
-    const apr_table_t *t;
-
-    if (items != 1 || !SvROK(ST(0)))
-        Perl_croak(aTHX_ "Usage: APR::Request::parse($req)");
-
-    req = apreq_xs_sv2handle(aTHX_ ST(0));
-
-    XSprePUSH;
-    EXTEND(SP, 3);
-    s = apreq_jar(req, &t);
-    PUSHs(sv_2mortal(apreq_xs_error2sv(aTHX_ s)));
-    s = apreq_args(req, &t);
-    PUSHs(sv_2mortal(apreq_xs_error2sv(aTHX_ s)));
-    s = apreq_body(req, &t);
-    PUSHs(sv_2mortal(apreq_xs_error2sv(aTHX_ s)));
-    PUTBACK;
-}
-
-
-
 MODULE = APR::Request     PACKAGE = APR::Request
 
 SV*
@@ -224,6 +199,31 @@ disable_uploads(req, pool)
 
   OUTPUT:
     RETVAL
+
+void
+upload_hook(obj, pool, sub)
+    SV *obj
+    APR::Pool pool
+    SV *sub
+  PREINIT:
+    struct hook_ctx *ctx;
+    IV iv;
+    apreq_handle_t *req;
+  CODE:
+    obj = apreq_xs_sv2object(aTHX_ obj, "APR::Request", 'r');
+    ctx = apr_palloc(pool, sizeof *ctx);
+    ctx->hook = newSVsv(sub);
+    ctx->bucket_data = newSV(8000);
+    ctx->parent = SvREFCNT_inc(obj);
+    SvTAINTED_on(ctx->bucket_data);
+#ifdef USE_ITHREADS
+    ctx->perl = aTHX;
+#endif
+
+    iv = SvIVX(obj);
+    req = INT2PTR(apreq_handle_t *, iv);
+    apreq_hook_add(req, apreq_hook_make(pool, apreq_xs_upload_hook, NULL, ctx));
+    apr_pool_cleanup_register(pool, ctx, upload_hook_cleanup, NULL);
 
 BOOT:
     {
