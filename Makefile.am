@@ -1,8 +1,10 @@
+#   The following is a trick to get CPAN clients to follow prerequisites:
 #
+#    PREREQ_PM
 #
-# XXX  Trick the cpan client by listing some EU::MM-ish prereqs here? XXX
-#
-#
+
+# --- MakeMaker post_initialize section:
+
 
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = . include library module glue
