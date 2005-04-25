@@ -94,7 +94,7 @@ sub print_prereqs ($$) {
 }
 
 sub perl_prereqs {
-    my @prereqs = map {"$_ => q[$perl_glue{$_}->{version}]"} 
+    my @prereqs = map {"$_=>q[$perl_glue{$_}->{version}]"} 
         grep {!m{perl}} keys %perl_glue;
     my $prereq_string = '';
     if (@prereqs) {
