@@ -40,7 +40,6 @@ BOOT:
     );
     newXS("APR::Request::Cookie::()", XS_APR__Request__Cookie_nil, file);
     newXS("APR::Request::Cookie::(\"\"", XS_APR__Request__Cookie_value, file);
-    newXS("APR::Request::Cookie::Table::do", apreq_xs_cookie_table_do, file);
 
 
 MODULE = APR::Request::Cookie   PACKAGE = APR::Request::Cookie
@@ -107,6 +106,7 @@ is_tainted(obj, val=NULL)
   OUTPUT:
     RETVAL
 
+
 SV*
 bind_handle(cookie, req)
     SV *cookie
@@ -124,6 +124,7 @@ bind_handle(cookie, req)
 
   OUTPUT:
     RETVAL
+
 
 APR::Request::Cookie
 make(class, pool, name, val)

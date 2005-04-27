@@ -52,7 +52,6 @@ BOOT:
     );
     newXS("APR::Request::Param::()", XS_APR__Request__Param_nil, file);
     newXS("APR::Request::Param::(\"\"", XS_APR__Request__Param_value, file);
-    newXS("APR::Request::Param::Table::do", apreq_xs_param_table_do, file);
 
 
 MODULE = APR::Request::Param   PACKAGE = APR::Request::Param

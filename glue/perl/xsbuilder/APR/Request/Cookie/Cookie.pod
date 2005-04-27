@@ -1,18 +1,113 @@
 =head1 NAME
 
-  APR::Request::CGI
+APR::Request::Cookie -
+
+
+
 
 =head1 SYNOPSIS
 
-  use APR::Request::CGI;
-  my $req = APR::Request::CGI->new($pool);
+  use APR::Request::Cookie;
+
+
 
 
 =head1 DESCRIPTION
 
-=head1 APR::Request::CGI
+
+
+
+=head1 METHODS
+
+APR::Request::Cookie
+
+
+=head2 new
+
+
+=head2 freeze
+
+
+=head2 thaw
+
+
+=head2 name
+
+
+=head2 value
+
+
+=head2 secure
+
+
+=head2 version
+
+
+=head2 path
+
+
+=head2 domain
+
+
+=head2 port
+
+
+=head2 comment
+
+
+=head2 commentURL
+
+
+=head2 is_tainted
+
+
+=head2 make
+
+
+=head2 as_string
+
+
+
+=head1 SUBROUTINES
+
+  APR::Request::Cookie
+
+
+=head2 expires
+
+
+
+=head1 METHODS
+
+  APR::Request::Cookie::Table
+
+
+=head2 cookie_class
+
+
+=head2 get
+
+
+=head2 FETCH
+
+
+=head2 NEXTKEY
+
+
+=head2 FIRSTKEY
+
+
+=head2 do
+
+
+
+
+=head2
+
 
 =head1 SEE ALSO
+
+L<< Apache2::Cookie >>, L<< APR::Request >>
 
 =head1 COPYRIGHT
 

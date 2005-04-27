@@ -1,18 +1,138 @@
 =head1 NAME
 
-  APR::Request::CGI
+APR::Request::Param
+
+
+
 
 =head1 SYNOPSIS
 
-  use APR::Request::CGI;
-  my $req = APR::Request::CGI->new($pool);
+  use APR::Request::Param;
+
+
 
 
 =head1 DESCRIPTION
 
-=head1 APR::Request::CGI
+
+
+
+
+=head1 METHODS
+
+APR::Request::Param
+
+
+=head2 name
+
+
+=head2 value
+
+
+=head2 is_tainted
+
+
+=head2 charset
+
+
+=head2 make
+
+
+=head2 info
+
+
+=head2 upload
+
+
+=head2 upload_filename
+
+
+=head2 upload_link
+
+
+=head2 upload_slurp
+
+
+=head2 upload_size
+
+
+=head2 upload_type
+
+
+=head2 upload_tempname
+
+
+=head2 upload_io
+
+
+=head2 upload_fh
+
+
+
+
+
+=head1 METHODS
+
+APR::Request::Param::Table
+
+
+=head2 param_class
+
+
+=head2 get
+
+
+=head2 FETCH
+
+
+=head2 NEXTKEY
+
+
+=head2 FIRSTKEY
+
+
+=head2 do
+
+
+
+
+
+=head1 METHODS
+
+APR::Request::Brigade
+
+
+=head2 new, TIEHANDLE
+
+
+=head2 READ
+
+
+=head2 READLINE
+
+
+
+
+
+=head1 METHODS
+
+APR::Request::Brigade::IO
+
+
+=head2 read
+
+
+=head2 readline
+
+
+
+
 
 =head1 SEE ALSO
+
+
+
+
 
 =head1 COPYRIGHT
 

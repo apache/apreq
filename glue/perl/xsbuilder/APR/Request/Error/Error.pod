@@ -1,18 +1,37 @@
 =head1 NAME
 
-  APR::Request::CGI
+APR::Request::Error
+
+
 
 =head1 SYNOPSIS
 
-  use APR::Request::CGI;
-  my $req = APR::Request::CGI->new($pool);
+  use APR::Request::Error;
+
+
 
 
 =head1 DESCRIPTION
 
-=head1 APR::Request::CGI
+
+
+
+=head1 SUBROUTINES
+
+APR::Request::Error - derived from C<< APR::Request >> and C<< APR::Error >>.
+
+
+
+
+=head2 strerror
+
+
+
 
 =head1 SEE ALSO
+
+
+
 
 =head1 COPYRIGHT
 

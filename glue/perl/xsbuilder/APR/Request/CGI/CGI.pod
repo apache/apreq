@@ -1,14 +1,12 @@
 =head1 NAME
 
-  APR::Request::CGI
-
-
+APR::Request::CGI
 
 
 =head1 SYNOPSIS
 
   use APR::Request::CGI;
-  my $req = APR::Request::CGI->new($pool);
+  my $req = APR::Request::CGI->handle($pool);
 
 
 
@@ -21,14 +19,14 @@ for accessing CGI request data associated to a pool via libapreq2.
 
 
 
-=head1 APR::Request::CGI
+=head1 METHODS
 
-This package is derived from C<< APR::Request >>.
+APR::Request::CGI - derived from C<< APR::Request >>.
 
 
-=head2 new
+=head2 handle
 
-    APR::Request::CGI->new($pool)
+    APR::Request::CGI->handle($pool)
 
 Creates an C<< APR::Request::CGI >> object.  The argument C<< $pool >> 
 is an C<< APR::Pool >> object.

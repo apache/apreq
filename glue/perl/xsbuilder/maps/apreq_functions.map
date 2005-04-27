@@ -5,9 +5,6 @@ MODULE=APR::Request  PACKAGE=APR::Request PREFIX=apreq_
 apreq_cp1252_to_utf8
 #apreq_hook_add
 
-MODULE=APR::Request  PACKAGE=APR::Request PREFIX=APR__Request_
-DEFINE_parse | apreq_xs_parse |
-
 MODULE=APR::Request::Apache2 PACKAGE=APR::Request::Apache2 PREFIX=APR__Request__Apache2_
 apreq_xs_handle_apache2_t *:DEFINE_handle | apreq_handle_apache2 (r) | const char *:class, request_rec *:r
 
@@ -22,27 +19,26 @@ apreq_cookie_expires
 MODULE=APR::Request::Cookie PACKAGE=APR::Request::Cookie::Table PREFIX=APR__Request__Cookie__Table_
 DEFINE_get      | apreq_xs_cookie_table_FETCH |
 DEFINE_FETCH    | apreq_xs_cookie_table_FETCH |
-#DEFINE_new      | apreq_xs_cookie_table_make |
 DEFINE_NEXTKEY  | apreq_xs_cookie_table_NEXTKEY |
 DEFINE_FIRSTKEY | apreq_xs_cookie_table_NEXTKEY |
-#DEFINE_do       | apreq_xs_cookie_table_do |
+DEFINE_do       | apreq_xs_cookie_table_do |
 
 
 #################### APR::Request::Param stuff ####################
 
 MODULE=APR::Request PACKAGE=APR::Request PREFIX=APR__Request_
+DEFINE_parse  | apreq_xs_parse |
+DEFINE_jar    | apreq_xs_jar |
 DEFINE_args   | apreq_xs_args  |
 DEFINE_body   | apreq_xs_body  |
 DEFINE_param  | apreq_xs_param |
-DEFINE_jar    | apreq_xs_jar |
 
 MODULE=APR::Request::Param PACKAGE=APR::Request::Param::Table PREFIX=APR__Request__Param__Table_
 DEFINE_get      | apreq_xs_param_table_FETCH |
 DEFINE_FETCH    | apreq_xs_param_table_FETCH |
-#DEFINE_new      | apreq_xs_param_table_make |
 DEFINE_NEXTKEY  | apreq_xs_param_table_NEXTKEY |
 DEFINE_FIRSTKEY | apreq_xs_param_table_NEXTKEY |
-#DEFINE_do       | apreq_xs_param_table_do |
+DEFINE_do       | apreq_xs_param_table_do |
 
 MODULE=APR::Request::Param PACKAGE=APR::Request::Brigade PREFIX=APR__Request__Brigade_
 DEFINE_new | apreq_xs_brigade_copy |

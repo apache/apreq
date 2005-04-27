@@ -1,6 +1,6 @@
 =head1 NAME
 
-  APR::Request
+APR::Request
 
 
 
@@ -22,17 +22,85 @@ a few utility functions and constants.
 
 
 
-=head1 APR::Request
+=head1 METHODS
+
+APR::Request
+
+
+=head2 jar_status
+
+
+=head2 args_status
+
+
+=head2 body_status
+
+
+=head2 param_status
+
+
+=head2 parse
+
+
+=head2 jar
+
+
+=head2 args
+
+
+=head2 body
+
+
+=head2 param
+
+
+=head2 uploads (APR::Request::Param::Table???)
+
+
+=head2 pool
+
+
+=head2 bucket_alloc
+
+
+=head2 read_limit
+
+
+=head2 brigade_limit
+
+
+=head2 temp_dir
+
+
+=head2 disable_uploads
+
+
+=head2 upload_hook
+
+
+=head2 import
 
 
 
+
+=head1 SUBROUTINES
+
+APR::Request
+
+
+=head2 encode
+
+
+=head2 decode
 
 
 
 
 =head1 SEE ALSO
 
-L<< APR::Request >>
+L<< APR::Request::Error >>, L<< APR::Request::Param >>,
+L<< APR::Request::Cookie >>
+
 
 
 

@@ -1,6 +1,6 @@
 =head1 NAME
 
-  APR::Request::Apache2
+APR::Request::Apache2
 
 
 
@@ -21,9 +21,9 @@ for interfacing with the mod_apreq2.so Apache module.
 
 
 
-=head1 APR::Request::Apache2
+=head1 METHODS
 
-This package is derived from C<< APR::Request >>.
+APR::Request::Apache2 - derived from C<< APR::Request >>.
 
 
 =head2 handle
