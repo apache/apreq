@@ -454,6 +454,7 @@ static void register_hooks (apr_pool_t *p)
 
 
 module AP_MODULE_DECLARE_DATA apreq_module = {
+#line __LINE__ "mod_apreq2.c"
 	STANDARD20_MODULE_STUFF,
 	apreq_create_dir_config,
 	apreq_merge_dir_config,

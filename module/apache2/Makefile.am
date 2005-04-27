@@ -20,7 +20,8 @@ endif
 
 if BUILD_HTTPD
 
-# mod_apreq.c needs to be built from httpd-2.X, e.g.
+# XXX FIXME: static builds don't work anymore
+# mod_apreq2 needs to be built from httpd-2.X, e.g.
 #
 # % cd ../httpd-2.X;
 # % ./configure --with-module=filters:../httpd-apreq-2/module/apache2/mod_apreq2.c ...
