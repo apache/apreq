@@ -16,7 +16,7 @@ sub handler {
     plan $r, tests => 30;
     $r->args("foo=1;bar=2;foo=3;quux=4");
 
-    my $req = APR::Request::Apache2->new($r);
+    my $req = APR::Request::Apache2->handle($r);
     ok defined $req->args;
     ok t_cmp $req->args("foo"), 1, "scalar args(foo)";
     ok t_cmp $req->args("bar"), 2, "scalar args(bar)";

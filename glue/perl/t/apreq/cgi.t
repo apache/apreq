@@ -218,7 +218,7 @@ require File::Basename;
 my $p = APR::Pool->new();
 
 apreq_log("Creating APR::Request::CGI object");
-my $req = APR::Request::CGI->new($p);
+my $req = APR::Request::CGI->handle($p);
 
 my $foo = $req->param("foo");
 my $bar = $req->param("bar");

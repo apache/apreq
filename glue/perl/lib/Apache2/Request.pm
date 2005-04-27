@@ -11,7 +11,7 @@ my %old_limits = (
 
 sub new {
     my $class = shift;
-    my $req = $class->APR::Request::Apache2::new(shift);
+    my $req = $class->APR::Request::Apache2::handle(shift);
     my %attrs = @_;
 
     while (my ($k, $v) = each %attrs) {

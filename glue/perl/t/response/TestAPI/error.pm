@@ -13,7 +13,7 @@ sub handler {
     my $r = shift;
     plan $r, tests => 3;
 
-    my $req = APR::Request::Apache2->new($r);
+    my $req = APR::Request::Apache2->handle($r);
     ok $req->isa("APR::Request");
 
     # XXX export some constants, and test apreq_xs_strerror

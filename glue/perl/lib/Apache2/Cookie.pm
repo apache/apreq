@@ -37,7 +37,7 @@ sub fetch {
 $usage: attempt to fetch global Apache->request failed: $@.
 EOD
     }
-    $req = APR::Request::Apache2->new($req) unless $req->isa("APR::Request");
+    $req = APR::Request::Apache2->handle($req) unless $req->isa("APR::Request");
     my $jar = $req->jar or return;
     $jar->cookie_class(__PACKAGE__);
     return wantarray ? %$jar : $jar;
@@ -103,7 +103,7 @@ my %old_args = (
 
 sub new {
     my $class = shift;
-    my $jar = $class->APR::Request::Apache2::new(shift);
+    my $jar = $class->APR::Request::Apache2::handle(shift);
     my %attrs = @_;
     while (my ($k, $v) = each %attrs) {
         $k =~ s/^-//;

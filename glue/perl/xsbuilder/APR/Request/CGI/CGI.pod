@@ -1,44 +1,44 @@
 =head1 NAME
 
-  APR::Request::Apache2
+  APR::Request::CGI
 
 
 
 
 =head1 SYNOPSIS
 
-  use APR::Request::Apache2;
-  my $req = APR::Request::Apache2->handle($r);
+  use APR::Request::CGI;
+  my $req = APR::Request::CGI->new($pool);
 
 
 
 
 =head1 DESCRIPTION
 
-The C<< APR::Request::Apache2 >> module provides a constructor
-for interfacing with the mod_apreq2.so Apache module.
+The C<< APR::Request::CGI >> module provides a constructor
+for accessing CGI request data associated to a pool via libapreq2.
 
 
 
 
-=head1 APR::Request::Apache2
+=head1 APR::Request::CGI
 
 This package is derived from C<< APR::Request >>.
 
 
-=head2 handle
+=head2 new
 
-    APR::Request::Apache2->handle($r)
+    APR::Request::CGI->new($pool)
 
-Creates an C<< APR::Request::Apache2 >> object.  The argument C<< $r >> 
-is the C<< Apache2::RequestRec >> object from mod_perl2.
+Creates an C<< APR::Request::CGI >> object.  The argument C<< $pool >> 
+is an C<< APR::Pool >> object.
 
 
 
 
 =head1 SEE ALSO
 
-L<< APR::Request >>, L<< Apache2::RequestRec >>.
+L<< APR::Request >>, L<< APR::Pool >>.
 
 
 

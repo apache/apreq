@@ -12,7 +12,7 @@ sub handler {
     my $r = shift;
     plan $r, tests => 9;
 
-    my $req = APR::Request::Apache2->new($r);
+    my $req = APR::Request::Apache2->handle($r);
     ok $req->isa("APR::Request::Apache2");
 
     ok t_cmp $req->brigade_limit, 256 * 1024, "default brigade limit is 256K";

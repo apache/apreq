@@ -1,97 +1,5 @@
-#include "apreq_xs_tables.h"
-#define TABLE_CLASS "APR::Request::Param::Table"
-
-#if (PERL_VERSION >= 8) /* MAGIC ITERATOR REQUIRES 5.8 */
-
-/* Requires perl 5.8 or better. 
- * A custom MGVTBL with its "copy" slot filled allows
- * us to FETCH a table entry immediately during iteration.
- * For multivalued keys this is essential in order to get
- * the value corresponding to the current key, otherwise
- * values() will always report the first value repeatedly.
- * With this MGVTBL the keys() list always matches up with
- * the values() list, even in the multivalued case.
- * We only prefetch the value during iteration, because the
- * prefetch adds overhead to EXISTS and STORE operations.
- * They are only "penalized" when the perl program is iterating
- * via each(), which seems to be a reasonable tradeoff.
- */
-
-static int apreq_xs_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv, 
-                                  const char *name, int namelen)
-{
-    /* Prefetch the value whenever the table iterator is > 0 */
-    MAGIC *tie_magic = mg_find(nsv, PERL_MAGIC_tiedelem);
-    SV *obj = SvRV(tie_magic->mg_obj);
-    IV idx = SvIVX(obj);
-    const apr_table_t *t = INT2PTR(apr_table_t *, idx);
-    const apr_array_header_t *arr = apr_table_elts(t);
-
-    idx = SvCUR(obj);
-
-    if (idx > 0 && idx <= arr->nelts) {
-        const apr_table_entry_t *te = (const apr_table_entry_t *)arr->elts;
-        apreq_param_t *p = apreq_value_to_param(te[idx-1].val);
-        MAGIC *my_magic = mg_find(obj, PERL_MAGIC_ext);
-
-        SvMAGICAL_off(nsv);
-        sv_setsv(nsv, sv_2mortal(apreq_xs_param2sv(aTHX_ p, my_magic->mg_ptr, 
-                                                   my_magic->mg_obj)));
-    }
-
-    return 0;
-}
-
-static const MGVTBL apreq_xs_table_magic = {0, 0, 0, 0, 0, 
-                                            apreq_xs_table_magic_copy};
-
-#endif
-
-static APR_INLINE
-SV *apreq_xs_table2sv(pTHX_ const apr_table_t *t, const char *class, SV *parent,
-                      const char *value_class, I32 vclen)
-{
-    SV *sv = (SV *)newHV();
-    SV *rv = sv_setref_pv(newSV(0), class, (void *)t);
-    sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, value_class, vclen);
-
-#if (PERL_VERSION >= 8) /* MAGIC ITERATOR requires 5.8 */
-
-    sv_magic(sv, NULL, PERL_MAGIC_ext, Nullch, -1);
-    SvMAGIC(sv)->mg_virtual = (MGVTBL *)&apreq_xs_table_magic;
-    SvMAGIC(sv)->mg_flags |= MGf_COPY;
-
-#endif
-
-    sv_magic(sv, rv, PERL_MAGIC_tied, Nullch, 0);
-    SvREFCNT_dec(rv); /* corrects SvREFCNT_inc(rv) implicit in sv_magic */
-
-    return sv_bless(newRV_noinc(sv), SvSTASH(SvRV(rv)));
-}
-
-static int apreq_xs_table_keys(void *data, const char *key, const char *val)
-{
-#ifdef USE_ITHREADS
-    struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
-    dTHXa(d->perl);
-#endif
-    dSP;
-    apreq_param_t *p = apreq_value_to_param(val);
-    SV *sv = newSVpvn(key, p->v.nlen);
-
-#ifndef USE_ITHREADS
-    (void)data;
-#endif
-
-    if (apreq_param_is_tainted(p))
-        SvTAINTED_on(sv);
-
-    XPUSHs(sv_2mortal(sv));
-    PUTBACK;
-    return 1;
-}
-
-static int apreq_xs_table_values(void *data, const char *key, const char *val)
+static int apreq_xs_param_table_values(void *data, const char *key,
+                                       const char *val)
 {
     struct apreq_xs_do_arg *d = (struct apreq_xs_do_arg *)data;
     dTHXa(d->perl);
@@ -105,178 +13,116 @@ static int apreq_xs_table_values(void *data, const char *key, const char *val)
 }
 
 
-static XS(apreq_xs_args)
+static int apreq_xs_param_table_do_sub(void *data, const char *key,
+                                       const char *val)
 {
-    dXSARGS;
-    apreq_handle_t *req;
-    SV *sv, *obj;
-    IV iv;
+    struct apreq_xs_do_arg *d = data;
+    apreq_param_t *p = apreq_value_to_param(val);
+    dTHXa(d->perl);
+    dSP;
+    SV *sv = apreq_xs_param2sv(aTHX_ p, d->pkg, d->parent);
+    int rv;
 
-    if (items == 0 || items > 2 || !SvROK(ST(0))
-        || !sv_derived_from(ST(0), HANDLE_CLASS))
-        Perl_croak(aTHX_ "Usage: APR::Request::args($req [,$name])");
+    ENTER;
+    SAVETMPS;
 
-    sv = ST(0);
-    obj = apreq_xs_sv2object(aTHX_ sv, HANDLE_CLASS, 'r');
-    iv = SvIVX(obj);
-    req = INT2PTR(apreq_handle_t *, iv);
+    PUSHMARK(SP);
+    EXTEND(SP,2);
 
+    PUSHs(sv_2mortal(newSVpvn(p->v.name, p->v.nlen)));
+    PUSHs(sv_2mortal(sv));
 
-    if (items == 2 && GIMME_V == G_SCALAR) {
-        apreq_param_t *p = apreq_args_get(req, SvPV_nolen(ST(1)));
+    PUTBACK;
+    rv = call_sv(d->sub, G_SCALAR);
+    SPAGAIN;
+    rv = (1 == rv) ? POPi : 1;
+    PUTBACK;
+    FREETMPS;
+    LEAVE;
 
-        if (p != NULL) {
-            ST(0) = apreq_xs_param2sv(aTHX_ p, NULL, obj);
-            sv_2mortal(ST(0));
-            XSRETURN(1);
-        }
-        else {
-            const apr_table_t *t;
-            apr_status_t s;
-            s = apreq_args(req, &t);
-
-            if (apreq_module_status_is_error(s))
-                APREQ_XS_THROW_ERROR(r, s, "APR::Request::args", ERROR_CLASS);
-
-            XSRETURN_UNDEF;
-        }
-    }
-    else {
-        struct apreq_xs_do_arg d = {NULL, NULL, NULL, aTHX};
-        const apr_table_t *t;
-        apr_status_t s;
-
-        s = apreq_args(req, &t);
-
-        if (apreq_module_status_is_error(s))
-            APREQ_XS_THROW_ERROR(r, s, "APR::Request::args", ERROR_CLASS);
-
-        if (t == NULL)
-            XSRETURN_EMPTY;
-
-        d.pkg = NULL;
-        d.parent = obj;
-
-        switch (GIMME_V) {
-
-        case G_ARRAY:
-            XSprePUSH;
-            PUTBACK;
-            if (items == 1)
-                apr_table_do(apreq_xs_table_keys, &d, t, NULL);
-            else
-                apr_table_do(apreq_xs_table_values, &d, t, 
-                             SvPV_nolen(ST(1)), NULL);
-            return;
-
-        case G_SCALAR:
-            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, NULL, 0);
-            sv_2mortal(ST(0));
-            XSRETURN(1);
-
-        default:
-           XSRETURN(0);
-        }
-    }
+    return rv;
 }
 
-static XS(apreq_xs_body)
+static XS(apreq_xs_param_table_do)
 {
     dXSARGS;
-    apreq_handle_t *req;
-    SV *sv, *obj;
+    struct apreq_xs_do_arg d = { NULL, NULL, NULL, aTHX };
+    const apr_table_t *t;
+    int i, rv = 1;
+    SV *sv, *t_obj;
     IV iv;
+    MAGIC *mg;
 
-    if (items == 0 || items > 2 || !SvROK(ST(0))
-        || !sv_derived_from(ST(0),HANDLE_CLASS))
-        Perl_croak(aTHX_ "Usage: APR::Request::body($req [,$name])");
-
+    if (items < 2 || !SvROK(ST(0)) || !SvROK(ST(1)))
+        Perl_croak(aTHX_ "Usage: $object->do(\\&callback, @keys)");
     sv = ST(0);
-    obj = apreq_xs_sv2object(aTHX_ sv, HANDLE_CLASS, 'r');
-    iv = SvIVX(obj);
-    req = INT2PTR(apreq_handle_t *, iv);
 
+    t_obj = apreq_xs_sv2object(aTHX_ sv, PARAM_TABLE_CLASS, 't');
+    iv = SvIVX(t_obj);
+    t = INT2PTR(const apr_table_t *, iv);
+    mg = mg_find(t_obj, PERL_MAGIC_ext);
+    d.parent = mg->mg_obj;
+    d.pkg = mg->mg_ptr;
+    d.sub = ST(1);
 
-    if (items == 2 && GIMME_V == G_SCALAR) {
-        apreq_param_t *p = apreq_body_get(req, SvPV_nolen(ST(1)));
-
-        if (p != NULL) {
-            ST(0) = apreq_xs_param2sv(aTHX_ p, NULL, obj);
-            sv_2mortal(ST(0));
-            XSRETURN(1);
-        }
-        else {
-            const apr_table_t *t;
-            apr_status_t s;
-            s = apreq_body(req, &t);
-
-            if (apreq_module_status_is_error(s))
-                APREQ_XS_THROW_ERROR(r, s, "APR::Request::body", ERROR_CLASS);
-
-            XSRETURN_UNDEF;
-        }
+    if (items == 2) {
+        rv = apr_table_do(apreq_xs_param_table_do_sub, &d, t, NULL);
+        XSRETURN_IV(rv);
     }
-    else {
-        struct apreq_xs_do_arg d = {NULL, NULL, NULL, aTHX};
-        const apr_table_t *t;
-        apr_status_t s;
 
-        s = apreq_body(req, &t);
-
-        if (apreq_module_status_is_error(s))
-            APREQ_XS_THROW_ERROR(r, s, "APR::Request::body", ERROR_CLASS);
-
-        if (t == NULL)
-            XSRETURN_EMPTY;
-
-        d.pkg = NULL;
-        d.parent = obj;
-
-        switch (GIMME_V) {
-
-        case G_ARRAY:
-            XSprePUSH;
-            PUTBACK;
-            if (items == 1)
-                apr_table_do(apreq_xs_table_keys, &d, t, NULL);
-            else
-                apr_table_do(apreq_xs_table_values, &d, t, 
-                             SvPV_nolen(ST(1)), NULL);
-            return;
-
-        case G_SCALAR:
-            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj, NULL, 0);
-            sv_2mortal(ST(0));
-            XSRETURN(1);
-
-        default:
-           XSRETURN(0);
-        }
+    for (i = 2; i < items; ++i) {
+        const char *key = SvPV_nolen(ST(i));
+        rv = apr_table_do(apreq_xs_param_table_do_sub, &d, t, key, NULL);
+        if (rv == 0)
+            break;
     }
+    XSRETURN_IV(rv);
 }
 
-
-static XS(apreq_xs_param)
+static XS(apreq_xs_param_table_FETCH)
 {
     dXSARGS;
-    apreq_handle_t *req;
-    SV *sv, *obj;
+    const apr_table_t *t;
+    const char *param_class;
+    SV *sv, *t_obj, *parent;
     IV iv;
+    MAGIC *mg;
 
-    if (items == 0 || items > 2 || !SvROK(ST(0))
-        || !sv_derived_from(ST(0), "APR::Request"))
-        Perl_croak(aTHX_ "Usage: APR::Request::param($req [,$name])");
+    if (items != 2 || !SvROK(ST(0))
+        || !sv_derived_from(ST(0), PARAM_TABLE_CLASS))
+        Perl_croak(aTHX_ "Usage: " PARAM_TABLE_CLASS "::FETCH($table, $key)");
 
     sv = ST(0);
-    obj = apreq_xs_sv2object(aTHX_ sv, HANDLE_CLASS, 'r');
-    iv = SvIVX(obj);
-    req = INT2PTR(apreq_handle_t *, iv);
 
-    if (items == 2 && GIMME_V == G_SCALAR) {
-        apreq_param_t *p = apreq_param(req, SvPV_nolen(ST(1)));
+    t_obj = apreq_xs_sv2object(aTHX_ sv, PARAM_TABLE_CLASS, 't');
+    iv = SvIVX(t_obj);
+    t = INT2PTR(const apr_table_t *, iv);
 
-        if (p != NULL) {
-            ST(0) = apreq_xs_param2sv(aTHX_ p, NULL, obj);
+    mg = mg_find(t_obj, PERL_MAGIC_ext);
+    param_class = mg->mg_ptr;
+    parent = mg->mg_obj;
+
+
+    if (GIMME_V == G_SCALAR) {
+        IV idx;
+        const char *key, *val;
+        const apr_array_header_t *arr;
+        apr_table_entry_t *te;
+        key = SvPV_nolen(ST(1));
+
+        idx = SvCUR(t_obj);
+        arr = apr_table_elts(t);
+        te  = (apr_table_entry_t *)arr->elts;
+
+        if (idx > 0 && idx <= arr->nelts
+            && !strcasecmp(key, te[idx-1].key))
+            val = te[idx-1].val;
+        else
+            val = apr_table_get(t, key);
+
+        if (val != NULL) {
+            apreq_param_t *p = apreq_value_to_param(val);
+            ST(0) = apreq_xs_param2sv(aTHX_ p, param_class, parent);
             sv_2mortal(ST(0));
             XSRETURN(1);
         }
@@ -284,53 +130,59 @@ static XS(apreq_xs_param)
             XSRETURN_UNDEF;
         }
     }
-    else {
+    else if (GIMME_V == G_ARRAY) {
         struct apreq_xs_do_arg d = {NULL, NULL, NULL, aTHX};
-        const apr_table_t *t;
-
-        d.pkg = NULL;
-        d.parent = obj;
-
-        switch (GIMME_V) {
-
-        case G_ARRAY:
-            XSprePUSH;
-            PUTBACK;
-            if (items == 1) {
-                apreq_args(req, &t);
-                if (t != NULL)
-                    apr_table_do(apreq_xs_table_keys, &d, t, NULL);
-                apreq_body(req, &t);
-                if (t != NULL)
-                    apr_table_do(apreq_xs_table_keys, &d, t, NULL);
-
-            }
-            else {
-                char *val = SvPV_nolen(ST(1));
-                apreq_args(req, &t);
-                if (t != NULL)
-                    apr_table_do(apreq_xs_table_values, &d, t, val, NULL);
-                apreq_body(req, &t);
-                if (t != NULL)
-                    apr_table_do(apreq_xs_table_values, &d, t, val, NULL);
-            }
-            return;
-
-        case G_SCALAR:
-            t = apreq_params(req, req->pool);
-            if (t == NULL)
-                XSRETURN_UNDEF;
-
-            ST(0) = apreq_xs_table2sv(aTHX_ t, TABLE_CLASS, obj,
-                                      NULL, 0);
-            sv_2mortal(ST(0));
-            XSRETURN(1);
-
-        default:
-            XSRETURN(0);
-        }
+        d.pkg = param_class;
+        d.parent = parent;
+        XSprePUSH;
+        PUTBACK;
+        apr_table_do(apreq_xs_param_table_values, &d, t, SvPV_nolen(ST(1)), NULL);
     }
+    else
+        XSRETURN(0);
 }
+
+static XS(apreq_xs_param_table_NEXTKEY)
+{
+    dXSARGS;
+    SV *sv, *obj;
+    IV iv, idx;
+    const apr_table_t *t;
+    const apr_array_header_t *arr;
+    apr_table_entry_t *te;
+
+    if (!SvROK(ST(0)) || !sv_derived_from(ST(0), PARAM_TABLE_CLASS))
+        Perl_croak(aTHX_ "Usage: " PARAM_TABLE_CLASS "::NEXTKEY($table, $key)");
+
+    sv  = ST(0);
+    obj = apreq_xs_sv2object(aTHX_ sv, PARAM_TABLE_CLASS,'t');
+
+    iv = SvIVX(obj);
+    t = INT2PTR(const apr_table_t *, iv);
+    arr = apr_table_elts(t);
+    te  = (apr_table_entry_t *)arr->elts;
+
+    if (items == 1)
+        SvCUR(obj) = 0;
+
+    if (SvCUR(obj) >= arr->nelts) {
+        SvCUR(obj) = 0;
+        XSRETURN_UNDEF;
+    }
+    idx = SvCUR(obj)++;
+    sv = newSVpv(te[idx].key, 0);
+    ST(0) = sv_2mortal(sv);
+    XSRETURN(1);
+}
+
+ 
+static XS(XS_APR__Request__Param_nil)
+{
+    dXSARGS;
+    (void)items;
+    XSRETURN_EMPTY;
+}
+
 
 APR_INLINE
 static SV *apreq_xs_find_bb_obj(pTHX_ SV *in)

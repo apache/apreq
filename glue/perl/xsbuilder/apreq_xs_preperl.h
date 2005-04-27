@@ -29,6 +29,11 @@
 #   endif
 #endif
 
+/* Undo httpd.h's strchr override. */
+#ifdef AP_DEBUG
+#    undef strchr
+#endif
+
 /**
  * @file apreq_xs_preperl.h
  * @brief XS include file for making Cookie.so and Request.so, for things

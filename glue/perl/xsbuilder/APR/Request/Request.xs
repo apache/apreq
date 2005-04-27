@@ -230,11 +230,32 @@ pool(req)
   CODE:
     RETVAL = req->pool;
 
+
 APR::BucketAlloc
 bucket_alloc(req)
     APR::Request req
   CODE:
     RETVAL = req->bucket_alloc;
+
+MODULE = APR::Request::Param    PACKAGE = APR::Request::Param::Table
+
+SV *
+uploads(t, pool)
+    APR::Request::Param::Table t
+    APR::Pool pool
+  PREINIT:
+    SV *obj = apreq_xs_sv2object(aTHX_ ST(0), PARAM_TABLE_CLASS, 't');
+    SV *parent = apreq_xs_sv2object(aTHX_ ST(0), HANDLE_CLASS, 'r');
+    MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
+  CODE:
+    RETVAL = apreq_xs_param_table2sv(aTHX_ apreq_uploads(t, pool),
+                                     HvNAME(SvSTASH(obj)), 
+                                     parent, mg->mg_ptr, mg->mg_len);
+  OUTPUT:
+    RETVAL
+
+
+
 
 BOOT:
     {

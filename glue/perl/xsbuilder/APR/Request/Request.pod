@@ -1,45 +1,38 @@
 =head1 NAME
 
-  APR::Request::Apache2
+  APR::Request
 
 
 
 
 =head1 SYNOPSIS
 
-  use APR::Request::Apache2;
-  my $req = APR::Request::Apache2->handle($r);
+  use APR::Request;
+  my $req = APR::Request->handle($pool, ...);
 
 
 
 
 =head1 DESCRIPTION
 
-The C<< APR::Request::Apache2 >> module provides a constructor
-for interfacing with the mod_apreq2.so Apache module.
+The C<< APR::Request >> module provides the base methods
+for interfacing with libapreq2's module api.  It also provides
+a few utility functions and constants.
 
 
 
 
-=head1 APR::Request::Apache2
-
-This package is derived from C<< APR::Request >>.
+=head1 APR::Request
 
 
-=head2 handle
 
-    APR::Request::Apache2->handle($r)
-
-Creates an C<< APR::Request::Apache2 >> object.  The argument C<< $r >> 
-is the C<< Apache2::RequestRec >> object from mod_perl2.
 
 
 
 
 =head1 SEE ALSO
 
-L<< APR::Request >>, L<< Apache2::RequestRec >>.
-
+L<< APR::Request >>
 
 
 
@@ -58,4 +51,3 @@ L<< APR::Request >>, L<< Apache2::RequestRec >>.
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-

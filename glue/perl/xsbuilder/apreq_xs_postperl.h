@@ -39,10 +39,20 @@ typedef char*          apreq_xs_subclass_t;
 #define APR__Request__Param__Table const apr_table_t *
 #define APR__BucketAlloc apr_bucket_alloc_t *
 
-#define HANDLE_CLASS "APR::Request"
-#define COOKIE_CLASS "APR::Request::Cookie"
-#define PARAM_CLASS  "APR::Request::Param"
-#define ERROR_CLASS  "APR::Request::Error"
+#define HANDLE_CLASS       "APR::Request"
+#define COOKIE_CLASS       "APR::Request::Cookie"
+#define PARAM_CLASS        "APR::Request::Param"
+#define ERROR_CLASS        "APR::Request::Error"
+#define COOKIE_TABLE_CLASS "APR::Request::Cookie::Table"
+#define PARAM_TABLE_CLASS  "APR::Request::Param::Table"
+
+struct apreq_xs_do_arg {
+    const char      *pkg;
+    SV              *parent,
+                    *sub;
+    PerlInterpreter *perl;
+};
+
 
 /**
  * @file apreq_xs_postperl.h
