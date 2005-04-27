@@ -404,25 +404,45 @@ apr_status_t apreq_filter(ap_filter_t *f,
 }
 
 
-static int apreq_post_config(apr_pool_t *p, apr_pool_t *plog,
-                             apr_pool_t *ptemp, server_rec *base_server) {
+static int apreq_pre_init(apr_pool_t *p, apr_pool_t *plog,
+                          apr_pool_t *ptemp, server_rec *base_server)
+{
     apr_status_t status;
 
-    status = apreq_initialize(p);
+    status = apreq_pre_initialize(p);
     if (status != APR_SUCCESS) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_ERR, status, base_server,
-                     "Failed to initialize libapreq2");
+                     "Failed to pre-initialize libapreq2");
         return HTTP_INTERNAL_SERVER_ERROR;
     }
+    return OK;
+}
 
+static int apreq_post_init(apr_pool_t *p, apr_pool_t *plog,
+                           apr_pool_t *ptemp, server_rec *base_server)
+{
+    apr_status_t status;
+
+    status = apreq_post_initialize(p);
+    if (status != APR_SUCCESS) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_ERR, status, base_server,
+                     "Failed to post-initialize libapreq2");
+        return HTTP_INTERNAL_SERVER_ERROR;
+    }
     return OK;
 }
 
 static void register_hooks (apr_pool_t *p)
 {
     /* APR_HOOK_FIRST because we want other modules to be able to
-       register parsers in their post_config hook */
-    ap_hook_post_config(apreq_post_config, NULL, NULL, APR_HOOK_FIRST);
+     * register parsers in their post_config hook via APR_HOOK_MIDDLE.
+     */
+    ap_hook_post_config(apreq_pre_init, NULL, NULL, APR_HOOK_FIRST);
+
+    /* APR_HOOK_LAST because we need to lock the default_parsers hash
+     * (to prevent further modifications) before the server forks.
+     */
+    ap_hook_post_config(apreq_post_init, NULL, NULL, APR_HOOK_LAST);
 
     ap_register_input_filter(APREQ_FILTER_NAME, apreq_filter, apreq_filter_init,
                              AP_FTYPE_PROTOCOL-1);

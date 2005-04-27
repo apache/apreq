@@ -120,14 +120,40 @@ void apreq_value_table_add(const apreq_value_t *v, apr_table_t *t) {
 
 /**
  * Initialize libapreq2. Applications (except apache modules using
- * mod_apreq) have to call this exactly once before they use
- * libapreq2.
+ * mod_apreq) should call this exactly once before they use any
+ * libapreq2 modules.  If you want to modify the list of default parsers
+ * with apreq_register_parser(), please use apreq_pre_initialize()
+ * and apreq_post_initialize() instead.
+ *
+ * @param pool a base pool persisting while libapreq2 is used
+ * @remarks after you detroy the pool, you have to call this function again
+ *    with a new pool if you still plan to use libapreq2
+ */
+APREQ_DECLARE(apr_status_t) apreq_initialize(apr_pool_t *pool);
+
+
+/**
+ * Pre-initialize libapreq2. Applications (except apache modules using
+ * mod_apreq2) should call this exactly once before they register custom
+ * parsers with libapreq2. mod_apreq2 does this automatically during the
+ * post-config phase, so modules that need call apreq_register_parser should
+ * create a post-config hook using APR_HOOK_MIDDLE.
  *
  * @param pool a base pool persisting while libapreq2 is used
  * @remarks after you detroyed the pool, you have to call this function again
  *    with a new pool if you still plan to use libapreq2
  */
-APREQ_DECLARE(apr_status_t) apreq_initialize(apr_pool_t *pool);
+APREQ_DECLARE(apr_status_t) apreq_pre_initialize(apr_pool_t *pool);
+
+/**
+ * Post-initialize libapreq2. Applications (except apache modules using
+ * mod_apreq2) should this exactly once before they use any
+ * libapreq2 modules for parsing.
+ *
+ * @param pool the same pool that was used in apreq_pre_initialize().
+ */
+APREQ_DECLARE(apr_status_t) apreq_post_initialize(apr_pool_t *pool);
+
 
 #ifdef __cplusplus
  }

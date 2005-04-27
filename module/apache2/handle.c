@@ -407,7 +407,7 @@ apr_status_t apache2_temp_dir_get(apreq_handle_t *handle,
     return APR_SUCCESS;
 }
 
-static APREQ_MODULE(apache2, 20050425);
+static APREQ_MODULE(apache2, 20050427);
 
 APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r)
 {

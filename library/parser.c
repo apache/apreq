@@ -20,7 +20,6 @@
 #include "apr_strings.h"
 #include "apr_xml.h"
 #include "apr_hash.h"
-#include "apr_thread_rwlock.h"
 
 #define PARSER_STATUS_CHECK(PREFIX)   do {         \
     if (ctx->status == PREFIX##_ERROR)             \
@@ -81,23 +80,27 @@ APREQ_DECLARE(apr_status_t) apreq_parser_add_hook(apreq_parser_t *p,
     return APR_SUCCESS;
 }
 
-static apr_thread_rwlock_t *default_parsers_lock = NULL;
+static int default_parsers_lock = 0;
 static apr_hash_t *default_parsers = NULL;
 static apr_pool_t *default_parser_pool = NULL;
 
-static apr_status_t apreq_parsers_cleanup(void *data) {
-    default_parsers_lock = NULL;
+static apr_status_t apreq_parsers_cleanup(void *data)
+{
+    default_parsers_lock = 0;
     default_parsers = NULL;
     default_parser_pool = NULL;
 
     return APR_SUCCESS;
 }
 
-static apr_status_t apreq_parser_initialize(apr_pool_t *pool)
+APREQ_DECLARE(apr_status_t) apreq_pre_initialize(apr_pool_t *pool)
 {
     apr_status_t status;
 
     if (default_parser_pool != NULL)
+        return APR_SUCCESS;
+
+    if (default_parsers_lock)
         return APREQ_ERROR_GENERAL;
 
     status = apr_pool_create(&default_parser_pool, pool);
@@ -107,11 +110,6 @@ static apr_status_t apreq_parser_initialize(apr_pool_t *pool)
     apr_pool_cleanup_register(default_parser_pool, NULL,
                               apreq_parsers_cleanup,
                               apr_pool_cleanup_null);
-
-    status = apr_thread_rwlock_create(&default_parsers_lock,
-                                      default_parser_pool);
-    if (status != APR_SUCCESS)
-        return status;
 
     default_parsers = apr_hash_make(default_parser_pool);
 
@@ -123,14 +121,31 @@ static apr_status_t apreq_parser_initialize(apr_pool_t *pool)
     return APR_SUCCESS;
 }
 
-APREQ_DECLARE(apr_status_t) apreq_initialize(apr_pool_t *pool) {
-    return apreq_parser_initialize(pool);
+APREQ_DECLARE(apr_status_t) apreq_post_initialize(apr_pool_t *pool)
+{
+    (void)pool;
+
+    if (default_parser_pool == NULL)
+        return APREQ_ERROR_GENERAL;
+
+    default_parsers_lock = 1;
+    return APR_SUCCESS;
 }
+
+APREQ_DECLARE(apr_status_t) apreq_initialize(apr_pool_t *pool)
+{
+    apr_status_t s = apreq_pre_initialize(pool);
+
+    if (s != APR_SUCCESS)
+        return s;
+
+    return apreq_post_initialize(pool);
+}
+
 
 APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
                                                   apreq_parser_function_t pfn)
 {
-    apr_status_t status;
     apreq_parser_function_t *f = NULL;
 
     if (default_parsers == NULL)
@@ -139,9 +154,8 @@ APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
     if (enctype == NULL)
         return APR_EINVAL;
 
-    status = apr_thread_rwlock_wrlock(default_parsers_lock);
-    if (status != APR_SUCCESS)
-        return status;
+    if (default_parsers_lock)
+        return APREQ_ERROR_GENERAL;
 
     if (pfn != NULL) {
         f = apr_palloc(default_parser_pool, sizeof *f);
@@ -150,30 +164,21 @@ APREQ_DECLARE(apr_status_t) apreq_register_parser(const char *enctype,
     apr_hash_set(default_parsers, apr_pstrdup(default_parser_pool, enctype),
                  APR_HASH_KEY_STRING, f);
 
-    apr_thread_rwlock_unlock(default_parsers_lock);
-
     return APR_SUCCESS;
 }
 
 APREQ_DECLARE(apreq_parser_function_t)apreq_parser(const char *enctype)
 {
-    apr_status_t status;
     apreq_parser_function_t *f;
     apr_size_t tlen = 0;
 
-    if (enctype == NULL || default_parsers == NULL)
-        return NULL;
-
-    status = apr_thread_rwlock_rdlock(default_parsers_lock);
-    if (status != APR_SUCCESS)
+    if (enctype == NULL || default_parsers_lock == 0)
         return NULL;
 
     while(enctype[tlen] && enctype[tlen] != ';')
         ++tlen;
 
     f = apr_hash_get(default_parsers, enctype, tlen);
-
-    apr_thread_rwlock_unlock(default_parsers_lock);
 
     if (f != NULL)
         return *f;

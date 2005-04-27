@@ -5,6 +5,12 @@
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
 
+- C API [joes, Max Kellermann]
+  Add apreq_initialize, apreq_pre_initialize and apreq_post_initialize.
+  These are not thread-safe operations, so applications need to ensure
+  they are invoked (in the correct sequence) prior to using any apreq2
+  modules.
+
 - C, Perl API [joes]
   Add pool, bucket_alloc to apreq_handle_t.
 
@@ -74,7 +80,6 @@
   - Convert apreq_cookie_name and apreq_cookie_value macros to inline.
   - Convert apreq_param_name, apreq_param_value, apreq_param_info, and
     apreq_param_brigade to inline.
-  - Add apreq_initialize to allow thread-safe parser registration.
 
 - C API [joes]
   Widespread API refactorization to remove apreq_jar_t and apreq_request_t:
