@@ -1,10 +1,3 @@
-static XS(XS_APR__Request__Error_nil)
-{
-    dXSARGS;
-    (void)items;
-    XSRETURN_EMPTY;
-}
-
 MODULE = APR::Request::Error       PACKAGE = APR::Request::Error
 
 SV *strerror(s)
