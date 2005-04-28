@@ -49,7 +49,7 @@ static apr_status_t custom_parse_brigade(apreq_handle_t *handle, apr_uint64_t by
         return req->body_status;
 
     switch (s = apr_brigade_partition(req->in, bytes, &e)) {
-        apr_uint64_t len;
+        apr_off_t len;
 
     case APR_SUCCESS:
         apreq_brigade_move(req->tmpbb, req->in, e);

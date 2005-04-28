@@ -668,12 +668,33 @@ APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src,
     return d - dest;
 }
 
+static int is_quoted(const char *p, const apr_size_t len) {
+    if (len > 1 && p[0] == '"' && p[len-1] == '"') {
+        apr_size_t i;
+        int backslash = 0;
+
+        for (i = 1; i < len - 1; i++) {
+            if (p[i] == '\\')
+                backslash = !backslash;
+            else if (p[i] == '"' && !backslash)
+                return 0;
+            else
+                backslash = 0;
+        }
+
+        return !backslash;
+    }
+
+    return 0;
+}
+
 APREQ_DECLARE(apr_size_t) apreq_quote_once(char *dest, const char *src, 
                                            const apr_size_t slen) 
 {
-    if (slen > 1 && src[0] == '"' && src[slen-1] == '"') {
+    if (is_quoted(src, slen)) {
         /* looks like src is already quoted */        
         memcpy(dest, src, slen);
+        dest[slen] = 0;
         return slen;
     }
     else
@@ -747,7 +768,8 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
     case APREQ_JOIN_QUOTE:
         len = 2 * (len + n);
         break;
-    default:
+    case APREQ_JOIN_AS_IS:
+    case APREQ_JOIN_DECODE:
         /* nothing special required, just here to keep noisy compilers happy */
         break;
     }
@@ -809,9 +831,6 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
             memcpy(d, a[j]->data, a[j]->dlen);
             d += a[j]->dlen;
         }
-        break;
-
-    default:
         break;
     }
 

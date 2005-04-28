@@ -188,7 +188,7 @@ AC_DEFUN([AC_APREQ], [
 
         APR_ADDTO([CPPFLAGS], "`$APR_CONFIG --cppflags`")
 
-        get_version="$abs_srcdir/build/get-version.sh"
+        get_version="$SHELL $abs_srcdir/build/get-version.sh"
         version_hdr="$abs_srcdir/include/apreq_version.h"
 
         # set version data

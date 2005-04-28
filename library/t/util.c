@@ -162,12 +162,62 @@ static void test_cp1252_to_utf8(dAT)
 
 static void test_quote(dAT)
 {
+    size_t len;
+    char dst[64];
 
+    len = apreq_quote(dst, "foo", 3);
+    AT_int_eq(len, 5);
+    AT_str_eq(dst, "\"foo\"");
+
+    len = apreq_quote(dst, "\"foo", 4);
+    AT_int_eq(len, 7);
+    AT_str_eq(dst, "\"\\\"foo\"");
+
+    len = apreq_quote(dst, "foo\0bar", 7);
+    AT_int_eq(len, 9);
+    AT_mem_eq(dst, "\"foo\0bar\"", len + 1);
 }
 
 static void test_quote_once(dAT)
 {
+    size_t len;
+    char dst[64];
 
+    len = apreq_quote_once(dst, "foo", 3);
+    AT_int_eq(len, 5);
+    AT_str_eq(dst, "\"foo\"");
+
+    len = apreq_quote_once(dst, "\"foo", 4);
+    AT_int_eq(len, 7);
+    AT_str_eq(dst, "\"\\\"foo\"");
+
+    len = apreq_quote_once(dst, "foo\"", 4);
+    AT_int_eq(len, 7);
+    AT_str_eq(dst, "\"foo\\\"\"");
+
+    len = apreq_quote_once(dst, "foo\0bar", 7);
+    AT_int_eq(len, 9);
+    AT_mem_eq(dst, "\"foo\0bar\"", len + 1);
+
+    len = apreq_quote_once(dst, "\"foo\0bar\"", 9);
+    AT_int_eq(len, 9);
+    AT_mem_eq(dst, "\"foo\0bar\"", len + 1);
+
+    len = apreq_quote_once(dst, "\"foo\"", 5);
+    AT_int_eq(len, 5);
+    AT_str_eq(dst, "\"foo\"");
+
+    len = apreq_quote_once(dst, "'foo'", 5);
+    AT_int_eq(len, 7);
+    AT_str_eq(dst, "\"'foo'\"");
+
+    len = apreq_quote_once(dst, "\"foo\"", 5);
+    AT_int_eq(len, 5);
+    AT_str_eq(dst, "\"foo\"");
+
+    len = apreq_quote_once(dst, "\"foo\"bar\"", 9);
+    AT_int_eq(len, 14);
+    AT_str_eq(dst, "\"\\\"foo\\\"bar\\\"\"");
 }
 
 static void test_join(dAT)
@@ -215,8 +265,8 @@ int main(int argc, char *argv[])
         { dT(test_decodev, 6) },
         { dT(test_encode, 0) },
         { dT(test_cp1252_to_utf8, 14) },
-        { dT(test_quote, 0) },
-        { dT(test_quote_once, 0), },
+        { dT(test_quote, 6) },
+        { dT(test_quote_once, 18), },
         { dT(test_join, 0) },
         { dT(test_brigade_fwrite, 0) },
         { dT(test_file_mktemp, 0) },
