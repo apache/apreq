@@ -15,8 +15,8 @@ sub handler {
     my $req = Apache2::Request->new($r);
     my $temp_dir = File::Spec->tmpdir;
 
-    my $method  = $req->args('method');
-    my $has_md5  = $req->args('has_md5');
+    my $method  = $req->APR::Request::args('method');
+    my $has_md5  = $req->APR::Request::args('has_md5');
     require Digest::MD5 if $has_md5;
     my $upload = $req->upload(($req->upload)[0]);
     my $type = $upload->type;

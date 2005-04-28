@@ -35,11 +35,11 @@ sub handler {
     $req->read_limit(1_000_000);
     $req->content_type('text/plain');
 
-    my $test  = $req->args('test');
+    my $test  = $req->APR::Request::args('test');
     my $method = $r->method;
 
     if ($test eq 'param') {
-        my $table = $req->args();
+        my $table = $req->APR::Request::args();
         my $value = $req->param('value');
         $req->print($value);
     }
@@ -117,7 +117,7 @@ sub handler {
     }
     elsif ($test eq 'bad') {
         require APR::Request::Error;
-        eval {my $q = $req->args('query')};
+        eval {my $q = $req->APR::Request::args('query')};
         if (ref $@ && $@->isa("APR::Request::Error")) {
             $req->upload("HTTPUPLOAD")->slurp(my $data);
             $req->print($data);
@@ -140,10 +140,10 @@ sub handler {
         $req->disable_uploads(1);
         eval {my $upload = $req->upload('HTTPUPLOAD')};
         if (ref $@ eq "APR::Request::Error") {
-            my $args = $@->{_r}->args('test'); # checks _r is an object ref
+            my $args = $@->{_r}->APR::Request::args('test'); # checks _r is an object ref
             my $upload = $@->body('HTTPUPLOAD'); # no exception this time!
             die "args test failed" unless $args eq $test;
-            $args = $@->args;
+            $args = $@->APR::Request::args;
             my $test_string = "";
 
             # MAGIC ITERATOR TESTS

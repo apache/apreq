@@ -5,6 +5,11 @@
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
 
+- Perl API [joes]
+  Remove Apache2::Request::args.  WARNING: through inheritance,
+  args() now maps to Apache2::RequestRec::args.  Folks that want
+  the pre-2.05-dev behavior need to invoke APR::Request::args by name.
+
 - C API [joes, Max Kellermann]
   Add apreq_initialize, apreq_pre_initialize and apreq_post_initialize.
   These are not thread-safe operations, so applications need to ensure
