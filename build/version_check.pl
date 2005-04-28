@@ -120,11 +120,23 @@ installdirs: site
 distribution_type: module
 dynamic_config: 1
 provides:
-  Apache::Request:
+  Apache2::Request:
     version: $opts{version}
-  Apache::Cookie:
+  Apache2::Cookie:
     version: $opts{version}
-  Apache::Upload:
+  Apache2::Upload:
+    version: $opts{version}
+  APR::Request:
+    version: $opts{version}
+  APR::Request::Apache2:
+    version: $opts{version}
+  APR::Request::CGI:
+    version: $opts{version}
+  APR::Request::Error:
+    version: $opts{version}
+  APR::Request::Cookie:
+    version: $opts{version}
+  APR::Request::Param:
     version: $opts{version}
 generated_by: $0
 EOT
