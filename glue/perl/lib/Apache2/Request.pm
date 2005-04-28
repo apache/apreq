@@ -1,6 +1,6 @@
 package Apache2::Request;
 use APR::Request::Param;
-use APR::Request::Apache2 qw/args/; # XXX the args() override here is a bug.
+use APR::Request::Apache2;
 use Apache2::RequestRec;
 push our @ISA, qw/Apache2::RequestRec APR::Request::Apache2/;
 our $VERSION = "2.05-dev";
