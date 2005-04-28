@@ -1,6 +1,6 @@
 =head1 NAME
 
-APR::Request
+APR::Request - wrapper for libapreq2's module/handle API.
 
 
 
@@ -8,15 +8,16 @@ APR::Request
 =head1 SYNOPSIS
 
   use APR::Request;
-  my $req = APR::Request->handle($pool, ...);
 
-
+  my $req = $derived_class->handle( ... );
+  $param = $req->param("foo");
+  $cookie = $req->jar("bar");
 
 
 =head1 DESCRIPTION
 
 The C<< APR::Request >> module provides the base methods
-for interfacing with libapreq2's module api.  It also provides
+for interfacing with libapreq2's module API.  It also provides
 a few utility functions and constants.
 
 
@@ -74,6 +75,7 @@ APR::Request
 
 =head2 disable_uploads
 
+Engage the disable_uploads hook for this request.
 
 =head2 upload_hook
 

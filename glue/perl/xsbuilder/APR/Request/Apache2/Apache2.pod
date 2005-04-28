@@ -1,6 +1,6 @@
 =head1 NAME
 
-APR::Request::Apache2
+APR::Request::Apache2 - wrapper for a mod_apreq2 handle.
 
 
 
@@ -15,8 +15,10 @@ APR::Request::Apache2
 
 =head1 DESCRIPTION
 
-The C<< APR::Request::Apache2 >> module provides a constructor
-for interfacing with the mod_apreq2.so Apache module.
+The APR::Request::Apache2 module provides a constructor
+for interfacing with the mod_apreq2 Apache module.
+
+This manpage documents the APR::Request::Apache2 package.
 
 
 
@@ -26,12 +28,14 @@ for interfacing with the mod_apreq2.so Apache module.
 APR::Request::Apache2 - derived from C<< APR::Request >>.
 
 
+
+
 =head2 handle
 
     APR::Request::Apache2->handle($r)
 
-Creates an C<< APR::Request::Apache2 >> object.  The argument C<< $r >> 
-is the C<< Apache2::RequestRec >> object from mod_perl2.
+Creates an APR::Request::Apache2 object.  The argument C<< $r >>
+is an Apache2::RequestRec object (from mod_perl2).
 
 
 

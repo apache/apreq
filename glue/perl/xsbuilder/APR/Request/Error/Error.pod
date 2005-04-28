@@ -1,6 +1,6 @@
 =head1 NAME
 
-APR::Request::Error
+APR::Request::Error - wrapper for libapreq2's error API.
 
 
 
@@ -12,6 +12,8 @@ APR::Request::Error
 
 
 =head1 DESCRIPTION
+
+This manpage documents the APR::Request::Error package.
 
 
 
@@ -25,10 +27,16 @@ APR::Request::Error - derived from C<< APR::Request >> and C<< APR::Error >>.
 
 =head2 strerror
 
+    strerror($status)
+
+Returns the apreq error string associated with a numeric C<$status> code.
+
 
 
 
 =head1 SEE ALSO
+
+L<APR::Request>, L<APR::Error>
 
 
 

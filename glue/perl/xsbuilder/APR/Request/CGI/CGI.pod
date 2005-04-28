@@ -1,6 +1,8 @@
 =head1 NAME
 
-APR::Request::CGI
+APR::Request::CGI - wrapper for libapreq2's CGI handle.
+
+
 
 
 =head1 SYNOPSIS
@@ -13,8 +15,10 @@ APR::Request::CGI
 
 =head1 DESCRIPTION
 
-The C<< APR::Request::CGI >> module provides a constructor
+The APR::Request::CGI module provides a constructor
 for accessing CGI request data associated to a pool via libapreq2.
+
+This manpage documents the APR::Request::CGI package.
 
 
 
@@ -24,12 +28,14 @@ for accessing CGI request data associated to a pool via libapreq2.
 APR::Request::CGI - derived from C<< APR::Request >>.
 
 
+
+
 =head2 handle
 
     APR::Request::CGI->handle($pool)
 
-Creates an C<< APR::Request::CGI >> object.  The argument C<< $pool >> 
-is an C<< APR::Pool >> object.
+Creates an APR::Request::CGI object.  The argument C<< $pool >> 
+is an APR::Pool object.
 
 
 
