@@ -359,9 +359,6 @@ void apreq_brigade_move(apr_bucket_brigade *d, apr_bucket_brigade *s,
     else {
         APR_BRIGADE_CONCAT(d, s);
     }
-
-    APR_BRIGADE_CHECK_CONSISTENCY(s);
-    APR_BRIGADE_CHECK_CONSISTENCY(d);
 }
 
 
