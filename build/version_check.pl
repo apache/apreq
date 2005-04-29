@@ -55,11 +55,11 @@ my %svn = (
             );
 
 my %build = (
-                apache2 => { version => "2.0.46",  test => \&exe_version },
+                apache2 => { version => "2.0.48",  test => \&exe_version },
                     apr => { version => "0.9.4",   test => \&gnu_version,
-                             comment => "bundled with apache2 2.0.46"    },
+                             comment => "bundled with apache2 2.0.48"    },
                     apu => { version => "0.9.4",   test => \&gnu_version,
-                             comment => "bundled with apache2 2.0.46"    },
+                             comment => "bundled with apache2 2.0.48"    },
                    perl => $svn{perl},
             );
 

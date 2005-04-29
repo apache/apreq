@@ -4,6 +4,9 @@
 
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
+- C API
+  Minimum httpd version is now 2.0.48, which includes the official
+  apr 0.9.4 release.
 
 - C API [Max Kellermann]
   Fix apreq_quote.
