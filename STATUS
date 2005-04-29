@@ -43,15 +43,6 @@ CURRENT VOTES:
 
 TODO:
 
-    - Clean up the hook API wrt "final pass" semantics.  Right now
-      there are two possibilities: either the final bucket is an eos,
-      or the passed brigade is NULL.
-
-          Sybil^H^H^H^H^Hjoes flip-flops again, and now thinks this is 
-          actually ok: empty file uploads aren't the same as ordinary
-          params.
-
-
     - Introduce APR::Request::Parser and APR::Request::Hook.  Implement
       Apache2::Request::new's UPLOAD_HOOK using them.
 
