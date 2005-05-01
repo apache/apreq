@@ -46,6 +46,19 @@ $args{"with-apache2-apxs"} = delete $args{apxs}
 $args{"with-perl-opts"} = "@ARGV" if @ARGV;
 
 if (WIN32) {
+    require File::Basename;
+    my @candidates = qw(with-apache2-apxs with-apache2-httpd
+                        with-apr-config with-apu-config);
+    unless ($args{'with-apache2'}) {
+        foreach my $opt(@candidates) {
+            (my $d = File::Basename::dirname($args{$opt})) =~ s{(\\|/)bin}{};
+            if (-d $d) {
+                delete $args{$opt};
+                $args{'with-apache2'} = $d;
+                last;
+            }
+        }
+    }
     my @opts = map{qq/--$_="$args{$_}"/} keys %args;
     my @args = (PERL_PATH, 'win32/Configure.pl', @opts);
     print "@args\n";
