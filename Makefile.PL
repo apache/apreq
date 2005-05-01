@@ -10,7 +10,7 @@ use constant WIN32 => ($^O =~ /Win32/);
 
 sub test_prereq {
     system (PERL_PATH, "build/version_check.pl", @_) == 0
-        or die "Please upgrade $_[0] first.\n";
+        or warn "Please upgrade $_[0] first.\n";
 }
 
 test_prereq perl => PERL_PATH;

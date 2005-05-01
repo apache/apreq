@@ -112,25 +112,25 @@ AC_DEFUN([AC_APREQ], [
 
             AC_MSG_CHECKING(for ExtUtils::XSBuilder)
             if test -z "`$prereq_check ExtUtils::XSBuilder`"; then
-                AC_MSG_ERROR([Bad ExtUtils::XSBuilder version])
+                AC_MSG_WARN([Bad ExtUtils::XSBuilder version])
             fi
             AC_MSG_RESULT(yes)
 
             AC_MSG_CHECKING(for mod_perl)
             if test -z "`$prereq_check mod_perl`"; then
-                AC_MSG_ERROR([Bad mod_perl version])
+                AC_MSG_WARN([Bad mod_perl version])
             fi
             AC_MSG_RESULT(yes)
 
             AC_MSG_CHECKING(for Apache::Test)
             if test -z "`$prereq_check Apache::Test`"; then
-                AC_MSG_ERROR([Bad Apache::Test version])
+                AC_MSG_WARN([Bad Apache::Test version])
             fi
             AC_MSG_RESULT(yes)
 
             AC_MSG_CHECKING(for ExtUtils::MakeMaker)
             if test -z "`$prereq_check ExtUtils::MakeMaker`"; then
-                AC_MSG_ERROR([Bad ExtUtils::MakeMaker version])
+                AC_MSG_WARN([Bad ExtUtils::MakeMaker version])
             fi
             AC_MSG_RESULT(yes)
 
