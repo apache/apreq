@@ -48,7 +48,7 @@ if (WIN32) {
     slurp my $make => "$base_dir/Makefile";
     $make =~ /^APACHE=(\S+)/m or
         die "Cannot find top-level Apache directory";
-    $apache_dir = $1;
+    ($apache_dir = $1) =~ s!\\!/!g;
     ($apache_includes = "-I$apache_dir" . '/include') =~ s!\\!/!g;
     ($apr_libs = "-L$apache_dir" . '/lib') =~ s!\\!/!g;
     $make =~ /^APR_LIB=(\S+)/m or

@@ -87,7 +87,9 @@ unless ($apxs) {
 }
 
 my $test = << 'END';
-TEST: $(LIBAPREQ) $(MOD)
+TEST : TEST_APREQ2 PERL_TEST
+
+TEST_APREQ2: $(LIBAPREQ) $(MOD)
 	$(MAKE) /nologo /f $(CFG_HOME)\$(APREQ2_TEST).mak CFG="$(APREQ2_TEST) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
         set PATH=$(APREQ_HOME)\win32\libs;$(APACHE)\bin;$(PATH)
         $(PERL) "-MExtUtils::Command::MM" "-e" "test_harness()" $(TEST_FILES)
@@ -166,14 +168,10 @@ print << "END";
 A Makefile has been generated in $apreq_home.
 You can now run
 
-  nmake               - builds the libapreq2 library
+  nmake               - builds the libapreq2 library and perl glue
   nmake test          - runs the supplied tests
-  nmake mod_apreq     - builds mod_apreq
-  nmake clean         - clean
-  nmake install       - install the C libraries
-  nmake perl_glue     - build the perl glue
-  nmake perl_test     - test the perl glue
-  nmake perl_install  - install the perl glue
+  nmake install       - install the C libraries and perl glue modules
+  nmake clean         - remove intermediate files
   nmake help          - list the nmake targets
 END
     if ($doxygen) {
@@ -429,7 +427,9 @@ APACHE_LIB=$(APACHE)\lib
 TDIR=$(APREQ_HOME)\library\t
 APREQ_MODULE=$(APREQ_HOME)\module
 
-ALL : "$(LIBAPREQ)"
+ALL : MAKE_ALL
+
+MAKE_ALL : $(LIBAPREQ) $(MOD) PERL_GLUE
 
 $(LIBAPREQ):
 	$(MAKE) /nologo /f $(CFG_HOME)\$(LIBAPREQ).mak CFG="$(LIBAPREQ) - Win32 $(CFG)" APACHE="$(APACHE)" APREQ_HOME="$(APREQ_HOME)" APR_LIB="$(APR_LIB)" APU_LIB="$(APU_LIB)"
@@ -452,15 +452,9 @@ PERL_TEST: $(MOD)
         $(MAKE) /nologo test
         cd $(APREQ_HOME)
 
-PERL_INSTALL: $(MOD)
-        cd $(PERLGLUE)
-!IF !EXIST("$(PERLGLUE)\Makefile")
-	$(PERL) Makefile.PL
-!ENDIF
-        $(MAKE) /nologo install
-        cd $(APREQ_HOME)
-
-INSTALL: $(LIBAPREQ)
+INSTALL : INSTALL_LIBAPREQ2 PERL_INSTALL
+ 
+INSTALL_LIBAPREQ2: $(LIBAPREQ)
         cd $(LIBDIR)
 !IF EXIST("$(LIBDIR)\$(MOD).so")
 	copy "$(MOD).so" "$(APACHE)\modules\$(MOD).so"
@@ -472,6 +466,14 @@ INSTALL: $(LIBAPREQ)
 !IF EXIST("$(LIBDIR)\$(LIBAPREQ).dll")
         copy "$(LIBAPREQ).dll" "$(APACHE)\bin\$(LIBAPREQ).dll"
 !ENDIF
+        cd $(APREQ_HOME)
+
+PERL_INSTALL: $(MOD)
+        cd $(PERLGLUE)
+!IF !EXIST("$(PERLGLUE)\Makefile")
+	$(PERL) Makefile.PL
+!ENDIF
+        $(MAKE) /nologo install
         cd $(APREQ_HOME)
 
 HELP:
