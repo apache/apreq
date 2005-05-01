@@ -47,10 +47,11 @@ $args{"with-perl-opts"} = "@ARGV" if @ARGV;
 
 if (WIN32) {
     require File::Basename;
-    my @candidates = qw(with-apache2-apxs with-apache2-httpd
-                        with-apr-config with-apu-config);
     unless ($args{'with-apache2'}) {
+        my @candidates = qw(with-apache2-apxs with-apache2-httpd
+                            with-apr-config with-apu-config);
         foreach my $opt(@candidates) {
+            next unless $args{$opt};
             (my $d = File::Basename::dirname($args{$opt})) =~ s{(\\|/)bin}{};
             if (-d $d) {
                 delete $args{$opt};
