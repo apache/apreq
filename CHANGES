@@ -4,12 +4,13 @@
 
 @section v2_05_dev Changes with libapreq2-2.05-dev
 
+
 - Win32 build [Randy Kobes]
   Have top-level 'nmake', 'nmake test', and 'nmake install'
   targets, respectively, also include building, testing, and
   installing the corresponding perl glue targets.
 
-- C API
+- C API [geoff]
   Minimum httpd version is now 2.0.48, which includes the official
   apr 0.9.4 release.
 
