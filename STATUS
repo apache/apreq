@@ -43,6 +43,9 @@ CURRENT VOTES:
 
 TODO:
 
+    - Dump automake, preferably replacing that with more stuff from
+      httpd/apr's build system.
+
     - Introduce APR::Request::Parser and APR::Request::Hook.  Implement
       Apache2::Request::new's UPLOAD_HOOK using them.
 
