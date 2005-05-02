@@ -1178,7 +1178,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
             return s;
 
         /* This cast, when in_len = -1, is intentional */
-        if ((apr_uint64_t)in_len < heap_limit - out_len) {
+        if ((apr_uint64_t)in_len < heap_limit - (apr_uint64_t)out_len) {
             APR_BRIGADE_CONCAT(out, in);
             return APR_SUCCESS;
         }
