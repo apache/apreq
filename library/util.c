@@ -676,7 +676,7 @@ static int is_quoted(const char *p, const apr_size_t len) {
         for (i = 1; i < len - 1; i++) {
             if (p[i] == '\\')
                 backslash = !backslash;
-            else if (p[i] == '"' && !backslash)
+            else if (p[i] == 0 || (p[i] == '"' && !backslash))
                 return 0;
             else
                 backslash = 0;
@@ -716,21 +716,20 @@ APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src,
     *d++ = '"';
 
     while (s <= last) {
-
         switch (*s) {
+        case 0:
+            *d++ = '\\';
+            *d++ = '0';
+            s++;
+            break;
 
         case '\\': 
-            if (s < last) {
-                *d++ = *s++;
-                break;
-            }
-            /* else fall through */
-
         case '"':
             *d++ = '\\';
-        }
 
-        *d++ = *s++;
+        default:
+            *d++ = *s++;
+        }
     }
 
     *d++ = '"';

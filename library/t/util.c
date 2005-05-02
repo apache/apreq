@@ -173,9 +173,13 @@ static void test_quote(dAT)
     AT_int_eq(len, 7);
     AT_str_eq(dst, "\"\\\"foo\"");
 
+    len = apreq_quote(dst, "foo\\bar", 7);
+    AT_int_eq(len, 10);
+    AT_str_eq(dst, "\"foo\\\\bar\"");
+
     len = apreq_quote(dst, "foo\0bar", 7);
-    AT_int_eq(len, 9);
-    AT_mem_eq(dst, "\"foo\0bar\"", len + 1);
+    AT_int_eq(len, 10);
+    AT_str_eq(dst, "\"foo\\0bar\"");
 }
 
 static void test_quote_once(dAT)
@@ -196,12 +200,14 @@ static void test_quote_once(dAT)
     AT_str_eq(dst, "\"foo\\\"\"");
 
     len = apreq_quote_once(dst, "foo\0bar", 7);
-    AT_int_eq(len, 9);
-    AT_mem_eq(dst, "\"foo\0bar\"", len + 1);
+    AT_int_eq(len, 10);
+    AT_str_eq(dst, "\"foo\\0bar\"");
 
+    /* null byte must be escaped, even when there are already double
+       quotes */
     len = apreq_quote_once(dst, "\"foo\0bar\"", 9);
-    AT_int_eq(len, 9);
-    AT_mem_eq(dst, "\"foo\0bar\"", len + 1);
+    AT_int_eq(len, 14);
+    AT_str_eq(dst, "\"\\\"foo\\0bar\\\"\"");
 
     len = apreq_quote_once(dst, "\"foo\"", 5);
     AT_int_eq(len, 5);
@@ -211,9 +217,9 @@ static void test_quote_once(dAT)
     AT_int_eq(len, 7);
     AT_str_eq(dst, "\"'foo'\"");
 
-    len = apreq_quote_once(dst, "\"foo\"", 5);
-    AT_int_eq(len, 5);
-    AT_str_eq(dst, "\"foo\"");
+    len = apreq_quote_once(dst, "\"fo\\o\"", 6);
+    AT_int_eq(len, 6);
+    AT_str_eq(dst, "\"fo\\o\"");
 
     len = apreq_quote_once(dst, "\"foo\"bar\"", 9);
     AT_int_eq(len, 14);
@@ -265,7 +271,7 @@ int main(int argc, char *argv[])
         { dT(test_decodev, 6) },
         { dT(test_encode, 0) },
         { dT(test_cp1252_to_utf8, 14) },
-        { dT(test_quote, 6) },
+        { dT(test_quote, 8) },
         { dT(test_quote_once, 18), },
         { dT(test_join, 0) },
         { dT(test_brigade_fwrite, 0) },
