@@ -44,10 +44,6 @@ static void test_strerror(dAT)
 
     /* Test some common APR status codes also */
 
-#ifdef APR_SUCCESS_STRERROR_IS_PORTABLE
-    str = apreq_strerror(APR_SUCCESS, buf, sizeof buf);
-    AT_str_eq(str, "Success");
-#endif
     str = apreq_strerror(APR_EINIT, buf, sizeof buf);
     AT_str_eq(str, "There is no error, this value signifies an initialized "
                    "error code");
@@ -72,11 +68,7 @@ int main(int argc, char *argv[])
     apr_pool_t *p;
     dAT;
     at_test_t test_list [] = {
-        { dT(test_strerror, 10
-#ifdef APR_SUCCESS_STRERROR_IS_PORTABLE
-                            +1
-#endif
-            ), "1" }
+        { dT(test_strerror, 10), "1" }
     };
 
     apr_initialize();
