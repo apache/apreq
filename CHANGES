@@ -2,7 +2,7 @@
 @brief List of major changes.
 
 
-@section v2_05_dev Changes with libapreq2-2.05-dev
+@section v2_05_dev Changes with libapreq2-2.05-dev (released May 5, 2005)
 
 
 - Win32 build [Randy Kobes]
