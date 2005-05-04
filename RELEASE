@@ -46,9 +46,9 @@ Instructions for the apreq Release Manager (RM)
    Commit the changes and tag the tree (tr/0-9a-zA-Z/_/c in the 
    version number)
 
-        % cvs commit -m "2.XX-dev released." STATUS CHANGES
-        % cvs tag v2_XX_dev
-
+        % svn commit -m "2.XX-dev released." STATUS CHANGES
+        % svn cp https://svn.apache.org/repos/asf/httpd/apreq/trunk \
+                 https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_XX_dev
 
 6. Regenerate the release 
 
@@ -67,7 +67,7 @@ Instructions for the apreq Release Manager (RM)
    for distribution:
 
         % scp libapreq2-2.XX-dev.tar.gz* \
-          <username>@www.apache.org:/www/www.apache.org/dist/httpd/libapreq/
+          <username>@people.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
    Ask another developer to confirm the uploaded signature is ok.
 
