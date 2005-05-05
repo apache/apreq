@@ -408,40 +408,6 @@ APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
                                                    apr_bucket_brigade *in);
 
 /**
- * Add the cookie to the outgoing "Set-Cookie" headers.
- *
- * @param c   The cookie.
- * @param req The request handle which set the outgoing header.
- *
- * @return APR_SUCCESS or error.
- */
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake(const apreq_cookie_t *c,
-                                              apreq_handle_t *req);
-
-/**
- * Add the cookie to the outgoing "Set-Cookie2" headers.
- *
- * @param c   cookie
- * @param req request handle
- *
- * @return APR_SUCCESS or error.
- */
-APREQ_DECLARE(apr_status_t) apreq_cookie_bake2(const apreq_cookie_t *c,
-                                               apreq_handle_t *req);
-
-/**
- * Looks for the presence of a "Cookie2" header to determine whether
- * or not the current User-Agent responsible for this request supports
- * rfc2965.
- *
- * @param req the apreq request handle
- *
- * @return ::APREQ_COOKIE_VERSION_RFC if rfc2965 is supported
- *         by the user-agent, ::APREQ_COOKIE_VERSION_NETSCAPE otherwise.
- */
-APREQ_DECLARE(unsigned)apreq_ua_cookie_version(apreq_handle_t *req);
-
-/**
  * Find the first query string parameter or body parameter with the
  * specified name.  The match is case-insensitive.
  *
@@ -482,34 +448,6 @@ APREQ_DECLARE(apr_table_t *) apreq_params(apreq_handle_t *req, apr_pool_t *p);
  * @param p Allocates the returned table.
  */
 APREQ_DECLARE(apr_table_t *)apreq_cookies(apreq_handle_t *req, apr_pool_t *p);
-
-/**
- * Force a complete parse of everything.
- *
- * @param req The request handle
- *
- * @return APR_SUCCESS on an error-free parse of the request data.
- *         Any other status code indicates a potential problem somewhere.
- */
-static APR_INLINE
-apr_status_t apreq_parse(apreq_handle_t *req)
-{
-    const apr_table_t *dummy;
-    apr_status_t jar_status, args_status, body_status;
-
-    jar_status = apreq_jar(req, &dummy);
-    args_status = apreq_args(req, &dummy);
-    body_status = apreq_body(req, &dummy);
-
-    /* XXX: punt to APREQ_ERROR_GENERAL; need to improve this
-     * for valid requests where certain data/headers are 
-     * unavailable.
-     */
-    if (jar_status || args_status || body_status)
-        return APREQ_ERROR_GENERAL;
-
-    return APR_SUCCESS;
-}
 
 #ifdef __cplusplus
  }
