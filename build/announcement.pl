@@ -51,7 +51,6 @@ libapreq2-$PACKAGE_VERSION is released under the Apache License
 version $LICENSE_VERSION.  It is now available through the ASF mirrors
 
       http://httpd.apache.org/apreq/download.cgi
-      http://httpd.apache.org/apreq/download.cgi
 
 and has entered the CPAN as $CPAN_DATA
 EOT
