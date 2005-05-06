@@ -11,13 +11,14 @@ use File::Basename;
 use Archive::Tar;
 use File::Path;
 use LWP::Simple;
-my ($apache, $debug, $help, $no_perl, $perl);
+my ($apache, $debug, $help, $no_perl, $perl, $with_perl);
 my $VERSION = '2.03-dev';
 my $result = GetOptions( 'with-apache2=s' => \$apache,
 			 'debug' => \$debug,
 			 'help' => \$help,
                          'with-perl=s' => \$perl,
                          'disable-perl-glue' => \$no_perl,
+                         'enable-perl-glue' => \$with_perl,
                        );
 usage() if $help;
 
@@ -460,11 +461,17 @@ INSTALL_LIBAPREQ2: $(LIBAPREQ)
 	copy "$(MOD).so" "$(APACHE)\modules\$(MOD).so"
 	copy "$(MOD).lib" "$(APACHE_LIB)\$(MOD).lib"
 !ENDIF
+!IF EXIST("$(LIBDIR)\$(MOD).pdb")
+	copy "$(MOD).pdb" "$(APACHE)\modules\$(MOD).pdb"
+!ENDIF
 !IF EXIST("$(LIBDIR)\$(LIBAPREQ).lib")
 	copy "$(LIBAPREQ).lib" "$(APACHE_LIB)\$(LIBAPREQ).lib"
 !ENDIF
 !IF EXIST("$(LIBDIR)\$(LIBAPREQ).dll")
         copy "$(LIBAPREQ).dll" "$(APACHE)\bin\$(LIBAPREQ).dll"
+!ENDIF
+!IF EXIST("$(LIBDIR)\$(LIBAPREQ).pdb")
+        copy "$(LIBAPREQ).pdb" "$(APACHE)\bin\$(LIBAPREQ).pdb"
 !ENDIF
         cd $(APREQ_HOME)
 

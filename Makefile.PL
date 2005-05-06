@@ -19,9 +19,10 @@ my %opts;
 undef @opts{qw(with-apache2-apxs with-apache1-apxs with-apache2-src
                with-perl with-apache2-httpd
                with-apr-config with-apu-config apxs)};
-undef $opts{'with-apache2'} if (WIN32);
+undef @opts{qw(with-apache2)} if (WIN32);
 
 my @flags = qw/enable-maintainer-mode enable-perl-glue disable-perl-glue/;
+push @flags, qw/debug/ if (WIN32);
 my %args;
 # grab from @ARGV only the options that we expect
 GetOptions(\%args, (map "$_=s", keys %opts), @flags);
@@ -38,6 +39,8 @@ unless (exists $args{"disable-perl-glue"}) {
     test_prereq "ExtUtils::XSBuilder";
     test_prereq "Test::More";
 }
+
+$opts .= "--debug " if (WIN32 and $args{debug});
 
 delete @args{@flags};
 $args{"with-apache2-apxs"} = delete $args{apxs}
@@ -61,6 +64,7 @@ if (WIN32) {
         }
     }
     my @opts = map{qq/--$_="$args{$_}"/} keys %args;
+    push @opts, (split ' ', $opts);
     my @args = (PERL_PATH, 'win32/Configure.pl', @opts);
     print "@args\n";
     system(@args) == 0 or die "system @args failed: $?";
