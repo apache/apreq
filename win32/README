@@ -15,14 +15,10 @@ Apache2 directory, and if found, a non-debug version will be built.
 Assuming the configuration is successful, a Makefile will
 be generated. This can be used as:
 
-  nmake               - builds the libapreq2 library
+  nmake               - builds the libapreq2 library and perl glue
   nmake test          - runs the supplied tests
-  nmake mod_apreq     - builds mod_apreq
-  nmake install       - install the C libraries
+  nmake install       - install the C libraries and perl modules
   nmake clean         - clean
-  nmake perl_glue     - build the perl glue
-  nmake perl_test     - test the perl glue
-  nmake perl_install  - install the perl glue
   nmake docs          - build documentation
   nmake help          - print a usage message
 
