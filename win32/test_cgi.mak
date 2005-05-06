@@ -51,7 +51,7 @@ CFG_HOME=$(APREQ_HOME)\win32
 MODULE=$(APREQ_HOME)\module
 OUTDIR=$(CFG_HOME)\libs
 INTDIR=$(CFG_HOME)\libs
-
+CGIBIN=$(MODULE)\t\cgi-bin
 LINK32_OBJS= \
         "$(INTDIR)\test_cgi.obj" \
 	"$(OUTDIR)\libapreq2.lib" \
@@ -71,7 +71,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\test_cgi.bsc" 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\test_cgi.pdb" /machine:I386 /out:"$(MODULE)\t\cgi-bin\test_cgi.exe" 
+LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\test_cgi.pdb" /machine:I386 /out:"$(CGIBIN)\test_cgi.exe" 
 
 !ELSEIF  "$(CFG)" == "test_cgi - Win32 Debug"
 
@@ -87,7 +87,7 @@ RSC=rc.exe
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\test_cgi.bsc" 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\test_cgi.pdb" /debug /machine:I386 /out:"$(MODULE)\t\cgi-bin\test_cgi.exe" /pdbtype:sept 
+LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\test_cgi.pdb" /debug /machine:I386 /out:"$(CGIBIN)\test_cgi.exe" /pdbtype:sept 
 
 !ENDIF 
 
@@ -124,6 +124,7 @@ LINK32_FLAGS=kernel32.lib wsock32.lib user32.lib gdi32.lib winspool.lib comdlg32
 <<
 
 "$(OUTDIR)\test_cgi.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    if not exist "$(CGIBIN)/$(NULL)" mkdir "$(CGIBIN)"
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
