@@ -3,6 +3,20 @@ use strict;
 use FindBin;
 use 5.005;
 
+BEGIN {
+    unless (eval {require mod_perl}) {
+        die "Please install mod_perl: 1.25 < version < 1.99\n($@)";
+    }
+    my $file = $INC{"mod_perl.pm"};
+    my $have = "Found $file: version $mod_perl::VERSION";
+    if ($mod_perl::VERSION < 1.2402) {
+        die "$have\nPlease upgrade mod_perl to 1.24_02 or greater";
+    }
+    elsif ($mod_perl::VERSION > 1.98) {
+        die "$have\nmod_perl 1.x ( < 1.99) is required";
+    }
+}
+
 use File::Path qw(mkpath);
 use lib qw(Apache-Test/lib);
 
@@ -22,17 +36,6 @@ if (WIN32) {
 if (HAS_APACHE_TEST) {
     require Apache::TestMM;
     Apache::TestMM->import(qw(test clean));
-}
-BEGIN {
-    unless (eval {require mod_perl}) {
-        die "Please install mod_perl: 1.25 < version < 1.99\n($@)";
-    }
-    if ($mod_perl::VERSION < 1.2402) {
-        die "Please upgrade mod_perl to 1.24_02 or greater";
-    }
-    elsif ($mod_perl::VERSION > 1.98) {
-        die "mod_perl 1.x ( < 1.99) is required";
-    }
 }
 
 my $conf_data = join '', <DATA>;

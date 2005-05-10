@@ -4,6 +4,10 @@ Revision history for libapreq-1
 
 =item 1.34 
 
+move the mod_perl version detection to the top of Makefile.PL, so
+Apache-Test and other things won't fool around with %INC and confuse
+the detection code. [Stas]
+
 
 
 =item 1.33 - December 15, 2004
