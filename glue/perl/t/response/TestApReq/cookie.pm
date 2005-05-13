@@ -33,7 +33,10 @@ sub handler {
         @expires = ("expires", $req->APR::Request::args('expires'))
             if $req->APR::Request::args('expires');
         my $cookie = Apache2::Cookie->new($r, name => "foo",
-                                             value => "bar", @expires);
+                                             value => "bar",
+                                            domain => "example.com",
+                                              path => "/quux",
+                                          @expires);
         if ($test eq "bake") {
             $cookie->bake($req);
         }
