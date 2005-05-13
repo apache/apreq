@@ -5,6 +5,7 @@ use APR::Request::Cookie;
 use APR::Request::Apache2;
 use APR::Request qw/encode decode/;
 use Apache2::RequestRec;
+use Apache2::RequestUtil;
 use overload '""' => sub { shift->as_string() }, fallback => 1;
 
 push our @ISA, "APR::Request::Cookie";
@@ -34,8 +35,8 @@ sub fetch {
     my $req = shift;
     unless (defined $req) {
         my $usage = 'Usage: Apache2::Cookie->fetch($r): missing argument $r';
-        $req = eval {Apache2->request} or die <<EOD;
-$usage: attempt to fetch global Apache->request failed: $@.
+        $req = eval {Apache2::RequestUtil->request} or die <<EOD;
+$usage: attempt to fetch global Apache2::RequestUtil->request failed: $@.
 EOD
     }
     $req = APR::Request::Apache2->handle($req) unless $req->isa("APR::Request");
