@@ -148,16 +148,15 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
         memcpy(v->name, name, nlen);
     v->name[nlen] = 0;
     v->nlen = nlen;
-    /* session cookie is the default */
-    c->max_age = -1;
 
     c->path = NULL;
     c->domain = NULL;
     c->port = NULL;
-    c->flags = 0; 
-
     c->comment = NULL;
     c->commentURL = NULL;
+    c->max_age = -1;    /* session cookie is the default */
+    c->flags = 0; 
+
 
     return c;
 }

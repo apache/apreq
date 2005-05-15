@@ -114,8 +114,9 @@ SV *apreq_xs_object2sv(pTHX_ void *ptr, const char *class, SV *parent, const cha
     SV *rv = sv_setref_pv(newSV(0), class, (void *)ptr);
     sv_magic(SvRV(rv), parent, PERL_MAGIC_ext, Nullch, 0);
     if (!sv_derived_from(rv, base))
-        croak("apreq_xs_object2sv failed: target class %s isn't derived from %s",
-              class, base);
+        Perl_croak(aTHX_ "apreq_xs_object2sv failed: "
+                   "target class %s isn't derived from %s",
+                   class, base);
     return rv;
 }
 
