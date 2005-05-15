@@ -13,22 +13,17 @@ our $VERSION = "2.06";
 
 sub new {
     my ($class, $r, %attrs) = @_;
-    my $name  = delete $attrs{name};
-    my $value = delete $attrs{value};
-    $name     = delete $attrs{-name}  unless defined $name;
-    $value    = delete $attrs{-value} unless defined $value;
+    my $name  = delete $attrs{name}  || delete $attrs{-name};
+    my $value = delete $attrs{value} || delete $attrs{-value};
     return unless defined $name and defined $value;
 
-    my $cookie = $class->make($r->pool, $name,
-                              $class->freeze($value));
-
+    my $cookie = $class->make($r->pool, $name, $class->freeze($value));
     while(my ($k, $v) = each %attrs) {
         $k =~ s/^-//;
         $cookie->$k($v);
     }
     return $cookie;
 }
-
 
 sub fetch {
     my $class = shift;
@@ -39,12 +34,13 @@ sub fetch {
 $usage: attempt to fetch global Apache2::RequestUtil->request failed: $@.
 EOD
     }
-    $req = APR::Request::Apache2->handle($req) unless $req->isa("APR::Request");
+    $req = APR::Request::Apache2->handle($req)
+        unless $req->isa("APR::Request");
+
     my $jar = $req->jar or return;
     $jar->cookie_class(__PACKAGE__);
     return wantarray ? %$jar : $jar;
 }
-
 
 sub set_attr {
     my ($cookie, %attrs) = @_;
