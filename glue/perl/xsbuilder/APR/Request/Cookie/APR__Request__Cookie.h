@@ -180,3 +180,19 @@ static XS(XS_APR__Request__Cookie_nil)
     (void)items;
     XSRETURN_EMPTY;
 }
+
+static APR_INLINE
+char *apreq_xs_cookie_pool_copy(pTHX_ SV *obj, SV *value)
+{
+    IV iv;
+    STRLEN vlen;
+    char *v;
+    MAGIC *mg;
+    apr_pool_t *p;
+
+    v = SvPV(value, vlen);
+    mg = mg_find(obj, PERL_MAGIC_ext);
+    iv = SvIVX(mg->mg_obj);
+    p = INT2PTR(apr_pool_t *, iv);
+    return apr_pstrmemdup(p, v, vlen);
+}

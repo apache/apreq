@@ -106,24 +106,126 @@ is_tainted(obj, val=NULL)
   OUTPUT:
     RETVAL
 
-
-SV*
-bind_handle(cookie, req)
+char *
+path(cookie, path=NULL)
     SV *cookie
-    SV *req
+    SV *path
+
   PREINIT:
-    MAGIC *mg;
+    apreq_cookie_t *c;
     SV *obj;
+    IV iv;
+
   CODE:
     obj = apreq_xs_sv2object(aTHX_ cookie, COOKIE_CLASS, 'c');
-    mg = mg_find(obj, PERL_MAGIC_ext);
-    req = apreq_xs_sv2object(aTHX_ req, HANDLE_CLASS, 'r');
-    RETVAL = newRV_noinc(mg->mg_obj);
-    SvREFCNT_inc(req);
-    mg->mg_obj = req;
+    iv = SvIVX(obj);
+    c = INT2PTR(apreq_cookie_t *, iv);
+
+    RETVAL = c->path;
+    if (items == 2)
+        c->path = apreq_xs_cookie_pool_copy(aTHX_ obj, path);
+    if (RETVAL == NULL)
+        XSRETURN_UNDEF;
 
   OUTPUT:
     RETVAL
+
+char *
+domain(cookie, domain=NULL)
+    SV *cookie
+    SV *domain
+
+  PREINIT:
+    apreq_cookie_t *c;
+    SV *obj;
+    IV iv;
+
+  CODE:
+    obj = apreq_xs_sv2object(aTHX_ cookie, COOKIE_CLASS, 'c');
+    iv = SvIVX(obj);
+    c = INT2PTR(apreq_cookie_t *, iv);
+
+    RETVAL = c->domain;
+    if (items == 2)
+        c->domain = apreq_xs_cookie_pool_copy(aTHX_ obj, domain);
+    if (RETVAL == NULL)
+        XSRETURN_UNDEF;
+
+  OUTPUT:
+    RETVAL
+
+char *
+port(cookie, port=NULL)
+    SV *cookie
+    SV *port
+
+  PREINIT:
+    apreq_cookie_t *c;
+    SV *obj;
+    IV iv;
+
+  CODE:
+    obj = apreq_xs_sv2object(aTHX_ cookie, COOKIE_CLASS, 'c');
+    iv = SvIVX(obj);
+    c = INT2PTR(apreq_cookie_t *, iv);
+
+    RETVAL = c->port;
+    if (items == 2)
+        c->port = apreq_xs_cookie_pool_copy(aTHX_ obj, port);
+    if (RETVAL == NULL)
+        XSRETURN_UNDEF;
+
+  OUTPUT:
+    RETVAL
+
+char *
+comment(cookie, comment=NULL)
+    SV *cookie
+    SV *comment
+
+  PREINIT:
+    apreq_cookie_t *c;
+    SV *obj;
+    IV iv;
+
+  CODE:
+    obj = apreq_xs_sv2object(aTHX_ cookie, COOKIE_CLASS, 'c');
+    iv = SvIVX(obj);
+    c = INT2PTR(apreq_cookie_t *, iv);
+
+    RETVAL = c->comment;
+    if (items == 2)
+        c->comment = apreq_xs_cookie_pool_copy(aTHX_ obj, comment);
+    if (RETVAL == NULL)
+        XSRETURN_UNDEF;
+
+  OUTPUT:
+    RETVAL
+
+char *
+commentURL(cookie, commentURL=NULL)
+    SV *cookie
+    SV *commentURL
+
+  PREINIT:
+    apreq_cookie_t *c;
+    SV *obj;
+    IV iv;
+
+  CODE:
+    obj = apreq_xs_sv2object(aTHX_ cookie, COOKIE_CLASS, 'c');
+    iv = SvIVX(obj);
+    c = INT2PTR(apreq_cookie_t *, iv);
+
+    RETVAL = c->commentURL;
+    if (items == 2)
+        c->commentURL = apreq_xs_cookie_pool_copy(aTHX_ obj, commentURL);
+    if (RETVAL == NULL)
+        XSRETURN_UNDEF;
+
+  OUTPUT:
+    RETVAL
+
 
 
 APR::Request::Cookie
