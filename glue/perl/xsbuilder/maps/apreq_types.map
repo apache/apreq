@@ -28,4 +28,4 @@ struct apreq_xs_error_t       | APR::Request::Error   | T_APREQ_ERROR
 struct apreq_xs_cookie_table_t | APR::Request::Cookie::Table | T_HASHOBJ
 const apreq_xs_param_table_t * | APR::Request::Param::Table | T_HASHOBJ
 apreq_xs_subclass_t | SUBCLASS
-
+struct apreq_parser_t | APR::Request::Parser

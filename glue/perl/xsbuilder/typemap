@@ -11,6 +11,7 @@ APR::Request::Error	T_APREQ_ERROR
 Apache2::RequestRec	T_APACHEOBJ
 APR::Request::Cookie::Table	T_HASHOBJ
 APR::Request	T_APREQ_HANDLE
+APR::Request::Parser T_PTROBJ
 apr_status_t	T_IV
 const void *	T_PTR
 const char *	T_PV

@@ -266,7 +266,24 @@ uploads(t, pool)
   OUTPUT:
     RETVAL
 
+MODULE = APR::Request  PACKAGE = APR::Request::Custom
 
+APR::Request
+handle(class, pool, query_string, cookie, parser, read_limit, in)
+    apreq_xs_subclass_t class
+    APR::Pool pool
+    char *query_string
+    char *cookie
+    APR::Request::Parser parser
+    UV read_limit
+    APR::Brigade in
+  PREINIT:
+    SV *parent = SvRV(ST(1));
+  CODE:
+    RETVAL = apreq_handle_custom(pool, query_string, cookie,
+                                 parser, read_limit, in);
+  OUTPUT:
+    RETVAL
 
 
 BOOT:
