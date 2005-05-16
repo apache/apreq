@@ -116,7 +116,6 @@ sub handler {
         $r->print(<$io>);
     }
     elsif ($test eq 'bad') {
-        require APR::Request::Error;
         eval {my $q = $req->APR::Request::args('query')};
         if (ref $@ && $@->isa("APR::Request::Error")) {
             $req->upload("HTTPUPLOAD")->slurp(my $data);
@@ -136,7 +135,6 @@ sub handler {
         $r->print($upload->type);
     }
     elsif ($test eq 'disable_uploads') {
-        require APR::Request::Error;
         $req->disable_uploads(1);
         eval {my $upload = $req->upload('HTTPUPLOAD')};
         if (ref $@ eq "APR::Request::Error") {
