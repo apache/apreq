@@ -1,5 +1,3 @@
-use APR::Request::Error;
-
 sub import {
     my $class = shift;
     return unless @_;
