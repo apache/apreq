@@ -11,16 +11,17 @@ APR::Request::Error	T_APREQ_ERROR
 Apache2::RequestRec	T_APACHEOBJ
 APR::Request::Cookie::Table	T_HASHOBJ
 APR::Request	T_APREQ_HANDLE
-APR::Request::Parser T_PTROBJ
+APR::Request::Parser	T_PTROBJ
+APR::Request::Hook	T_PTROBJ
 apr_status_t	T_IV
 const void *	T_PTR
 const char *	T_PV
 apreq_xs_subclass_t	T_SUBCLASS
-const apreq_xs_subclass_t *	T_SUBCLASS
 const apr_size_t	T_UV
-apreq_xs_subclass_t *	T_SUBCLASS
 apr_size_t	T_UV
 unsigned char	T_UV
+apreq_parser_function_t	T_APREQ_PARSER_FUNCTION
+apreq_hook_function_t	T_APREQ_HOOK_FUNCTION
 
 INPUT
 T_APREQ_HANDLE
@@ -106,6 +107,11 @@ T_APREQ_TABLE
                    \"(expecting an %s derived object)\", \"${ntype}\");
     }
 
+T_APREQ_PARSER_FUNCTION
+	$var = INT2PTR(apreq_parser_function_t, SvObjIV($arg))
+
+T_APREQ_HOOK_FUNCTION
+	$var = INT2PTR(apreq_hook_function_t, SvObjIV($arg))
 
 OUTPUT
 T_APREQ_HANDLE
@@ -142,3 +148,8 @@ T_APREQ_HANDLE_CGI
 T_APREQ_PARAM
 	$arg = apreq_xs_param2sv(aTHX_ $var, class, parent);
 
+T_APREQ_PARSER_FUNCTION
+	$arg = sv_setref_pv(newSV(0), class, $var);
+
+T_APREQ_HOOK_FUNCTION
+	$arg = sv_setref_pv(newSV(0), class, $var);
