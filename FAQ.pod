@@ -3,7 +3,11 @@
 [...]
 
 
-=head1 Using libapreq2 with Apache 2 and mod_perl 2.
+
+
+=head1 Using libapreq2 with Apache2 and mod_perl2.
+
+
 
 
 =head2 When I use Apache::Request in my output filter, it seems to lose the incoming POST variables.
@@ -29,6 +33,34 @@ I<Apache::Upload> is now a separate module in apreq2, so you need to
 C<use Apache::Upload> to load the C<Apache::Request::upload> function.
 
 
+
+
 =head1 Using libapreq2 outside of Apache.
 
 [...]
+
+
+
+
+=head1 Contributing to apreq development.
+
+
+
+
+=head2 How is the subversion repository managed?
+
+apreq's repository is broken into three subdirectories:
+
+        /trunk    - the current codebase for active development.
+        /tags     - release snapshots.
+        /branches - where older releases and experimental development lines live.
+
+apreq follows a Commit-then-Review policy for its entire repository,
+but being a shared library places certain restrictions on the admissible
+changes for stable trees.   Basically the header files cannot be modified;
+only new functions and structures may be added to them.  Any time that 
+happens, the minor-version needs to be bumped, and the patch-level gets
+reset to zero.  Changes that only modify the library's implementation (.c)
+files require a bump to the patch-level.  On stable trees, this version 
+tracking should happen on each commit, to make auditing easy for other 
+developers without resorting to a draconian Review-then-Commit policy.
