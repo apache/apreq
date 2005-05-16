@@ -236,28 +236,28 @@ apreq_cookie_t *apreq_xs_sv2cookie(pTHX_ SV *sv)
 }
 
 static APR_INLINE
-void apreq_xs_croak(pTHX_ HV *data, apr_status_t rc, const char *func, 
-                   const char *class)
+void apreq_xs_croak(pTHX_ HV *data, SV *obj, apr_status_t rc,
+                    const char *func, const char *class)
 {
-    HV *stash = gv_stashpvn(class, strlen(class), FALSE);
+    HV *stash;
 
-    sv_setsv(ERRSV, sv_2mortal(sv_bless(newRV_noinc((SV*)data), stash)));
+    stash = gv_stashpv(ERROR_CLASS, FALSE);
+    if (stash == NULL) {
+        SV *pkg_name = sv_2mortal(newSVpv(class, 0));
+        Perl_load_module(aTHX_ PERL_LOADMOD_NOIMPORT, pkg_name, Nullsv);
+        stash = gv_stashpv(class, TRUE);
+    }
+
+    if (obj != Nullsv)
+        sv_setsv(*hv_fetch(data, "_r",   2, 1), sv_2mortal(newRV_inc(obj)));
     sv_setiv(*hv_fetch(data, "rc",   2, 1), rc);
     sv_setpv(*hv_fetch(data, "file", 4, 1), CopFILE(PL_curcop));
     sv_setiv(*hv_fetch(data, "line", 4, 1), CopLINE(PL_curcop));
     sv_setpv(*hv_fetch(data, "func", 4, 1), func);
+
+    sv_setsv(ERRSV, sv_2mortal(sv_bless(newRV_noinc((SV*)data), stash)));
     Perl_croak(aTHX_ Nullch);
 }
-
-#define APREQ_XS_THROW_ERROR(attr, status, func, errpkg)  do {          \
-    if (!sv_derived_from(sv, errpkg)) {                                 \
-        HV *hv = newHV();                                               \
-        SV *rv = newRV_inc(obj);                                        \
-        sv_setsv(*hv_fetch(hv, "_" #attr, 2, 1), sv_2mortal(rv));       \
-        apreq_xs_croak(aTHX_ hv, status, func, errpkg);                 \
-    }                                                                   \
-} while (0)
-
 
 static APR_INLINE
 const char *apreq_xs_helper_class(pTHX_ SV **SP, SV *sv, const char *method)

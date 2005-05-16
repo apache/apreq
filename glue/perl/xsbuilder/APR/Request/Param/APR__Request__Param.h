@@ -279,7 +279,7 @@ static XS(apreq_xs_brigade_read)
         e = APR_BRIGADE_FIRST(bb);
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
-            apreq_xs_croak(aTHX_ newHV(), s, 
+            apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
                            "APR::Request::Brigade::READ", 
                            "APR::Error");
         want = dlen;
@@ -292,7 +292,7 @@ static XS(apreq_xs_brigade_read)
         case APR_INCOMPLETE:
             s = apr_brigade_length(bb, 1, &len);
             if (s != APR_SUCCESS)
-                apreq_xs_croak(aTHX_ newHV(), s, 
+                apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
                                "APR::Request::Brigade::READ",
                                "APR::Error");
             want = len;
@@ -301,7 +301,7 @@ static XS(apreq_xs_brigade_read)
             break;
 
         default:
-            apreq_xs_croak(aTHX_ newHV(), s, 
+            apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
                            "APR::Request::Brigade::READ",
                            "APR::Error");
         }
@@ -318,8 +318,9 @@ static XS(apreq_xs_brigade_read)
         apr_size_t dlen;
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
-            apreq_xs_croak(aTHX_ newHV(), s, 
-                           "APR::Request::Brigade::READ", "APR::Error");
+            apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
+                           "APR::Request::Brigade::READ",
+                           "APR::Error");
         memcpy(buf, data, dlen);
         buf += dlen;
         apr_bucket_delete(e);
@@ -369,7 +370,7 @@ static XS(apreq_xs_brigade_readline)
         e = APR_BRIGADE_FIRST(bb);
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
-            apreq_xs_croak(aTHX_ newHV(), s, 
+            apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
                            "APR::Request::Brigade::READLINE",
                            "APR::Error");
 
