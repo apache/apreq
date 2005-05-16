@@ -1,7 +1,7 @@
 MODULE = APR::Request::Hook    PACKAGE = APR::Request::Hook
 
 APR::Request::Hook
-make(class, pool, hook, next)
+make(class, pool, hook, next=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     apreq_hook_function_t hook
@@ -14,7 +14,7 @@ make(class, pool, hook, next)
     RETVAL
 
 APR::Request::Hook
-disable_uploads(class, pool, next)
+disable_uploads(class, pool, next=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::Request::Hook next
@@ -25,7 +25,7 @@ disable_uploads(class, pool, next)
     RETVAL
 
 APR::Request::Hook
-apr_xml_parser(class, pool, next)
+apr_xml_parser(class, pool, next=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::Request::Hook next
@@ -36,7 +36,7 @@ apr_xml_parser(class, pool, next)
     RETVAL
 
 APR::Request::Hook
-find_param(class, pool, next, name)
+find_param(class, pool, name, next=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::Request::Hook next
@@ -48,7 +48,7 @@ find_param(class, pool, next, name)
     RETVAL
 
 APR::Request::Hook
-discard_brigade(class, pool, next)
+discard_brigade(class, pool, next=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::Request::Hook next
