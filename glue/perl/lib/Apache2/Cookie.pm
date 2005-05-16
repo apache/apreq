@@ -13,8 +13,8 @@ our $VERSION = "2.06";
 
 sub new {
     my ($class, $r, %attrs) = @_;
-    my $name  = delete $attrs{name}  || delete $attrs{-name};
-    my $value = delete $attrs{value} || delete $attrs{-value};
+    my ($name)  = grep {defined} delete $attrs{name} , delete $attrs{-name};
+    my ($value) = grep {defined} delete $attrs{value}, delete $attrs{-value};
     return unless defined $name and defined $value;
 
     my $cookie = $class->make($r->pool, $name, $class->freeze($value));
