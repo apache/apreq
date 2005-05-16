@@ -23,7 +23,6 @@
 
 struct custom_handle {
     struct apreq_handle_t        handle;
-    const char                  *cookie_header;
 
     apr_table_t                 *jar, *args, *body;
     apr_status_t                 jar_status,
@@ -250,21 +249,20 @@ static apr_status_t custom_temp_dir_set(apreq_handle_t *handle,
 }
 
 
-static APREQ_MODULE(custom, 20050425);
+static APREQ_MODULE(custom, 20050516);
 
-APREQ_DECLARE(apreq_handle_t*) apreq_handle_custom(apr_pool_t *pool,
-                                                       const char *query_string,
-                                                       const char *cookie,
-                                                       apreq_parser_t *parser,
-                                                       apr_uint64_t read_limit,
-                                                       apr_bucket_brigade *in)
+APREQ_DECLARE(apreq_handle_t *)apreq_handle_custom(apr_pool_t *pool,
+                                                   const char *query_string,
+                                                   const char *cookie,
+                                                   apreq_parser_t *parser,
+                                                   apr_uint64_t read_limit,
+                                                   apr_bucket_brigade *in)
 {
     struct custom_handle *req;
     req = apr_palloc(pool, sizeof(*req));
     req->handle.module = &custom_module;
     req->handle.pool = pool;
     req->handle.bucket_alloc = in->bucket_alloc;
-    req->cookie_header = cookie;
     req->read_limit = read_limit;
     req->parser = parser;
     req->in = in;
