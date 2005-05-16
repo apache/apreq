@@ -18,8 +18,8 @@ Unix build, where libtool/automake/autoconf works:
             % make install
 
 
-Or using the CPAN/perlish way (which includes the Apache::Request and
-Apache::Cookie modules):
+Or using the CPAN/perlish way (which includes the Apache2::Request and
+Apache2::Cookie modules):
 
             % perl Makefile.PL --with-apache2-apxs=/path/to/apache2/bin/apxs
             % make
