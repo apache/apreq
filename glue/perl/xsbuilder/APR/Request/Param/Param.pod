@@ -91,7 +91,7 @@ values are
 
 =item 0 APREQ_CHARSET_ASCII    (7-bit us-ascii)
 
-=item 1 APREQ_CHARSET_LATIN1   (8-bit iso 8859-1)
+=item 1 APREQ_CHARSET_LATIN1   (8-bit iso-8859-1)
 
 =item 2 APREQ_CHARSET_CP1252   (8-bit Windows-1252)
 
@@ -199,6 +199,8 @@ Returns an L<APR::Request::Brigade::IO> object, which can
 be treated as a non-seekable IO stream.
 
 
+
+
 =head2 upload_fh
 
 
@@ -214,6 +216,8 @@ Returns a seekable filehandle representing the file-upload content.
 APR::Request::Param::Table
 
 
+
+
 =head2 param_class
 
     $table->param_class()
@@ -225,10 +229,13 @@ L<get> or L<FETCH> call.  If defined, the class must be derived
 from APR::Request::Param.
 
 
+
+
 =head2 get
 
     $table->get()
     $table->get($name)
+
 
 
 
@@ -265,14 +272,19 @@ from APR::Request::Param.
 APR::Request::Brigade
 
 
+
+
 =head2 new, TIEHANDLE
+
+
 
 
 =head2 READ
 
 
-=head2 READLINE
 
+
+=head2 READLINE
 
 
 
@@ -282,7 +294,11 @@ APR::Request::Brigade
 APR::Request::Brigade::IO
 
 
+
+
 =head2 read
+
+
 
 
 =head2 readline
@@ -290,9 +306,9 @@ APR::Request::Brigade::IO
 
 
 
-
 =head1 SEE ALSO
 
+L<APR::Request>.
 
 
 

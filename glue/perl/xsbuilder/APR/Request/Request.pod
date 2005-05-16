@@ -14,11 +14,15 @@ APR::Request - wrapper for libapreq2's module/handle API.
   $cookie = $req->jar("bar");
 
 
+
+
 =head1 DESCRIPTION
 
 The C<< APR::Request >> module provides the base methods
 for interfacing with libapreq2's module API.  It also provides
 a few utility functions and constants.
+
+This manpage documents the APR::Request package.
 
 
 
@@ -28,56 +32,93 @@ a few utility functions and constants.
 APR::Request
 
 
+
+
 =head2 jar_status
+
+
 
 
 =head2 args_status
 
 
+
+
 =head2 body_status
+
+
 
 
 =head2 param_status
 
 
+
+
 =head2 parse
+
+
 
 
 =head2 jar
 
 
+
+
 =head2 args
+
+
 
 
 =head2 body
 
 
+
+
 =head2 param
+
+
 
 
 =head2 uploads (APR::Request::Param::Table???)
 
 
+
+
 =head2 pool
+
+
 
 
 =head2 bucket_alloc
 
 
+
+
 =head2 read_limit
+
+
 
 
 =head2 brigade_limit
 
 
+
+
 =head2 temp_dir
+
+
 
 
 =head2 disable_uploads
 
 Engage the disable_uploads hook for this request.
 
+
+
+
 =head2 upload_hook
+
+
 
 
 =head2 import
@@ -90,18 +131,53 @@ Engage the disable_uploads hook for this request.
 APR::Request
 
 
+
+
 =head2 encode
+
+  encode($string)
+
+Exported sub which returns the url-encoded form of C<$string>.
+
+
 
 
 =head2 decode
+
+  decode($string)
+
+Exported sub which returns the url-decoded form of C<$string>.
+
+
+
+
+=head1 SUBCLASSING
+
+APR::Request
+
+If the instances of your subclass are hash references then you can actually
+inherit from APR::Request as long as the APR::Request object is stored in
+an attribute called "r" or "_r". (The APR::Request class effectively does the
+delegation for you automagically, as long as it knows where to find the
+APR::Request object to delegate to.)  For example:
+
+	package MySubClass;
+	use APR::Request::Custom;
+	our @ISA = qw(APR::Request);
+	sub new {
+		my($class, @args) = @_;
+		return bless { r => APR::Request::Custom->handle(@args) }, $class;
+	}
+
+
 
 
 
 
 =head1 SEE ALSO
 
-L<< APR::Request::Error >>, L<< APR::Request::Param >>,
-L<< APR::Request::Cookie >>
+L<APR::Request::Error>, L<APR::Request::Param>,
+L<APR::Request::Cookie>
 
 
 

@@ -94,13 +94,13 @@ struct apreq_parser_t {
     apreq_parser_function_t parser;
     /** the Content-Type request header */
     const char             *content_type;
-    /** a pool used by the parser */
+    /** a pool which outlasts the bucket_alloc. */
     apr_pool_t             *pool;
     /** bucket allocator used to create bucket brigades */
     apr_bucket_alloc_t     *bucket_alloc;
     /** the maximum in-memory bytes a brigade may use */
     apr_size_t              brigade_limit;
-    /** the directory used by the parser for temporary files */
+    /** the directory for generating temporary files */
     const char             *temp_dir;
     /** linked list of hooks */
     apreq_hook_t           *hook;
@@ -189,7 +189,7 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser);
  * @param pfn The parser function.
  * @param brigade_limit the maximum in-memory bytes a brigade may use
  * @param temp_dir the directory used by the parser for temporary files
- * @param hook Hooks to asssociate this parser with.
+ * @param hook Hooks to associate this parser with.
  * @param ctx Parser's internal scratch pad.
  * @return New parser.
  */
