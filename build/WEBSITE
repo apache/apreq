@@ -1,9 +1,3 @@
-build/
-        General Info on the apreq community.
-        Utility scripts for building & packaging httpd-apreq-2.
-
-
-
 UPDATING THE WEBSITE:
         (cf: http://jakarta.apache.org/site/jakarta-site2.html )
 
@@ -32,12 +26,12 @@ UPDATING THE WEBSITE:
     $ cd httpd-site
     $ emacs xdocs/apreq
     $ ant
-    $ cvs commit -m "..." xdocs/apreq/ docs/apreq/
+    $ svn commit -m "..." xdocs/apreq/ docs/apreq/
 
   5) Login (via ssh) to httpd.apache.org and do
 
     $ cd /www/httpd.apache.org
-    $ cvs update index.html apreq/
+    $ svn update index.html apreq/
 
 
 

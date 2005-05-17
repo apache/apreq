@@ -241,6 +241,8 @@ pool(req)
     APR::Request req
   CODE:
     RETVAL = req->pool;
+   OUTPUT:
+    RETVAL
 
 
 APR::BucketAlloc
@@ -248,6 +250,8 @@ bucket_alloc(req)
     APR::Request req
   CODE:
     RETVAL = req->bucket_alloc;
+  OUTPUT:
+    RETVAL
 
 MODULE = APR::Request::Param    PACKAGE = APR::Request::Param::Table
 

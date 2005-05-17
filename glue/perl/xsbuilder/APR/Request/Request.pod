@@ -13,7 +13,8 @@ APR::Request - wrapper for libapreq2's module/handle API.
     $pool = APR::Pool->new;
     $ba = APR::BucketAlloc->new($pool);
     $bb = APR::Brigade->new($pool, $ba);
-    $bb->insert_tail(APR::Bucket->new($ba, "alpha=body1&beta=body2;foo=body3"));
+    $bb->insert_tail(APR::Bucket->new($ba,
+                                  "alpha=body1&beta=body2;foo=body3"));
     $parser = APR::Request::Parser->urlencoded($pool, $ba, 
                                     "application/x-www-form-urlencoded");
 
@@ -50,7 +51,34 @@ The C<< APR::Request >> module provides the base methods
 for interfacing with libapreq2's module API.  It also provides
 a few utility functions and constants.
 
-This manpage documents the APR::Request package.
+This manpage documents the APR::Request and APR::Request::Custom
+packages.
+
+
+
+=head1 METHODS
+
+APR::Request::Custom - derived from APR::Request.
+
+
+
+
+=head2 handle
+
+    APR::Request::Custom->handle($pool, 
+                                 $query_string,
+                                 $cookie_header,
+                                 $parser,
+                                 $read_limit,
+                                 $brigade)
+
+Creates a new APR::Request::Custom object.  The $query_string
+and $cookie_headers are immediately parsed into the C<args> and 
+C<jar> tables.  The $parser is an APR::Request::Parser object
+which is invoked when fetching C<body> entries from the $brigade. 
+The $read_limit represents the maximum number of bytes this handle 
+may feed into the parser.
+
 
 
 
@@ -58,6 +86,16 @@ This manpage documents the APR::Request package.
 =head1 METHODS
 
 APR::Request
+
+
+
+
+=head2 pool
+
+
+
+
+=head2 bucket_alloc
 
 
 
@@ -108,16 +146,6 @@ APR::Request
 
 
 =head2 uploads (APR::Request::Param::Table???)
-
-
-
-
-=head2 pool
-
-
-
-
-=head2 bucket_alloc
 
 
 
@@ -205,7 +233,7 @@ APR::Request object to delegate to.)  For example:
 =head1 SEE ALSO
 
 L<APR::Request::Error>, L<APR::Request::Param>,
-L<APR::Request::Cookie>
+L<APR::Request::Cookie>, L<APR::Request::Parser>
 
 
 
