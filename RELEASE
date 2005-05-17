@@ -5,7 +5,7 @@ Instructions for the apreq Release Manager (RM)
 
         % make release
 
-   This will generate a libapreq2-2.XX-dev.tar.gz candidate in the 
+   This will generate a libapreq2-2.XX.tar.gz candidate in the 
    current directory.   You should keep this source tree
    intact to tag the final release.
 
@@ -34,21 +34,21 @@ Instructions for the apreq Release Manager (RM)
 
         /** @page STATUS
 
-        2.XX-dev released on <today's date>.
+        2.XX released on <today's date>.
 
 
    Also add the release date to the top @section in CHANGES:
 
         /** @page CHANGES
 
-        @section v2_XX_dev Changes with libapreq2-2.XX-dev (released ...).
+        @section v2_XX Changes with libapreq2-2.XX (released ...).
 
    Commit the changes and tag the tree (tr/0-9a-zA-Z/_/c in the 
    version number)
 
-        % svn commit -m "2.XX-dev released." STATUS CHANGES
+        % svn commit -m "2.XX released." STATUS CHANGES
         % svn cp https://svn.apache.org/repos/asf/httpd/apreq/trunk \
-                 https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_XX_dev
+                 https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_XX
 
 6. Regenerate the release 
 
@@ -56,23 +56,23 @@ Instructions for the apreq Release Manager (RM)
 
    Then test and sign it via gpg:
 
-        % gpg --detach-sign --armor libapreq2-2.XX-dev.tar.gz
+        % gpg --detach-sign --armor libapreq2-2.XX.tar.gz
 
    or pgp:
 
-        % pgp -sba libapreq2-2.XX-dev.tar.gz
+        % pgp -sba libapreq2-2.XX.tar.gz
 
 
 7. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
-        % scp libapreq2-2.XX-dev.tar.gz* \
+        % scp libapreq2-2.XX.tar.gz* \
           <username>@people.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
    Ask another developer to confirm the uploaded signature is ok.
 
-        % gpg --verify libapreq2-2.XX-dev.tar.gz.asc
-        % pgp libapreq2-2.XX-dev.tar.gz.asc
+        % gpg --verify libapreq2-2.XX.tar.gz.asc
+        % pgp libapreq2-2.XX.tar.gz.asc
 
    Check that your public key is among those listed in the
    /www/www.apache.org/dist/httpd/KEYS file.   If not, you
