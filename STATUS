@@ -13,6 +13,8 @@ CURRENT RELEASE NOTES:
 RELEASE SHOWSTOPPERS:
 
     - The api docs are currently incorrect.
+    - The perl docs are missing Test::Inline tests.
+    - The APR::Request* docs don't appear in our doxygen pages.
 
 
 CURRENT VOTES:
@@ -33,11 +35,13 @@ CURRENT VOTES:
 
 TODO:
 
+    - Sadly, the PAUSE indexer still doesn't speak META.yml.  We need
+      to find a way to get the APR::Request* packages indexed (with 
+      proper version numbers), and prevent the indexer from inspecting 
+      the supporting modules in */t, and glue/perl/xsbuilder/tables.
+
     - Dump automake, preferably replacing that with more stuff from
       httpd/apr's build system.
-
-    - Introduce APR::Request::Parser and APR::Request::Hook.  Implement
-      Apache2::Request::new's UPLOAD_HOOK using them.
 
     - Move module/t to module/apache2/t.
 
