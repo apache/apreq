@@ -1,7 +1,7 @@
 MODULE = APR::Request::Parser    PACKAGE = APR::Request::Parser
 
 APR::Request::Parser
-make(class, pool, ba, ct, parser, blim, tdir, hook=NULL)
+make(class, pool, ba, ct, parser, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::BucketAlloc ba
@@ -18,7 +18,7 @@ make(class, pool, ba, ct, parser, blim, tdir, hook=NULL)
     RETVAL
 
 APR::Request::Parser
-generic(class, pool, ba, ct, blim, tdir, hook=NULL)
+generic(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::BucketAlloc ba
@@ -35,7 +35,7 @@ generic(class, pool, ba, ct, blim, tdir, hook=NULL)
     RETVAL
 
 APR::Request::Parser
-headers(class, pool, ba, ct, blim, tdir, hook=NULL)
+headers(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::BucketAlloc ba
@@ -52,7 +52,7 @@ headers(class, pool, ba, ct, blim, tdir, hook=NULL)
     RETVAL
 
 APR::Request::Parser
-urlencoded(class, pool, ba, ct, blim, tdir, hook=NULL)
+urlencoded(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::BucketAlloc ba
@@ -70,7 +70,7 @@ urlencoded(class, pool, ba, ct, blim, tdir, hook=NULL)
 
 
 APR::Request::Parser
-multipart(class, pool, ba, ct, blim, tdir, hook=NULL)
+multipart(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::BucketAlloc ba
@@ -87,7 +87,7 @@ multipart(class, pool, ba, ct, blim, tdir, hook=NULL)
     RETVAL
 
 APR::Request::Parser
-default(class, pool, ba, ct, blim, tdir, hook=NULL)
+default(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook=NULL)
     apreq_xs_subclass_t class
     APR::Pool pool
     APR::BucketAlloc ba
