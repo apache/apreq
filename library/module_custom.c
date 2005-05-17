@@ -265,7 +265,11 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_custom(apr_pool_t *pool,
     req->handle.bucket_alloc = in->bucket_alloc;
     req->read_limit = read_limit;
     req->parser = parser;
-    req->in = in;
+    req->in = apr_brigade_create(pool, in->bucket_alloc);
+    req->tmpbb = apr_brigade_create(pool, in->bucket_alloc);
+    req->body = apr_table_make(pool, APREQ_DEFAULT_NELTS);
+    req->body_status = APR_INCOMPLETE;
+    APR_BRIGADE_CONCAT(req->in, in);
 
     if (cookie != NULL) {
         req->jar = apr_table_make(pool, APREQ_DEFAULT_NELTS);
@@ -288,14 +292,9 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_custom(apr_pool_t *pool,
         req->args_status = APREQ_ERROR_NODATA;
     }
 
-    if (in != NULL) {
-        req->tmpbb = apr_brigade_create(pool, in->bucket_alloc);
-        req->body = apr_table_make(pool, APREQ_DEFAULT_NELTS);
-        req->body_status = APR_INCOMPLETE;
-    }
-    else {
-        req->body = NULL;
-        req->body_status = APREQ_ERROR_NODATA;
+    if (!APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(req->in))) {
+        apr_bucket *eos = apr_bucket_eos_create(in->bucket_alloc);
+        APR_BRIGADE_INSERT_TAIL(req->in, eos);
     }
 
     return &req->handle;
