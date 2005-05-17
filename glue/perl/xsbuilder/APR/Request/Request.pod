@@ -3,15 +3,43 @@
 APR::Request - wrapper for libapreq2's module/handle API.
 
 
+=for testing
+    use APR::Pool;
+    use APR::Brigade;
+    use APR::Bucket;
+    use APR::BucketAlloc;
+    use APR::Request;
+    use APR::Request::Parser;
+    $pool = APR::Pool->new;
+    $ba = APR::BucketAlloc->new($pool);
+    $bb = APR::Brigade->new($pool, $ba);
+    $bb->insert_tail(APR::Bucket->new($ba, "alpha=body1&beta=body2;foo=body3"));
+    $parser = APR::Request::Parser->urlencoded($pool, $ba, 
+                                    "application/x-www-form-urlencoded");
+
+
 
 
 =head1 SYNOPSIS
 
+
+=for example begin
+
   use APR::Request;
 
-  my $req = $derived_class->handle( ... );
+  $req = APR::Request::Custom->handle($pool, 
+                                      "foo=arg1&bar=arg2", 
+                                      "cookie=apache",
+                                       $parser, 1e6, $bb);
   $param = $req->param("foo");
-  $cookie = $req->jar("bar");
+  $cookie = $req->jar("cookie");
+
+=for example end
+
+=for example_testing
+    ok $req->isa("APR::Request");
+    is $param, "arg1", "param";
+    is $cookie, "apache", "cookie";
 
 
 
