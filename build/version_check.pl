@@ -138,6 +138,11 @@ provides:
     version: $opts{version}
   APR::Request::Param:
     version: $opts{version}
+no_index:
+  directory:
+    - glue/perl/xsbuilder/tables/APR/Request
+    - glue/perl/t/response/TestAPI
+    - glue/perl/t/response/TestApReq
 generated_by: $0
 EOT
         my %runtime_prereqs =  (
