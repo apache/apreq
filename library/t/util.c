@@ -244,7 +244,19 @@ static void test_file_mktemp(dAT)
 
 static void test_header_attribute(dAT)
 {
+    const char hdr[] = "filename=\"filename=foo\" filename=\"quux.txt\"";
+    const char *val;
+    apr_size_t vlen;
 
+    AT_int_eq(apreq_header_attribute(hdr+4, "name", 4, &val, &vlen),
+              APR_SUCCESS);
+    AT_int_eq(vlen, 12);
+    AT_mem_eq("filename=foo", val, 12);
+
+    AT_int_eq(apreq_header_attribute(hdr+4, "filename", 8, &val, &vlen),
+              APR_SUCCESS);
+    AT_int_eq(vlen, 8);
+    AT_mem_eq("quux.txt", val, 8);
 
 }
 
@@ -276,7 +288,7 @@ int main(int argc, char *argv[])
         { dT(test_join, 0) },
         { dT(test_brigade_fwrite, 0) },
         { dT(test_file_mktemp, 0) },
-        { dT(test_header_attribute, 0) },
+        { dT(test_header_attribute, 6) },
         { dT(test_brigade_concat, 0) },
     };
 

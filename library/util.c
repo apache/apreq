@@ -1077,7 +1077,7 @@ APREQ_DECLARE(apr_status_t)
             }
         }
 
-        if (strncasecmp(key, name, nlen) == 0) {
+        if (key >= hdr && strncasecmp(key, name, nlen) == 0) {
             *vlen = v - *val;
             if (key == hdr || ! is_2616_token(key[-1]))
                 return APR_SUCCESS;
