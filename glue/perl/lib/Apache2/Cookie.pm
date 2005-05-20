@@ -183,36 +183,10 @@ accessing the incoming params and file uploads.
 
 =head2 new
 
-    Apache2::Cookie::Jar->new($env, %args)
+    Apache2::Cookie::Jar->new($env)
 
 Class method that retrieves the parsed cookie jar from the current 
-environment.  An optional VALUE_CLASS => $class argument instructs
-the jar to bless any returned cookies into $class instead
-of Apache2::Cookie.  This feature is meant to be useful in situations 
-where C<Apache2::Cookie::thaw()> is unable to correctly interpret an incoming
-cookie's serialization.  Users can simply override C<thaw> in an
-application-specific subclass and pass that subclass's name as the 
-VALUE_CLASS argument:
-
-=for example begin
-
-    {
-        package FOO;
-        @ISA= 'Apache2::Cookie';
-    }
-    my $jar = Apache2::Cookie::Jar->new($r, VALUE_CLASS => "FOO");
-    ok $jar->cookies("foo")->isa("FOO");
-    ok $jar->cookies->{bar}->isa("FOO");
-
-=for example end
-
-=for example_testing
-    ok $jar->isa("Apache2::Cookie::Jar");
-    $jar->cookies->do(sub { ok $_[1]->isa("FOO"); });
-    map { ok $_->isa("FOO") } values %{$jar->cookies};
-
-
-
+environment.
 
 =head2 cookies
 
