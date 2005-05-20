@@ -18,12 +18,12 @@
 # buildconf: Build the support scripts needed to compile from a
 #            checked-out version of the source code.
 
-perl="perl"
-libtool="libtool"
-aclocal="aclocal"
-automake="automake"
-autoconf="autoconf"
-autoheader="autoheader"
+perl="${PERL:-perl}"
+libtool="${LIBTOOL:-libtool}"
+aclocal="${ACLOCAL:-aclocal}"
+automake="${AUTOMAKE:-automake}"
+autoconf="${AUTOCONF:-autoconf}"
+autoheader="${AUTOHEADER:-autoheader}"
 
 
 while test $# -gt 0 
