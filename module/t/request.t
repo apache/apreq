@@ -26,7 +26,7 @@ foreach my $location ('/apreq_request_test', '/apreq_access_test') {
 
 ok t_cmp(GET_RC("/apreq_access_test"), 403, "access denied");
 
-my $filler = "0123456789" x 6400; # < 64K
+my $filler = "0123456789" x 25_000; # length($filler) must be < 500K / 2
 my $body = POST_BODY("/apreq_access_test?foo=1;", 
                      content => "bar=2&quux=$filler;test=6&more=$filler");
 ok t_cmp($body, <<EOT, "prefetch credentials");
@@ -87,14 +87,14 @@ sub filter_content ($) {
 }
 
 ok t_cmp(GET_RC("/index.html"), 200, "/index.html");
-ok t_cmp(filter_content GET_BODY("/index.html?test=13"),
-         "ARGS:\n\ttest => 13\n", "output filter GET");
+ok t_cmp(filter_content GET_BODY("/index.html?test=15"),
+         "ARGS:\n\ttest => 15\n", "output filter GET");
 
-ok t_cmp(filter_content POST_BODY("/index.html?test=14", content => 
+ok t_cmp(filter_content POST_BODY("/index.html?test=16", content => 
          "post+data=foo;more=$filler;test=output+filter+POST"), 
          <<EOT,
 ARGS:
-\ttest => 14
+\ttest => 16
 BODY:
 \tpost data => foo
 \tmore => $filler
