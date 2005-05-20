@@ -3,13 +3,65 @@
 APR::Request::Param - wrapper for libapreq2's param API.
 
 
+=begin testing
+    use APR::Pool;
+    use APR::Brigade;
+    use APR::Bucket;
+    use APR::BucketAlloc;
+    use APR::Request;
+    use APR::Request::Parser;
+    $pool = APR::Pool->new;
+    $ba = APR::BucketAlloc->new($pool);
+    $bb = APR::Brigade->new($pool, $ba);
+    $content = <<EOT;
+---XYZ-
+Content-Disposition: form-data; name="alpha"
+Content-Type: text/plain; charset=us-ascii
+
+first
+---XYZ-
+Content-Disposition: form-data; name="beta" filename="foo.txt"
+Content-Type: text/plain; charset=us-ascii
+
+second
+---XYZ-
+Content-Disposition: form-data; name="gamma"
+Content-Type: text/plain; charset=us-ascii
+
+third
+---XYZ---
+EOT
+    s/(?<!\015)\012/\015\012/g for $content;
+    $bb->insert_tail(APR::Bucket->new($ba, $content));
+    $parser = APR::Request::Parser->multipart($pool, $ba, 
+                                    "multipart/form-data; boundary=-XYZ-");
+    $req = APR::Request::Custom->handle($pool, "alpha=arg1&beta=arg2", 
+                                                "foo=bar",
+                                                $parser, 1e6, $bb);
+
+=end testing
 
 
 =head1 SYNOPSIS
 
+
+=for example begin
+
   use APR::Request::Param;
 
+  $arg1 = $req->args('alpha');
+  $body = $req->body;
+  $body->param_class("APR::Request::Param");
+  ok $_->isa("APR::Request::Param") for values %$body;
 
+  @uploads = grep {$_->upload} values %$body;
+
+
+=for example end
+
+=for example_testing
+  is $arg1, "arg1", 'alpha arg is "arg1"';
+  ok @uploads == 1;
 
 
 =head1 DESCRIPTION
