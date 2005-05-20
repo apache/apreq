@@ -3,23 +3,56 @@
 APR::Request::Cookie - wrapper for libapreq2's cookie API.
 
 
+=for testing
+    use APR::Pool;
+    use APR::Brigade;
+    use APR::Bucket;
+    use APR::BucketAlloc;
+    use APR::Request;
+    use APR::Request::Parser;
+    $pool = APR::Pool->new;
+    $ba = APR::BucketAlloc->new($pool);
+    $bb = APR::Brigade->new($pool, $ba);
+    $bb->insert_tail(APR::Bucket->new($ba,
+                                  "alpha=body1&beta=body2;foo=body3"));
+    $parser = APR::Request::Parser->urlencoded($pool, $ba, 
+                                    "application/x-www-form-urlencoded");
+    $req = APR::Request::Custom->handle($pool, "foo=bar", 
+                                                "cookie1=apache1;cookie2=apache2",
+                                                $parser, 1e6, $bb);
+
 
 
 =head1 SYNOPSIS
 
-  use APR::Request::Cookie;
-  my $cookie = APR::Request::Cookie->new($req, 
-                                         name => "foo",
-                                        value => "bar",
-                                       domain => "capricorn.com");
 
+=for example begin
+
+  use APR::Request::Cookie;
+
+  # fetch inbound cookie
+  $jar = $req->jar;
+  $cookie1 = $jar->get("cookie1");
+
+  # generate new cookie
+  $cookie = APR::Request::Cookie->new($req->pool, 
+                                      name => "foo",
+                                     value => "bar",
+                                    domain => "capricorn.com");
   print "$cookie"; # prints "bar"
 
   $cookie->domain("example.com"); # change domains
   $cookie->version(1); # upgrade it to conform with RFC 2109/2965.
 
-  # print a response header
-  printf "Set-Cookie: %s\n", $cookie->as_string;
+  # send a response header
+  print sprintf "Set-Cookie: %s\n", $cookie->as_string;
+
+=for example end
+
+=for example_testing
+  ok "$cookie1" eq "apache1";
+  ok $jar->isa("APR::Request::Cookie::Table");
+  is $_STDOUT_ , qq[barSet-Cookie: foo=bar; Version=1; domain="example.com"\n];
 
 
 
@@ -103,7 +136,8 @@ the corresponding method's documentation.
 
     APR::Request::Cookie->freeze($value)
 
-Default serializer- returns $value unmodified.
+Class method representing the default serializer;
+here it returns $value unmodified.
 
 
 
@@ -112,7 +146,8 @@ Default serializer- returns $value unmodified.
 
     APR::Request::Cookie->thaw($value)
 
-Reverses C<< freeze() >>; here it's a noop.
+Class method that reverses C<< freeze() >>;
+here it returns $value unmodified.
 
 
 
@@ -121,8 +156,10 @@ Reverses C<< freeze() >>; here it's a noop.
 
     $cookie->name()
 
-Fetch the cookie's name.
-This attribute cannot be modified.
+Fetch the cookie's name.  This attribute 
+cannot be modified and is never serialized; 
+ie freeze() and thaw() do not act on the 
+cookie's name.
 
 
 
@@ -131,7 +168,7 @@ This attribute cannot be modified.
 
     $cookie->value()
 
-Fetch the cookie's value.
+Fetch the cookie's raw (frozen) value.
 This attribute cannot be modified.
 
 
@@ -278,6 +315,24 @@ C<< APR::Request::jar() >>.
 Get/set the class each table element is blessed into during a 
 L<get> or L<FETCH> call.  If defined, the class must be derived 
 from APR::Request::Cookie.
+
+
+=for example begin
+
+    {
+        package FOO;
+        @ISA= 'APR::Request::Cookie';
+    }
+
+    $jar->cookie_class("FOO");
+    ok $_->isa("FOO") for values %$jar;
+
+=for example end
+
+=for example_testing
+    $jar->do(sub { ok $_[1]->isa("FOO"); });
+
+
 
 
 
