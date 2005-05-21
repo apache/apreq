@@ -6,6 +6,10 @@
 
 
 - Perl API [joes]
+  Drop support for Apache2::Request::new's HOOK_DATA.
+  UPLOAD_HOOK now takes only two arguments: ($upload, $data).
+
+- Perl API [joes]
   Drop support for Apache2::Cookie::Jar::new's VALUE_CLASS.
   2.05-dev broke that API, and it's not worth trying to fix.
   People who need that should use APR::Request::Cookie::Table's

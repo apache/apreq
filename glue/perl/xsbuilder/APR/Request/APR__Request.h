@@ -370,18 +370,15 @@ static apr_status_t eval_upload_hook(pTHX_ apreq_param_t *upload,
 {
     dSP;
     SV *sv = ctx->bucket_data;
-    STRLEN len = SvPOK(sv) ? SvCUR(sv) : 0;
 
     PUSHMARK(SP);
-    EXTEND(SP, 3);
+    EXTEND(SP, 2);
     ENTER;
     SAVETMPS;
 
     sv = apreq_xs_param2sv(aTHX_ upload, PARAM_CLASS, ctx->parent);
     PUSHs(sv_2mortal(sv));
     PUSHs(ctx->bucket_data);
-    PUSHs(sv_2mortal(newSViv(len)));
-
     PUTBACK;
     perl_call_sv(ctx->hook, G_EVAL|G_DISCARD);
     FREETMPS;
