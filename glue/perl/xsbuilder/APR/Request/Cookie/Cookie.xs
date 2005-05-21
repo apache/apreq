@@ -268,9 +268,9 @@ as_string(c)
 MODULE = APR::Request::Cookie PACKAGE = APR::Request::Cookie::Table
 
 SV *
-cookie_class(t, newclass=NULL)
+cookie_class(t, subclass=&PL_sv_undef)
     APR::Request::Cookie::Table t
-    char *newclass
+    SV *subclass
 
   PREINIT:
     SV *obj = apreq_xs_sv2object(aTHX_ ST(0), COOKIE_TABLE_CLASS, 't');
@@ -280,14 +280,22 @@ cookie_class(t, newclass=NULL)
   CODE:
     RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
 
-    if (newclass != NULL) {
-        if (!sv_derived_from(ST(1), COOKIE_CLASS))
+    if (items == 2) {
+        if (!SvOK(subclass)) {
+            mg->mg_ptr = NULL;
+            mg->mg_len = 0;
+        }
+        else if (!sv_derived_from(subclass, COOKIE_CLASS)) {
             Perl_croak(aTHX_ "Usage: " 
                              COOKIE_TABLE_CLASS "::cookie_class($table, $class): "
-                             "class %s is not derived from " COOKIE_CLASS, newclass);
-        mg->mg_ptr = savepv(newclass);
-        mg->mg_len = strlen(newclass);
-
+                             "class %s is not derived from " COOKIE_CLASS, 
+                             SvPV_nolen(subclass));
+        }
+        else {
+            STRLEN len;
+            mg->mg_ptr = savepv(SvPV(subclass, len));
+            mg->mg_len = len;
+        }
         if (curclass != NULL)
             Safefree(curclass);
     }
