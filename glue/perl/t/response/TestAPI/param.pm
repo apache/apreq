@@ -55,7 +55,7 @@ sub handler {
     eval { $args->param_class("APR::Request::Cookie") };
     ok t_cmp qr/^Usage/, $@, "Bad class name";
 
-    ok t_cmp $jar->param_class(), "APR::Request::Param", "old class";
+    ok t_cmp $args->param_class(), "APR::Request::Param", "old class";
     ok t_cmp $args->param_class(__PACKAGE__), $args, "class upgrade";
     ok $args->{foo}->isa(__PACKAGE__);
 
