@@ -39,6 +39,7 @@ EOD
 
     my $jar = $req->jar or return;
     $jar->cookie_class(__PACKAGE__);
+    return $jar->get(shift) if @_;
     return wantarray ? %$jar : $jar;
 }
 
@@ -92,7 +93,7 @@ sub bake2 {
 package Apache2::Cookie::Jar;
 use APR::Request::Apache2;
 push our @ISA, qw/APR::Request::Apache2/;
-sub cookies { Apache2::Cookie->fetch(shift) }
+sub cookies { Apache2::Cookie->fetch(@_) }
 *Apache2::Cookie::Jar::status = *APR::Request::jar_status;
 
 my %old_args = (
