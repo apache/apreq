@@ -13,7 +13,7 @@ use APR::Request::Apache2;
 
 sub handler {
     my $r = shift;
-    plan $r, tests => 30;
+    plan $r, tests => 31;
     $r->args("foo=1;bar=2;foo=3;quux=4");
 
     my $req = APR::Request::Apache2->handle($r);
