@@ -314,7 +314,10 @@ C<< APR::Request::jar() >>.
 
 Get/set the class each table element is blessed into during a 
 L<get> or L<FETCH> call.  If defined, the class must be derived 
-from APR::Request::Cookie.
+from APR::Request::Cookie.  When called with set, it returns 
+the $table.  Otherwise it returns the name of the current class, 
+or undef if no cookie class is defined.
+
 
 
 =for example begin

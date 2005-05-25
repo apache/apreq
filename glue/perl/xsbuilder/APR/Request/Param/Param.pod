@@ -42,6 +42,8 @@ EOT
 =end testing
 
 
+
+
 =head1 SYNOPSIS
 
 
@@ -62,6 +64,8 @@ EOT
 =for example_testing
   is $arg1, "arg1", 'alpha arg is "arg1"';
   ok @uploads == 1;
+
+
 
 
 =head1 DESCRIPTION
@@ -278,7 +282,9 @@ APR::Request::Param::Table
 
 Get/set the class each table element is blessed into during a
 L<get> or L<FETCH> call.  If defined, the class must be derived
-from APR::Request::Param.
+from APR::Request::Param.  When called with $set, it returns
+the $table.  Otherwise it returns the name of the current class,
+or undef if no param class is defined.
 
 
 
@@ -294,6 +300,8 @@ from APR::Request::Param.
 =head2 FETCH
 
     $table->FETCH($name)
+
+Same as get().
 
 
 

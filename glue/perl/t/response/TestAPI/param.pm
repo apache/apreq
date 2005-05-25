@@ -46,7 +46,7 @@ sub handler {
 
     ok t_cmp join(" ", $args->get("foo")), "1 3", '$args->get("foo")';
 
-    ok not defined $args->param_class("APR::Request::Param");
+    ok $args == $args->param_class("APR::Request::Param");
     ok t_cmp $_->is_tainted, 1, "is tainted: $_" for values %$args;
     $_->is_tainted(0) for values %$args;
     ok t_cmp $_->is_tainted, 0, "not tainted: $_" for values %$args;
@@ -55,7 +55,8 @@ sub handler {
     eval { $args->param_class("APR::Request::Cookie") };
     ok t_cmp qr/^Usage/, $@, "Bad class name";
 
-    ok t_cmp $args->param_class(__PACKAGE__), "APR::Request::Param", "class upgrade";
+    ok t_cmp $jar->param_class(), "APR::Request::Param", "old class";
+    ok t_cmp $args->param_class(__PACKAGE__), $args, "class upgrade";
     ok $args->{foo}->isa(__PACKAGE__);
 
     return 0;

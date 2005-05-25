@@ -140,7 +140,6 @@ param_class(t, subclass=&PL_sv_undef)
     char *curclass = mg->mg_ptr;
 
   CODE:
-    RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
 
     if (items == 2) {
         if (!SvOK(subclass)) {
@@ -157,10 +156,15 @@ param_class(t, subclass=&PL_sv_undef)
             STRLEN len;
             mg->mg_ptr = savepv(SvPV(subclass, len));
             mg->mg_len = len;
+            
         }
         if (curclass != NULL)
             Safefree(curclass);
+
+        XSRETURN(1);
     }
+
+    RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
 
   OUTPUT:
     RETVAL

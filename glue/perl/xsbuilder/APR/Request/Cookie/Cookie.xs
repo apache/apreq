@@ -278,7 +278,6 @@ cookie_class(t, subclass=&PL_sv_undef)
     char *curclass = mg->mg_ptr;
 
   CODE:
-    RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
 
     if (items == 2) {
         if (!SvOK(subclass)) {
@@ -298,7 +297,11 @@ cookie_class(t, subclass=&PL_sv_undef)
         }
         if (curclass != NULL)
             Safefree(curclass);
+
+        XSRETURN(1);
     }
+
+    RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
 
   OUTPUT:
     RETVAL
