@@ -1,3 +1,4 @@
+package APR::Request::Cookie;
 use APR::Request;
 
 sub new {
@@ -17,4 +18,15 @@ sub new {
 }
 
 sub freeze { return $_[1] }
-sub thaw { return shift->value }
+sub thaw {
+    my $obj = shift;
+    return shift if @_;
+    return "$obj";
+}
+
+package APR::Request::Cookie::Table;
+
+sub EXISTS {
+    my ($t, $key) = @_;
+    return defined $t->FETCH($key);
+}
