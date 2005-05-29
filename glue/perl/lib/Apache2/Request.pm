@@ -380,9 +380,8 @@ data, and will not be seen by other libapreq2 applications.
 =head2 args_status
 
     $req->args_status()
-    $req->args_status($set)
 
-Get/set the I<APR> status code of the query-string parser.
+Get the I<APR> status code of the query-string parser.
 APR_SUCCESS on success, error otherwise.
 
 =for testing
@@ -394,9 +393,8 @@ APR_SUCCESS on success, error otherwise.
 =head2 body_status
 
     $req->body_status()
-    $req->body_status($set)
 
-Get/set the current I<APR> status code of the parsed POST data.
+Get the current I<APR> status code of the parsed POST data.
 APR_SUCCESS when parser has completed, APR_INCOMPLETE if parser
 has more data to parse, APR_EINIT if no post data has been parsed,
 error otherwise.
