@@ -92,80 +92,162 @@ APR::Request
 
 =head2 pool
 
+    $req->pool()
+
+Returns the APR::Pool object associated to this handle.
+
 
 
 
 =head2 bucket_alloc
+
+    $req->bucket_alloc()
+
+Returns the APR::BucketAlloc object associated to this handle.
 
 
 
 
 =head2 jar_status
 
+    $req->jar_status()
+
+Returns the final status code of the handle's cookie header parser.
+
 
 
 
 =head2 args_status
+
+    $req->args_status()
+
+Returns the final status code of the handle's query-string parser.
 
 
 
 
 =head2 body_status
 
+    $req->body_status()
+
+Returns the final status code of the handle's body parser.
+
 
 
 
 =head2 param_status
 
+    $req->param_status()
 
+Returns C<< ($req->args_status, $req->body_status) >> in list
+context; otherwise returns C<< $req->args_status || $req->body_status >>.
 
 
 =head2 parse
 
+    $req->parse()
 
+Parses the jar, args, and body tables. Returns 
+C<< $req->jar_status, $req->args_status, $req->body_status >>.
 
 
 =head2 jar
 
+    $req->jar()
+    $req->jar($key)
+
+With no arguments, this method returns a tied APR::Request::Cookie::Table 
+object in scalar context, or the names (in order, with repetitions) of all
+the parsed cookies.
+
+With the C<$key> argument, in scalar context this method fetches the first 
+matching cookie.  In list context it returns all matching cookies.
+The returned cookies are the values as they appeared in the incoming
+Cookie header.
 
 
 
 =head2 args
 
+    $req->args()
+    $req->args($key)
+
+With no arguments, this method returns a tied APR::Request::Param::Table 
+object in scalar context, or the names (in order, with repetitions) of all
+the parsed query-string arguments.
+
+With the C<$key> argument, in scalar context this method fetches the first 
+matching query-string arg.  In list context it returns all matching args.
 
 
 
 =head2 body
 
+    $req->body()
+    $req->body($key)
+
+With no arguments, this method returns a tied APR::Request::Param::Table 
+object in scalar context, or the names (in order, with repetitions) of all
+the parsed cookies.
+
+With the C<$key> argument, in scalar context this method fetches the first 
+matching body param.  In list context it returns all matching body params.
 
 
 
 =head2 param
 
+    $req->param()
+    $req->param($key)
+
+With no arguments, this method returns a tied APR::Request::Cookie::Table 
+object in scalar context, or the names (in order, with repetitions) of all
+the incoming (args + body) params.
+
+With the C<$key> argument, in scalar context this method fetches the first 
+matching param.  In list context it returns all matching params.
 
 
 
 =head2 uploads (APR::Request::Param::Table???)
+
+    $req->uploads()
+    $req->uploads($key)
 
 
 
 
 =head2 read_limit
 
+    $req->read_limit()
+    $req->read_limit($set)
+
 
 
 
 =head2 brigade_limit
 
+    $req->brigade_limit()
+    $req->brigade_limit($set)
 
+Get/set the brigade_limit for the current parser.  This limit
+determines how many bytes of a file upload that the parser may 
+spool into main memory.  Uploads exceeding this limit are written
+directly to disk.
 
 
 =head2 temp_dir
 
+    $req->temp_dir()
+    $req->temp_dir($set)
 
+Get/set the spool directory for uploads which exceed the configured
+brigade_limit.
 
 
 =head2 disable_uploads
+
+    $req->disable_uploads()
 
 Engage the disable_uploads hook for this request.
 
@@ -174,12 +256,17 @@ Engage the disable_uploads hook for this request.
 
 =head2 upload_hook
 
+    $req->upload_hook($callback)
+
+Add an upload hook callback for this request.  The
+arguments to the $callback sub are ($upload, $new_data).
+
 
 
 
 =head2 import
 
-
+Exports a list of subs into the caller's package.
 
 
 =head1 SUBROUTINES
@@ -191,18 +278,18 @@ APR::Request
 
 =head2 encode
 
-  encode($string)
+    encode($string)
 
-Exported sub which returns the url-encoded form of C<$string>.
+Exportable sub which returns the url-encoded form of C<$string>.
 
 
 
 
 =head2 decode
 
-  decode($string)
+    decode($string)
 
-Exported sub which returns the url-decoded form of C<$string>.
+Exportable sub which returns the url-decoded form of C<$string>.
 
 
 
