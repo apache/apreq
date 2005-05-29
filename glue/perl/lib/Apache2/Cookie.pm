@@ -242,25 +242,9 @@ C<cookies> will croak if the parser failed to successfully parse the
 =head2 status
 
     $jar->status()
-    $jar->status($set)
 
-Get or set the I<APR> status code of the cookie parser:
+Get the I<APR> status code of the cookie parser:
 APR_SUCCESS on success, error otherwise.
-
-=for example begin
-
-    $j->status(-1);
-    ok $j->status == -1;
-    eval { @cookies = $j->cookies("foo") };   # croaks
-    ok $@->isa("Apache2::Cookie::Jar::Error");
-    $j->status(0);
-
-=for example end
-
-=for example_testing
-    ok $j->status == 0,            '$j->status == 0';
-    @cookies = $j->cookies("foo");
-    ok @cookies == 2,              '@cookies == 2';
 
 
 
