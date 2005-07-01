@@ -310,7 +310,7 @@ depends on the table's current param_class.
 
 
 
-=head EXISTS
+=head2 EXISTS
 
 Synonym for C<< defined >>; these tables are not 
 allowed to contain undefined values. Since these
