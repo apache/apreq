@@ -96,17 +96,13 @@ push our @ISA, qw/APR::Request::Apache2/;
 sub cookies { Apache2::Cookie->fetch(@_) }
 *Apache2::Cookie::Jar::status = *APR::Request::jar_status;
 
-my %old_args = (
-    value_class => "cookie_class",
-);
-
 sub new {
     my $class = shift;
     my $jar = $class->APR::Request::Apache2::handle(shift);
     my %attrs = @_;
     while (my ($k, $v) = each %attrs) {
         $k =~ s/^-//;
-        my $method = $old_args{lc($k)} || lc $k;
+        my $method = lc $k;
         $jar->$method($v);
     }
     return $jar;
