@@ -1237,7 +1237,12 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
             e->start = last_out->start + FILE_BUCKET_LIMIT;
             wlen -= FILE_BUCKET_LIMIT - last_out->length;
             last_out->length = FILE_BUCKET_LIMIT;
+
+            /* Copying makes the bucket types exactly the
+             * opposite of what we need here.
+             */
             last_out->type = &apr_bucket_type_file;
+            e->type = &spool_bucket_type;
 
             APR_BRIGADE_INSERT_TAIL(out, e);
             last_out = e;
