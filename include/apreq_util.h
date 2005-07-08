@@ -353,6 +353,12 @@ void apreq_brigade_move(apr_bucket_brigade *d, apr_bucket_brigade *s,
 
     if (e != APR_BRIGADE_SENTINEL(s)) {
         f = APR_RING_FIRST(&s->list);
+        if (f == e) /* zero buckets to be moved */
+            return;
+
+        /* obtain the last bucket to be moved */
+        e = APR_RING_PREV(e, link);
+
         APR_RING_UNSPLICE(f, e, link);
         APR_RING_SPLICE_HEAD(&d->list, f, e, apr_bucket, link);
     }

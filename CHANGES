@@ -4,6 +4,11 @@
 
 @section v2_06 Changes with libapreq2-2.06
 
+- C API [max]
+
+  Right-hand limit of apreq_brigade_move() is declared as "excluding",
+  but APR_RING_UNSPLICE() wants an "including" right-hand limit. Fixed
+  this by passing the previous bucket.
 
 - Perl API [joes]
   Drop support for Apache2::Request::new's HOOK_DATA.
