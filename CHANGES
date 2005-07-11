@@ -4,6 +4,12 @@
 
 @section v2_06 Changes with libapreq2-2.06
 
+
+- Perl API [joes]
+  Support for table set/add/delete methods is formally withdrawn.
+  Technically this feature died with the module API refactoring in
+  2.05-dev.
+
 - C API [max]
 
   Right-hand limit of apreq_brigade_move() is declared as "excluding",
