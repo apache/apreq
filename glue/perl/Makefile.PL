@@ -176,33 +176,6 @@ sub get_functions {
     $self->SUPER::get_functions;
 }
 
-sub copy_docs {
-    my @lines;
-    my $dfs = '$(DIRFILESEP)';
-
-    return; # XXX FIXME when APR::Request gets documentation
-
-    foreach my $file (@_) {
-        my @dirs;
-        $file =~ /(\w+\.pod)$/ or next;
-        if ($1 eq "Error.pod" or $1 eq "Table.pod") {
-            push @dirs, "Apache$dfs$_" for qw/Request Cookie Upload/;
-            push @dirs, join $dfs, qw/Apache Cookie Jar/ if $1 eq "Error.pod";
-        }
-        else {
-            push @dirs, "Apache";
-        }
-        push @lines, map <<EOT, @dirs;
-subdirs :: \$(INST_LIBDIR)$dfs$_$dfs$1
-
-\$(INST_LIBDIR)$dfs$_$dfs$1: $file
-	\$(NOECHO) \$(MKPATH) \$(INST_LIBDIR)$dfs$_
-	\$(CP) $file \$(INST_LIBDIR)$dfs$_$dfs$1
-
-EOT
-    }
-    return join "", @lines;
-}
 
 sub test_docs {
     my ($pods, $tests) = @_;
@@ -229,8 +202,7 @@ sub MY::postamble {
     my @tests = @docs;
     s/pod$/t/ for @tests;
 
-    my $string = copy_docs(@docs);
-
+    my $string = "";
     my $test_docs = test_docs(\@docs, \@tests);
 
     if ($test_docs) {
