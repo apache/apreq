@@ -43,7 +43,7 @@ release_test:
 	@echo "$(distdir).tar.gz is kosher."
 
 reconfig:
-	./buildconf --with-automake=automake-1.6 --with-aclocal=aclocal-1.6
+	./buildconf.nice
 	./config.nice
 
 docs_clean:

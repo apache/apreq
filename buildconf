@@ -25,6 +25,7 @@ automake="${AUTOMAKE:-automake}"
 autoconf="${AUTOCONF:-autoconf}"
 autoheader="${AUTOHEADER:-autoheader}"
 
+save_args="$*";
 
 while test $# -gt 0 
 do
@@ -81,5 +82,15 @@ echo "running $autoheader" && $autoheader && \
 echo "running $automake -a -c" && $automake -a -c && \
 echo "running xsbuilder" && (cd glue/perl && $perl ../../build/xsbuilder.pl) && \
 echo "running cpan prereq fixups" && $perl -i -wpe "s/PREREQ_PM/$PREREQ_PM/" Makefile.in && \
-echo "buildconf successful."
+echo "saving arguments for reuse." && cat >buildconf.nice <<END_CAT
+#!/bin/sh
+./buildconf $save_args
+END_CAT
 
+if [ "$?" -eq "0" ] ; then
+  chmod +x buildconf.nice && \
+  echo "buildconf successful."
+else
+  echo "saving buildconf arguments failed."
+  exit 1
+fi
