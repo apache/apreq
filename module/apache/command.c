@@ -156,7 +156,7 @@ static void apreq_init (server_rec *s, pool *sp)
     ap_add_version_component(p, apr_psprintf(p, 
                                              "mod_apreq-%d/%s", 
                                              APREQ_APACHE_MMN,
-                                             APREQ_VERSION_STRING));
+                                             apreq_version_string()));
     ap_register_cleanup(sp, p, apreq_cleanup, apreq_cleanup);
 }
 

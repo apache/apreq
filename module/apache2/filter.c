@@ -427,7 +427,7 @@ static int apreq_post_init(apr_pool_t *p, apr_pool_t *plog,
     ap_add_version_component(p, apr_psprintf(p,
                                              "mod_apreq2-%d/%s",
                                              APREQ_APACHE2_MMN,
-                                             APREQ_VERSION_STRING));
+                                             apreq_version_string()));
 
     status = apreq_post_initialize(p);
     if (status != APR_SUCCESS) {
