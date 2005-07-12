@@ -482,7 +482,7 @@ apr_status_t apache_temp_dir_get(apreq_handle_t *env,
     return APR_SUCCESS;
 }
 
-static APREQ_MODULE(apache, 20050227);
+static APREQ_MODULE(apache, APREQ_APACHE_MMN);
 
 static void apreq_cleanup(void *data)
 {

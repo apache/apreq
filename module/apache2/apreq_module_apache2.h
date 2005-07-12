@@ -137,7 +137,10 @@
  * Create an apreq handle which communicates with an Apache 2.X
  * request_rec.
  */
-APREQ_DECLARE(apreq_handle_t*) apreq_handle_apache2(request_rec *r);
+APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r);
+
+#define APREQ_FILTER_NAME "apreq2"
+#define APREQ_APACHE2_MMN 20050712
 
 /** @} */
 

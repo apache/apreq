@@ -4,6 +4,8 @@
 
 @section v2_06 Changes with libapreq2-2.06
 
+- C API [Philip M. Gollucci]
+  Add mod_apreq2 to httpd's server tokens.
 
 - Perl API [joes]
   Drop support for $req->env(), which also died with 2.05-dev.

@@ -36,6 +36,8 @@ APREQ_DECLARE(apr_pool_t *) apreq_handle_apache_pool(apreq_handle_t *req);
 APREQ_DECLARE(apr_bucket_alloc_t *)
     apreq_handle_apache_bucket_alloc(apreq_handle_t *req);
 
+#define APREQ_APACHE_MMN 20050712
+
 #ifdef __cplusplus
  }
 #endif

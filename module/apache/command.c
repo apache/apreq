@@ -18,6 +18,7 @@
 
 #include "apreq_util.h"
 #include "apreq_module_apache.h"
+#include "apreq_version.h"
 
 #include "httpd.h"
 #include "http_log.h"
@@ -152,6 +153,10 @@ static void apreq_init (server_rec *s, pool *sp)
     apr_initialize();
     apr_pool_create(&p, NULL);
     apreq_initialize(p);
+    ap_add_version_component(p, apr_psprintf(p, 
+                                             "mod_apreq-%d/%s", 
+                                             APREQ_APACHE_MMN,
+                                             APREQ_VERSION_STRING));
     ap_register_cleanup(sp, p, apreq_cleanup, apreq_cleanup);
 }
 

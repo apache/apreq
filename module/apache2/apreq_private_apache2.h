@@ -1,5 +1,4 @@
 extern module AP_MODULE_DECLARE_DATA apreq_module;
-#define APREQ_FILTER_NAME "apreq2"
 
 struct dir_config {
     const char         *temp_dir;
