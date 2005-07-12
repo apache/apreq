@@ -743,7 +743,7 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
                                  const apr_array_header_t *arr,
                                  apreq_join_t mode)
 {
-    apr_ssize_t len, slen;
+    apr_size_t len, slen;
     char *rv;
     const apreq_value_t **a = (const apreq_value_t **)arr->elts;
     char *d;

@@ -182,7 +182,8 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
         apr_size_t off = 0, dlen;
         const char *data;
         apr_status_t s;
-        apreq_param_t *param;
+        apreq_param_t *param = NULL; /* silences gcc-4.0 warning */
+
         if (APR_BUCKET_IS_EOS(e)) {
             ctx->status = HDR_COMPLETE;
             APR_BRIGADE_CONCAT(bb, ctx->bb);
