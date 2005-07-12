@@ -15,7 +15,8 @@ APU_DOX = (cd $(APU_SRCDIR); cat docs/doxygen.conf - | doxygen -)
 APR_DOX = (cd $(APR_SRCDIR); cat docs/doxygen.conf - | doxygen -)
 SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi, s(href="/Apache(?:/\w+)*/([^/]+).html")(href="group__apreq__xs__\L$$1.html")g
 EUM=ExtUtils::Manifest
-POD_DIR=glue/perl/lib/Apache2
+PM_DIR=glue/perl/lib/Apache2
+XS_DIR=glue/perl/xsbuilder/APR
 bin_SCRIPTS = apreq2-config
 CLEANFILES = $(bin_SCRIPTS)
 
@@ -62,10 +63,41 @@ docs_install: docs
 %.html: $(POD_DIR)/%.pm Makefile.am 
 	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
 
-pod2html :: Request.html Cookie.html Upload.html FAQ.html
+Apache2__Request.html: $(PM_DIR)/Request.pm
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+
+Apache2__Upload.html: $(PM_DIR)/Upload.pm
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+
+Apache2__Cookie.html: $(PM_DIR)/Cookie.pm
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+
+APR__Request.html: $(XS_DIR)/Request/Request.pod
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+
+APR__Request__Param.html: $(XS_DIR)/Request/Param/Param.pod
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+
+APR__Request__Cookie.html: $(XS_DIR)/Request/Cookie/Cookie.pod
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+
+APR__Request__Error.html: $(XS_DIR)/Request/Error/Error.pod
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+
+APR__Request__Apache2.html: $(XS_DIR)/Request/Apache2/Apache2.pod
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+
+APR__Request__CGI.html: $(XS_DIR)/Request/CGI/CGI.pod
+	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
 
 FAQ.html: Makefile.am FAQ.pod
 	pod2html < FAQ.pod | perl -0777 -pe '$(SED_BODY_TAG)' > FAQ.html
+
+pod2html :: Apache2__Request.html Apache2__Cookie.html Apache2__Upload.html 
+pod2html :: APR__Request.html APR__Request__Cookie.html
+pod2html :: APR__Request__Param.html APR__Request__Error.html
+pod2html :: APR__Request__Apache2.html APR__Request__CGI.html FAQ.html
+
 
 $(POD_DIR)/%.t: $(POD_DIR)/%.pod
 	(cd glue/perl ; pod2test docs/$*.pod docs/$*.t)

@@ -63,20 +63,57 @@
 /**
  * @defgroup apreq_xs_request Apache2::Request
  * @ingroup apreq_xs
- * @htmlinclude Request.html
+ * @htmlinclude Apache2__Request.html
  */
 
 /**
  * @defgroup apreq_xs_upload Apache2::Upload
  * @ingroup apreq_xs
- * @htmlinclude Upload.html
+ * @htmlinclude Apache2__Upload.html
  */
 
 /**
  * @defgroup apreq_xs_cookie Apache2::Cookie
  * @ingroup apreq_xs
- * @htmlinclude Cookie.html
+ * @htmlinclude Apache2__Cookie.html
  */
+
+/**
+ * @defgroup apreq_xs_apr_request APR::Request
+ * @ingroup apreq_xs
+ * @htmlinclude APR__Request.html
+ */
+
+/**
+ * @defgroup apreq_xs_apr_request_cookie APR::Request::Cookie
+ * @ingroup apreq_xs
+ * @htmlinclude APR__Request__Cookie.html
+ */
+
+/**
+ * @defgroup apreq_xs_apr_request_param APR::Request::Param
+ * @ingroup apreq_xs
+ * @htmlinclude APR__Request__Param.html
+ */
+
+/**
+ * @defgroup apreq_xs_apr_request_error APR::Request::Error
+ * @ingroup apreq_xs
+ * @htmlinclude APR__Request__Error.html
+ */
+
+/**
+ * @defgroup apreq_xs_apr_request_cgi APR::Request::CGI
+ * @ingroup apreq_xs
+ * @htmlinclude APR__Request__CGI.html
+ */
+
+/**
+ * @defgroup apreq_xs_apr_request_apache2 APR::Request::Apache2
+ * @ingroup apreq_xs
+ * @htmlinclude APR__Request__Apache2.html
+ */
+
 
 /**
  * @page apreq_faq FAQ
