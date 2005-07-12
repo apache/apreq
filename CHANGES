@@ -6,12 +6,14 @@
 
 
 - Perl API [joes]
+  Drop support for $req->env(), which also died with 2.05-dev.
+
+- Perl API [joes]
   Support for table set/add/delete methods is formally withdrawn.
   Technically this feature died with the module API refactoring in
   2.05-dev.
 
 - C API [max]
-
   Right-hand limit of apreq_brigade_move() is declared as "excluding",
   but APR_RING_UNSPLICE() wants an "including" right-hand limit. Fixed
   this by passing the previous bucket.
