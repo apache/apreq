@@ -4,6 +4,10 @@
 
 @section v2_06 Changes with libapreq2-2.06
 
+
+- Perl API [Philip M. Gollucci]
+  Fix "Attempt to free temp prematurely" error in apreq_xs_croak().
+
 - C API [Philip M. Gollucci]
   Add mod_apreq2 to httpd's server tokens.
 
