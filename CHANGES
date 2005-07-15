@@ -5,6 +5,10 @@
 @section v2_06 Changes with libapreq2-2.06
 
 
+- C API [Marc Gràcia, joes]
+  Fix apreq_decode(v) when iso-latin-1 chars appear
+  at the end of an encoded string.
+
 - Perl API [Philip M. Gollucci]
   Fix "Attempt to free temp prematurely" error in apreq_xs_croak().
 

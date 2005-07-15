@@ -350,6 +350,15 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                 else if (*charset == APREQ_CHARSET_LATIN1) {
                     *d = c;
                 }
+                else if (s + 1 >= end) {
+                    *charset = APREQ_CHARSET_UTF8;
+                    s -= 2;
+                    *dlen = d - start;
+                    *slen = s - src;
+                    memmove(d, s, end - s);
+                    d[end - s] = 0;
+                    return APR_INCOMPLETE;
+                }
 
                 /* utf8 cases */
 
@@ -591,6 +600,15 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *d, apr_size_t *dlen,
     }
 
     rv = url_decode(d, dlen, &c, s, &slen);
+
+    if (rv == APR_INCOMPLETE && c == APREQ_CHARSET_UTF8) {
+        c = APREQ_CHARSET_LATIN1;
+        len += *dlen;
+        d += *dlen;
+        slen = end - (s + slen);
+        rv = url_decode(d, dlen, &c, d, &slen);
+    }
+
     *dlen += len;
 
     return rv + c;
@@ -620,13 +638,18 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
         case APR_INCOMPLETE:
             d += len;
             *dlen += len;
+            slen = v[n].iov_len - slen;
 
-            if (++n == nelts)
-                return APR_INCOMPLETE + c;
-
-            len = v[n-1].iov_len - slen;
-            memcpy(d + len, v[n].iov_base, v[n].iov_len);
-            v[n].iov_len += len;
+            if (++n == nelts) {
+                if (c == APREQ_CHARSET_UTF8) {
+                    c = APREQ_CHARSET_LATIN1;
+                    status = url_decode(d, &len, &c, d, &slen);
+                    *dlen += len;
+                }
+                return status + c;
+            }
+            memcpy(d + slen, v[n].iov_base, v[n].iov_len);
+            v[n].iov_len += slen;
             v[n].iov_base = d;
             continue;
 
@@ -635,7 +658,8 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
             return status;
         }
     }
-    return APR_SUCCESS + c;
+
+    return status + c;
 }
 
 

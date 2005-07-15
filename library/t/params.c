@@ -22,7 +22,7 @@
 
 
 static const char query_string[] = "a=1;quux=foo+bar&a=2&plus=%2B;"
-                                   "uplus=%U002b;okie=dokie;"
+                                   "uplus=%U002b;okie=dokie;foo=a%E1;"
                                    "novalue1;novalue2=";
 static apr_table_t *args;
 static apr_pool_t *p;
@@ -35,7 +35,7 @@ static void request_make(dAT)
     AT_not_null(args);
     s = apreq_parse_query_string(p, args, query_string);
     AT_int_eq(s, APR_SUCCESS);
-    AT_int_eq(apr_table_elts(args)->nelts, 8);
+    AT_int_eq(apr_table_elts(args)->nelts, 9);
 }
 
 
