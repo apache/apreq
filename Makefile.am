@@ -20,6 +20,8 @@ XS_DIR=glue/perl/xsbuilder/APR
 bin_SCRIPTS = apreq2-config
 CLEANFILES = $(bin_SCRIPTS)
 
+POD2HTML = @PERL@ -MPod::Html -wle 'pod2html @ARGV'
+
 if BUILD_PERL_GLUE
 PERL_TEST = perl_test
 else
@@ -58,40 +60,40 @@ docs:	pod2html build/doxygen.conf apr_tags docs/html/feather.gif
 docs_install: docs
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
-	cp -a docs $(DESTDIR)$(pkgdatadir)
+	cp -R docs $(DESTDIR)$(pkgdatadir)
 
 %.html: $(POD_DIR)/%.pm Makefile.am 
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 Apache2__Request.html: $(PM_DIR)/Request.pm
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 Apache2__Upload.html: $(PM_DIR)/Upload.pm
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 Apache2__Cookie.html: $(PM_DIR)/Cookie.pm
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 APR__Request.html: $(XS_DIR)/Request/Request.pod
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 APR__Request__Param.html: $(XS_DIR)/Request/Param/Param.pod
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 APR__Request__Cookie.html: $(XS_DIR)/Request/Cookie/Cookie.pod
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 APR__Request__Error.html: $(XS_DIR)/Request/Error/Error.pod
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 APR__Request__Apache2.html: $(XS_DIR)/Request/Apache2/Apache2.pod
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 APR__Request__CGI.html: $(XS_DIR)/Request/CGI/CGI.pod
-	pod2html < $< | perl -0777 -pe '$(SED_BODY_TAG)' > $@
+	${POD2HTML} < $< | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > $@
 
 FAQ.html: Makefile.am FAQ.pod
-	pod2html < FAQ.pod | perl -0777 -pe '$(SED_BODY_TAG)' > FAQ.html
+	${POD2HTML} < FAQ.pod | @PERL@ -0777 -pe '$(SED_BODY_TAG)' > FAQ.html
 
 pod2html :: Apache2__Request.html Apache2__Cookie.html Apache2__Upload.html 
 pod2html :: APR__Request.html APR__Request__Cookie.html
@@ -107,16 +109,16 @@ pod2test :: $(POD_DIR)/Request.t $(POD_DIR)/Cookie.t $(POD_DIR)/Upload.t $(POD_D
 apr_tags: docs/apr.tag docs/apu.tag
 
 docs/html/feather.gif:
-	-mkdir docs
-	-mkdir docs/html
-	(cd docs/html; wget http://httpd.apache.org/docs-2.0/images/feather.gif)
+	${mkinstalldirs} docs
+	${mkinstalldirs} docs/html
+	cp feather.gif docs/html
 
 docs/apu.tag:
-	-mkdir docs
+	${mkinstalldirs} docs
 	echo GENERATE_TAGFILE=`pwd`/docs/apu.tag | $(APU_DOX)
 
 docs/apr.tag:
-	-mkdir docs
+	${mkinstalldirs} docs
 	echo GENERATE_TAGFILE=`pwd`/docs/apr.tag | $(APR_DOX)
 
 test: all library_test module_test $(PERL_TEST)
