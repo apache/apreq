@@ -212,17 +212,28 @@ EOT
 my %prereq = (%svn, %build, %perl_glue, %test);
 die "$0 failed: unknown tool '$tool'.\n" unless $prereq{$tool};
 my $version = $prereq{$tool}->{version};
-my @version = split /\./, $version;
 
 $_ = $prereq{$tool}->{test}->();
 die "$0 failed: no version_string found in '$_' for '$tool'.\n" unless /(\d[.\d]+)/;
 my $saw = $1;
-my @saw = split /\./, $saw;
-$_ = 0 for @saw[@saw .. $#version]; # ensure @saw has enough entries
-for (0.. $#version) {
-    last if $version[$_] < $saw[$_];
-    die <<EOM if $version[$_] > $saw[$_];
+my $fail;
+
+if ($saw =~ /^(\d+)(\.(\d+))$/) {
+    $fail = $saw < $version;
+} else {
+    my @version = split /\./, $version;
+    my @saw = split /\./, $saw;
+    $_ = 0 for @saw[@saw .. $#version]; # ensure @saw has enough entries
+    for (0.. $#version) {
+        last if $version[$_] < $saw[$_];
+        $fail = 1, last if $version[$_] > $saw[$_];
+    }
+}
+
+if ($fail) {
+    die <<EOM
 $0 failed: $tool version $saw unsupported ($version or greater is required).
 EOM
 }
+
 print "$tool: $saw ok\n";
