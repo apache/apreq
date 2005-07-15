@@ -423,7 +423,7 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *req, const char *key);
  * The match is case-insensitive.
  *
  * @param req request handle.
- * @param key desired cookie name
+ * @param name desired cookie name
  *
  * @return The first matching parameter (with args searched first) or NULL.
  */
