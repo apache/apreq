@@ -350,15 +350,6 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                 else if (*charset == APREQ_CHARSET_LATIN1) {
                     *d = c;
                 }
-                else if (s + 1 >= end) {
-                    *charset = APREQ_CHARSET_UTF8;
-                    s -= 2;
-                    *dlen = d - start;
-                    *slen = s - src;
-                    memmove(d, s, end - s);
-                    d[end - s] = 0;
-                    return APR_INCOMPLETE;
-                }
 
                 /* utf8 cases */
 
