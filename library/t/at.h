@@ -248,7 +248,7 @@ void at_skip(at_t *t, int n, const char *reason, const char *file, int line) {
     char buf[256];
     while (n-- > 0) {
         ++t->current;
-        apr_snprintf(buf, 256, "not ok %d - %s (%d) #skipped: %s (%s:%d)", 
+        apr_snprintf(buf, 256, "ok %d - %s (%d) #skipped: %s (%s:%d)", 
                      t->current + t->prior, t->name, t->current, reason, file, line);
         at_report(t, buf);
     }
