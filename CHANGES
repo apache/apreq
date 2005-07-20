@@ -2,7 +2,11 @@
 //! brief List of major changes.
 
 
-@section v2_06 Changes with libapreq2-2.06 (released July 20, 2005)
+@section v2_07 Changes with libapreq2-2.07
+
+
+
+@section v2_06_dev Changes with libapreq2-2.06-dev (released July 20, 2005)
 
 
 - C API [Marc Gràcia, joes]
