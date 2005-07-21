@@ -32,23 +32,31 @@ Instructions for the apreq Release Manager (RM)
 
 5. Edit STATUS, marking the release date
 
-        /** @page STATUS
+       /** @page STATUS
 
-        2.XX released on <today's date>.
+       2.XX released on <today's date>.
 
 
    Also add the release date to the top @section in CHANGES:
 
-        /** @page CHANGES
+       /** @page CHANGES
 
-        @section v2_XX Changes with libapreq2-2.XX (released ...).
+       @section v2_XX Changes with libapreq2-2.XX (released ...).
 
-   Commit the changes and tag the tree (tr/0-9a-zA-Z/_/c in the 
+   And #undef the APREQ_VERSION_IS_DEV macro definition
+   in include/apreq_version.h:
+
+       *  This symbol will be #undef'd for releases. 
+       */
+       #undef APREQ_IS_DEV_VERSION
+
+
+   Now commit the changes and tag the tree (tr/0-9a-zA-Z/_/c in the
    version number)
 
-        % svn commit -m "2.XX released." STATUS CHANGES
-        % svn cp https://svn.apache.org/repos/asf/httpd/apreq/trunk \
-                 https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_XX
+       % svn commit -m "2.XX released." STATUS CHANGES include/apreq_version.h
+       % svn cp https://svn.apache.org/repos/asf/httpd/apreq/trunk \
+                https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_XX
 
 6. Regenerate the release 
 
