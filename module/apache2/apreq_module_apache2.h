@@ -48,16 +48,16 @@
  *
  * @code
  *
- *     LoadModule    modules/mod_apreq2.so
+ *     LoadModule apreq_module    modules/mod_apreq2.so
  *
  * @endcode
  *
- * The mod_apreq2 filter is named "APREQ2", and may be used in Apache's
+ * The mod_apreq2 filter is named "apreq2", and may be used in Apache's
  * input filter directives, e.g.
  * @code
  *
- *     AddInputFilter APREQ2         # or
- *     SetInputFilter APREQ2
+ *     AddInputFilter apreq2         # or
+ *     SetInputFilter apreq2
  *
  * @endcode
  *
