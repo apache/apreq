@@ -149,7 +149,7 @@ if (@ARGV == 0) {
 
     if ($opts{version}) {      # generate META.yml file content
         print <<EOT;
---- #YAML:1.0 (see http://module-build.sourceforge.net/META-spec.html)
+--- #YAML:1.0
 name: libapreq2
 version: $opts{version}
 license: open_source
