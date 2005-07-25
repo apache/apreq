@@ -20,6 +20,9 @@
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include <assert.h>
+
+#undef MAX
+#undef MIN
 #define MIN(a,b) ( (a) < (b) ? (a) : (b) )
 #define MAX(a,b) ( (a) > (b) ? (a) : (b) )
 
@@ -549,7 +552,7 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
             break;
 
         default:
-            if (s > 0) {
+            if (*s > 0) {
                 *d = *s;
             }
             else {
