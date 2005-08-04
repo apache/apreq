@@ -34,11 +34,6 @@ CURRENT VOTES:
 
 TODO:
 
-    - Sadly, the PAUSE indexer still doesn't speak META.yml.  We need
-      to find a way to get the APR::Request* packages indexed (with 
-      proper version numbers), and prevent the indexer from inspecting 
-      the supporting modules in */t, and glue/perl/xsbuilder/tables.
-
     - Implement (some of) RFC 2047 in the multipart parser.
 
     - Dump automake, preferably replacing that with more stuff from
