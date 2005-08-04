@@ -39,6 +39,8 @@ TODO:
       proper version numbers), and prevent the indexer from inspecting 
       the supporting modules in */t, and glue/perl/xsbuilder/tables.
 
+    - Implement (some of) RFC 2047 in the multipart parser.
+
     - Dump automake, preferably replacing that with more stuff from
       httpd/apr's build system.
 
