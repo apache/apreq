@@ -23,10 +23,10 @@
 
 #ifdef  __cplusplus
  extern "C" {
-#endif 
+#endif
 
 /**
- * This header contains useful functions for creating new 
+ * This header contains useful functions for creating new
  * parsers, hooks or modules.  It includes
  *
  *    - string <-> array converters
@@ -49,9 +49,9 @@
  *
  * @return Joined string, or NULL on error
  */
-APREQ_DECLARE(char *) apreq_join(apr_pool_t *p, 
-                                 const char *sep, 
-                                 const apr_array_header_t *arr, 
+APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
+                                 const char *sep,
+                                 const apr_array_header_t *arr,
                                  apreq_join_t mode);
 
 /**
@@ -66,8 +66,8 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
  * @return Offset of match string, or -1 if no match is found.
  *
  */
-APREQ_DECLARE(apr_ssize_t) apreq_index(const char* hay, apr_size_t hlen, 
-                                       const char* ndl, apr_size_t nlen, 
+APREQ_DECLARE(apr_ssize_t) apreq_index(const char* hay, apr_size_t hlen,
+                                       const char* ndl, apr_size_t nlen,
                                        const apreq_match_t type);
 
 /**
@@ -82,7 +82,7 @@ APREQ_DECLARE(apr_ssize_t) apreq_index(const char* hay, apr_size_t hlen,
  *
  * @return length of quoted copy in dest.
  */
-APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src, 
+APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src,
                                       const apr_size_t slen);
 
 /**
@@ -98,7 +98,7 @@ APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src,
  *
  * @return length of quoted copy in dest.
  */
-APREQ_DECLARE(apr_size_t) apreq_quote_once(char *dest, const char *src, 
+APREQ_DECLARE(apr_size_t) apreq_quote_once(char *dest, const char *src,
                                            const apr_size_t slen);
 
 /**
@@ -111,7 +111,7 @@ APREQ_DECLARE(apr_size_t) apreq_quote_once(char *dest, const char *src,
  *
  * @return length of url-encoded string in dest; does not exceed 3 * slen.
  */
-APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src, 
+APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src,
                                        const apr_size_t slen);
 
 /**
@@ -143,8 +143,8 @@ APREQ_DECLARE(apr_size_t) apreq_cp1252_to_utf8(char *dest,
  * @return ::APREQ_ERROR_BADSEQ or ::APREQ_ERROR_BADCHAR on malformed input.
  *
  * @remarks In the non-success case, dlen will be set to include
- *          the last succesfully decoded value.  This function decodes 
- *          \%uXXXX into a utf8 (wide) character, following ECMA-262 
+ *          the last succesfully decoded value.  This function decodes
+ *          \%uXXXX into a utf8 (wide) character, following ECMA-262
  *          (the Javascript spec) Section B.2.1.
  */
 
@@ -167,7 +167,7 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *dest, apr_size_t *dlen,
  *
  * @remarks In the non-APR_SUCCESS case, dlen will be set to include
  *          the last succesfully decoded value.  This function decodes
- *          \%uXXXX into a utf8 (wide) character, following ECMA-262 
+ *          \%uXXXX into a utf8 (wide) character, following ECMA-262
  *          (the Javascript spec) Section B.2.1.
  */
 
@@ -247,7 +247,7 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s);
  *
  * @param f       File that gets the brigade.
  * @param wlen    On a successful return, wlen holds the length of
- *                the brigade, which is the amount of data written to 
+ *                the brigade, which is the amount of data written to
  *                the file.
  * @param bb      Bucket brigade.
  *
@@ -255,7 +255,7 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s);
  * @return Error status code from either an unsuccessful apr_bucket_read(),
  *         or a failed apr_file_writev().
  *
- * @remarks       In the future, this function may do something 
+ * @remarks       In the future, this function may do something
  *                intelligent with file buckets.
  */
 
@@ -278,7 +278,7 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
  *         or a failed apr_file_mktemp().
  */
 
-APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp, 
+APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
                                               apr_pool_t *pool,
                                               const char *path);
 
@@ -349,7 +349,7 @@ static APR_INLINE
 void apreq_brigade_move(apr_bucket_brigade *d, apr_bucket_brigade *s,
                         apr_bucket *e)
 {
-    apr_bucket *f;     
+    apr_bucket *f;
 
     if (e != APR_BRIGADE_SENTINEL(s)) {
         f = APR_RING_FIRST(&s->list);
@@ -394,8 +394,8 @@ APREQ_DECLARE(apr_status_t) apreq_header_attribute(const char *hdr,
  *
  * @param pool           Pool for creating a tempfile bucket.
  * @param temp_dir       Directory for tempfile creation.
- * @param brigade_limit  If out's length would exceed this value, 
- *                       the appended buckets get written to a tempfile.  
+ * @param brigade_limit  If out's length would exceed this value,
+ *                       the appended buckets get written to a tempfile.
  * @param out            Resulting brigade.
  * @param in             Brigade to append.
  *
@@ -408,7 +408,7 @@ APREQ_DECLARE(apr_status_t) apreq_header_attribute(const char *hdr,
 APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
                                                  const char *temp_dir,
                                                  apr_size_t brigade_limit,
-                                                 apr_bucket_brigade *out, 
+                                                 apr_bucket_brigade *out,
                                                  apr_bucket_brigade *in);
 
 /**

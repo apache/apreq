@@ -25,9 +25,9 @@
 #define MAX_READ_AHEAD  (1024 * 64)
 
 
-APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p, 
+APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
                                                 const char *name,
-                                                const apr_size_t nlen, 
+                                                const apr_size_t nlen,
                                                 const char *val,
                                                 const apr_size_t vlen)
 {
@@ -41,7 +41,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
 
     param->info = NULL;
     param->upload = NULL;
-    param->flags = 0; 
+    param->flags = 0;
 
     *(const apreq_value_t **)&v = &param->v;
 
@@ -154,7 +154,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
             break;
 
         case '&':
-        case ';': 
+        case ';':
         case 0:
             if (qs > start) {
                 apr_size_t vlen = 0;
@@ -190,7 +190,7 @@ APREQ_DECLARE(apr_status_t) apreq_parse_query_string(apr_pool_t *pool,
 static int param_push(void *data, const char *key, const char *val)
 {
     apr_array_header_t *arr = data;
-    *(apreq_param_t **)apr_array_push(arr) = 
+    *(apreq_param_t **)apr_array_push(arr) =
         apreq_value_to_param(val);
     return 1;   /* keep going */
 }

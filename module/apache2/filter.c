@@ -137,7 +137,7 @@ void apreq_filter_init_context(ap_filter_t *f)
         else if (content_length > ctx->read_limit) {
             ap_log_rerror(APLOG_MARK, APLOG_ERR, APR_EGENERAL, r,
                           "Content-Length header (%s) exceeds configured "
-                          "max_body limit (%" APR_UINT64_T_FMT ")", 
+                          "max_body limit (%" APR_UINT64_T_FMT ")",
                           cl_header, ctx->read_limit);
             ctx->body_status = APREQ_ERROR_OVERLIMIT;
             return;
@@ -197,7 +197,7 @@ void apreq_filter_init_context(ap_filter_t *f)
  *    just needs to ensure cfg->f does not point at it.
  * 3) If req->proto_input_filters and req->input_filters are apreq
  *    filters, and req->input_filters->next == req->proto_input_filters,
- *    it is safe for apreq_filter to "steal" the proto filter's context 
+ *    it is safe for apreq_filter to "steal" the proto filter's context
  *    and subsequently drop it from the chain.
  */
 
@@ -211,7 +211,7 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
 {
     request_rec *r = f->r;
     struct filter_ctx *ctx = f->ctx;
-    struct apache2_handle *handle = 
+    struct apache2_handle *handle =
         (struct apache2_handle *)apreq_handle_apache2(r);
 
     /* Don't parse GET (this protects against subrequest body parsing). */
@@ -242,7 +242,7 @@ static apr_status_t apreq_filter_init(ap_filter_t *f)
      * if it is, we must deregister it now.
      */
     if (handle->f == f) {
-        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r, 
+        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r,
                      "disabling stale protocol filter");
         if (ctx->body_status == APR_INCOMPLETE)
             ctx->body_status = APREQ_ERROR_INTERRUPT;
@@ -273,7 +273,7 @@ apr_status_t apreq_filter_prefetch(ap_filter_t *f, apr_off_t readbytes)
                        APR_BLOCK_READ, readbytes);
 
     if (rv != APR_SUCCESS) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, 
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
                       "ap_get_brigade failed during prefetch");
         ctx->filter_error = rv;
         return ctx->body_status = APREQ_ERROR_GENERAL;
@@ -291,13 +291,13 @@ apr_status_t apreq_filter_prefetch(ap_filter_t *f, apr_off_t readbytes)
         return ctx->body_status = rv;
     }
 
-    /* Adding "f" to the protocol filter chain ensures the 
+    /* Adding "f" to the protocol filter chain ensures the
      * spooled data is preserved across internal redirects.
      */
 
     if (f != r->proto_input_filters) {
         ap_filter_t *in;
-        for (in = r->input_filters; in != r->proto_input_filters; 
+        for (in = r->input_filters; in != r->proto_input_filters;
              in = in->next)
         {
             if (f == in) {
@@ -312,7 +312,7 @@ apr_status_t apreq_filter_prefetch(ap_filter_t *f, apr_off_t readbytes)
 
     if (ctx->bytes_read > ctx->read_limit) {
         ctx->body_status = APREQ_ERROR_OVERLIMIT;
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, ctx->body_status, r, 
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, ctx->body_status, r,
                       "Bytes read (%" APR_UINT64_T_FMT
                       ") exceeds configured read limit (%" APR_UINT64_T_FMT ")",
                       ctx->bytes_read, ctx->read_limit);
@@ -391,7 +391,7 @@ apr_status_t apreq_filter(ap_filter_t *f,
 
     if (ctx->bytes_read > ctx->read_limit) {
         ctx->body_status = APREQ_ERROR_OVERLIMIT;
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, ctx->body_status, r, 
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, ctx->body_status, r,
                       "Bytes read (%" APR_UINT64_T_FMT
                       ") exceeds configured max_body limit (%"
                       APR_UINT64_T_FMT ")",
@@ -480,7 +480,7 @@ void apreq_filter_make_context(ap_filter_t *f)
     r = f->r;
     d = ap_get_module_config(r->per_dir_config, &apreq_module);
 
-    if (f == r->input_filters 
+    if (f == r->input_filters
         && r->proto_input_filters == f->next
         && f->next->frec->filter_func.in_func == apreq_filter
         && f->r->method_number != M_GET)
@@ -517,7 +517,7 @@ void apreq_filter_make_context(ap_filter_t *f)
             return;
 
         default:
-            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, ctx->body_status, r, 
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, ctx->body_status, r,
                           "cannot steal context: bad filter status");
         }
     }

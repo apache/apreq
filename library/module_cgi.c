@@ -69,7 +69,7 @@ typedef struct {
     const char *t_name;
     int      t_val;
 } TRANS;
- 
+
 static const TRANS priorities[] = {
     {"emerg",   CGILOG_EMERG},
     {"alert",   CGILOG_ALERT},
@@ -81,7 +81,7 @@ static const TRANS priorities[] = {
     {"debug",   CGILOG_DEBUG},
     {NULL,      -1},
 };
- 
+
 static const char *cgi_header_in(apreq_handle_t *handle,
                                  const char *name)
 {
@@ -194,7 +194,7 @@ static void init_body(apreq_handle_t *handle)
             req->body_status = APREQ_ERROR_OVERLIMIT;
             cgi_log_error(CGILOG_MARK, CGILOG_ERR, req->body_status, handle,
                           "Content-Length header (%s) exceeds configured "
-                          "max_body limit (%" APR_UINT64_T_FMT ")", 
+                          "max_body limit (%" APR_UINT64_T_FMT ")",
                           cl_header, req->read_limit);
             return;
         }
@@ -209,7 +209,7 @@ static void init_body(apreq_handle_t *handle)
             if (pf != NULL) {
                 req->parser = apreq_parser_make(pool,
                                                 ba,
-                                                ct_header, 
+                                                ct_header,
                                                 pf,
                                                 req->brigade_limit,
                                                 req->temp_dir,
@@ -239,7 +239,7 @@ static void init_body(apreq_handle_t *handle)
     req->in         = apr_brigade_create(pool, ba);
     req->tmpbb      = apr_brigade_create(pool, ba);
 
-    apr_file_open_stdin(&file, pool); // error status?    
+    apr_file_open_stdin(&file, pool); // error status?
     pipe = apr_bucket_pipe_create(file, ba);
     eos = apr_bucket_eos_create(ba);
     APR_BRIGADE_INSERT_HEAD(req->in, pipe);
@@ -303,7 +303,7 @@ static apr_status_t cgi_read(apreq_handle_t *handle,
                           "Bytes read (%" APR_UINT64_T_FMT
                           ") exceeds configured limit (%" APR_UINT64_T_FMT ")",
                           req->bytes_read, req->read_limit);
-            
+
             break;
         }
 
@@ -330,7 +330,7 @@ static apr_status_t cgi_jar(apreq_handle_t *handle,
         const char *cookies = cgi_header_in(handle, "Cookie");
         if (cookies != NULL) {
             req->jar = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
-            req->jar_status = 
+            req->jar_status =
                 apreq_parse_cookie_header(handle->pool, req->jar, cookies);
         }
         else
@@ -350,7 +350,7 @@ static apr_status_t cgi_args(apreq_handle_t *handle,
         const char *qs = cgi_query_string(handle);
         if (qs != NULL) {
             req->args = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
-            req->args_status = 
+            req->args_status =
                 apreq_parse_query_string(handle->pool, req->args, qs);
         }
         else
@@ -432,7 +432,7 @@ static apr_status_t cgi_body(apreq_handle_t *handle,
     return req->body_status;
 }
 
-static apreq_param_t *cgi_body_get(apreq_handle_t *handle, 
+static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
                                    const char *name)
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
@@ -463,12 +463,12 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
         if (val != NULL)
             return apreq_value_to_param(val);
 
-        /* Not seen yet, so we need to scan for 
+        /* Not seen yet, so we need to scan for
            param while prefetching the body */
 
         if (req->find_param == NULL)
-            req->find_param = apreq_hook_make(handle->pool, 
-                                              apreq_hook_find_param, 
+            req->find_param = apreq_hook_make(handle->pool,
+                                              apreq_hook_find_param,
                                               NULL, NULL);
         h = req->find_param;
         h->next = req->parser->hook;
@@ -502,7 +502,7 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
     return NULL;
 }
 
-static apr_status_t cgi_parser_get(apreq_handle_t *handle, 
+static apr_status_t cgi_parser_get(apreq_handle_t *handle,
                                    const apreq_parser_t **parser)
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
@@ -511,7 +511,7 @@ static apr_status_t cgi_parser_get(apreq_handle_t *handle,
     return APR_SUCCESS;
 }
 
-static apr_status_t cgi_parser_set(apreq_handle_t *handle, 
+static apr_status_t cgi_parser_set(apreq_handle_t *handle,
                                    apreq_parser_t *parser)
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
@@ -564,8 +564,8 @@ static apr_status_t cgi_brigade_limit_set(apreq_handle_t *handle,
                                           apr_size_t bytes)
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
-    apr_size_t *limit = (req->parser == NULL) 
-                      ? &req->brigade_limit 
+    apr_size_t *limit = (req->parser == NULL)
+                      ? &req->brigade_limit
                       : &req->parser->brigade_limit;
 
     if (*limit > bytes) {
@@ -580,8 +580,8 @@ static apr_status_t cgi_brigade_limit_get(apreq_handle_t *handle,
                                           apr_size_t *bytes)
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
-    *bytes = (req->parser == NULL) 
-           ?  req->brigade_limit 
+    *bytes = (req->parser == NULL)
+           ?  req->brigade_limit
            :  req->parser->brigade_limit;
 
     return APR_SUCCESS;
@@ -614,7 +614,7 @@ static apr_status_t cgi_temp_dir_set(apreq_handle_t *handle,
                                      const char *path)
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
-    const char **temp_dir = (req->parser == NULL) 
+    const char **temp_dir = (req->parser == NULL)
                           ? &req->temp_dir
                           : &req->parser->temp_dir;
 
@@ -634,7 +634,7 @@ static apr_status_t cgi_temp_dir_get(apreq_handle_t *handle,
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
     *path = (req->parser == NULL)
-           ? req->temp_dir 
+           ? req->temp_dir
            : req->parser->temp_dir;
     return APR_SUCCESS;
 }
@@ -657,7 +657,7 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
     apr_bucket_alloc_t *ba;
     struct cgi_handle *req;
     void *data;
-    
+
     apr_pool_userdata_get(&data, USER_DATA_KEY, pool);
 
     if (data != NULL)
@@ -674,8 +674,8 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
     req->read_limit           = (apr_uint64_t) -1;
     req->brigade_limit        = APREQ_DEFAULT_BRIGADE_LIMIT;
 
-    req->args_status = 
-        req->jar_status = 
+    req->args_status =
+        req->jar_status =
             req->body_status = APR_EINIT;
 
     apr_pool_userdata_setn(&req->handle, USER_DATA_KEY, NULL, pool);

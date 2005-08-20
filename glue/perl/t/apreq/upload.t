@@ -39,7 +39,7 @@ foreach my $file( map {File::Spec->catfile($cwd, 't', $_)} @names) {
     my $basename = File::Basename::basename($file);
 
     for my $method ( @methods) {
-        my $result = UPLOAD_BODY("$location?method=$method;has_md5=$has_md5", 
+        my $result = UPLOAD_BODY("$location?method=$method;has_md5=$has_md5",
                                  filename => $file);
         my $expected = <<END;
 

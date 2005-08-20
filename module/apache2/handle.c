@@ -36,13 +36,13 @@ static ap_filter_t *get_apreq_filter(apreq_handle_t *handle)
     struct apache2_handle *req = (struct apache2_handle *)handle;
 
     if (req->f == NULL) {
-        req->f = ap_add_input_filter(APREQ_FILTER_NAME, NULL, 
-                                     req->r, 
+        req->f = ap_add_input_filter(APREQ_FILTER_NAME, NULL,
+                                     req->r,
                                      req->r->connection);
         /* ap_add_input_filter does not guarantee cfg->f == r->input_filters,
          * so we reposition the new filter there as necessary.
          */
-        apreq_filter_relocate(req->f); 
+        apreq_filter_relocate(req->f);
     }
 
     return req->f;
@@ -58,7 +58,7 @@ static apr_status_t apache2_jar(apreq_handle_t *handle, const apr_table_t **t)
         const char *cookies = apr_table_get(r->headers_in, "Cookie");
         if (cookies != NULL) {
             req->jar = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
-            req->jar_status = 
+            req->jar_status =
                 apreq_parse_cookie_header(handle->pool, req->jar, cookies);
         }
         else
@@ -77,7 +77,7 @@ static apr_status_t apache2_args(apreq_handle_t *handle, const apr_table_t **t)
     if (req->args_status == APR_EINIT) {
         if (r->args != NULL) {
             req->args = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
-            req->args_status = 
+            req->args_status =
                 apreq_parse_query_string(handle->pool, req->args, r->args);
         }
         else
@@ -196,12 +196,12 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *handle, const char *name)
         if (val != NULL)
             return apreq_value_to_param(val);
 
-        /* Not seen yet, so we need to scan for 
+        /* Not seen yet, so we need to scan for
            param while prefetching the body */
 
         if (ctx->find_param == NULL)
-            ctx->find_param = apreq_hook_make(handle->pool, 
-                                              apreq_hook_find_param, 
+            ctx->find_param = apreq_hook_make(handle->pool,
+                                              apreq_hook_find_param,
                                               NULL, NULL);
         h = ctx->find_param;
         h->next = ctx->parser->hook;
@@ -237,7 +237,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *handle, const char *name)
 }
 
 static
-apr_status_t apache2_parser_get(apreq_handle_t *handle, 
+apr_status_t apache2_parser_get(apreq_handle_t *handle,
                                   const apreq_parser_t **parser)
 {
     ap_filter_t *f = get_apreq_filter(handle);
@@ -252,7 +252,7 @@ apr_status_t apache2_parser_get(apreq_handle_t *handle,
 }
 
 static
-apr_status_t apache2_parser_set(apreq_handle_t *handle, 
+apr_status_t apache2_parser_set(apreq_handle_t *handle,
                                 apreq_parser_t *parser)
 {
     ap_filter_t *f = get_apreq_filter(handle);

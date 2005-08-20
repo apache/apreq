@@ -149,14 +149,14 @@ param_class(t, subclass=&PL_sv_undef)
         else if (!sv_derived_from(subclass, PARAM_CLASS)) {
             Perl_croak(aTHX_ "Usage: "
                               PARAM_TABLE_CLASS "::param_class($table, $class): "
-                             "class %s is not derived from " PARAM_CLASS, 
+                             "class %s is not derived from " PARAM_CLASS,
                               SvPV_nolen(subclass));
         }
         else {
             STRLEN len;
             mg->mg_ptr = savepv(SvPV(subclass, len));
             mg->mg_len = len;
-            
+
         }
         if (curclass != NULL)
             Safefree(curclass);
@@ -264,7 +264,7 @@ upload_size(param)
     if (s != APR_SUCCESS)
         Perl_croak(aTHX_ "$param->upload_size(): can't get upload length");
 
-    RETVAL = len;    
+    RETVAL = len;
 
   OUTPUT:
     RETVAL
@@ -282,13 +282,13 @@ upload_type(param)
     ct = apr_table_get(param->info, "Content-Type");
     if (ct == NULL)
         Perl_croak(aTHX_ "$param->upload_type: can't find Content-Type header");
-    
+
     if ((sc = strchr(ct, ';')))
         len = sc - ct;
     else
         len = strlen(ct);
 
-    RETVAL = newSVpvn(ct, len);    
+    RETVAL = newSVpvn(ct, len);
     if (apreq_param_is_tainted(param))
         SvTAINTED_on(RETVAL);
 
@@ -314,7 +314,7 @@ upload_tempname(param, req=apreq_xs_sv2handle(aTHX_ ST(0)))
         s = apreq_temp_dir_get(req, &path);
         if (s != APR_SUCCESS)
             Perl_croak(aTHX_ "$param->upload_tempname($req): can't get temp_dir");
-        s = apreq_brigade_concat(param->upload->p, path, 0, 
+        s = apreq_brigade_concat(param->upload->p, path, 0,
                                  param->upload, param->upload);
         if (s != APR_SUCCESS)
             Perl_croak(aTHX_ "$param->upload_tempname($req): can't make spool bucket");

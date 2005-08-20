@@ -91,7 +91,7 @@ This manpage documents the Apache2::Request package.
 =head1 Apache2::Request
 
 The interface is designed to mimic the CGI.pm routines for parsing
-query parameters. The main differences are 
+query parameters. The main differences are
 
 =over 4
 
@@ -167,8 +167,8 @@ For more details on C<link>, see L<Apache2::Upload>.
 
 =item * C<HOOK_DATA>
 
-Extra configuration info passed as the fourth argument 
-to an upload hook.  See the description for the next item, 
+Extra configuration info passed as the fourth argument
+to an upload hook.  See the description for the next item,
 C<UPLOAD_HOOK>.
 
 
@@ -186,7 +186,7 @@ $upload->fh after the hook exits.
     warn "$hook_data: got $data_len bytes for " . $upload->name;
   };
 
-  my $req = Apache2::Request->new($r, 
+  my $req = Apache2::Request->new($r,
                                   HOOK_DATA => "Note",
                                   UPLOAD_HOOK => $transparent_hook,
                                  );
@@ -206,7 +206,7 @@ $upload->fh after the hook exits.
 The default (and only) behavior of I<Apache2::Request> is to intelligently
 cache B<POST> data for the duration of the request.  Thus there is no longer
 the need for a separate C<instance()> method as existed in I<Apache2::Request>
-for Apache 1.3 - all B<POST> data is always available from each and every 
+for Apache 1.3 - all B<POST> data is always available from each and every
 I<Apache2::Request> object created during the request's lifetime.
 
 However an C<instance()> method is aliased to C<new()> in this release
@@ -234,7 +234,7 @@ mimicing the OO interface of C<CGI::param>.
 
     # the following differ slightly from CGI.pm
 
-    # returns ref to APR::Request::Param::Table object representing 
+    # returns ref to APR::Request::Param::Table object representing
     # all (args + body) params
     my $table = $req->param;
     @table_keys = keys %$table;
@@ -248,19 +248,19 @@ mimicing the OO interface of C<CGI::param>.
     is "@table_keys", "foo bar foo foo";
 
 
-In list context, or when invoked with no arguments as 
-C<< $req->param() >>, C<param> induces libapreq2 to read 
+In list context, or when invoked with no arguments as
+C<< $req->param() >>, C<param> induces libapreq2 to read
 and parse all remaining data in the request body.
-However, C<< scalar $req->param("foo") >> is lazy: libapreq2 
+However, C<< scalar $req->param("foo") >> is lazy: libapreq2
 will only read and parse more data if
 
     1) no "foo" param appears in the query string arguments, AND
     2) no "foo" param appears in the previously parsed POST data.
 
 In this circumstance libapreq2 will read and parse additional
-blocks of the incoming request body until either 
+blocks of the incoming request body until either
 
-    1) it has found the the "foo" param, or 
+    1) it has found the the "foo" param, or
     2) parsing is completed.
 
 Observe that C<< scalar $req->param("foo") >> will not raise
@@ -271,7 +271,7 @@ Apache2::Request::Error object into $@ should either parser fail.
 
 =for example begin
 
-    $req->args_status(1); # set error state for query-string parser 
+    $req->args_status(1); # set error state for query-string parser
     ok $req->param_status == 1;
 
     $foo = $req->param("foo");
@@ -291,9 +291,9 @@ Apache2::Request::Error object into $@ should either parser fail.
 
 
 Note: modifications to the C<< scalar $req->param() >> table only
-affect the returned table object (the underlying C apr_table_t is 
-I<generated> from the parse data by apreq_params()).  Modifications 
-do not affect the actual request data, and will not be seen by other 
+affect the returned table object (the underlying C apr_table_t is
+I<generated> from the parse data by apreq_params()).  Modifications
+do not affect the actual request data, and will not be seen by other
 libapreq2 applications.
 
 
@@ -304,7 +304,7 @@ libapreq2 applications.
 The functionality of these functions is assumed by C<param>,
 so they are no longer necessary.  Aliases to C<param> are
 provided in this release for backwards compatibility,
-however they are deprecated and may be removed from a future 
+however they are deprecated and may be removed from a future
 release.
 
 
@@ -344,7 +344,7 @@ parameter associated with the given name:
 More generally, C<body()> follows the same pattern as C<param()>
 with respect to its return values and argument list.  The main difference
 is that modifications to the C<< scalar $req->body() >> table affect
-the underlying apr_table_t attribute in apreq_request_t, so their impact 
+the underlying apr_table_t attribute in apreq_request_t, so their impact
 will be noticed by all libapreq2 applications during this request.
 
 
@@ -356,7 +356,7 @@ will be noticed by all libapreq2 applications during this request.
     $req->upload($name)
 
 Requires C<Apache2::Upload>.  With no arguments, this method
-returns an I<APR::Request::Param::Table> object in scalar context, 
+returns an I<APR::Request::Param::Table> object in scalar context,
 or the names of all I<Apache2::Upload> objects in list context.
 
 An optional name parameter can be passed to return the I<Apache2::Upload>
@@ -366,12 +366,12 @@ object associated with the given name:
 
 More generally, C<upload()> follows the same pattern as C<param()>
 with respect to its return values and argument list.  The main difference
-is that its returned values are Apache2::Upload object refs, not 
+is that its returned values are Apache2::Upload object refs, not
 simple scalars.
 
 Note: modifications to the C<< scalar $req->upload() >> table only
-affect the returned table object (the underlying C apr_table_t is 
-I<generated> by apreq_uploads()).  They do not affect the actual request 
+affect the returned table object (the underlying C apr_table_t is
+I<generated> by apreq_uploads()).  They do not affect the actual request
 data, and will not be seen by other libapreq2 applications.
 
 
@@ -410,17 +410,17 @@ error otherwise.
 
 In scalar context, this returns C<args_status> if there was
 an error during the query-string parse, otherwise this returns
-C<body_status>, ie  
+C<body_status>, ie
 
     $req->args_status || $req->body_status
 
-In list context C<param_status> returns the list 
+In list context C<param_status> returns the list
 C<(args_status, body_status)>.
 
 =for testing
-    is scalar($req->param_status), 
+    is scalar($req->param_status),
        $req->args_status || $req->body_status;
-    is join(" ", $req->param_status), 
+    is join(" ", $req->param_status),
        join(" ", $req->args_status, $req->body_status);
 
 
@@ -433,7 +433,7 @@ C<(args_status, body_status)>.
 Forces the request to be parsed immediately.  In void context,
 this will throw an APR::Request::Error should the either the
 query-string or body parser fail. In all other contexts it will
-return the two parsers' combined I<APR> status code 
+return the two parsers' combined I<APR> status code
 
     $req->body_status || $req->args_status
 
@@ -454,8 +454,8 @@ in a mod_perl content handler it is more efficient to write
     }
 
 Calling C<< $r->discard_request_body >> outside the content handler
-is generally a mistake, so use C<< $req->parse >> there, but 
-B<only as a last resort>.  The Apache2::Request API is B<designed> 
+is generally a mistake, so use C<< $req->parse >> there, but
+B<only as a last resort>.  The Apache2::Request API is B<designed>
 around a lazy-parsing scheme, so calling C<parse> should not
 affect the behavior of any other methods.
 
@@ -483,8 +483,8 @@ Apache2::Request object to delegate to.)  For example:
 
 =head1 PORTING from 1.X
 
-This is the complete list of changes to existing methods 
-from Apache2::Request 1.X.  These issues need to be 
+This is the complete list of changes to existing methods
+from Apache2::Request 1.X.  These issues need to be
 addressed when porting 1.X apps to the new 2.X API.
 
 
@@ -492,7 +492,7 @@ addressed when porting 1.X apps to the new 2.X API.
 
 =item * Apache2::Upload is now a separate module.  Applications
         requiring the upload API must C<use Apache2::Upload> in 2.X.
-        This is easily addressed by preloading the modules during 
+        This is easily addressed by preloading the modules during
         server startup.
 
 =item * You can no longer add (or set or delete) parameters in the
@@ -500,7 +500,7 @@ addressed when porting 1.X apps to the new 2.X API.
         C<< scalar $req->body >> tables.  Nor can you add (or set or delete)
         cookies in the C<< scalar $req->jar >> table.
 
-=item * C<instance()> is now identical to C<new()>, and is now deprecated.  It 
+=item * C<instance()> is now identical to C<new()>, and is now deprecated.  It
         may be removed from a future 2.X release.
 
 =item * C<param> includes the functionality of C<parms()> and C<params()>, so

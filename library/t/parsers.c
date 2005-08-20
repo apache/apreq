@@ -26,7 +26,7 @@ static apr_pool_t *p;
 
 static char url_data[] = "alpha=one&beta=two;omega=last%2";
 
-static char form_data[] = 
+static char form_data[] =
 "--AaB03x" CRLF                                           /* 10 chars
  012345678901234567890123456789012345678901234567890123456789 */
 "content-disposition: form-data; name=\"field1\"" CRLF    /* 47 chars */
@@ -150,14 +150,14 @@ static void parse_urlencoded(dAT)
                                100, NULL, NULL, NULL);
 
     APR_BRIGADE_INSERT_HEAD(bb,
-        apr_bucket_immortal_create(url_data,strlen(url_data), 
+        apr_bucket_immortal_create(url_data,strlen(url_data),
                                    bb->bucket_alloc));
 
     rv = apreq_parser_run(parser, body, bb);
     AT_int_eq(rv, APR_INCOMPLETE);
 
     APR_BRIGADE_INSERT_HEAD(bb,
-        apr_bucket_immortal_create("blast",5, 
+        apr_bucket_immortal_create("blast",5,
                                    bb->bucket_alloc));
     APR_BRIGADE_INSERT_TAIL(bb,
            apr_bucket_eos_create(bb->bucket_alloc));
@@ -316,7 +316,7 @@ static void parse_generic(dAT)
 
     body = apr_table_make(p, APREQ_DEFAULT_NELTS);
 
-    parser = apreq_parser_make(p, ba, "application/xml", 
+    parser = apreq_parser_make(p, ba, "application/xml",
                                apreq_parse_generic, 1000, NULL, NULL, NULL);
 
     rv = apreq_parser_run(parser, body, bb);
@@ -348,7 +348,7 @@ static void hook_discard(dAT)
     body = apr_table_make(p, APREQ_DEFAULT_NELTS);
 
     hook = apreq_hook_make(p, apreq_hook_discard_brigade, NULL, NULL);
-    parser = apreq_parser_make(p, ba, "application/xml", 
+    parser = apreq_parser_make(p, ba, "application/xml",
                                apreq_parse_generic, 1000, NULL, hook, NULL);
 
 
@@ -388,7 +388,7 @@ static void parse_related(dAT)
     xml_hook = apreq_hook_make(p, apreq_hook_apr_xml_parser, NULL, NULL);
 
     body =   apr_table_make(p, APREQ_DEFAULT_NELTS);
-    parser = apreq_parser_make(p, ba, ct, apreq_parse_multipart, 
+    parser = apreq_parser_make(p, ba, ct, apreq_parse_multipart,
                                1000, NULL, xml_hook, NULL);
 
     rv = apreq_parser_run(parser, body, bb);
@@ -460,7 +460,7 @@ static void parse_mixed(dAT)
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
-    parser = apreq_parser_make(p, ba, ct, apreq_parse_multipart, 
+    parser = apreq_parser_make(p, ba, ct, apreq_parse_multipart,
                                1000, NULL, NULL, NULL);
 
     rv = apreq_parser_run(parser, body, bb);
@@ -506,7 +506,7 @@ int main(int argc, char *argv[])
     apr_pool_t *test_pool;
     unsigned i, plan = 0;
     dAT;
-    at_test_t test_list [] = {        
+    at_test_t test_list [] = {
         dT(locate_default_parsers, 3),
         dT(parse_urlencoded, 5),
         dT(parse_multipart, sizeof form_data),
@@ -525,7 +525,7 @@ int main(int argc, char *argv[])
     apreq_initialize(p);
 
 
-    AT = at_create(test_pool, 0, at_report_stdout_make(test_pool)); 
+    AT = at_create(test_pool, 0, at_report_stdout_make(test_pool));
 
     for (i = 0; i < sizeof(test_list) / sizeof(at_test_t);  ++i)
         plan += test_list[i].plan;

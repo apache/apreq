@@ -22,9 +22,9 @@
 
 #ifdef  __cplusplus
  extern "C" {
-#endif 
+#endif
 
-/** 
+/**
  * apreq's wrapper around apr_strerror();
  * recognizes APREQ_ERROR_* status codes.
  */

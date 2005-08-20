@@ -39,7 +39,7 @@ struct custom_handle {
 
 
 static apr_status_t custom_parse_brigade(apreq_handle_t *handle, apr_uint64_t bytes)
-{       
+{
     struct custom_handle *req = (struct custom_handle *)handle;
     apr_status_t s;
     apr_bucket *e;
@@ -59,7 +59,7 @@ static apr_status_t custom_parse_brigade(apreq_handle_t *handle, apr_uint64_t by
             break;
         }
 
-        req->body_status = 
+        req->body_status =
             apreq_parser_run(req->parser, req->body, req->tmpbb);
 
         apr_brigade_cleanup(req->tmpbb);
@@ -78,7 +78,7 @@ static apr_status_t custom_parse_brigade(apreq_handle_t *handle, apr_uint64_t by
             req->body_status = APREQ_ERROR_OVERLIMIT;
             break;
         }
-        req->body_status = 
+        req->body_status =
             apreq_parser_run(req->parser, req->body, req->tmpbb);
 
         apr_brigade_cleanup(req->tmpbb);
@@ -273,7 +273,7 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_custom(apr_pool_t *pool,
 
     if (cookie != NULL) {
         req->jar = apr_table_make(pool, APREQ_DEFAULT_NELTS);
-        req->jar_status = 
+        req->jar_status =
             apreq_parse_cookie_header(pool, req->jar, cookie);
     }
     else {
@@ -284,7 +284,7 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_custom(apr_pool_t *pool,
 
     if (query_string != NULL) {
         req->args = apr_table_make(pool, APREQ_DEFAULT_NELTS);
-        req->args_status = 
+        req->args_status =
             apreq_parse_query_string(pool, req->args, query_string);
     }
     else {

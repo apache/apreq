@@ -27,7 +27,7 @@
 
 #define ADD_COOKIE(j,c) apreq_value_table_add(&c->v, j)
 
-APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
+APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
                                          const char *time_str)
 {
     if (time_str == NULL) {
@@ -47,7 +47,7 @@ APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
 }
 
 static apr_status_t apreq_cookie_attr(apr_pool_t *p,
-                                      apreq_cookie_t *c, 
+                                      apreq_cookie_t *c,
                                       const char *attr,
                                       apr_size_t alen,
                                       const char *val,
@@ -104,7 +104,7 @@ static apr_status_t apreq_cookie_attr(apr_pool_t *p,
         if (!strncasecmp("commentURL", attr, 10)) {
             c->commentURL = apr_pstrmemdup(p,val,vlen);
             return APR_SUCCESS;
-        } 
+        }
         else if (!strncasecmp("comment", attr, 7)) {
             c->comment = apr_pstrmemdup(p,val,vlen);
             return APR_SUCCESS;
@@ -123,7 +123,7 @@ static apr_status_t apreq_cookie_attr(apr_pool_t *p,
     return APR_ENOTIMPL;
 }
 
-APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p, 
+APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
                                                   const char *name,
                                                   const apr_size_t nlen,
                                                   const char *value,
@@ -155,7 +155,7 @@ APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *p,
     c->comment = NULL;
     c->commentURL = NULL;
     c->max_age = -1;    /* session cookie is the default */
-    c->flags = 0; 
+    c->flags = 0;
 
 
     return c;
@@ -180,7 +180,7 @@ apr_status_t get_pair(apr_pool_t *p, const char **data,
 
     val = key + 1;
 
-    do --key; 
+    do --key;
     while (key > hdr && apr_isspace(*key));
 
     *n = key;
@@ -219,7 +219,7 @@ apr_status_t get_pair(apr_pool_t *p, const char **data,
                     *vlen = d - dest;
                     *v = dest;
                 }
-                
+
                 return APR_SUCCESS;
             case '\\':
                 saw_backslash = 1;
@@ -369,8 +369,8 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
                                           char *buf, apr_size_t len)
 {
     /*  The format string must be large enough to accomodate all
-     *  of the cookie attributes.  The current attributes sum to 
-     *  ~90 characters (w/ 6-8 padding chars per attr), so anything 
+     *  of the cookie attributes.  The current attributes sum to
+     *  ~90 characters (w/ 6-8 padding chars per attr), so anything
      *  over 100 should be fine.
      */
 
@@ -382,7 +382,7 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
 
     if (c->v.name == NULL)
         return -1;
-    
+
 #define NULL2EMPTY(attr) (attr ? attr : "")
 
 
@@ -449,8 +449,8 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
         strcpy(f, "; secure");
 
     return apr_snprintf(buf, len, format, c->v.name, c->v.data, version,
-                        NULL2EMPTY(c->path), NULL2EMPTY(c->domain), 
-                        NULL2EMPTY(c->port), NULL2EMPTY(c->comment), 
+                        NULL2EMPTY(c->path), NULL2EMPTY(c->domain),
+                        NULL2EMPTY(c->port), NULL2EMPTY(c->comment),
                         NULL2EMPTY(c->commentURL), apr_time_sec(c->max_age));
 }
 

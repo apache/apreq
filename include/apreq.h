@@ -26,7 +26,7 @@
 
 #ifdef  __cplusplus
  extern "C" {
-#endif 
+#endif
 
 /**
  * @file apreq.h
@@ -83,7 +83,7 @@ typedef enum {
 
 
 /** @enum apreq_join_t Join type */
-typedef enum { 
+typedef enum {
     APREQ_JOIN_AS_IS,      /**< Join the strings without modification */
     APREQ_JOIN_ENCODE,     /**< Url-encode the strings before joining them */
     APREQ_JOIN_DECODE,     /**< Url-decode the strings before joining them */

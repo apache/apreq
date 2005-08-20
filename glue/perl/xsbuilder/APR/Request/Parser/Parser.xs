@@ -28,7 +28,7 @@ generic(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook=N
     APR::Request::Hook hook
 
   CODE:
-    RETVAL = apreq_parser_make(pool, ba, ct, apreq_parse_generic, 
+    RETVAL = apreq_parser_make(pool, ba, ct, apreq_parse_generic,
                                blim, tdir, hook, NULL);
 
   OUTPUT:
@@ -45,7 +45,7 @@ headers(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook=N
     APR::Request::Hook hook
 
   CODE:
-    RETVAL = apreq_parser_make(pool, ba, ct, apreq_parse_headers, 
+    RETVAL = apreq_parser_make(pool, ba, ct, apreq_parse_headers,
                                blim, tdir, hook, NULL);
 
   OUTPUT:
@@ -62,7 +62,7 @@ urlencoded(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hoo
     APR::Request::Hook hook
 
   CODE:
-    RETVAL = apreq_parser_make(pool, ba, ct, apreq_parse_urlencoded, 
+    RETVAL = apreq_parser_make(pool, ba, ct, apreq_parse_urlencoded,
                                blim, tdir, hook, NULL);
 
   OUTPUT:
@@ -80,7 +80,7 @@ multipart(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook
     APR::Request::Hook hook
 
   CODE:
-    RETVAL = apreq_parser_make(pool, ba, ct, apreq_parse_multipart, 
+    RETVAL = apreq_parser_make(pool, ba, ct, apreq_parse_multipart,
                                blim, tdir, hook, NULL);
 
   OUTPUT:
@@ -104,7 +104,7 @@ default(class, pool, ba, ct, blim=APREQ_DEFAULT_BRIGADE_LIMIT, tdir=NULL, hook=N
     if (parser == NULL)
         XSRETURN_UNDEF;
 
-    RETVAL = apreq_parser_make(pool, ba, ct, parser, 
+    RETVAL = apreq_parser_make(pool, ba, ct, parser,
                                blim, tdir, hook, NULL);
 
   OUTPUT:

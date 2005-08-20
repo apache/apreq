@@ -60,7 +60,7 @@ sub handler {
     print $wfh $data;
     close $wfh;
     my $cs = $has_md5 ? cs($temp_file) : 0;
- 
+
     $req->content_type('text/plain');
     my $size = -s $temp_file;
     $r->print(<<END);

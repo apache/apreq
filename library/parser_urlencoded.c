@@ -33,7 +33,7 @@
 struct url_ctx {
     apr_bucket_brigade *bb;
     enum {
-        URL_NAME, 
+        URL_NAME,
         URL_VALUE,
         URL_COMPLETE,
         URL_ERROR

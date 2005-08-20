@@ -36,11 +36,11 @@ static apr_status_t test_cleanup(void *data)
     if (t->current < t->plan)
         return at_report(t, "Bail out!");
     else
-        return at_report(t, "END"); 
+        return at_report(t, "END");
 }
 
 void at_end(at_t *t)
-{     
+{
     apr_pool_cleanup_kill(t->pool, t, test_cleanup);
     test_cleanup(t);
 }
@@ -90,7 +90,7 @@ apr_status_t at_comment(at_t *t, const char *fmt, va_list vp)
     }
 
     return s;
-} 
+}
 
 void at_ok(at_t *t, int is_ok, const char *label, const char *file, int line)
 {
@@ -102,7 +102,7 @@ void at_ok(at_t *t, int is_ok, const char *label, const char *file, int line)
     int rv, is_fatal = 0, is_skip = 0, is_todo = 0;
 
     t->current++;
-      
+
     if (*t->fatal == t->current) {
         t->fatal++;
         is_fatal = 1;
@@ -127,7 +127,7 @@ void at_ok(at_t *t, int is_ok, const char *label, const char *file, int line)
     else
         comment = is_todo ? "todo" : is_skip ? "skip" : "at";
 
-    rv = apr_snprintf(buf, 256, fmt, t->current + t->prior, 
+    rv = apr_snprintf(buf, 256, fmt, t->current + t->prior,
                       label, comment,  file, line, t->current, t->name);
 
     if (rv <= 0)
@@ -262,7 +262,7 @@ void at_report_local(at_t *AT, apr_pool_t *p, const char *file, int line)
     if (*q->saved_fatal == AT->current + 1)
         q->saved_fatal++;
 
-    apr_pool_cleanup_register(p, q, report_local_cleanup, 
+    apr_pool_cleanup_register(p, q, report_local_cleanup,
                                     report_local_cleanup);
 }
 

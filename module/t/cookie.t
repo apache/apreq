@@ -45,7 +45,7 @@ my $location = "/apreq_cookie_test";
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = "$key=$value";
-    my ($header) = GET_HEAD("$location?test=$test&key=$key", 
+    my ($header) = GET_HEAD("$location?test=$test&key=$key",
                             Cookie => $cookie) =~ /^#Set-Cookie:\s+(.+)/m;
 
     ok t_cmp($header, $cookie, $test);
@@ -55,7 +55,7 @@ my $location = "/apreq_cookie_test";
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$location"};
-    my ($header) = GET_HEAD("$location?test=$test&key=$key", 
+    my ($header) = GET_HEAD("$location?test=$test&key=$key",
                             Cookie => $cookie) =~ /^#Set-Cookie2:\s+(.+)/m;
     ok t_cmp($header, qq{$key="$value"; Version=1; path="$location"}, $test);
 }

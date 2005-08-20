@@ -114,9 +114,9 @@ struct apreq_parser_t {
  * consume all the buckets of the brigade during parsing. However
  * parsers may leave "rejected" data in the brigade, even during a
  * successful parse, so callers may need to clean up the brigade
- * themselves (in particular, rejected buckets should not be 
+ * themselves (in particular, rejected buckets should not be
  * passed back to the parser again).
- * @remark  bb == NULL is valid: the parser should return its 
+ * @remark  bb == NULL is valid: the parser should return its
  * public status: APR_INCOMPLETE, APR_SUCCESS, or an error code.
  */
 static APR_INLINE
@@ -127,9 +127,9 @@ apr_status_t apreq_parser_run(struct apreq_parser_t *psr, apr_table_t *t,
 }
 
 /**
- * Run the hook with the current parameter and the incoming 
+ * Run the hook with the current parameter and the incoming
  * bucket brigade.  The hook may modify the brigade if necessary.
- * Once all hooks have completed, the contents of the brigade will 
+ * Once all hooks have completed, the contents of the brigade will
  * be added to the parameter's bb attribute.
  * @return APR_SUCCESS on success. All other values represent errors.
  */
@@ -155,7 +155,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded);
 
 /**
  * RFC 2388 multipart/form-data (and XForms 1.0 multipart/related)
- * parser. It will reject any buckets representing preamble and 
+ * parser. It will reject any buckets representing preamble and
  * postamble text (this is normal behavior, not an error condition).
  * See apreq_parser_run() for more info on rejected data.
  */
@@ -174,8 +174,8 @@ APREQ_DECLARE_PARSER(apreq_parse_generic);
 /**
  * apr_xml_parser hook. It will parse until EOS appears.
  * The parsed document isn't available until parsing has
- * completed successfully.  The hook's ctx pointer may 
- * be cast as (apr_xml_doc **) to retrieve the 
+ * completed successfully.  The hook's ctx pointer may
+ * be cast as (apr_xml_doc **) to retrieve the
  * parsed document.
  */
 APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser);
@@ -223,7 +223,7 @@ APREQ_DECLARE(apreq_hook_t *) apreq_hook_make(apr_pool_t *pool,
  * @param p Parser.
  * @param h Hook to append.
  */
-APREQ_DECLARE(apr_status_t) apreq_parser_add_hook(apreq_parser_t *p, 
+APREQ_DECLARE(apr_status_t) apreq_parser_add_hook(apreq_parser_t *p,
                                                   apreq_hook_t *h);
 
 
@@ -268,12 +268,12 @@ APREQ_DECLARE_HOOK(apreq_hook_discard_brigade);
 /**
  * Special purpose utility for locating a parameter
  * during parsing.  The hook's ctx shoud be initialized
- * to a const char *, which is a pointer to the desired 
- * param name.  The hook's ctx will be reassigned to the 
+ * to a const char *, which is a pointer to the desired
+ * param name.  The hook's ctx will be reassigned to the
  * first param found.
  *
  * @remarks When used, this should always be the first hook
- * invoked, so add it manually as parser->hook instead of 
+ * invoked, so add it manually as parser->hook instead of
  * using apreq_parser_add_hook.
  */
 APREQ_DECLARE_HOOK(apreq_hook_find_param);

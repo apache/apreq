@@ -82,7 +82,7 @@ version(obj, val=0)
     RETVAL = apreq_cookie_version(obj);
     if (items == 2)
         apreq_cookie_version_set(obj, val);
- 
+
   OUTPUT:
     RETVAL
 
@@ -285,9 +285,9 @@ cookie_class(t, subclass=&PL_sv_undef)
             mg->mg_len = 0;
         }
         else if (!sv_derived_from(subclass, COOKIE_CLASS)) {
-            Perl_croak(aTHX_ "Usage: " 
+            Perl_croak(aTHX_ "Usage: "
                              COOKIE_TABLE_CLASS "::cookie_class($table, $class): "
-                             "class %s is not derived from " COOKIE_CLASS, 
+                             "class %s is not derived from " COOKIE_CLASS,
                              SvPV_nolen(subclass));
         }
         else {

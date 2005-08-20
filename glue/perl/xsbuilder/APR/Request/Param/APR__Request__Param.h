@@ -175,7 +175,7 @@ static XS(apreq_xs_param_table_NEXTKEY)
     XSRETURN(1);
 }
 
- 
+
 static XS(XS_APR__Request__Param_nil)
 {
     dXSARGS;
@@ -189,7 +189,7 @@ static SV *apreq_xs_find_bb_obj(pTHX_ SV *in)
 {
     while (in && SvROK(in)) {
         SV *sv = SvRV(in);
-        switch (SvTYPE(sv)) {            
+        switch (SvTYPE(sv)) {
             MAGIC *mg;
         case SVt_PVIO:
             if (SvMAGICAL(sv) && (mg = mg_find(sv, PERL_MAGIC_tiedscalar))) {
@@ -279,8 +279,8 @@ static XS(apreq_xs_brigade_read)
         e = APR_BRIGADE_FIRST(bb);
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
-            apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
-                           "APR::Request::Brigade::READ", 
+            apreq_xs_croak(aTHX_ newHV(), Nullsv, s,
+                           "APR::Request::Brigade::READ",
                            "APR::Error");
         want = dlen;
         end = APR_BUCKET_NEXT(e);
@@ -292,7 +292,7 @@ static XS(apreq_xs_brigade_read)
         case APR_INCOMPLETE:
             s = apr_brigade_length(bb, 1, &len);
             if (s != APR_SUCCESS)
-                apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
+                apreq_xs_croak(aTHX_ newHV(), Nullsv, s,
                                "APR::Request::Brigade::READ",
                                "APR::Error");
             want = len;
@@ -301,7 +301,7 @@ static XS(apreq_xs_brigade_read)
             break;
 
         default:
-            apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
+            apreq_xs_croak(aTHX_ newHV(), Nullsv, s,
                            "APR::Request::Brigade::READ",
                            "APR::Error");
         }
@@ -318,7 +318,7 @@ static XS(apreq_xs_brigade_read)
         apr_size_t dlen;
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
-            apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
+            apreq_xs_croak(aTHX_ newHV(), Nullsv, s,
                            "APR::Request::Brigade::READ",
                            "APR::Error");
         memcpy(buf, data, dlen);
@@ -359,7 +359,7 @@ static XS(apreq_xs_brigade_readline)
     sv = sv_2mortal(newSVpvn("",0));
     if (tainted)
         SvTAINTED_on(sv);
-        
+
     XPUSHs(sv);
 
     while (!APR_BRIGADE_EMPTY(bb)) {
@@ -370,7 +370,7 @@ static XS(apreq_xs_brigade_readline)
         e = APR_BRIGADE_FIRST(bb);
         s = apr_bucket_read(e, &data, &dlen, APR_BLOCK_READ);
         if (s != APR_SUCCESS)
-            apreq_xs_croak(aTHX_ newHV(), Nullsv, s, 
+            apreq_xs_croak(aTHX_ newHV(), Nullsv, s,
                            "APR::Request::Brigade::READLINE",
                            "APR::Error");
 

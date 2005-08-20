@@ -34,7 +34,7 @@ APR::Request::CGI - derived from C<< APR::Request >>.
 
     APR::Request::CGI->handle($pool)
 
-Creates an APR::Request::CGI object.  The argument C<< $pool >> 
+Creates an APR::Request::CGI object.  The argument C<< $pool >>
 is an APR::Pool object.
 
 

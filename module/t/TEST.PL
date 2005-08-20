@@ -72,7 +72,7 @@ sub cmodules_write_makefile {
     if (WIN32) {
         require File::Spec;
         my @goners = map {$name . '.' . $_} qw(exp ilk lib pdb so lo);
-        my $libs = join ' ', 
+        my $libs = join ' ',
             (map {'-l' . File::Spec->catfile($mod_apreq2_dir, $_)}
               qw(libapreq2.lib mod_apreq2.lib));
         print $fh <<EOF;
@@ -83,7 +83,7 @@ $lib: $name.c
         \$(APXS) -I../../../apache2 -I../../../../include $libs -llibhttpd $dversion -p -I$self->{cmodules_dir} -c $name.c
 
 clean:
-	-erase @goners vc60.pdb 
+	-erase @goners vc60.pdb
 EOF
     }
     else {

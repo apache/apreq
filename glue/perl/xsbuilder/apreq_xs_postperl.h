@@ -65,10 +65,10 @@ struct apreq_xs_do_arg {
  * @{
  */
 
-/** 
+/**
  * Trace through magic objects & hashrefs looking for original object.
  * @param in  The starting SV *.
- * @param key The first letter of key is used to search a hashref for 
+ * @param key The first letter of key is used to search a hashref for
  *            the desired object.
  * @return    Reference to the object.
  */
@@ -79,7 +79,7 @@ static SV *apreq_xs_find_obj(pTHX_ SV *in, const char key)
 
     while (in && SvROK(in)) {
         SV *sv = SvRV(in);
-        switch (SvTYPE(sv)) {            
+        switch (SvTYPE(sv)) {
             MAGIC *mg;
             SV **svp;
         case SVt_PVHV:
@@ -122,14 +122,14 @@ SV *apreq_xs_object2sv(pTHX_ void *ptr, const char *class, SV *parent, const cha
 
 
 APR_INLINE
-static SV *apreq_xs_handle2sv(pTHX_ apreq_handle_t *req, 
+static SV *apreq_xs_handle2sv(pTHX_ apreq_handle_t *req,
                               const char *class, SV *parent)
 {
     return apreq_xs_object2sv(aTHX_ req, class, parent, HANDLE_CLASS);
 }
 
 APR_INLINE
-static SV *apreq_xs_param2sv(pTHX_ apreq_param_t *p, 
+static SV *apreq_xs_param2sv(pTHX_ apreq_param_t *p,
                               const char *class, SV *parent)
 {
     if (class == NULL) {
@@ -149,7 +149,7 @@ static SV *apreq_xs_param2sv(pTHX_ apreq_param_t *p,
 }
 
 APR_INLINE
-static SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c, 
+static SV *apreq_xs_cookie2sv(pTHX_ apreq_cookie_t *c,
                               const char *class, SV *parent)
 {
     if (class == NULL) {

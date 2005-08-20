@@ -27,7 +27,7 @@
 
 #define APACHE_HTTPD_TEST_ACCESS_CHECKER apreq_access_checker
 #define APACHE_HTTPD_TEST_COMMANDS       access_cmds
-#define APACHE_HTTPD_TEST_PER_DIR_CREATE create_access_config 
+#define APACHE_HTTPD_TEST_PER_DIR_CREATE create_access_config
 
 #include "apache_httpd_test.h"
 #include "apreq_module_apache2.h"
@@ -82,12 +82,12 @@ static int apreq_access_checker(request_rec *r)
     else {
         const apr_table_t *t = apreq_params(handle, r->pool);
         if (t != NULL) {
-            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_EGENERAL, r, 
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_EGENERAL, r,
                           "%s not found: parsing error detected (%d params)",
                           cfg->param, apr_table_elts(t)->nelts);
         }
         else {
-            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_EGENERAL, r, 
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_EGENERAL, r,
                           "%s not found: paring error detected (no param table)",
                           cfg->param);
         }

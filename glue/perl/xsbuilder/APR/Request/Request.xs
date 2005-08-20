@@ -41,7 +41,7 @@ read_limit(req, val=NULL)
     if (items == 1) {
         apr_status_t s;
         apr_uint64_t bytes;
-        s = apreq_read_limit_get(req, &bytes);     
+        s = apreq_read_limit_get(req, &bytes);
         if (s != APR_SUCCESS) {
             if (!sv_derived_from(ST(0), ERROR_CLASS)) {
                 SV *obj = apreq_xs_sv2object(aTHX_ ST(0), HANDLE_CLASS, 'r');
@@ -84,7 +84,7 @@ brigade_limit(req, val=NULL)
     if (items == 1) {
         apr_status_t s;
         apr_size_t bytes;
-        s = apreq_brigade_limit_get(req, &bytes);     
+        s = apreq_brigade_limit_get(req, &bytes);
         if (s != APR_SUCCESS) {
             if (!sv_derived_from(ST(0), ERROR_CLASS)) {
                 SV *obj = apreq_xs_sv2object(aTHX_ ST(0), HANDLE_CLASS, 'r');
@@ -128,7 +128,7 @@ temp_dir(req, val=NULL)
     if (items == 1) {
         apr_status_t s;
         const char *path;
-        s = apreq_temp_dir_get(req, &path);     
+        s = apreq_temp_dir_get(req, &path);
         if (s != APR_SUCCESS) {
             if (!sv_derived_from(ST(0), ERROR_CLASS)) {
                 SV *obj = apreq_xs_sv2object(aTHX_ ST(0), HANDLE_CLASS, 'r');
@@ -265,7 +265,7 @@ uploads(t, pool)
     MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
   CODE:
     RETVAL = apreq_xs_param_table2sv(aTHX_ apreq_uploads(t, pool),
-                                     HvNAME(SvSTASH(obj)), 
+                                     HvNAME(SvSTASH(obj)),
                                      parent, mg->mg_ptr, mg->mg_len);
   OUTPUT:
     RETVAL

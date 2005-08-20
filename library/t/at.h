@@ -48,10 +48,10 @@ struct at_report_t {
 };
 
 /* We only need one at_t struct per test suite, so lets call it *AT.
- * The mnemonic we follow is that (for lowercase foo) "AT_foo(bar)" 
+ * The mnemonic we follow is that (for lowercase foo) "AT_foo(bar)"
  * should be syntactically equivalent to "at_foo(AT, bar)".
  *
- * Terminology: test == an at_test_t, 
+ * Terminology: test == an at_test_t,
  *              check == an assertion which produces TAP.
  */
 
@@ -74,7 +74,7 @@ struct at_t {
 
 
 static APR_INLINE
-apr_status_t at_report(at_t *t, const char *msg) { 
+apr_status_t at_report(at_t *t, const char *msg) {
     at_report_t *r = t->report;
     return r->func(r, msg);
 }
@@ -114,7 +114,7 @@ void at_end(at_t *t);
 
 
 
-/* Additional reporting utils. 
+/* Additional reporting utils.
    These emit TAP comments, and are not "checks". */
 
 apr_status_t at_comment(at_t *t, const char *fmt, va_list vp);
@@ -233,7 +233,7 @@ void at_check(at_t *t, int is_ok, const char *label, const char *file,
 #define AT_not_null(a) AT_ptr_ne(a, NULL)
 
 
-/* XXX these two macro checks evaluate a & b more than once, but the 
+/* XXX these two macro checks evaluate a & b more than once, but the
  * upshot is that they don't care too much about their types.
  */
 
@@ -248,7 +248,7 @@ void at_skip(at_t *t, int n, const char *reason, const char *file, int line) {
     char buf[256];
     while (n-- > 0) {
         ++t->current;
-        apr_snprintf(buf, 256, "ok %d - %s (%d) #skipped: %s (%s:%d)", 
+        apr_snprintf(buf, 256, "ok %d - %s (%d) #skipped: %s (%s:%d)",
                      t->current + t->prior, t->name, t->current, reason, file, line);
         at_report(t, buf);
     }

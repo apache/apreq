@@ -68,7 +68,7 @@ for my $big_key_len (@big_key_len) {
 
 }
 
-if (Apache::Test::have_ssl() and $scheme ne 'https') {    
+if (Apache::Test::have_ssl() and $scheme ne 'https') {
     $scheme = 'https';
     goto START_TESTS;
 }

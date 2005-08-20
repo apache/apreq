@@ -93,7 +93,7 @@ static void string_decoding_in_place(dAT)
     s3 = apreq_escape(p, s2, 11);
     AT_str_eq(s3,"dandy+%3Edons");
     apreq_unescape(s3);
-    AT_str_eq(s3,"dandy >dons"); 
+    AT_str_eq(s3,"dandy >dons");
 }
 
 static void header_attributes(dAT)
@@ -145,7 +145,7 @@ static void make_param(dAT)
     char *encode;
     strcpy(name, "foo");
     strcpy(val, "bar > alpha");
- 
+
     param = apreq_param_make(p, name, nlen, val, vlen);
     AT_str_eq(param->v.name, name);
     AT_int_eq(param->v.dlen, vlen);
@@ -169,7 +169,7 @@ static void quote_strings(dAT)
     const char *expr;
     int i;
     const char * arr[] = {"cest", "\"cest", "ce\"st", "\"cest\""};
-    const char * arr_quote[] = 
+    const char * arr_quote[] =
         {"\"cest\"", "\"\\\"cest\"", "\"ce\\\"st\"", "\"\\\"cest\\\"\""};
     apr_size_t arr_len[] = {4, 5, 5, 6};
     apr_size_t arr_quote_len[] = {6, 8, 8, 10};
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 
     apreq_initialize(p);
 
-    AT = at_create(p, 0, at_report_stdout_make(p)); 
+    AT = at_create(p, 0, at_report_stdout_make(p));
     AT_trace_on();
     for (i = 0; i < sizeof(test_list) / sizeof(at_test_t);  ++i)
         plan += test_list[i].plan;

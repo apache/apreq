@@ -47,7 +47,7 @@ struct ctx_t {
 static int dump_table(void *data, const char *key, const char *value)
 {
     struct ctx_t *ctx = (struct ctx_t *)data;
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, ctx->r, 
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, ctx->r,
                   "%s => %s", key, value);
     apr_brigade_printf(ctx->bb,NULL,NULL,"\t%s => %s\n", key, value);
     return 1;
@@ -67,7 +67,7 @@ static apr_status_t apreq_output_filter_test(ap_filter_t *f, apr_bucket_brigade 
     eos = apr_brigade_split(bb, APR_BRIGADE_LAST(bb));
 
     handle = apreq_handle_apache2(r);
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r, 
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r,
                   "appending parsed data");
 
     apr_brigade_puts(bb, NULL, NULL, "\n--APREQ OUTPUT FILTER--\nARGS:\n");
@@ -88,7 +88,7 @@ static apr_status_t apreq_output_filter_test(ap_filter_t *f, apr_bucket_brigade 
 static void register_hooks (apr_pool_t *p)
 {
     (void)p;
-    ap_register_output_filter(filter_name, apreq_output_filter_test, 
+    ap_register_output_filter(filter_name, apreq_output_filter_test,
                               apreq_output_filter_test_init,
                               AP_FTYPE_CONTENT_SET);
 }

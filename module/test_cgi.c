@@ -25,7 +25,7 @@ static int dump_table(void *count, const char *key, const char *value)
 {
     int *c = (int *) count;
     int value_len = key - value - 1; /* == strlen(value) by construction */
-    if (value_len) 
+    if (value_len)
         *c += strlen(key) + value_len;
     return 1;
 }
@@ -80,7 +80,7 @@ int main(int argc, char const * const * argv)
             apr_file_printf(out, "\t%s => %s\n", "bar", bar->v.data);
         }
     }
-    
+
     else if (test && key) {
         apreq_cookie_t *cookie;
         char *dest;
@@ -101,7 +101,7 @@ int main(int argc, char const * const * argv)
 
         apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");
         dest = apr_pcalloc(pool, cookie->v.dlen + 1);
-        if (apreq_decode(dest, &dlen, cookie->v.data, 
+        if (apreq_decode(dest, &dlen, cookie->v.data,
                          cookie->v.dlen) == APR_SUCCESS)
             apr_file_printf(out, "%s", dest);
         else {
@@ -109,7 +109,7 @@ int main(int argc, char const * const * argv)
         }
     }
 
-    else { 
+    else {
         const apr_table_t *params = apreq_params(req, pool);
         int count = 0;
         apr_file_printf(out, "%s", "Content-Type: text/plain\n\n");

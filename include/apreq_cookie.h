@@ -22,7 +22,7 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif 
+#endif
 
 /**
  * @file apreq_cookie.h
@@ -30,7 +30,7 @@ extern "C" {
  * @ingroup libapreq2
  *
  * apreq_cookie.h describes a common server-side API for request (incoming)
- * and response (outgoing) cookies.  It aims towards compliance with the 
+ * and response (outgoing) cookies.  It aims towards compliance with the
  * standard cookie specifications listed below.
  *
  * @see http://wp.netscape.com/newsref/std/cookie_spec.html
@@ -155,14 +155,14 @@ APREQ_DECLARE(apr_status_t) apreq_parse_cookie_header(apr_pool_t *pool,
  *
  * @return the new cookie
  */
-APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *pool, 
+APREQ_DECLARE(apreq_cookie_t *) apreq_cookie_make(apr_pool_t *pool,
                                                   const char *name,
-                                                  const apr_size_t nlen, 
+                                                  const apr_size_t nlen,
                                                   const char *value,
                                                   const apr_size_t vlen);
 
 /**
- * Returns a string that represents the cookie as it would appear 
+ * Returns a string that represents the cookie as it would appear
  * in a valid "Set-Cookie*" header.
  *
  * @param c cookie.
@@ -182,7 +182,7 @@ APREQ_DECLARE(char*) apreq_cookie_as_string(const apreq_cookie_t *c,
  *
  * @param c   cookie.
  * @param buf storage location for the result.
- * @param len size of buf's storage area. 
+ * @param len size of buf's storage area.
  *
  * @return size of resulting header string.
  */
@@ -191,19 +191,19 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
 
 /**
  * Set the Cookie's expiration date.
- * 
+ *
  * @param c The cookie.
  * @param time_str If NULL, the Cookie's expiration date is unset,
- * making it a session cookie.  This means no "expires" or "max-age" 
+ * making it a session cookie.  This means no "expires" or "max-age"
  * attribute will appear in the cookie's serialized form. If time_str
  * is not NULL, the expiration date will be reset to the offset (from now)
- * represented by time_str.  The time_str should be in a format that 
+ * represented by time_str.  The time_str should be in a format that
  * apreq_atoi64t() can understand, namely /[+-]?\\d+\\s*[YMDhms]/.
  *
  * @remarks Now time_str may also be a fixed date; see apr_date_parse_rfc()
  * for admissible formats.
  */
-APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c, 
+APREQ_DECLARE(void) apreq_cookie_expires(apreq_cookie_t *c,
                                          const char *time_str);
 
 #ifdef __cplusplus

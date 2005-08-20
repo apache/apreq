@@ -23,7 +23,7 @@
 
 #ifdef  __cplusplus
  extern "C" {
-#endif 
+#endif
 
 /**
  * @file apreq_module.h
@@ -122,10 +122,10 @@ unsigned apreq_module_status_is_error(apr_status_t s) {
 
 
 /**
- * Expose the parsed "cookie" header associated to this handle. 
+ * Expose the parsed "cookie" header associated to this handle.
  *
  * @param req The request handle
- * @param t   The resulting table, which will either be NULL or a 
+ * @param t   The resulting table, which will either be NULL or a
  *            valid table object on return.
  *
  * @return    APR_SUCCESS or a module-specific error status code.
@@ -137,10 +137,10 @@ apr_status_t apreq_jar(apreq_handle_t *req, const apr_table_t **t)
 }
 
 /**
- * Expose the parsed "query string" associated to this handle. 
+ * Expose the parsed "query string" associated to this handle.
  *
  * @param req The request handle
- * @param t   The resulting table, which will either be NULL or a 
+ * @param t   The resulting table, which will either be NULL or a
  *            valid table object on return.
  *
  * @return    APR_SUCCESS or a module-specific error status code.
@@ -152,10 +152,10 @@ apr_status_t apreq_args(apreq_handle_t *req, const apr_table_t **t)
 }
 
 /**
- * Expose the parsed "request body" associated to this handle. 
+ * Expose the parsed "request body" associated to this handle.
  *
  * @param req The request handle
- * @param t   The resulting table, which will either be NULL or a 
+ * @param t   The resulting table, which will either be NULL or a
  *            valid table object on return.
  *
  * @return    APR_SUCCESS or a module-specific error status code.
@@ -168,7 +168,7 @@ apr_status_t apreq_body(apreq_handle_t *req, const apr_table_t **t)
 
 
 /**
- * Fetch the first cookie with the given name. 
+ * Fetch the first cookie with the given name.
  *
  * @param req  The request handle
  * @param name Case-insensitive cookie name.
@@ -182,7 +182,7 @@ apreq_cookie_t *apreq_jar_get(apreq_handle_t *req, const char *name)
 }
 
 /**
- * Fetch the first query string param with the given name. 
+ * Fetch the first query string param with the given name.
  *
  * @param req  The request handle
  * @param name Case-insensitive param name.
@@ -196,7 +196,7 @@ apreq_param_t *apreq_args_get(apreq_handle_t *req, const char *name)
 }
 
 /**
- * Fetch the first body param with the given name. 
+ * Fetch the first body param with the given name.
  *
  * @param req  The request handle
  * @param name Case-insensitive cookie name.
@@ -278,7 +278,7 @@ apr_status_t apreq_brigade_limit_set(apreq_handle_t *req,
  * @param req   The handle.
  * @param bytes Pointer to resulting (current) limit.
  *
- * @return APR_SUCCESS or a module-specific error, 
+ * @return APR_SUCCESS or a module-specific error,
  *         which may leave bytes undefined.
  */
 static APR_INLINE
@@ -359,7 +359,7 @@ apr_status_t apreq_temp_dir_get(apreq_handle_t *req, const char **path)
  * @param pre Prefix to define new environment.  All attributes of
  *            the apreq_env_module_t struct are defined with this as their
  *            prefix. The generated struct is named by appending "_module" to
- *            the prefix. 
+ *            the prefix.
  * @param mmn Magic number (i.e. version number) of this environment.
  */
 #define APREQ_MODULE(pre, mmn) const apreq_module_t     \

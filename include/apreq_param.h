@@ -109,7 +109,7 @@ APREQ_DECLARE(apreq_param_t *) apreq_param_make(apr_pool_t *p,
  *
  * @remarks     Unless vlen == 0, this function assumes there is
  *              exactly one character ('=') which separates the pair.
- *            
+ *
  */
 APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
                                                apr_pool_t *pool,
@@ -187,7 +187,7 @@ APREQ_DECLARE(const apr_table_t *) apreq_uploads(const apr_table_t *body,
                                                  apr_pool_t *pool);
 
 /**
- * Returns the first param in req->body which has both param->v.name 
+ * Returns the first param in req->body which has both param->v.name
  * matching key (case insensitive) and param->upload != NULL.
  * @param body parameter table returned by apreq_body() or apreq_params()
  * @param name Parameter name. key == NULL returns first upload.

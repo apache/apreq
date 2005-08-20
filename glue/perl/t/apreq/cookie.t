@@ -23,9 +23,9 @@ my $location = "/TestApReq__cookie";
     # XXX why does this test fail?
     my $test  = 'bake';
     my $value = 'foo=bar; path=/quux; domain=example.com';
-    my ($header) = (GET_HEAD("$location?test=bake") 
+    my ($header) = (GET_HEAD("$location?test=bake")
                    =~ /^#Set-Cookie:\s+(.+)/m) ;
-    ok t_cmp($header, 
+    ok t_cmp($header,
              $value,
              $test);
 }
@@ -69,7 +69,7 @@ my $location = "/TestApReq__cookie";
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = "$key=$value";
-    my ($header) = GET_HEAD("$location?test=$test&key=$key", 
+    my ($header) = GET_HEAD("$location?test=$test&key=$key",
                             Cookie => $cookie) =~ /^#Set-Cookie:\s+(.+)/m;
 
     ok t_cmp($header, $cookie, $test);
@@ -79,7 +79,7 @@ my $location = "/TestApReq__cookie";
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$location"};
-    my ($header) = GET_HEAD("$location?test=$test&key=$key", 
+    my ($header) = GET_HEAD("$location?test=$test&key=$key",
                             Cookie => $cookie) =~ /^#Set-Cookie2:\s+(.+)/m;
     ok t_cmp($header, qq{$key="$value"; Version=1; path="$location"}, $test);
 }

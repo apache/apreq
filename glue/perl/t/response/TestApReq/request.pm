@@ -25,7 +25,7 @@ sub hook {
 sub handler {
     my $r = shift;
     my $temp_dir =
-        File::Spec->catfile(Apache2::ServerUtil::server_root, 'logs'); 
+        File::Spec->catfile(Apache2::ServerUtil::server_root, 'logs');
     my $req = Apache2::Request->new($r, POST_MAX => 1_000_000,
                                         TEMP_DIR => $temp_dir);
 #    $req->temp_dir($temp_dir);

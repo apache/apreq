@@ -57,7 +57,7 @@ static int apreq_cookie_test_handler(request_rec *r)
 
     req = apreq_handle_apache2(r);
 
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r, 
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS, r,
                   "starting cookie tests");
 
     apreq_args(req, &args);

@@ -32,9 +32,9 @@
  * <TABLE class="qref"><CAPTION>Per-directory commands for mod_apreq</CAPTION>
  * <TR><TH>Directive</TH><TH>Context</TH><TH>Default</TH><TH>Description</TH></TR>
  * <TR class="odd"><TD>APREQ_ReadLimit</TD><TD>directory</TD><TD>-1 (Unlimited)</TD><TD>
- * Maximum number of bytes mod_apreq will send off to libapreq for parsing.  
+ * Maximum number of bytes mod_apreq will send off to libapreq for parsing.
  * mod_apreq will log this event and remove itself from the filter chain.
- * The APREQ_ERROR_GENERAL error will be reported to libapreq2 users via the return 
+ * The APREQ_ERROR_GENERAL error will be reported to libapreq2 users via the return
  * value of apreq_env_read().
  * </TD></TR>
  * <TR><TD>APREQ_BrigadeLimit</TD><TD>directory</TD><TD> #APREQ_MAX_BRIGADE_LEN </TD><TD>
@@ -153,8 +153,8 @@ static void apreq_init (server_rec *s, pool *sp)
     apr_initialize();
     apr_pool_create(&p, NULL);
     apreq_initialize(p);
-    ap_add_version_component(p, apr_psprintf(p, 
-                                             "mod_apreq-%d/%s", 
+    ap_add_version_component(p, apr_psprintf(p,
+                                             "mod_apreq-%d/%s",
                                              APREQ_APACHE_MMN,
                                              apreq_version_string()));
     ap_register_cleanup(sp, p, apreq_cleanup, apreq_cleanup);

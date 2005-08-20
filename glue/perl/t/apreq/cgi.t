@@ -4,7 +4,7 @@ use warnings FATAL => 'all';
 use Apache::Test;
 use Apache::TestUtil qw(t_cmp t_debug t_write_perl_script);
 use Apache::TestConfig;
-use Apache::TestRequest qw(GET_BODY UPLOAD_BODY 
+use Apache::TestRequest qw(GET_BODY UPLOAD_BODY
                            GET_BODY_ASSERT POST_BODY GET_RC GET_HEAD);
 use constant WIN32 => Apache::TestConfig::WIN32;
 use HTTP::Cookies;
@@ -93,19 +93,19 @@ ok t_cmp(POST_BODY("$script?foo=1", Content => $filler),
 ok t_cmp(GET_BODY("$script?foo=%3F&bar=hello+world"),
          "\tfoo => ?$line_end\tbar => hello world$line_end", "simple get");
 
-my $body = POST_BODY($script, content => 
+my $body = POST_BODY($script, content =>
                      "aaa=$filler;foo=1;bar=2;filler=$filler");
-ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end", 
+ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end",
          "simple post");
 
-$body = POST_BODY("$script?foo=1", content => 
+$body = POST_BODY("$script?foo=1", content =>
                   "intro=$filler&bar=2&conclusion=$filler");
-ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end", 
+ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end",
          "simple post");
 
 
 $body = UPLOAD_BODY("$script?foo=1", content => $filler);
-ok t_cmp($body, "\tfoo => 1$line_end", 
+ok t_cmp($body, "\tfoo => 1$line_end",
          "simple upload");
 
 
@@ -142,7 +142,7 @@ ok t_cmp($body, "\tfoo => 1$line_end",
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = "$key=$value";
-    my ($header) = GET_HEAD("$script?test=$test&key=$key", 
+    my ($header) = GET_HEAD("$script?test=$test&key=$key",
                             Cookie => $cookie) =~ /^#Set-Cookie:\s+(.+)/m;
     ok t_cmp($header, $cookie, $test);
 }
@@ -151,7 +151,7 @@ ok t_cmp($body, "\tfoo => 1$line_end",
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$location"};
-    my ($header) = GET_HEAD("$script?test=$test&key=$key", 
+    my ($header) = GET_HEAD("$script?test=$test&key=$key",
                             Cookie => $cookie) =~ /^#Set-Cookie2:\s+(.+)/m;
     ok t_cmp($header, qq{$key="$value"; Version=1; path="$location"}, $test);
 }
@@ -178,7 +178,7 @@ foreach my $file( map {File::Spec->catfile($cwd, 't', $_)} @names) {
     my $basename = File::Basename::basename($file);
 
     for my $method ( @methods) {
-        my $result = UPLOAD_BODY("$script?method=$method;has_md5=$has_md5", 
+        my $result = UPLOAD_BODY("$script?method=$method;has_md5=$has_md5",
                                  filename => $file);
         $result =~ s{\r}{}g;
         my $expected = <<END;
@@ -238,7 +238,7 @@ if ($foo || $bar) {
         print "\tbar => $bar\n";
     }
 }
-    
+
 elsif ($test && $key) {
     my $jar = $req->jar;
     $jar->cookie_class("APR::Request::Cookie");
@@ -304,7 +304,7 @@ elsif ($method) {
     print $wfh $data;
     close $wfh;
     my $cs = $has_md5 ? cs($temp_file) : 0;
- 
+
     my $size = -s $temp_file;
     print <<"END";
 
@@ -335,7 +335,7 @@ sub apreq_log {
     my $msg = shift;
     my ($pkg, $file, $line) = caller;
     $file = basename($file);
-    print STDERR "$file($line): $msg\n";    
+    print STDERR "$file($line): $msg\n";
 }
 
 sub cs {

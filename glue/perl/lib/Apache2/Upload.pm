@@ -92,7 +92,7 @@ Apache2::Upload - Methods for dealing with file uploads.
 =head1 DESCRIPTION
 
 Apache2::Upload is a new module based on the original package included
-in Apache2::Request 1.X.  Users requiring the upload API must now 
+in Apache2::Request 1.X.  Users requiring the upload API must now
 C<use Apache2::Upload>, which adds the C<upload> method to Apache2::Request.
 Apache2::Upload is largely backwards-compatible with the original 1.X API.
 See the L<PORTING from 1.X> section below for a list of known issues.
@@ -123,8 +123,8 @@ The name of the HTML form element which generated the upload.
 
     $upload->filename()
 
-The (client-side) filename as submitted in the HTML form.  Note: 
-some agents will submit the file's full pathname, while others 
+The (client-side) filename as submitted in the HTML form.  Note:
+some agents will submit the file's full pathname, while others
 may submit just the basename.
 
 =for testing
@@ -147,16 +147,16 @@ which contains the full contents of the upload.
 
     $upload->io()
 
-Creates a tied IO handle.  This method is a more efficient version 
-of C<fh>, but with C<io> the handle ref returned is not seekable.  
-It is tied to an APR::Request::Brigade object, so you may use the 
-brigade API on the tied object if you want to manipulate the IO stream 
+Creates a tied IO handle.  This method is a more efficient version
+of C<fh>, but with C<io> the handle ref returned is not seekable.
+It is tied to an APR::Request::Brigade object, so you may use the
+brigade API on the tied object if you want to manipulate the IO stream
 (beyond simply reading from it).
 
-The returned reference is actually an object which has C<read> and 
-C<readline> methods available.  However these methods are just 
-syntactic sugar for the underlying C<READ> and C<READLINE> methods from 
-APR::Request::Brigade.  
+The returned reference is actually an object which has C<read> and
+C<readline> methods available.  However these methods are just
+syntactic sugar for the underlying C<READ> and C<READLINE> methods from
+APR::Request::Brigade.
 
 =for example begin
 
@@ -171,7 +171,7 @@ APR::Request::Brigade.
     $io->read($h{io}, $upload->size);
     is $h{io}, $data, "autovivifying read";
 
-See L<READ|read> and L<READLINE|readline> below for additional notes 
+See L<READ|read> and L<READLINE|readline> below for additional notes
 on their usage.
 
 
@@ -203,7 +203,7 @@ Returns the size of the upload in bytes.
     $upload->info()
     $upload->info($set)
 
-Get/set the additional header information table for the 
+Get/set the additional header information table for the
 uploaded file.
 Returns a hash reference tied to the I<APR::Table> class.
 An optional C<$table> argument can be passed to reassign
@@ -254,7 +254,7 @@ Returns the MIME type of the given I<Apache2::Upload> object.
 
     $upload->link()
 
-To avoid recopying the upload's internal tempfile brigade on a 
+To avoid recopying the upload's internal tempfile brigade on a
 *nix-like system, I<link> will create a hard link to it:
 
 =for example begin
@@ -265,9 +265,9 @@ To avoid recopying the upload's internal tempfile brigade on a
 
 =for example end
 
-Typically the new name must lie on the same device and partition 
+Typically the new name must lie on the same device and partition
 as the brigade's tempfile.  If this or any other reason prevents
-the OS from linking the files, C<link()> will instead 
+the OS from linking the files, C<link()> will instead
 copy the temporary file to the specified location.
 
 
@@ -320,9 +320,9 @@ Provides the name of the spool file.
 
 This class is derived from APR::Brigade, providing additional
 methods for TIEHANDLE, READ and READLINE.  To be memory efficient,
-these methods delete buckets from the brigade as soon as their 
+these methods delete buckets from the brigade as soon as their
 data is actually read, so you cannot C<seek> on handles tied to
-this class.  Such handles have semantics similar to that of a 
+this class.  Such handles have semantics similar to that of a
 read-only socket.
 
 
@@ -352,9 +352,9 @@ and C<< <> >> operations on handles tied to this package:
     $bb->READ($contents, $length, $offset)
 
 Reads data from the brigade $bb into $contents.  When omitted
-$length defaults to C<-1>, which reads the first bucket into $contents.  
-A positive $length will read in $length bytes, or the remainder of the 
-brigade, whichever is greater. $offset represents the index in $context 
+$length defaults to C<-1>, which reads the first bucket into $contents.
+A positive $length will read in $length bytes, or the remainder of the
+brigade, whichever is greater. $offset represents the index in $context
 to read the new data.
 
 
@@ -374,7 +374,7 @@ linefeeds (the '\012' character), but we may eventually use C<$/> instead.
 
 =over 4
 
-=item * C<< $upload->next() >> is no longer available;  please use the 
+=item * C<< $upload->next() >> is no longer available;  please use the
 C<< APR::Request::Param::Table >> API when iterating over upload entries.
 
 =item * C<info($header_name)> is replaced by C<info($set)>.

@@ -31,10 +31,10 @@
 struct hdr_ctx {
     apr_bucket_brigade *bb;
    enum {
-       HDR_NAME, 
-       HDR_GAP, 
-       HDR_VALUE, 
-       HDR_NEWLINE, 
+       HDR_NAME,
+       HDR_GAP,
+       HDR_VALUE,
+       HDR_NEWLINE,
        HDR_CONTINUE,
        HDR_COMPLETE,
        HDR_ERROR
@@ -45,9 +45,9 @@ struct hdr_ctx {
 
 
 static apr_status_t split_header_line(apreq_param_t **p,
-                                      apr_pool_t *pool, 
+                                      apr_pool_t *pool,
                                       apr_bucket_brigade *bb,
-                                      apr_size_t nlen, 
+                                      apr_size_t nlen,
                                       apr_size_t glen,
                                       apr_size_t vlen)
 {
@@ -64,7 +64,7 @@ static apr_status_t split_header_line(apreq_param_t **p,
     if (nlen == 0)
         return APR_EBADARG;
 
-    param = apreq_param_make(pool, NULL, nlen, NULL, vlen - 1); /*drop (CR)LF */ 
+    param = apreq_param_make(pool, NULL, nlen, NULL, vlen - 1); /*drop (CR)LF */
     *(const apreq_value_t **)&v = &param->v;
 
     arr.pool     = pool;
@@ -77,7 +77,7 @@ static apr_status_t split_header_line(apreq_param_t **p,
 
     /* store name in a temporary iovec array */
 
-    while (nlen > 0) {        
+    while (nlen > 0) {
         apr_size_t len;
         end = apr_array_push(&arr);
         s = apr_bucket_read(e, (const char **)&end->iov_base,
@@ -131,7 +131,7 @@ static apr_status_t split_header_line(apreq_param_t **p,
     /* write name */
     v->name = dest;
     iov = (struct iovec *)arr.elts;
-    
+
     while (iov <= end) {
         memcpy(dest, iov->iov_base, iov->iov_len);
         dest += iov->iov_len;
@@ -172,7 +172,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
 
     ctx->status = HDR_NAME;
 
-    /* parse the brigade for CRLF_CRLF-terminated header block, 
+    /* parse the brigade for CRLF_CRLF-terminated header block,
      * each time starting from the front of the brigade.
      */
 
@@ -291,7 +291,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
 
         case HDR_NEWLINE:
 
-            if (off == dlen) 
+            if (off == dlen)
                 break;
             else {
                 switch (data[off]) {

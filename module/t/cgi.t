@@ -15,7 +15,7 @@ my @big_key_len = (100, 500, 5000, 10000);
 my @big_key_num = (5, 15, 25);
 my @big_keys    = ('a'..'z');
 
-plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num, 
+plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num,
     have_lwp && have_cgi;
 
 require HTTP::Cookies;
@@ -75,12 +75,12 @@ ok t_cmp(POST_BODY("$script?foo=1", Content => $filler),
 ok t_cmp(GET_BODY("$script?foo=%3F&bar=hello+world"),
           "\tfoo => ?$line_end\tbar => hello world$line_end", "simple get");
 
-my $body = POST_BODY($script, content => 
+my $body = POST_BODY($script, content =>
                      "aaa=$filler;foo=1;bar=2;filler=$filler");
 ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end",
          "simple post");
 
-$body = POST_BODY("$script?foo=1", content => 
+$body = POST_BODY("$script?foo=1", content =>
                   "intro=$filler&bar=2&conclusion=$filler");
 ok t_cmp($body, "\tfoo => 1$line_end\tbar => 2$line_end",
          "simple post");
@@ -123,7 +123,7 @@ ok t_cmp($body, "\tfoo => 0$line_end",
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = "$key=$value";
-    my ($header) = GET_HEAD("$script?test=$test&key=$key", 
+    my ($header) = GET_HEAD("$script?test=$test&key=$key",
                             Cookie => $cookie) =~ /^#Set-Cookie:\s+(.+)/m;
     ok t_cmp($cookie, $header, $test);
 }
@@ -132,7 +132,7 @@ ok t_cmp($body, "\tfoo => 0$line_end",
     my $key   = 'apache';
     my $value = 'ok';
     my $cookie = qq{\$Version="1"; $key="$value"; \$Path="$location"};
-    my ($header) = GET_HEAD("$script?test=$test&key=$key", 
+    my ($header) = GET_HEAD("$script?test=$test&key=$key",
                             Cookie => $cookie) =~ /^#Set-Cookie2:\s+(.+)/m;
     ok t_cmp(qq{$key="$value"; Version=1; path="$location"}, $header, $test);
 }

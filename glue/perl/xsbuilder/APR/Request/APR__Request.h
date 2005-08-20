@@ -27,7 +27,7 @@ static XS(apreq_xs_jar)
             apr_status_t s;
 
             s = apreq_jar(req, &t);
-            if (apreq_module_status_is_error(s) 
+            if (apreq_module_status_is_error(s)
                 && !sv_derived_from(ST(0), ERROR_CLASS))
                 apreq_xs_croak(aTHX_ newHV(), obj, s,
                                "APR::Request::jar", ERROR_CLASS);
@@ -61,7 +61,7 @@ static XS(apreq_xs_jar)
             if (items == 1)
                 apr_table_do(apreq_xs_cookie_table_keys, &d, t, NULL);
             else
-                apr_table_do(apreq_xs_cookie_table_values, &d, t, 
+                apr_table_do(apreq_xs_cookie_table_values, &d, t,
                              SvPV_nolen(ST(1)), NULL);
             return;
 
@@ -142,12 +142,12 @@ static XS(apreq_xs_args)
             if (items == 1)
                 apr_table_do(apreq_xs_param_table_keys, &d, t, NULL);
             else
-                apr_table_do(apreq_xs_param_table_values, &d, t, 
+                apr_table_do(apreq_xs_param_table_values, &d, t,
                              SvPV_nolen(ST(1)), NULL);
             return;
 
         case G_SCALAR:
-            ST(0) = apreq_xs_param_table2sv(aTHX_ t, 
+            ST(0) = apreq_xs_param_table2sv(aTHX_ t,
                                             PARAM_TABLE_CLASS,
                                             obj, NULL, 0);
             sv_2mortal(ST(0));
@@ -222,12 +222,12 @@ static XS(apreq_xs_body)
             if (items == 1)
                 apr_table_do(apreq_xs_param_table_keys, &d, t, NULL);
             else
-                apr_table_do(apreq_xs_param_table_values, &d, t, 
+                apr_table_do(apreq_xs_param_table_values, &d, t,
                              SvPV_nolen(ST(1)), NULL);
             return;
 
         case G_SCALAR:
-            ST(0) = apreq_xs_param_table2sv(aTHX_ t, 
+            ST(0) = apreq_xs_param_table2sv(aTHX_ t,
                                             PARAM_TABLE_CLASS,
                                             obj, NULL, 0);
             sv_2mortal(ST(0));
@@ -304,7 +304,7 @@ static XS(apreq_xs_param)
             if (t == NULL)
                 XSRETURN_UNDEF;
 
-            ST(0) = apreq_xs_param_table2sv(aTHX_ t, 
+            ST(0) = apreq_xs_param_table2sv(aTHX_ t,
                                             PARAM_TABLE_CLASS,
                                             obj, NULL, 0);
             sv_2mortal(ST(0));
@@ -365,7 +365,7 @@ static apr_status_t upload_hook_cleanup(void *ctx_)
 }
 
 APR_INLINE
-static apr_status_t eval_upload_hook(pTHX_ apreq_param_t *upload, 
+static apr_status_t eval_upload_hook(pTHX_ apreq_param_t *upload,
                                      struct hook_ctx *ctx)
 {
     dSP;
@@ -413,7 +413,7 @@ static apr_status_t apreq_xs_upload_hook(APREQ_HOOK_ARGS)
         apr_size_t len;
         const char *data;
 
-        if (APR_BUCKET_IS_EOS(e)) {  /*last call on this upload */           
+        if (APR_BUCKET_IS_EOS(e)) {  /*last call on this upload */
             SV *sv = ctx->bucket_data;
             ctx->bucket_data = &PL_sv_undef;
             s = eval_upload_hook(aTHX_ param, ctx);

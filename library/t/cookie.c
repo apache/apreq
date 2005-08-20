@@ -93,7 +93,7 @@ static void netscape_cookie(dAT)
     AT_str_eq(apreq_cookie_as_string(c, p), "foo=bar; domain=example.com");
 
     c->path = apr_pstrdup(p, "/quux");
-    AT_str_eq(apreq_cookie_as_string(c, p), 
+    AT_str_eq(apreq_cookie_as_string(c, p),
               "foo=bar; path=/quux; domain=example.com");
 
     apreq_cookie_expires(c, "+1y");
@@ -101,7 +101,7 @@ static void netscape_cookie(dAT)
                              + apr_time_from_sec(apreq_atoi64t("+1y")));
     expires[7] = '-';
     expires[11] = '-';
-    val = apr_pstrcat(p, "foo=bar; path=/quux; domain=example.com; expires=", 
+    val = apr_pstrcat(p, "foo=bar; path=/quux; domain=example.com; expires=",
                       expires, NULL);
 
     AT_str_eq(apreq_cookie_as_string(c, p), val);
@@ -112,7 +112,7 @@ static void rfc_cookie(dAT)
 {
     apreq_cookie_t *c = apreq_cookie_make(p,"rfc",3,"out",3);
     const char *expected;
-    long expires; 
+    long expires;
 
     AT_str_eq(c->v.data, "out");
 
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 
     apr_pool_create(&p, NULL);
 
-    AT = at_create(p, 0, at_report_stdout_make(p)); 
+    AT = at_create(p, 0, at_report_stdout_make(p));
 
     for (i = 0; i < sizeof(test_list) / sizeof(at_test_t);  ++i)
         plan += test_list[i].plan;

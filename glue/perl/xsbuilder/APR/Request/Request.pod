@@ -15,7 +15,7 @@ APR::Request - wrapper for libapreq2's module/handle API.
     $bb = APR::Brigade->new($pool, $ba);
     $bb->insert_tail(APR::Bucket->new($ba,
                                   "alpha=body1&beta=body2;foo=body3"));
-    $parser = APR::Request::Parser->urlencoded($pool, $ba, 
+    $parser = APR::Request::Parser->urlencoded($pool, $ba,
                                     "application/x-www-form-urlencoded");
 
 
@@ -28,8 +28,8 @@ APR::Request - wrapper for libapreq2's module/handle API.
 
   use APR::Request;
 
-  $req = APR::Request::Custom->handle($pool, 
-                                      "foo=arg1&bar=arg2", 
+  $req = APR::Request::Custom->handle($pool,
+                                      "foo=arg1&bar=arg2",
                                       "cookie=apache",
                                        $parser, 1e6, $bb);
   $param = $req->param("foo");
@@ -65,7 +65,7 @@ APR::Request::Custom - derived from APR::Request.
 
 =head2 handle
 
-    APR::Request::Custom->handle($pool, 
+    APR::Request::Custom->handle($pool,
                                  $query_string,
                                  $cookie_header,
                                  $parser,
@@ -73,10 +73,10 @@ APR::Request::Custom - derived from APR::Request.
                                  $brigade)
 
 Creates a new APR::Request::Custom object.  The $query_string
-and $cookie_headers are immediately parsed into the C<args> and 
+and $cookie_headers are immediately parsed into the C<args> and
 C<jar> tables.  The $parser is an APR::Request::Parser object
-which is invoked when fetching C<body> entries from the $brigade. 
-The $read_limit represents the maximum number of bytes this handle 
+which is invoked when fetching C<body> entries from the $brigade.
+The $read_limit represents the maximum number of bytes this handle
 may feed into the parser.
 
 
@@ -147,7 +147,7 @@ context; otherwise returns C<< $req->args_status || $req->body_status >>.
 
     $req->parse()
 
-Parses the jar, args, and body tables. Returns 
+Parses the jar, args, and body tables. Returns
 C<< $req->jar_status, $req->args_status, $req->body_status >>.
 
 
@@ -156,11 +156,11 @@ C<< $req->jar_status, $req->args_status, $req->body_status >>.
     $req->jar()
     $req->jar($key)
 
-With no arguments, this method returns a tied APR::Request::Cookie::Table 
+With no arguments, this method returns a tied APR::Request::Cookie::Table
 object in scalar context, or the names (in order, with repetitions) of all
 the parsed cookies.
 
-With the C<$key> argument, in scalar context this method fetches the first 
+With the C<$key> argument, in scalar context this method fetches the first
 matching cookie.  In list context it returns all matching cookies.
 The returned cookies are the values as they appeared in the incoming
 Cookie header.
@@ -172,11 +172,11 @@ Cookie header.
     $req->args()
     $req->args($key)
 
-With no arguments, this method returns a tied APR::Request::Param::Table 
+With no arguments, this method returns a tied APR::Request::Param::Table
 object in scalar context, or the names (in order, with repetitions) of all
 the parsed query-string arguments.
 
-With the C<$key> argument, in scalar context this method fetches the first 
+With the C<$key> argument, in scalar context this method fetches the first
 matching query-string arg.  In list context it returns all matching args.
 
 
@@ -186,11 +186,11 @@ matching query-string arg.  In list context it returns all matching args.
     $req->body()
     $req->body($key)
 
-With no arguments, this method returns a tied APR::Request::Param::Table 
+With no arguments, this method returns a tied APR::Request::Param::Table
 object in scalar context, or the names (in order, with repetitions) of all
 the parsed cookies.
 
-With the C<$key> argument, in scalar context this method fetches the first 
+With the C<$key> argument, in scalar context this method fetches the first
 matching body param.  In list context it returns all matching body params.
 
 
@@ -200,11 +200,11 @@ matching body param.  In list context it returns all matching body params.
     $req->param()
     $req->param($key)
 
-With no arguments, this method returns a tied APR::Request::Cookie::Table 
+With no arguments, this method returns a tied APR::Request::Cookie::Table
 object in scalar context, or the names (in order, with repetitions) of all
 the incoming (args + body) params.
 
-With the C<$key> argument, in scalar context this method fetches the first 
+With the C<$key> argument, in scalar context this method fetches the first
 matching param.  In list context it returns all matching params.
 
 
@@ -231,7 +231,7 @@ matching param.  In list context it returns all matching params.
     $req->brigade_limit($set)
 
 Get/set the brigade_limit for the current parser.  This limit
-determines how many bytes of a file upload that the parser may 
+determines how many bytes of a file upload that the parser may
 spool into main memory.  Uploads exceeding this limit are written
 directly to disk.
 

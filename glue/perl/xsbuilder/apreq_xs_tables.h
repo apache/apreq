@@ -26,7 +26,7 @@
 
 #if (PERL_VERSION >= 8) /* MAGIC ITERATOR REQUIRES 5.8 */
 
-/* Requires perl 5.8 or better. 
+/* Requires perl 5.8 or better.
  * A custom MGVTBL with its "copy" slot filled allows
  * us to FETCH a table entry immediately during iteration.
  * For multivalued keys this is essential in order to get
@@ -40,7 +40,7 @@
  * via each(), which seems to be a reasonable tradeoff.
  */
 
-static int apreq_xs_cookie_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv, 
+static int apreq_xs_cookie_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv,
                                             const char *name, int namelen)
 {
     /* Prefetch the value whenever the table iterator is > 0 */
@@ -65,7 +65,7 @@ static int apreq_xs_cookie_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv,
     return 0;
 }
 
-static const MGVTBL apreq_xs_cookie_table_magic = {0, 0, 0, 0, 0, 
+static const MGVTBL apreq_xs_cookie_table_magic = {0, 0, 0, 0, 0,
                                 apreq_xs_cookie_table_magic_copy};
 
 #endif
@@ -109,7 +109,7 @@ static int apreq_xs_cookie_table_keys(void *data, const char *key,
 
 #ifndef USE_ITHREADS
 		(void)data;
-#endif	
+#endif
     XPUSHs(sv_2mortal(sv));
     PUTBACK;
     return 1;
@@ -135,7 +135,7 @@ static int apreq_xs_cookie_table_values(void *data, const char *key,
 
 #if (PERL_VERSION >= 8) /* MAGIC ITERATOR REQUIRES 5.8 */
 
-/* Requires perl 5.8 or better. 
+/* Requires perl 5.8 or better.
  * A custom MGVTBL with its "copy" slot filled allows
  * us to FETCH a table entry immediately during iteration.
  * For multivalued keys this is essential in order to get
@@ -149,7 +149,7 @@ static int apreq_xs_cookie_table_values(void *data, const char *key,
  * via each(), which seems to be a reasonable tradeoff.
  */
 
-static int apreq_xs_param_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv, 
+static int apreq_xs_param_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv,
                                   const char *name, int namelen)
 {
     /* Prefetch the value whenever the table iterator is > 0 */
@@ -167,14 +167,14 @@ static int apreq_xs_param_table_magic_copy(pTHX_ SV *sv, MAGIC *mg, SV *nsv,
         MAGIC *my_magic = mg_find(obj, PERL_MAGIC_ext);
 
         SvMAGICAL_off(nsv);
-        sv_setsv(nsv, sv_2mortal(apreq_xs_param2sv(aTHX_ p, my_magic->mg_ptr, 
+        sv_setsv(nsv, sv_2mortal(apreq_xs_param2sv(aTHX_ p, my_magic->mg_ptr,
                                                    my_magic->mg_obj)));
     }
 
     return 0;
 }
 
-static const MGVTBL apreq_xs_param_table_magic = {0, 0, 0, 0, 0, 
+static const MGVTBL apreq_xs_param_table_magic = {0, 0, 0, 0, 0,
                                  apreq_xs_param_table_magic_copy};
 
 #endif

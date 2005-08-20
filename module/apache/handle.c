@@ -96,7 +96,7 @@ static void init_body(apreq_handle_t *env)
             req->body_status = APREQ_ERROR_OVERLIMIT;
             ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
                           "Content-Length header (%s) exceeds configured "
-                          "max_body limit (%" APR_UINT64_T_FMT ")", 
+                          "max_body limit (%" APR_UINT64_T_FMT ")",
                           cl_header, req->read_limit);
             return;
         }
@@ -111,7 +111,7 @@ static void init_body(apreq_handle_t *env)
             if (pf != NULL) {
                 req->parser = apreq_parser_make(req->pool,
                                                 ba,
-                                                ct_header, 
+                                                ct_header,
                                                 pf,
                                                 req->brigade_limit,
                                                 req->temp_dir,
@@ -211,7 +211,7 @@ static apr_status_t apache_jar(apreq_handle_t *env, const apr_table_t **t)
         const char *cookies = ap_table_get(r->headers_in, "Cookie");
         if (cookies != NULL) {
             req->jar = apr_table_make(req->pool, APREQ_DEFAULT_NELTS);
-            req->jar_status = 
+            req->jar_status =
                 apreq_parse_cookie_header(req->pool, req->jar, cookies);
         }
         else
@@ -230,7 +230,7 @@ static apr_status_t apache_args(apreq_handle_t *env, const apr_table_t **t)
     if (req->args_status == APR_EINIT) {
         if (r->args != NULL) {
             req->args = apr_table_make(req->pool, APREQ_DEFAULT_NELTS);
-            req->args_status = 
+            req->args_status =
                 apreq_parse_query_string(req->pool, req->args, r->args);
         }
         else
@@ -345,7 +345,7 @@ static apreq_param_t *apache_body_get(apreq_handle_t *env, const char *name)
 }
 
 static
-apr_status_t apache_parser_get(apreq_handle_t *env, 
+apr_status_t apache_parser_get(apreq_handle_t *env,
                                   const apreq_parser_t **parser)
 {
     struct apache_handle *req = (struct apache_handle *)env;
@@ -354,7 +354,7 @@ apr_status_t apache_parser_get(apreq_handle_t *env,
 }
 
 static
-apr_status_t apache_parser_set(apreq_handle_t *env, 
+apr_status_t apache_parser_set(apreq_handle_t *env,
                                 apreq_parser_t *parser)
 {
     struct apache_handle *req = (struct apache_handle *)env;
@@ -408,8 +408,8 @@ apr_status_t apache_brigade_limit_set(apreq_handle_t *env,
                                        apr_size_t bytes)
 {
     struct apache_handle *req = (struct apache_handle *)env;
-    apr_size_t *limit = (req->parser == NULL) 
-                      ? &req->brigade_limit 
+    apr_size_t *limit = (req->parser == NULL)
+                      ? &req->brigade_limit
                       : &req->parser->brigade_limit;
 
     if (*limit > bytes) {
@@ -425,8 +425,8 @@ apr_status_t apache_brigade_limit_get(apreq_handle_t *env,
                                        apr_size_t *bytes)
 {
     struct apache_handle *req = (struct apache_handle *)env;
-    *bytes = (req->parser == NULL) 
-           ?  req->brigade_limit 
+    *bytes = (req->parser == NULL)
+           ?  req->brigade_limit
            :  req->parser->brigade_limit;
 
     return APR_SUCCESS;
@@ -460,7 +460,7 @@ apr_status_t apache_temp_dir_set(apreq_handle_t *env,
 {
     struct apache_handle *req = (struct apache_handle *)env;
 
-    const char **curpath = (req->parser == NULL) 
+    const char **curpath = (req->parser == NULL)
                          ? &req->temp_dir
                          : &req->parser->temp_dir;
 
