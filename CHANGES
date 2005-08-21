@@ -5,6 +5,9 @@
 @section v2_07 Changes with libapreq2-2.07
 
 
+- C API [joes]
+  Improve the cp1252-charset heuristics for apreq_decode(v).
+
 - C API [Ralph Mattes]
   Add explicit casts for apreq_param_charset_* to keep c++ compilers happy.
 
