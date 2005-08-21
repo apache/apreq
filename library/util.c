@@ -254,23 +254,33 @@ static APR_INLINE unsigned is_enc8(const char *word, unsigned char wlen)
     return 1;
 }
 
-static APR_INLINE apreq_charset_t fragment_charset(const char *word,
-                                                   const char *end)
+static APR_INLINE unsigned is_enc8_fragment(const char *word,
+                                            const char *end)
 {
     unsigned char flen = end - word;
     unsigned char wlen = flen / 3;
     if (!is_enc8(word, wlen))
-        return APREQ_CHARSET_LATIN1;
+        return 0;
 
     switch (flen % 3) {
     case 2:
         if (!is_89AB(*--end))
-            return APREQ_CHARSET_LATIN1;
+            return 0;
     case 1:
         if (*--end != '%')
-            return APREQ_CHARSET_LATIN1;
+            return 0;
     }
-    return APREQ_CHARSET_UTF8;
+    return 1;
+}
+
+/* look for chars between 0x80 and 0x9F, inclusive */
+static APR_INLINE unsigned has_cntrl(const unsigned char *start,
+                                     const unsigned char *end)
+{
+    while (start <= end)
+        if ((*start++ & 0xE0) == 0x80)
+            return 1;
+    return 0;
 }
 
 
@@ -309,9 +319,8 @@ static APR_INLINE apr_uint16_t hex4_to_bmp(const char *what) {
  * 3) presume latin1; unless there are control chars, in which case
  * 4) punt to cp1252.
  *
- * Note: in downgrading from 2 to 3, we should to be careful
+ * Note: in downgrading from 2 to 3, we need to be careful
  * about earlier control characters presumed to be valid utf8.
- * However, we aren't being that careful with the current implementation.
  */
 
 
@@ -359,8 +368,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                 else if (c < 0xE0) {
                     /* 2-byte utf8 */
                     if (s + 3 >= end) {
-                        *charset = fragment_charset(s+1, end);
-                        if (*charset == APREQ_CHARSET_UTF8) {
+                        if (is_enc8_fragment(s+1, end)) {
+                            *charset = APREQ_CHARSET_UTF8;
                             s -= 2;
                             *dlen = d - start;
                             *slen = s - src;
@@ -369,6 +378,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                             return APR_INCOMPLETE;
                         }
                         *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
                     else if (is_enc8(s+1, 1)) {
                         *charset = APREQ_CHARSET_UTF8;
@@ -377,15 +388,16 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         s += 3;
                     }
                     else {
-                        *charset = APREQ_CHARSET_LATIN1;
                         *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
                 }
                 else if (c < 0xF0) {
                     /* 3-byte utf8 */
                     if (s + 6 >= end) {
-                        *charset = fragment_charset(s+1, end);
-                        if (*charset == APREQ_CHARSET_UTF8) {
+                        if (is_enc8_fragment(s+1, end)) {
+                            *charset = APREQ_CHARSET_UTF8;
                             s -= 2;
                             *dlen = d - start;
                             *slen = s - src;
@@ -394,6 +406,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                             return APR_INCOMPLETE;
                         }
                         *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
                     else if (is_enc8(s+1, 2)) {
                         *charset = APREQ_CHARSET_UTF8;
@@ -403,16 +417,17 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         s += 6;
                     }
                     else {
-                        *charset = APREQ_CHARSET_LATIN1;
                         *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
 
                 }
                 else if (c < 0xF8) {
                     /* 4-byte utf8 */
                     if (s + 9 >= end) {
-                        *charset = fragment_charset(s+1, end);
-                        if (*charset == APREQ_CHARSET_UTF8) {
+                        if (is_enc8_fragment(s+1, end)) {
+                            *charset = APREQ_CHARSET_UTF8;
                             s -= 2;
                             *dlen = d - start;
                             *slen = s - src;
@@ -421,6 +436,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                             return APR_INCOMPLETE;
                         }
                         *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
                     else if (is_enc8(s+1, 3)) {
                         *charset = APREQ_CHARSET_UTF8;
@@ -431,24 +448,27 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         s += 9;
                     }
                     else {
-                        *charset = APREQ_CHARSET_LATIN1;
                         *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
 
                 }
                 else if (c < 0xFC) {
                     /* 5-byte utf8 */
                     if (s + 12 >= end) {
-                        *charset = fragment_charset(s+1, end);
-                         if (*charset == APREQ_CHARSET_UTF8) {
-                             s -= 2;
-                             *dlen = d - start;
-                             *slen = s - src;
-                             memmove(d, s, end - s);
-                             d[end - s] = 0;
-                             return APR_INCOMPLETE;
-                         }
-                         *d = c;
+                        if (is_enc8_fragment(s+1, end)) {
+                            *charset = APREQ_CHARSET_UTF8;
+                            s -= 2;
+                            *dlen = d - start;
+                            *slen = s - src;
+                            memmove(d, s, end - s);
+                            d[end - s] = 0;
+                            return APR_INCOMPLETE;
+                        }
+                        *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
                     else if (is_enc8(s+1, 4)) {
                         *charset = APREQ_CHARSET_UTF8;
@@ -460,16 +480,17 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         s += 12;
                     }
                     else {
-                        *charset = APREQ_CHARSET_LATIN1;
                         *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
 
                 }
                 else if (c < 0xFE) {
                     /* 6-byte utf8 */
                     if (s + 15 >= end) {
-                        *charset = fragment_charset(s+1, end);
-                        if (*charset == APREQ_CHARSET_UTF8) {
+                        if (is_enc8_fragment(s+1, end)) {
+                            *charset = APREQ_CHARSET_UTF8;
                             s -= 2;
                             *dlen = d - start;
                             *slen = s - src;
@@ -478,6 +499,8 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                             return APR_INCOMPLETE;
                         }
                         *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
                     else if (is_enc8(s+1, 5)) {
                         *charset = APREQ_CHARSET_UTF8;
@@ -490,8 +513,9 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
                         s += 15;
                     }
                     else {
-                        *charset = APREQ_CHARSET_LATIN1;
                         *d = c;
+                        *charset = has_cntrl((unsigned char *)dest, d)
+                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
                     }
                 }
                 else {
