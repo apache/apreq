@@ -129,6 +129,20 @@ APREQ_DECLARE(apr_size_t) apreq_cp1252_to_utf8(char *dest,
                                                const char *src, apr_size_t slen);
 
 /**
+ * Heuristically determine the charset of a string.
+ *
+ * @param src  String to scan.
+ * @param slen Length of string.
+ *
+ * @return APREQ_CHARSET_ASCII  if the string contains only 7-bit chars;
+ * @return APREQ_CHARSET_UTF8   if the string is a valid utf8 byte sequence;
+ * @return APREQ_CHARSET_LATIN1 if the string has no control chars;
+ * @return APREQ_CHARSET_CP1252 if the string has control chars.
+ */
+APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const unsigned char *src,
+                                                    apr_size_t slen);
+
+/**
  * Url-decodes a string.
  *
  * @param dest Location of url-encoded result string. Caller must ensure dest is

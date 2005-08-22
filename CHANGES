@@ -6,6 +6,9 @@
 
 
 - C API [joes]
+  Add apreq_charset_divine().
+
+- C API [joes]
   Improve the cp1252-charset heuristics for apreq_decode(v).
 
 - C API [Ralph Mattes]

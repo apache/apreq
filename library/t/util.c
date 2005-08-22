@@ -107,7 +107,7 @@ static void test_decodev(dAT)
     apr_status_t status;
 
     status = apreq_decodev(dest, &dest_len, iovec1, 3);
-    AT_int_eq(status, APR_SUCCESS + APREQ_CHARSET_UTF8);
+    AT_int_eq(status, APR_SUCCESS);
     AT_int_eq(dest_len, sizeof(expect1) - 1);
     AT_mem_eq(dest, expect1, sizeof(expect1) - 1);
 

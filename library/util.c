@@ -217,72 +217,106 @@ APREQ_DECLARE(apr_size_t) apreq_cp1252_to_utf8(char *dest,
 
 
 /**
- * Valid utf8 bit patterns:
+ * Valid utf8 bit patterns: (true utf8 must satisfy a minimality condition)
  *
  * 0xxxxxxx
- * 110xxxxx 10xxxxxx
- * 1110xxxx 10xxxxxx 10xxxxxx
- * 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
- * 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
- * 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+ * 110xxxxx 10xxxxxx                        minimality mask: 0x1E
+ * 1110xxxx 10xxxxxx 10xxxxxx                                0x0F || 0x20
+ * 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx                       0x07 || 0x30
+ * 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx              0x03 || 0x38
+ * 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx     0x01 || 0x3C
+ *
+ * Charset divination heuristics:
+ * 1) presume ascii; if not, then
+ * 2) presume utf8; if not, then
+ * 3) presume latin1; unless there are control chars, in which case
+ * 4) punt to cp1252.
+ *
+ * Note: in downgrading from 2 to 3, we need to be careful
+ * about earlier control characters presumed to be valid utf8.
  */
 
-static APR_INLINE unsigned is_89AB(const char c)
-{
+APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const unsigned char *src,
+                                                    apr_size_t slen)
 
-    switch(c) {
-    case '8':
-    case '9':
-    case 'A':
-    case 'B':
-    case 'a':
-    case 'b':
-        return 1;
+{
+    apreq_charset_t rv = APREQ_CHARSET_ASCII;
+    register unsigned char trail = 0, saw_cntrl = 0, mask = 0;
+    const unsigned char *end = src + slen;
+
+    for (; src < end; ++src) {
+        if (trail) {
+            if ((*src & 0xC0) == 0x80 && (mask == 0 || (mask & *src))) {
+                mask = 0;
+                --trail;
+
+                if ((*src & 0xE0) == 0x80) {
+                    saw_cntrl = 1;
+                }
+            }
+            else {
+                trail = 0;
+                if (saw_cntrl)
+                    return APREQ_CHARSET_CP1252;
+                rv = APREQ_CHARSET_LATIN1;
+            }
+        }
+        else if (*src < 0x80) {
+            /* do nothing */
+        }
+        else if (*src < 0xA0) {
+            return APREQ_CHARSET_CP1252;
+        }
+        else if (*src < 0xC0) {
+            if (saw_cntrl)
+                return APREQ_CHARSET_CP1252;
+            rv = APREQ_CHARSET_LATIN1;
+        }
+        else if (rv == APREQ_CHARSET_LATIN1) {
+            /* do nothing */
+        }
+
+        /* utf8 cases */
+
+        else if (*src < 0xE0) {
+            if (*src & 0x1E) {
+                rv = APREQ_CHARSET_UTF8;
+                trail = 1;
+                mask = 0;
+            }
+            else if (saw_cntrl)
+                return APREQ_CHARSET_CP1252;
+            else
+                rv = APREQ_CHARSET_LATIN1;
+        }
+        else if (*src < 0xF0) {
+            mask = (*src & 0x0F) ? 0 : 0x20;
+            rv = APREQ_CHARSET_UTF8;
+            trail = 2;
+        }
+        else if (*src < 0xF8) {
+            mask = (*src & 0x07) ? 0 : 0x30;
+            rv = APREQ_CHARSET_UTF8;
+            trail = 3;
+        }
+        else if (*src < 0xFC) {
+            mask = (*src & 0x03) ? 0 : 0x38;
+            rv = APREQ_CHARSET_UTF8;
+            trail = 4;
+        }
+        else if (*src < 0xFE) {
+            mask = (*src & 0x01) ? 0 : 0x3C;
+            rv = APREQ_CHARSET_UTF8;
+            trail = 5;
+        }
+        else {
+            rv = APREQ_CHARSET_UTF8;
+        }
     }
-    return 0;
+
+    return trail ? saw_cntrl ?
+        APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1 : rv;
 }
-
-static APR_INLINE unsigned is_enc8(const char *word, unsigned char wlen)
-{
-
-    while (wlen-- > 0) {
-        if (word[0] == '%' && is_89AB(word[1]) && apr_isxdigit(word[2]))
-            word += 3;
-        else
-            return 0;
-    }
-    return 1;
-}
-
-static APR_INLINE unsigned is_enc8_fragment(const char *word,
-                                            const char *end)
-{
-    unsigned char flen = end - word;
-    unsigned char wlen = flen / 3;
-    if (!is_enc8(word, wlen))
-        return 0;
-
-    switch (flen % 3) {
-    case 2:
-        if (!is_89AB(*--end))
-            return 0;
-    case 1:
-        if (*--end != '%')
-            return 0;
-    }
-    return 1;
-}
-
-/* look for chars between 0x80 and 0x9F, inclusive */
-static APR_INLINE unsigned has_cntrl(const unsigned char *start,
-                                     const unsigned char *end)
-{
-    while (start <= end)
-        if ((*start++ & 0xE0) == 0x80)
-            return 1;
-    return 0;
-}
-
 
 
 static APR_INLINE apr_uint16_t hex4_to_bmp(const char *what) {
@@ -312,20 +346,7 @@ static APR_INLINE apr_uint16_t hex4_to_bmp(const char *what) {
 }
 
 
-/*
- * Charset divination heuristics:
- * 1) presume ascii; if not, then
- * 2) presume utf8; if not, then
- * 3) presume latin1; unless there are control chars, in which case
- * 4) punt to cp1252.
- *
- * Note: in downgrading from 2 to 3, we need to be careful
- * about earlier control characters presumed to be valid utf8.
- */
-
-
 static apr_status_t url_decode(char *dest, apr_size_t *dlen,
-                               apreq_charset_t *charset,
                                const char *src, apr_size_t *slen)
 {
     register const char *s = src;
@@ -343,205 +364,14 @@ static apr_status_t url_decode(char *dest, apr_size_t *dlen,
         case '%':
 	    if (s + 2 < end && apr_isxdigit(s[1]) && apr_isxdigit(s[2]))
             {
-                unsigned char c;
-		c = hex2_to_char(s + 1);
+                *d = hex2_to_char(s + 1);
                 s += 2;
-                if (c < 0x80 || *charset == APREQ_CHARSET_CP1252)
-                {
-                    *d = c;
-                }
-                else if (c < 0xA0) {
-                    /* these are ctrl chars in latin1 */
-                    *charset = APREQ_CHARSET_CP1252;
-                    *d = c;
-                }
-                else if (c < 0xC0) {
-                    *charset = APREQ_CHARSET_LATIN1;
-                    *d = c;
-                }
-                else if (*charset == APREQ_CHARSET_LATIN1) {
-                    *d = c;
-                }
-
-                /* utf8 cases */
-
-                else if (c < 0xE0) {
-                    /* 2-byte utf8 */
-                    if (s + 3 >= end) {
-                        if (is_enc8_fragment(s+1, end)) {
-                            *charset = APREQ_CHARSET_UTF8;
-                            s -= 2;
-                            *dlen = d - start;
-                            *slen = s - src;
-                            memmove(d, s, end - s);
-                            d[end - s] = 0;
-                            return APR_INCOMPLETE;
-                        }
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-                    else if (is_enc8(s+1, 1)) {
-                        *charset = APREQ_CHARSET_UTF8;
-                        *d++ = c;
-                        *d   = hex2_to_char(s+2);
-                        s += 3;
-                    }
-                    else {
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-                }
-                else if (c < 0xF0) {
-                    /* 3-byte utf8 */
-                    if (s + 6 >= end) {
-                        if (is_enc8_fragment(s+1, end)) {
-                            *charset = APREQ_CHARSET_UTF8;
-                            s -= 2;
-                            *dlen = d - start;
-                            *slen = s - src;
-                            memmove(d, s, end - s);
-                            d[end - s] = 0;
-                            return APR_INCOMPLETE;
-                        }
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-                    else if (is_enc8(s+1, 2)) {
-                        *charset = APREQ_CHARSET_UTF8;
-                        *d++ = c;
-                        *d++ = hex2_to_char(s+2);
-                        *d   = hex2_to_char(s+5);
-                        s += 6;
-                    }
-                    else {
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-
-                }
-                else if (c < 0xF8) {
-                    /* 4-byte utf8 */
-                    if (s + 9 >= end) {
-                        if (is_enc8_fragment(s+1, end)) {
-                            *charset = APREQ_CHARSET_UTF8;
-                            s -= 2;
-                            *dlen = d - start;
-                            *slen = s - src;
-                            memmove(d, s, end - s);
-                            d[end - s] = 0;
-                            return APR_INCOMPLETE;
-                        }
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-                    else if (is_enc8(s+1, 3)) {
-                        *charset = APREQ_CHARSET_UTF8;
-                        *d++ = c;
-                        *d++ = hex2_to_char(s+2);
-                        *d++ = hex2_to_char(s+5);
-                        *d   = hex2_to_char(s+8);
-                        s += 9;
-                    }
-                    else {
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-
-                }
-                else if (c < 0xFC) {
-                    /* 5-byte utf8 */
-                    if (s + 12 >= end) {
-                        if (is_enc8_fragment(s+1, end)) {
-                            *charset = APREQ_CHARSET_UTF8;
-                            s -= 2;
-                            *dlen = d - start;
-                            *slen = s - src;
-                            memmove(d, s, end - s);
-                            d[end - s] = 0;
-                            return APR_INCOMPLETE;
-                        }
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-                    else if (is_enc8(s+1, 4)) {
-                        *charset = APREQ_CHARSET_UTF8;
-                        *d++ = c;
-                        *d++ = hex2_to_char(s+2);
-                        *d++ = hex2_to_char(s+5);
-                        *d++ = hex2_to_char(s+8);
-                        *d   = hex2_to_char(s+11);
-                        s += 12;
-                    }
-                    else {
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-
-                }
-                else if (c < 0xFE) {
-                    /* 6-byte utf8 */
-                    if (s + 15 >= end) {
-                        if (is_enc8_fragment(s+1, end)) {
-                            *charset = APREQ_CHARSET_UTF8;
-                            s -= 2;
-                            *dlen = d - start;
-                            *slen = s - src;
-                            memmove(d, s, end - s);
-                            d[end - s] = 0;
-                            return APR_INCOMPLETE;
-                        }
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-                    else if (is_enc8(s+1, 5)) {
-                        *charset = APREQ_CHARSET_UTF8;
-                        *d++ = c;
-                        *d++ = hex2_to_char(s+2);
-                        *d++ = hex2_to_char(s+5);
-                        *d++ = hex2_to_char(s+8);
-                        *d++ = hex2_to_char(s+11);
-                        *d   = hex2_to_char(s+14);
-                        s += 15;
-                    }
-                    else {
-                        *d = c;
-                        *charset = has_cntrl((unsigned char *)dest, d)
-                            ? APREQ_CHARSET_CP1252 : APREQ_CHARSET_LATIN1;
-                    }
-                }
-                else {
-                    /* (skipped) utf8 byte-order mark */
-                    *charset = APREQ_CHARSET_UTF8;
-                }
 	    }
             else if (s + 5 < end && (s[1] == 'u' || s[1] == 'U') &&
                      apr_isxdigit(s[2]) && apr_isxdigit(s[3]) &&
                      apr_isxdigit(s[4]) && apr_isxdigit(s[5]))
             {
                 apr_uint16_t c = hex4_to_bmp(s+2);
-
-                switch (*charset) {
-                case APREQ_CHARSET_ASCII:
-                    *charset = APREQ_CHARSET_UTF8;
-                case APREQ_CHARSET_UTF8:
-                    break;
-
-                default:
-                    *dlen = d - start;
-                    *slen = s - src;
-                    *d = 0;
-                    return APREQ_ERROR_BADSEQ;
-                }
-
 
                 if (c < 0x80) {
                     *d = c;
@@ -601,7 +431,6 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *d, apr_size_t *dlen,
     apr_size_t len = 0;
     const char *end = s + slen;
     apr_status_t rv;
-    apreq_charset_t c = APREQ_CHARSET_ASCII;
 
     if (s == (const char *)d) {     /* optimize for src = dest case */
         for ( ; d < end; ++d) {
@@ -617,26 +446,15 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *d, apr_size_t *dlen,
         slen -= len;
     }
 
-    rv = url_decode(d, dlen, &c, s, &slen);
-
-    if (rv == APR_INCOMPLETE && c == APREQ_CHARSET_UTF8) {
-        c = APREQ_CHARSET_LATIN1;
-        len += *dlen;
-        d += *dlen;
-        slen = end - (s + slen);
-        rv = url_decode(d, dlen, &c, d, &slen);
-    }
-
-    *dlen += len;
-
-    return rv + c;
+    rv = url_decode(d, dlen, s, &slen);
+    return rv + apreq_charset_divine((unsigned char *)d, *dlen);
 }
 
 APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
                                           struct iovec *v, int nelts)
 {
     apr_status_t status = APR_SUCCESS;
-    apreq_charset_t c = APREQ_CHARSET_ASCII;
+    const unsigned char *dest = (unsigned char *)d;
     int n = 0;
 
     *dlen = 0;
@@ -645,7 +463,7 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
         apr_size_t slen, len;
 
         slen = v[n].iov_len;
-        switch (status = url_decode(d,&len, &c, v[n].iov_base, &slen)) {
+        switch (status = url_decode(d, &len, v[n].iov_base, &slen)) {
 
         case APR_SUCCESS:
             d += len;
@@ -659,12 +477,7 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
             slen = v[n].iov_len - slen;
 
             if (++n == nelts) {
-                if (c == APREQ_CHARSET_UTF8) {
-                    c = APREQ_CHARSET_LATIN1;
-                    status = url_decode(d, &len, &c, d, &slen);
-                    *dlen += len;
-                }
-                return status + c;
+                return status;
             }
             memcpy(d + slen, v[n].iov_base, v[n].iov_len);
             v[n].iov_len += slen;
@@ -677,7 +490,7 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
         }
     }
 
-    return status + c;
+    return status + apreq_charset_divine(dest, *dlen);
 }
 
 
