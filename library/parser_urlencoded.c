@@ -115,18 +115,19 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
 
     s = apreq_decodev(v->data, &vlen,
                       (struct iovec *)arr.elts + mark, arr.nelts - mark);
-    if (s > APR_SUCCESS + APREQ_CHARSET_UTF8)
+    if (s != APR_SUCCESS)
         return s;
 
-    charset = s;
+    charset = apreq_charset_divine(v->data, vlen);
 
     v->name = v->data + vlen + 1;
     v->dlen = vlen;
 
     s = apreq_decodev(v->name, &nlen, (struct iovec *)arr.elts, mark);
-    if (s > APR_SUCCESS + APREQ_CHARSET_UTF8)
+    if (s != APR_SUCCESS)
         return s;
-    switch (s) {
+
+    switch (apreq_charset_divine(v->name, nlen)) {
     case APREQ_CHARSET_UTF8:
         if (charset == APREQ_CHARSET_ASCII)
             charset = APREQ_CHARSET_UTF8;

@@ -77,7 +77,7 @@ static void test_decode(dAT)
     unsigned char expect[6];
 
     AT_int_eq(apreq_decode((char *)expect, &elen, src1, sizeof(src1) -1),
-              APR_SUCCESS + APREQ_CHARSET_UTF8);
+              APR_SUCCESS);
     AT_int_eq(elen, 5);
     AT_int_eq(expect[0], 0xC3);
     AT_int_eq(expect[1], 0x80);
@@ -85,6 +85,31 @@ static void test_decode(dAT)
     AT_int_eq(expect[3], 0x82);
     AT_int_eq(expect[4], 0xA2);
 }
+
+static void test_charset_divine(dAT)
+{
+    apr_size_t elen;
+    char src1[] = "%C3%80%E3%82%a2"; /* A_GRAVE KATAKANA_A as utf8 */
+    char src2[] = "pound%A3";/* latin-1 */
+    char src3[] = "euro%80";/* cp-1252 */
+    char expect[6];
+
+    AT_int_eq(apreq_decode(expect, &elen, src1, sizeof(src1) -1),
+              APR_SUCCESS);
+
+    AT_int_eq(apreq_charset_divine(expect, elen), APREQ_CHARSET_UTF8);
+
+    AT_int_eq(apreq_decode(expect, &elen, src2, sizeof(src2) -1),
+              APR_SUCCESS);
+
+    AT_int_eq(apreq_charset_divine(expect, elen), APREQ_CHARSET_LATIN1);
+    AT_int_eq(apreq_decode(expect, &elen, src3, sizeof(src3) -1),
+              APR_SUCCESS);
+
+    AT_int_eq(apreq_charset_divine(expect, elen), APREQ_CHARSET_CP1252);
+
+}
+
 
 static void test_decodev(dAT)
 {
@@ -131,7 +156,7 @@ static void test_cp1252_to_utf8(dAT)
     apr_size_t slen;
 
     AT_int_eq(apreq_decode((char *)src2, &slen, src1, sizeof(src1) -1),
-              APR_SUCCESS + APREQ_CHARSET_UTF8);
+              APR_SUCCESS);
     AT_int_eq(apreq_cp1252_to_utf8((char *)expect, src2, 5),
               12);
 
@@ -280,6 +305,7 @@ int main(int argc, char *argv[])
         { dT(test_atoi64t, 9) },
         { dT(test_index, 6) },
         { dT(test_decode, 7) },
+        { dT(test_charset_divine, 6) },
         { dT(test_decodev, 6) },
         { dT(test_encode, 0) },
         { dT(test_cp1252_to_utf8, 14) },

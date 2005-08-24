@@ -6,7 +6,8 @@
 
 
 - C API [joes]
-  Add apreq_charset_divine().
+  Add apreq_charset_divine() and eliminate charset offset from return
+  value of apreq_decode(v).
 
 - C API [joes]
   Improve the cp1252-charset heuristics for apreq_decode(v).

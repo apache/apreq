@@ -139,7 +139,7 @@ APREQ_DECLARE(apr_size_t) apreq_cp1252_to_utf8(char *dest,
  * @return APREQ_CHARSET_LATIN1 if the string has no control chars;
  * @return APREQ_CHARSET_CP1252 if the string has control chars.
  */
-APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const unsigned char *src,
+APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const char *src,
                                                     apr_size_t slen);
 
 /**
@@ -151,9 +151,9 @@ APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const unsigned char *src,
  * @param src  Original string.
  * @param slen Length of original string.
  *
- * @return APR_SUCCESS + apreq_charset_t (<=APREQ_CHARSET_UTF8) on success.
- * @return APR_INCOMPLETE + apreq_charset_t (<=APREQ_CHARSET_UTF8) if the string
- *         ends in the middle of an escape sequence.
+ * @return APR_SUCCESS.
+ * @return APR_INCOMPLETE if the string
+ *                        ends in the middle of an escape sequence.
  * @return ::APREQ_ERROR_BADSEQ or ::APREQ_ERROR_BADCHAR on malformed input.
  *
  * @remarks In the non-success case, dlen will be set to include
@@ -174,9 +174,9 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *dest, apr_size_t *dlen,
  * @param v     Array of iovecs that represent the source string
  * @param nelts Number of iovecs in the array.
  *
- * @return APR_SUCCESS + apreq_charset_t (<=APREQ_CHARSET_UTF8) on success.
- * @return APR_INCOMPLETE + apreq_charset_t (<=APREQ_CHARSET_UTF8) if the iovec
- *         ends in the middle of an escape sequence.
+ * @return APR_SUCCESS.
+ * @return APR_INCOMPLETE if the iovec
+ *                        ends in the middle of an escape sequence.
  * @return ::APREQ_ERROR_BADSEQ or ::APREQ_ERROR_BADCHAR on malformed input.
  *
  * @remarks In the non-APR_SUCCESS case, dlen will be set to include

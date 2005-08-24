@@ -83,11 +83,11 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
 
     if (vlen > 0) {
         status = apreq_decode(v->data, &v->dlen, word + nlen + 1, vlen);
-        if (status > APR_SUCCESS + APREQ_CHARSET_UTF8) {
+        if (status != APR_SUCCESS) {
             *param = NULL;
             return status;
         }
-        charset = status;
+        charset = apreq_charset_divine(v->data, v->dlen);
     }
     else {
         v->data[0] = 0;
@@ -97,12 +97,12 @@ APREQ_DECLARE(apr_status_t) apreq_param_decode(apreq_param_t **param,
     v->name = v->data + vlen + 1;
 
     status = apreq_decode(v->name, &v->nlen, word, nlen);
-    if (status > APR_SUCCESS + APREQ_CHARSET_UTF8) {
+    if (status != APR_SUCCESS) {
         *param = NULL;
         return status;
     }
 
-    switch (status) {
+    switch (apreq_charset_divine(v->name, v->nlen)) {
     case APREQ_CHARSET_UTF8:
         if (charset == APREQ_CHARSET_ASCII)
             charset = APREQ_CHARSET_UTF8;

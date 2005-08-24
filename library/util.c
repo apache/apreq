@@ -236,21 +236,22 @@ APREQ_DECLARE(apr_size_t) apreq_cp1252_to_utf8(char *dest,
  * about earlier control characters presumed to be valid utf8.
  */
 
-APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const unsigned char *src,
+APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const char *src,
                                                     apr_size_t slen)
 
 {
     apreq_charset_t rv = APREQ_CHARSET_ASCII;
     register unsigned char trail = 0, saw_cntrl = 0, mask = 0;
-    const unsigned char *end = src + slen;
+    register const unsigned char *s = (const unsigned char *)src;
+    const unsigned char *end = s + slen;
 
-    for (; src < end; ++src) {
+    for (; s < end; ++s) {
         if (trail) {
-            if ((*src & 0xC0) == 0x80 && (mask == 0 || (mask & *src))) {
+            if ((*s & 0xC0) == 0x80 && (mask == 0 || (mask & *s))) {
                 mask = 0;
                 --trail;
 
-                if ((*src & 0xE0) == 0x80) {
+                if ((*s & 0xE0) == 0x80) {
                     saw_cntrl = 1;
                 }
             }
@@ -261,13 +262,13 @@ APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const unsigned char *src,
                 rv = APREQ_CHARSET_LATIN1;
             }
         }
-        else if (*src < 0x80) {
+        else if (*s < 0x80) {
             /* do nothing */
         }
-        else if (*src < 0xA0) {
+        else if (*s < 0xA0) {
             return APREQ_CHARSET_CP1252;
         }
-        else if (*src < 0xC0) {
+        else if (*s < 0xC0) {
             if (saw_cntrl)
                 return APREQ_CHARSET_CP1252;
             rv = APREQ_CHARSET_LATIN1;
@@ -278,8 +279,8 @@ APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const unsigned char *src,
 
         /* utf8 cases */
 
-        else if (*src < 0xE0) {
-            if (*src & 0x1E) {
+        else if (*s < 0xE0) {
+            if (*s & 0x1E) {
                 rv = APREQ_CHARSET_UTF8;
                 trail = 1;
                 mask = 0;
@@ -289,23 +290,23 @@ APREQ_DECLARE(apreq_charset_t) apreq_charset_divine(const unsigned char *src,
             else
                 rv = APREQ_CHARSET_LATIN1;
         }
-        else if (*src < 0xF0) {
-            mask = (*src & 0x0F) ? 0 : 0x20;
+        else if (*s < 0xF0) {
+            mask = (*s & 0x0F) ? 0 : 0x20;
             rv = APREQ_CHARSET_UTF8;
             trail = 2;
         }
-        else if (*src < 0xF8) {
-            mask = (*src & 0x07) ? 0 : 0x30;
+        else if (*s < 0xF8) {
+            mask = (*s & 0x07) ? 0 : 0x30;
             rv = APREQ_CHARSET_UTF8;
             trail = 3;
         }
-        else if (*src < 0xFC) {
-            mask = (*src & 0x03) ? 0 : 0x38;
+        else if (*s < 0xFC) {
+            mask = (*s & 0x03) ? 0 : 0x38;
             rv = APREQ_CHARSET_UTF8;
             trail = 4;
         }
-        else if (*src < 0xFE) {
-            mask = (*src & 0x01) ? 0 : 0x3C;
+        else if (*s < 0xFE) {
+            mask = (*s & 0x01) ? 0 : 0x3C;
             rv = APREQ_CHARSET_UTF8;
             trail = 5;
         }
@@ -430,7 +431,6 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *d, apr_size_t *dlen,
 {
     apr_size_t len = 0;
     const char *end = s + slen;
-    apr_status_t rv;
 
     if (s == (const char *)d) {     /* optimize for src = dest case */
         for ( ; d < end; ++d) {
@@ -446,15 +446,13 @@ APREQ_DECLARE(apr_status_t) apreq_decode(char *d, apr_size_t *dlen,
         slen -= len;
     }
 
-    rv = url_decode(d, dlen, s, &slen);
-    return rv + apreq_charset_divine((unsigned char *)d, *dlen);
+    return url_decode(d, dlen, s, &slen);
 }
 
 APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
                                           struct iovec *v, int nelts)
 {
     apr_status_t status = APR_SUCCESS;
-    const unsigned char *dest = (unsigned char *)d;
     int n = 0;
 
     *dlen = 0;
@@ -490,7 +488,7 @@ APREQ_DECLARE(apr_status_t) apreq_decodev(char *d, apr_size_t *dlen,
         }
     }
 
-    return status + apreq_charset_divine(dest, *dlen);
+    return status;
 }
 
 

@@ -58,7 +58,7 @@ extern "C" {
  * Minor API changes that do not cause binary compatibility problems.
  * Should be reset to 0 when upgrading APREQ_MAJOR_VERSION
  */
-#define APREQ_MINOR_VERSION       4
+#define APREQ_MINOR_VERSION       5
 
 /** patch level */
 #define APREQ_PATCH_VERSION       0
