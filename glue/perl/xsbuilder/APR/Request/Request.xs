@@ -8,7 +8,7 @@ encode(in)
     char *src;
   CODE:
     src = SvPV(in, len);
-    RETVAL = newSV(3 * len);
+    RETVAL = newSV(3 * len + 1);
     SvCUR_set(RETVAL, apreq_encode(SvPVX(RETVAL), src, len));
     SvPOK_on(RETVAL);
 
@@ -24,7 +24,7 @@ decode(in)
     char *src;
   CODE:
     src = SvPV(in, len);
-    RETVAL = newSV(len);
+    RETVAL = newSV(len + 1);
     apreq_decode(SvPVX(RETVAL), &dlen, src, len); /*XXX needs error-handling */
     SvCUR_set(RETVAL, dlen);
     SvPOK_on(RETVAL);

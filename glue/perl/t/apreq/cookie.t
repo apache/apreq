@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 
-plan tests => 8, have_lwp;
+plan tests => 9, have_lwp;
 
 require HTTP::Cookies;
 
@@ -14,15 +14,23 @@ my $location = "/TestApReq__cookie";
 
 {
     my $test  = 'new';
-    my $value = 'bar';
+    my $value = 'new';
     ok t_cmp(GET_BODY("$location?test=new"),
              $value,
              $test);
 }
 {
-    # XXX why does this test fail?
+    my $test  = '';
+    my $value = 'foo=; path=/quux; domain=example.com';
+    my ($header) = (GET_HEAD("$location?test=$test")
+                   =~ /^#Set-Cookie:\s+(.+)/m) ;
+    ok t_cmp($header,
+             $value,
+             $test);
+}
+{
     my $test  = 'bake';
-    my $value = 'foo=bar; path=/quux; domain=example.com';
+    my $value = 'foo=bake; path=/quux; domain=example.com';
     my ($header) = (GET_HEAD("$location?test=bake")
                    =~ /^#Set-Cookie:\s+(.+)/m) ;
     ok t_cmp($header,
@@ -31,7 +39,7 @@ my $location = "/TestApReq__cookie";
 }
 {
     my $test  = 'new';
-    my $value = 'bar';
+    my $value = 'new';
     ok t_cmp(GET_BODY("$location?test=new;expires=%2B3M"),
              $value,
              $test);

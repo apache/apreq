@@ -5,6 +5,10 @@
 @section v2_07 Changes with libapreq2-2.07
 
 
+- Perl API [joes]
+  encode()/decode() were busted with zero-length args.  This caused
+  Apache2::Cookie::new() to segfault on cookie value of "".
+
 - C API [joes]
   Add apreq_charset_divine() and eliminate charset offset from return
   value of apreq_decode(v).
