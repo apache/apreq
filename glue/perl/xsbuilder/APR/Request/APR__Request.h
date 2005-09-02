@@ -1,6 +1,6 @@
 #include "apreq_xs_tables.h"
 
-static XS(apreq_xs_jar)
+MP_STATIC XS(apreq_xs_jar)
 {
     dXSARGS;
     apreq_handle_t *req;
@@ -79,7 +79,7 @@ static XS(apreq_xs_jar)
 }
 
 
-static XS(apreq_xs_args)
+MP_STATIC XS(apreq_xs_args)
 {
     dXSARGS;
     apreq_handle_t *req;
@@ -159,7 +159,7 @@ static XS(apreq_xs_args)
     }
 }
 
-static XS(apreq_xs_body)
+MP_STATIC XS(apreq_xs_body)
 {
     dXSARGS;
     apreq_handle_t *req;
@@ -240,7 +240,7 @@ static XS(apreq_xs_body)
 }
 
 
-static XS(apreq_xs_param)
+MP_STATIC XS(apreq_xs_param)
 {
     dXSARGS;
     apreq_handle_t *req;
@@ -317,7 +317,7 @@ static XS(apreq_xs_param)
 }
 
 
-static XS(apreq_xs_parse)
+MP_STATIC XS(apreq_xs_parse)
 {
     dXSARGS;
     apreq_handle_t *req;

@@ -219,12 +219,12 @@ APREQ_DECLARE(apr_size_t) apreq_cp1252_to_utf8(char *dest,
 /**
  * Valid utf8 bit patterns: (true utf8 must satisfy a minimality condition)
  *
- * 0xxxxxxx
- * 110xxxxx 10xxxxxx                        minimality mask: 0x1E
- * 1110xxxx 10xxxxxx 10xxxxxx                                0x0F || 0x20
- * 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx                       0x07 || 0x30
- * 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx              0x03 || 0x38
- * 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx     0x01 || 0x3C
+ * 0aaaaaaa
+ * 110bbbba 10aaaaaa                        minimality mask: 0x1E
+ * 1110cccc 10cbbbba 10aaaaaa                                0x0F || 0x20
+ * 11110ddd 10ddcccc 10cbbbba 10aaaaaa                       0x07 || 0x30
+ * 111110ee 10eeeddd 10ddcccc 10cbbbba 10aaaaaa              0x03 || 0x38
+ * 1111110f 10ffffee 10eeeddd 10ddcccc 10cbbbba 10aaaaaa     0x01 || 0x3C
  *
  * Charset divination heuristics:
  * 1) presume ascii; if not, then

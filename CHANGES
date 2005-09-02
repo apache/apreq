@@ -5,6 +5,9 @@
 @section v2_07 Changes with libapreq2-2.07
 
 
+- Perl XS [Nikolay Ananiev]
+  Use MP_STATIC declarations to allow Cygwin builds.
+
 - Perl API [joes]
   encode()/decode() were busted with zero-length args.  This caused
   Apache2::Cookie::new() to segfault on cookie value of "".

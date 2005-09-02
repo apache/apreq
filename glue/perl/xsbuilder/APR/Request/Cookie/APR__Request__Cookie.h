@@ -42,7 +42,7 @@ static int apreq_xs_cookie_table_do_sub(void *data, const char *key,
     return rv;
 }
 
-static XS(apreq_xs_cookie_table_do)
+MP_STATIC XS(apreq_xs_cookie_table_do)
 {
     dXSARGS;
     struct apreq_xs_do_arg d = { NULL, NULL, NULL, aTHX };
@@ -78,7 +78,7 @@ static XS(apreq_xs_cookie_table_do)
     XSRETURN_IV(rv);
 }
 
-static XS(apreq_xs_cookie_table_FETCH)
+MP_STATIC XS(apreq_xs_cookie_table_FETCH)
 {
     dXSARGS;
     const apr_table_t *t;
@@ -140,7 +140,7 @@ static XS(apreq_xs_cookie_table_FETCH)
         XSRETURN(0);
 }
 
-static XS(apreq_xs_cookie_table_NEXTKEY)
+MP_STATIC XS(apreq_xs_cookie_table_NEXTKEY)
 {
     dXSARGS;
     SV *sv, *obj;
@@ -174,7 +174,7 @@ static XS(apreq_xs_cookie_table_NEXTKEY)
 }
 
 
-static XS(XS_APR__Request__Cookie_nil)
+MP_STATIC XS(XS_APR__Request__Cookie_nil)
 {
     dXSARGS;
     (void)items;

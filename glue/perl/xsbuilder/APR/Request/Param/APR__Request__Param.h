@@ -43,7 +43,7 @@ static int apreq_xs_param_table_do_sub(void *data, const char *key,
     return rv;
 }
 
-static XS(apreq_xs_param_table_do)
+MP_STATIC XS(apreq_xs_param_table_do)
 {
     dXSARGS;
     struct apreq_xs_do_arg d = { NULL, NULL, NULL, aTHX };
@@ -79,7 +79,7 @@ static XS(apreq_xs_param_table_do)
     XSRETURN_IV(rv);
 }
 
-static XS(apreq_xs_param_table_FETCH)
+MP_STATIC XS(apreq_xs_param_table_FETCH)
 {
     dXSARGS;
     const apr_table_t *t;
@@ -142,7 +142,7 @@ static XS(apreq_xs_param_table_FETCH)
         XSRETURN(0);
 }
 
-static XS(apreq_xs_param_table_NEXTKEY)
+MP_STATIC XS(apreq_xs_param_table_NEXTKEY)
 {
     dXSARGS;
     SV *sv, *obj;
@@ -176,7 +176,7 @@ static XS(apreq_xs_param_table_NEXTKEY)
 }
 
 
-static XS(XS_APR__Request__Param_nil)
+MP_STATIC XS(XS_APR__Request__Param_nil)
 {
     dXSARGS;
     (void)items;
@@ -209,7 +209,7 @@ static SV *apreq_xs_find_bb_obj(pTHX_ SV *in)
 
 /* XXX these Apache::Upload::Brigade funcs need a makeover as vanilla XS. */
 
-static XS(apreq_xs_brigade_copy)
+MP_STATIC XS(apreq_xs_brigade_copy)
 {
     dXSARGS;
     apr_bucket_brigade *bb, *bb_copy;
@@ -234,7 +234,7 @@ static XS(apreq_xs_brigade_copy)
     XSRETURN(1);
 }
 
-static XS(apreq_xs_brigade_read)
+MP_STATIC XS(apreq_xs_brigade_read)
 {
     dXSARGS;
     apr_bucket_brigade *bb;
@@ -332,7 +332,7 @@ static XS(apreq_xs_brigade_read)
     XSRETURN_IV(want);
 }
 
-static XS(apreq_xs_brigade_readline)
+MP_STATIC XS(apreq_xs_brigade_readline)
 {
     dXSARGS;
     apr_bucket_brigade *bb;
