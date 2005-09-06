@@ -16,22 +16,6 @@ sub upload_fh {
     return $fh;
 }
 
-sub APR::Request::upload {
-    my $req = shift;
-    my $body = $req->body or return;
-    $body->param_class(__PACKAGE__);
-    if (@_) {
-        my @uploads = grep $_->upload, $body->get(@_);
-        return wantarray ? @uploads : $uploads[0];
-    }
-
-    return map { $_->upload ? $_->name : () } values %$body
-        if wantarray;
-
-   return $body->uploads($req->pool);
-
-}
-
 package APR::Request::Brigade;
 push our(@ISA), "APR::Brigade";
 

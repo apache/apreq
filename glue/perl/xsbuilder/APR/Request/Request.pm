@@ -16,5 +16,21 @@ sub param_status {
     return ($req->args_status, $req->body_status);
 }
 
+sub upload {
+    require APR::Request::Param;
+    my $req = shift;
+    my $body = $req->body or return;
+    $body->param_class("APR::Request::Param");
+    if (@_) {
+        my @uploads = grep $_->upload, $body->get(@_);
+        return wantarray ? @uploads : $uploads[0];
+    }
+
+    return map { $_->upload ? $_->name : () } values %$body
+        if wantarray;
+
+   return $body->uploads($req->pool);
+}
+
 package APR::Request::Custom;
 our @ISA = qw/APR::Request/;
