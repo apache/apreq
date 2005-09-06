@@ -51,8 +51,8 @@ The C<< APR::Request >> module provides the base methods
 for interfacing with libapreq2's module API.  It also provides
 a few utility functions and constants.
 
-This manpage documents the APR::Request and APR::Request::Custom
-packages.
+This manpage documents version 33
+of the APR::Request and APR::Request::Custom packages.
 
 
 
@@ -209,10 +209,18 @@ matching param.  In list context it returns all matching params.
 
 
 
+
+=head2 upload
+
+    $req->upload()
+    $req->upload($key)
+
+
+
+
 =head2 uploads (APR::Request::Param::Table???)
 
-    $req->uploads()
-    $req->uploads($key)
+    $req->uploads($pool)
 
 
 

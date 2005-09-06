@@ -281,7 +281,7 @@ APR::Request::Param::Table
 
 
 Get/set the class each table element is blessed into during a
-L<get> or L<FETCH> call.  If defined, the class must be derived
+C<get> or C<FETCH> call.  If defined, the class must be derived
 from APR::Request::Param.  When called with $set, it returns
 the $table.  Otherwise it returns the name of the current class,
 or undef if no param class is defined.
@@ -303,7 +303,7 @@ Same as FETCH.
     $table->FETCH($key)
 
 In scalar context, this returns the first value matching
-$key (note: see NEXTKEY for additional notes).  The match
+$key (see NEXTKEY for additional notes on this).  The match
 is always case-insensitive.  In list context, this returns
 all matching values.  Note: the type of the return values
 depends on the table's current param_class.

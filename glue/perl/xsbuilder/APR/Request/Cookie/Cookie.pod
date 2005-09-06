@@ -63,7 +63,8 @@ The APR::Request::Cookie module provides base methods
 for interfacing with libapreq2's cookie API.  It also provides
 a few utility functions and constants.
 
-This manpage documents the APR::Request::Cookie and
+This manpage documents version 33
+of the APR::Request::Cookie and
 APR::Request::Cookie::Table packages.
 
 

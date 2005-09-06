@@ -13,7 +13,8 @@ APR::Request::Error - wrapper for libapreq2's error API.
 
 =head1 DESCRIPTION
 
-This manpage documents the APR::Request::Error package.
+This manpage documents version 33
+of the APR::Request::Error package.
 
 
 

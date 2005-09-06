@@ -15,7 +15,8 @@ APR::Request::Hook - wrapper for libapreq2's hook API.
 =head1 DESCRIPTION
 
 
-This manpage documents the APR::Request::Hook package.
+This manpage version documents version 2.07
+of the APR::Request::Hook package.
 
 
 

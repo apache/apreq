@@ -18,7 +18,8 @@ APR::Request::CGI - wrapper for libapreq2's CGI handle.
 The APR::Request::CGI module provides a constructor
 for accessing CGI request data associated to a pool via libapreq2.
 
-This manpage documents the APR::Request::CGI package.
+This manpage documents version 33
+of the APR::Request::CGI package.
 
 
 
