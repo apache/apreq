@@ -28,7 +28,8 @@ my @pm;
 find(sub { push @pm, $File::Find::name if /\.pm$/ },
      qw(glue/perl/lib/Apache2));
 
-system "perl -i -ple '$substitution' @pm";
+my $pattern = '(?<=our $VERSION = ")([^"]+)(?=")';
+system "perl -i -ple 's/$pattern/$version/' @pm";
 
 #
 #  configure.ac -
