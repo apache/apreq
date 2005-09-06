@@ -105,3 +105,8 @@ Instructions for the apreq Release Manager (RM)
 
     % build/announcement.pl $user@apache.org < CPAN_ack | ssh user@people.apache.org "sendmail -oi -t -odq"
 
+
+11. Update CHANGES and STATUS to reflect the start of a new develoment cycle,
+    and run this to update the package version numbers throughout the tree:
+
+    % build/update_version.pl $VERSION+1
