@@ -169,10 +169,11 @@ print << "END";
 A Makefile has been generated in $apreq_home.
 You can now run
 
-  nmake               - builds the libapreq2 library and perl glue
-  nmake test          - runs the supplied tests
+  nmake               - build the libapreq2 library and perl glue
+  nmake test          - run the supplied tests
   nmake install       - install the C libraries and perl glue modules
   nmake clean         - remove intermediate files
+  nmake docs          - build documents (requires doxygen)
   nmake help          - list the nmake targets
 END
     if ($doxygen) {
@@ -484,12 +485,8 @@ PERL_INSTALL: $(MOD)
         cd $(APREQ_HOME)
 
 HELP:
-	@echo nmake               - builds the libapreq2 library
-	@echo nmake test          - runs the supplied tests
-	@echo nmake mod_apreq     - builds mod_apreq
+        @echo nmake               - build the libapreq2 library and perl glue
+        @echo nmake test          - run the supplied tests
 	@echo nmake clean         - clean
-	@echo nmake install       - install the C libraries
-	@echo nmake perl_glue     - build the perl glue
-	@echo nmake perl_test     - test the perl glue
-	@echo nmake perl_install  - install the perl glue
-	@echo nmake docs          - builds documents (requires doxygen)
+        @echo nmake install       - install the C libraries and perl modules
+        @echo nmake docs          - build documents (requires doxygen)
