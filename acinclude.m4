@@ -28,13 +28,16 @@ AC_DEFUN([AC_APREQ], [
                 AC_HELP_STRING([--with-apache1-apxs],[path to apache1's apxs]),
                 [APACHE1_APXS=$withval],[APACHE1_APXS=""])
         AC_ARG_WITH(perl-opts,
-                AC_HELP_STRING([--with-perl-opts],[extra MakeMaker options]),
+                AC_HELP_STRING([--with-perl-opts],[extra PERL options]),
                 [PERL_OPTS=$withval],[PERL_OPTS=""])
+        AC_ARG_WITH(mm-opts,
+                AC_HELP_STRING([--with-mm-opts], [extra ExtUtils::MakeMaker options]),
+                [MM_OPTS=$withval], [MM_OPTS=""])
         AC_ARG_WITH(expat,
                 AC_HELP_STRING([--with-expat],[specify expat location]),
                 [EXPAT_DIR=$withval],[EXPAT_DIR=""])
 
-        prereq_check="$PERL build/version_check.pl"
+        prereq_check="$PERL $PERL_OPTS build/version_check.pl"
 
         if test -n "$APACHE2_SRC"; then
                 # no apxs: must compile httpd from source
@@ -235,6 +238,7 @@ AC_DEFUN([AC_APREQ], [
 
         AC_SUBST(PERL)
         AC_SUBST(PERL_OPTS)
+        AC_SUBST(MM_OPTS)
 ])
 
 dnl APR_CONFIG_NICE(filename)
