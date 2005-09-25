@@ -497,11 +497,13 @@ APREQ_DECLARE(apr_size_t) apreq_encode(char *dest, const char *src,
 {
     char *d = dest;
     const unsigned char *s = (const unsigned char *)src;
-    unsigned c;
+    unsigned char c;
 
     for ( ; s < (const unsigned char *)src + slen; ++s) {
         c = *s;
-        if ( apr_isalnum(c) || c == '-' || c == '.' || c == '_' || c == '~' )
+        if ( c < 0x80 && (apr_isalnum(c)
+                          || c == '-' || c == '.'
+                          || c == '_' || c == '~') )
             *d++ = c;
 
         else if ( c == ' ' )
