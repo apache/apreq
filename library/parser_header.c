@@ -300,7 +300,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                 case '\t':
                     ctx->status = HDR_CONTINUE;
                     ++off;
-                    vlen += 2;
+                    ++vlen;
                     break;
 
                 default:

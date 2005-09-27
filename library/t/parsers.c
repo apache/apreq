@@ -39,7 +39,7 @@ static char form_data[] =
 "... contents of file1.txt ..." CRLF CRLF
 "--AaB03x" CRLF
 "content-disposition: form-data; name=\"\"" CRLF
-"content-type: text/plain;charset=windows-1250" CRLF
+"content-type: text/plain;" CRLF " charset=windows-1250" CRLF
 "content-transfer-encoding: quoted-printable" CRLF CRLF
 "Joe owes =80100." CRLF
 "--AaB03x--" CRLF;

@@ -5,6 +5,10 @@
 @section v2_07 Changes with libapreq2-2.07
 
 
+- C API [joes]
+  Fix off-by-one bug in the continuation-lines portion of the
+  header parser.
+
 - Perl API [joes]
   Move APR::Request::upload to APR::Request, where it belongs.
 
