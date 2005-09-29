@@ -15,6 +15,7 @@
 */
 
 #include "apreq_parser.h"
+#include "apreq_util.h"
 #include "apreq_error.h"
 #include "apr_strings.h"
 #include "apr_xml.h"
@@ -243,6 +244,15 @@ static void parse_multipart(dAT)
             AT_mem_eq(val2 ,"... contents of file1.txt ..." CRLF, len);
             val = apr_table_get(t, "content-type");
             AT_str_eq(val, "text/plain");
+
+            val = apr_table_get(body, "");
+            AT_str_eq(val, "Joe owes =80100.");
+            t = apreq_value_to_param(val)->info;
+            val = apr_table_get(t, "content-type");
+            AT_int_eq(apreq_header_attribute(val, "charset", 7, &val, &len),
+                      APR_SUCCESS);
+            AT_str_eq(val, "windows-1250");
+
             apr_brigade_cleanup(vb);
             apr_brigade_cleanup(bb);
         }
