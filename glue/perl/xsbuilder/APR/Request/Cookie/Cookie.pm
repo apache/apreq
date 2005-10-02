@@ -20,7 +20,6 @@ sub new {
 sub freeze { return $_[1] }
 sub thaw {
     my $obj = shift;
-    return shift if @_;
     return "$obj";
 }
 

@@ -5,6 +5,9 @@
 @section v2_07 Changes with libapreq2-2.07
 
 
+- Perl API [joes]
+  APR::Request::Cookie::freeze() isn't a class method.
+
 - C API [joes]
   Fix off-by-one bug in the continuation-lines portion of the
   header parser.

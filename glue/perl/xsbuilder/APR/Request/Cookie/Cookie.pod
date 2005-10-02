@@ -145,10 +145,10 @@ here it returns $value unmodified.
 
 =head2 thaw
 
-    APR::Request::Cookie->thaw($value)
+    $cookie->thaw()
 
-Class method that reverses C<< freeze() >>;
-here it returns $value unmodified.
+Reverses C<< freeze() >>; here it simply returns 
+$cookie->value since freeze() is a noop.
 
 
 
