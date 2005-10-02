@@ -6,7 +6,7 @@
 
 
 - Perl API [joes]
-  APR::Request::Cookie::freeze() isn't a class method.
+  APR::Request::Cookie::thaw() isn't a class method.
 
 - C API [joes]
   Fix off-by-one bug in the continuation-lines portion of the
