@@ -12,7 +12,6 @@ CURRENT RELEASE NOTES:
 
 RELEASE SHOWSTOPPERS:
 
-    - The api docs are currently incorrect.
     - The perl docs are missing Test::Inline tests.
 
 
