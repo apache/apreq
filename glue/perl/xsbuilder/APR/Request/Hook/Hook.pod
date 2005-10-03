@@ -28,8 +28,39 @@ APR::Request::Hook
 
 
 
-=head2 make
+=head2 disable_uploads
 
+    APR::Request::Hook->disable_uploads($pool)
+    APR::Request::Hook->disable_uploads($pool, $next)
+
+Hook which returns APREQ_ERROR_GENERAL 
+if a file upload field is detected. $pool
+is an APR::Pool object; $next (if present)
+is the next APR::Request::Hook in the chain.
+
+
+
+
+=head2 apr_xml_parser
+
+    APR::Request::Hook->apr_xml_parser($pool)
+    APR::Request::Hook->apr_xml_parser($pool, $next)
+
+Xml parser hook.  $pool is an APR::Pool object;
+$next (if present) is the next APR::Request::Hook
+in the chain.
+
+
+
+
+=head2 discard_brigade
+
+    APR::Request::Hook->discard_brigade($pool)
+    APR::Request::Hook->discard_brigade($pool, $next)
+
+Hook which discards the brigade it receives from the parser.
+$pool is an APR::Pool object; $next (if present) is the next
+APR::Request::Hook in the chain.
 
 
 

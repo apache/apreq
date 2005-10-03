@@ -28,8 +28,82 @@ APR::Request::Parser
 
 
 
-=head2 make
+=head2 generic
 
+    APR::Request::Parser->generic($pool, $ba, $ct)
+    APR::Request::Parser->generic($pool, $ba, $ct, $blim)
+    APR::Request::Parser->generic($pool, $ba, $ct, $blim, $tdir)
+    APR::Request::Parser->generic($pool, $ba, $ct, $blim, $tdir, $hook)
+
+Noop-parser that collects everything into a single,
+internal parameter.  Here $pool is an APR::Pool object, $ba is
+an APR::BucketAlloc object, and $ct is the Content-Type
+header of the request.  Optionally $blim is the brigade in-memory limit,
+$tdir is the path to the temporary directory, and $hook is an 
+APR::Request::Hook object.
+
+
+
+
+=head2 headers
+
+    APR::Request::Parser->headers($pool, $ba, $ct)
+    APR::Request::Parser->headers($pool, $ba, $ct, $blim)
+    APR::Request::Parser->headers($pool, $ba, $ct, $blim, $tdir)
+    APR::Request::Parser->headers($pool, $ba, $ct, $blim, $tdir, $hook)
+
+RFC 822 header parser.  Here $pool is an APR::Pool object, $ba is
+an APR::BucketAlloc object, and $ct is the Content-Type
+header of the request.  Optionally $blim is the brigade in-memory limit,
+$tdir is the path to the temporary directory, and $hook is an 
+APR::Request::Hook object.
+
+
+
+
+=head2 urlencoded
+
+    APR::Request::Parser->urlencoded($pool, $ba, $ct)
+    APR::Request::Parser->urlencoded($pool, $ba, $ct, $blim)
+    APR::Request::Parser->urlencoded($pool, $ba, $ct, $blim, $tdir)
+    APR::Request::Parser->urlencoded($pool, $ba, $ct, $blim, $tdir, $hook)
+
+x-www-form-urlencoded parser.  Here $pool is an APR::Pool object, $ba is
+an APR::BucketAlloc object, and $ct is the Content-Type
+header of the request.  Optionally $blim is the brigade in-memory limit,
+$tdir is the path to the temporary directory, and $hook is an 
+APR::Request::Hook object.
+
+
+
+=head2 multipart
+
+    APR::Request::Parser->multipart($pool, $ba, $ct)
+    APR::Request::Parser->multipart($pool, $ba, $ct, $blim)
+    APR::Request::Parser->multipart($pool, $ba, $ct, $blim, $tdir)
+    APR::Request::Parser->multipart($pool, $ba, $ct, $blim, $tdir, $hook)
+
+Multipart parser.  Here $pool is an APR::Pool object, $ba is
+an APR::BucketAlloc object, and $ct is the Content-Type
+header of the request.  Optionally $blim is the brigade in-memory limit,
+$tdir is the path to the temporary directory, and $hook is an 
+APR::Request::Hook object.
+
+
+
+
+=head2 default
+
+    APR::Request::Parser->default($pool, $ba, $ct)
+    APR::Request::Parser->default($pool, $ba, $ct, $blim)
+    APR::Request::Parser->default($pool, $ba, $ct, $blim, $tdir)
+    APR::Request::Parser->default($pool, $ba, $ct, $blim, $tdir, $hook)
+
+Default parser.  Here $pool is an APR::Pool object, $ba is
+an APR::BucketAlloc object, and $ct is the Content-Type
+header of the request.  Optionally $blim is the brigade in-memory limit,
+$tdir is the path to the temporary directory, and $hook is an 
+APR::Request::Hook object.
 
 
 
