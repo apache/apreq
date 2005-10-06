@@ -1,3 +1,14 @@
+/* On Win32 without PERL_IMPLICIT_SYS, PerlLIO_link is #defined as
+ * link, which in turn is #defined as win32_link, but mp2's 
+ * modperl_perl_unembed.h #undefs link, leaving link as an unresolved 
+ * symbol when linking Param.dll. */
+#ifdef WIN32
+#ifndef PERL_IMPLICIT_SYS
+#undef PerlLIO_link
+#define PerlLIO_link(oldname, newname) win32_link(oldname, newname)
+#endif
+#endif
+
 MODULE = APR::Request::Param      PACKAGE = APR::Request::Param
 
 SV *
