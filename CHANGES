@@ -4,6 +4,9 @@
 
 @section v2_07 Changes with libapreq2-2.07
 
+- Perl XS [Steve Hay]
+  Fix compile problems on Win32 without PERL_IMPLICIT_SYS
+  related to link being an unresolved symbol.
 
 - Perl API [joes]
   APR::Request::Cookie::thaw() isn't a class method.
