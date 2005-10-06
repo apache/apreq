@@ -4,6 +4,11 @@
 
 @section v2_07 Changes with libapreq2-2.07
 
+
+- Perl API [joes]
+  Move APR::Request::Param::Table and APR::Request::Cookie::Table
+  packages to APR::Request module.
+
 - Perl XS [Steve Hay]
   Fix compile problems on Win32 without PERL_IMPLICIT_SYS
   related to link being an unresolved symbol.

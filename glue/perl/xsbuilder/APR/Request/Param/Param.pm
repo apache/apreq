@@ -21,10 +21,3 @@ push our(@ISA), "APR::Brigade";
 
 package APR::Request::Brigade::IO;
 push our(@ISA), ();
-
-package APR::Request::Param::Table;
-
-sub EXISTS {
-    my ($t, $key) = @_;
-    return defined $t->FETCH($key);
-}

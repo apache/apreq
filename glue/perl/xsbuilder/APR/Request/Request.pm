@@ -34,3 +34,17 @@ sub upload {
 
 package APR::Request::Custom;
 our @ISA = qw/APR::Request/;
+
+package APR::Request::Cookie::Table;
+
+sub EXISTS {
+    my ($t, $key) = @_;
+    return defined $t->FETCH($key);
+}
+
+package APR::Request::Param::Table;
+
+sub EXISTS {
+    my ($t, $key) = @_;
+    return defined $t->FETCH($key);
+}

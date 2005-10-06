@@ -270,6 +270,92 @@ uploads(t, pool)
   OUTPUT:
     RETVAL
 
+
+MODULE = APR::Request::Param PACKAGE = APR::Request::Param::Table
+
+SV *
+param_class(t, subclass=&PL_sv_undef)
+    APR::Request::Param::Table t
+    SV *subclass
+
+  PREINIT:
+    SV *obj = apreq_xs_sv2object(aTHX_ ST(0), PARAM_TABLE_CLASS, 't');
+    MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
+    char *curclass = mg->mg_ptr;
+
+  CODE:
+
+    if (items == 2) {
+        if (!SvOK(subclass)) {
+            mg->mg_ptr = NULL;
+            mg->mg_len = 0;
+        }
+        else if (!sv_derived_from(subclass, PARAM_CLASS)) {
+            Perl_croak(aTHX_ "Usage: "
+                              PARAM_TABLE_CLASS "::param_class($table, $class): "
+                             "class %s is not derived from " PARAM_CLASS,
+                              SvPV_nolen(subclass));
+        }
+        else {
+            STRLEN len;
+            mg->mg_ptr = savepv(SvPV(subclass, len));
+            mg->mg_len = len;
+
+        }
+        if (curclass != NULL)
+            Safefree(curclass);
+
+        XSRETURN(1);
+    }
+
+    RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
+
+  OUTPUT:
+    RETVAL
+
+
+MODULE = APR::Request::Cookie PACKAGE = APR::Request::Cookie::Table
+
+SV *
+cookie_class(t, subclass=&PL_sv_undef)
+    APR::Request::Cookie::Table t
+    SV *subclass
+
+  PREINIT:
+    SV *obj = apreq_xs_sv2object(aTHX_ ST(0), COOKIE_TABLE_CLASS, 't');
+    MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
+    char *curclass = mg->mg_ptr;
+
+  CODE:
+
+    if (items == 2) {
+        if (!SvOK(subclass)) {
+            mg->mg_ptr = NULL;
+            mg->mg_len = 0;
+        }
+        else if (!sv_derived_from(subclass, COOKIE_CLASS)) {
+            Perl_croak(aTHX_ "Usage: "
+                             COOKIE_TABLE_CLASS "::cookie_class($table, $class): "
+                             "class %s is not derived from " COOKIE_CLASS,
+                             SvPV_nolen(subclass));
+        }
+        else {
+            STRLEN len;
+            mg->mg_ptr = savepv(SvPV(subclass, len));
+            mg->mg_len = len;
+        }
+        if (curclass != NULL)
+            Safefree(curclass);
+
+        XSRETURN(1);
+    }
+
+    RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
+
+  OUTPUT:
+    RETVAL
+
+
 MODULE = APR::Request  PACKAGE = APR::Request::Custom
 
 APR::Request

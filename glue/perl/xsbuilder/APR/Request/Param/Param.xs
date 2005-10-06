@@ -1,7 +1,8 @@
 /* On Win32 without PERL_IMPLICIT_SYS, PerlLIO_link is #defined as
  * link, which in turn is #defined as win32_link, but mp2's 
  * modperl_perl_unembed.h #undefs link, leaving link as an unresolved 
- * symbol when linking Param.dll. */
+ * symbol when linking Param.dll.
+ */
 #ifdef WIN32
 #ifndef PERL_IMPLICIT_SYS
 #undef PerlLIO_link
@@ -133,49 +134,6 @@ make(class, pool, name, val)
     RETVAL = apreq_param_make(pool, n, nlen, v, vlen);
     if (SvTAINTED(name) || SvTAINTED(val))
         apreq_param_tainted_on(RETVAL);
-
-  OUTPUT:
-    RETVAL
-
-
-MODULE = APR::Request::Param PACKAGE = APR::Request::Param::Table
-
-SV *
-param_class(t, subclass=&PL_sv_undef)
-    APR::Request::Param::Table t
-    SV *subclass
-
-  PREINIT:
-    SV *obj = apreq_xs_sv2object(aTHX_ ST(0), PARAM_TABLE_CLASS, 't');
-    MAGIC *mg = mg_find(obj, PERL_MAGIC_ext);
-    char *curclass = mg->mg_ptr;
-
-  CODE:
-
-    if (items == 2) {
-        if (!SvOK(subclass)) {
-            mg->mg_ptr = NULL;
-            mg->mg_len = 0;
-        }
-        else if (!sv_derived_from(subclass, PARAM_CLASS)) {
-            Perl_croak(aTHX_ "Usage: "
-                              PARAM_TABLE_CLASS "::param_class($table, $class): "
-                             "class %s is not derived from " PARAM_CLASS,
-                              SvPV_nolen(subclass));
-        }
-        else {
-            STRLEN len;
-            mg->mg_ptr = savepv(SvPV(subclass, len));
-            mg->mg_len = len;
-
-        }
-        if (curclass != NULL)
-            Safefree(curclass);
-
-        XSRETURN(1);
-    }
-
-    RETVAL = (curclass == NULL) ? &PL_sv_undef : newSVpv(curclass, 0);
 
   OUTPUT:
     RETVAL

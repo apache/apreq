@@ -22,10 +22,3 @@ sub thaw {
     my $obj = shift;
     return "$obj";
 }
-
-package APR::Request::Cookie::Table;
-
-sub EXISTS {
-    my ($t, $key) = @_;
-    return defined $t->FETCH($key);
-}
