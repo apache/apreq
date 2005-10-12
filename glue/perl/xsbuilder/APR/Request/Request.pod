@@ -3,7 +3,7 @@
 APR::Request - wrapper for libapreq2's module/handle API.
 
 
-=for testing
+=begin testing
     use APR::Pool;
     use APR::Brigade;
     use APR::Bucket;
@@ -13,10 +13,30 @@ APR::Request - wrapper for libapreq2's module/handle API.
     $pool = APR::Pool->new;
     $ba = APR::BucketAlloc->new($pool);
     $bb = APR::Brigade->new($pool, $ba);
-    $bb->insert_tail(APR::Bucket->new($ba,
-                                  "alpha=body1&beta=body2;foo=body3"));
-    $parser = APR::Request::Parser->urlencoded($pool, $ba,
-                                    "application/x-www-form-urlencoded");
+    $content = <<EOT;
+---XYZ-
+Content-Disposition: form-data; name="alpha"
+Content-Type: text/plain; charset=us-ascii
+
+body1
+---XYZ-
+Content-Disposition: form-data; name="beta" filename="foo.txt"
+Content-Type: text/plain; charset=us-ascii
+
+body2
+---XYZ-
+Content-Disposition: form-data; name="foo"
+Content-Type: text/plain; charset=us-ascii
+
+body3
+---XYZ---
+EOT
+    s/(?<!\015)\012/\015\012/g for $content;
+    $bb->insert_tail(APR::Bucket->new($ba, $content));
+    $parser = APR::Request::Parser->multipart($pool, $ba,
+                                    "multipart/form-data; boundary=-XYZ-");
+
+=end testing
 
 
 
@@ -225,6 +245,12 @@ matching cookie.  In list context it returns all matching cookies.
 The returned cookies are the values as they appeared in the incoming
 Cookie header.
 
+jar() will throw an APR::Request::Error object whenever jar_status() 
+is non-zero and the return value is potentially invalid (eg
+C<< scalar $req->jar($key) >> will not die if the desired cookie
+was successfully parsed).
+
+
 =for example begin
 
     $jar = $req->jar;
@@ -255,6 +281,11 @@ the parsed query-string arguments.
 
 With the C<$key> argument, in scalar context this method fetches the first
 matching query-string arg.  In list context it returns all matching args.
+
+args() will throw an APR::Request::Error object whenever args_status() 
+is non-zero and the return value is potentially invalid (eg
+C<< scalar $req->args($key) >> will not die if the desired query argument
+was successfully parsed).
 
 =for example begin
 
@@ -287,6 +318,11 @@ the parsed cookies.
 With the C<$key> argument, in scalar context this method fetches the first
 matching body param.  In list context it returns all matching body params.
 
+body() will throw an APR::Request::Error object whenever body_status() 
+is non-zero and the return value is potentially invalid (eg 
+C<< scalar $req->body($key) >> will not die if the desired body param was
+successfully parsed).
+
 =for example begin
 
     $body = $req->body;
@@ -301,7 +337,7 @@ matching body param.  In list context it returns all matching body params.
 
 =for example_testing
     is $alpha, "body1", "alpha body";
-    is "@beta", "body2", "beta body";
+    is "@beta", "foo.txt", "beta body";
 
 
 
@@ -311,12 +347,17 @@ matching body param.  In list context it returns all matching body params.
     $req->param()
     $req->param($key)
 
-With no arguments, this method returns a tied APR::Request::Cookie::Table
+With no arguments, this method returns a tied APR::Request::Param::Table
 object in scalar context, or the names (in order, with repetitions) of all
 the incoming (args + body) params.
 
 With the C<$key> argument, in scalar context this method fetches the first
 matching param.  In list context it returns all matching params.
+
+param() will throw an APR::Request::Error object whenever param_status() 
+is non-zero and the return value is potentially invalid (eg 
+C<< scalar $req->param($key) >> will not die if the desired param 
+was successfully parsed).
 
 =for example begin
 
@@ -342,12 +383,37 @@ matching param.  In list context it returns all matching params.
     $req->upload()
     $req->upload($key)
 
+With no arguments, this method returns a tied APR::Request::Param::Table
+object in scalar context (whose entries are APR::Request::Param objects),
+or the names (in order, with repetitions) of all the incoming uploads.
+
+With the C<$key> argument, in scalar context this method fetches the first
+matching upload.  In list context it returns all matching uploads.  The return
+values are APR::Request::Param objects.
+
+upload() will throw an APR::Request::Error object whenever body_status() 
+is non-zero.
 
 
+=for example begin
 
-=head2 uploads (APR::Request::Param::Table???)
+    $uploads = $req->upload;
+    @upload_names = $req->upload;
+    ok $uploads->isa("APR::Request::Param::Table");
+    ok shift @upload_names eq $_ for keys %$uploads;
+    ok $_->upload for values %$uploads;
 
-    $req->uploads($pool)
+    $up = $req->upload("beta");
+    @ups = $req->upload("beta");
+    ok $_->isa("APR::Request::Param") for $up, @ups;
+    ok $_->upload for $up, @ups;
+
+
+=for example end
+
+=for example_testing
+   is $up, "foo.txt", "scalar upload";
+   is "@ups", "foo.txt", "list upload";
 
 
 
@@ -356,6 +422,10 @@ matching param.  In list context it returns all matching params.
 
     $req->read_limit()
     $req->read_limit($set)
+
+
+Get/set the read limit, which controls the total amount of
+bytes that can be fed to the current parser.
 
 
 
@@ -404,6 +474,8 @@ arguments to the $callback sub are ($upload, $new_data).
 Exports a list of subs into the caller's package.
 
 
+
+
 =head1 SUBROUTINES
 
 APR::Request
@@ -443,8 +515,8 @@ APR::Request object to delegate to.)  For example:
 	use APR::Request::Custom;
 	our @ISA = qw(APR::Request);
 	sub new {
-		my($class, @args) = @_;
-		return bless { r => APR::Request::Custom->handle(@args) }, $class;
+            my($class, @args) = @_;
+            return bless { r => APR::Request::Custom->handle(@args) }, $class;
 	}
 
 
@@ -576,6 +648,20 @@ C<get> or C<FETCH> call.  If defined, the class must be derived
 from APR::Request::Param.  When called with $set, it returns
 the $table.  Otherwise it returns the name of the current class,
 or undef if no param class is defined.
+
+=for example begin
+    $body = $req->body;
+    {
+        package BAR;
+        use base 'APR::Request::Param';
+    }
+    $body->param_class("BAR");
+    ok $_->isa("BAR") for values %$body;
+
+=for example end
+
+=for example_testing
+    $body->do(sub { ok $_[1]->isa("BAR"); });
 
 
 

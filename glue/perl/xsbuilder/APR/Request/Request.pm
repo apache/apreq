@@ -1,3 +1,6 @@
+use APR::Pool;
+use APR::BucketAlloc;
+
 sub import {
     my $class = shift;
     return unless @_;
@@ -20,16 +23,12 @@ sub upload {
     require APR::Request::Param;
     my $req = shift;
     my $body = $req->body or return;
-    $body->param_class("APR::Request::Param");
-    if (@_) {
-        my @uploads = grep $_->upload, $body->get(@_);
-        return wantarray ? @uploads : $uploads[0];
-    }
+    my $uploads = $body->uploads($req->pool);
+    $uploads->param_class("APR::Request::Param");
 
-    return map { $_->upload ? $_->name : () } values %$body
-        if wantarray;
-
-   return $body->uploads($req->pool);
+    return $uploads->get(@_) if @_;
+    return keys %$uploads if wantarray;
+    return $uploads;
 }
 
 package APR::Request::Custom;
