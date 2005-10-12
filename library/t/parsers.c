@@ -99,12 +99,12 @@ static char mix_data[] =
 "Content-Transfer-Encoding: binary" CRLF CRLF
 "...contents of file2.gif..." CRLF
 "--BbC04y--" CRLF
-"--AaB03x" CRLF
+"--AaB03x  " CRLF
 "content-disposition: form-data; name=\"field1\"" CRLF
 "content-type: text/plain;charset=windows-1250" CRLF
 "content-transfer-encoding: quoted-printable" CRLF CRLF
 "Joe owes =80100." CRLF
-"--AaB03x--" CRLF;
+"--AaB03x--"; /* omit CRLF, which is ok per rfc 2046 */
 
 
 #define URL_ENCTYPE "application/x-www-form-urlencoded"

@@ -291,19 +291,26 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
     case MFD_NEXTLINE:
         {
             s = split_on_bdry(ctx->bb, ctx->in, NULL, CRLF);
+            if (s == APR_EOF) {
+                ctx->status = MFD_COMPLETE;
+                return APR_SUCCESS;
+            }
             if (s != APR_SUCCESS) {
                 apreq_brigade_setaside(ctx->in, pool);
                 apreq_brigade_setaside(ctx->bb, pool);
                 return s;
             }
             if (!APR_BRIGADE_EMPTY(ctx->bb)) {
-                /* ctx->bb probably contains "--", but we'll stop here
-                 *  without bothering to check, and just
-                 * return any postamble text to caller.
-                 */
-                APR_BRIGADE_CONCAT(bb, ctx->in);
-                ctx->status = MFD_COMPLETE;
-                return APR_SUCCESS;
+                char *line;
+                apr_size_t len;
+                apr_brigade_pflatten(ctx->bb, &line, &len, pool);
+
+                if (len >= 2 && strncmp(line, "--", 2) == 0) {
+                    APR_BRIGADE_CONCAT(bb, ctx->in);
+                    ctx->status = MFD_COMPLETE;
+                    return APR_SUCCESS;
+                }
+                apr_brigade_cleanup(ctx->bb);
             }
 
             ctx->status = MFD_HEADER;

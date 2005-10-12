@@ -5,6 +5,10 @@
 @section v2_07 Changes with libapreq2-2.07
 
 
+- C API [joes]
+  Clean up end-of-file parsing for apreq_parse_multipart(), 
+  conforming to rfc-2046 § 5.1.1.
+
 - Perl API [joes]
   Move APR::Request::Param::Table and APR::Request::Cookie::Table
   packages to APR::Request module.
