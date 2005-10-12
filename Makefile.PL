@@ -46,6 +46,10 @@ $opts .= "--debug " if (WIN32 and $args{debug});
 delete @args{@flags};
 $args{"with-apache2-apxs"} = delete $args{apxs}
     if exists $args{apxs} and not exists $args{"with-apache2-apxs"};
+$args{"with-apache2-apxs"} ||= eval {
+    require Apache2::Build;
+    Apache2::Build->build_config->{MP_APXS};
+};
 
 $args{"with-perl-opts"} = "@ARGV" if @ARGV;
 
