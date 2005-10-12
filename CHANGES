@@ -5,6 +5,10 @@
 @section v2_07 Changes with libapreq2-2.07
 
 
+- C API [Ville Skyttä, Dirk Nehring]
+  Add explicit cast in apreq_escape()/apreq_util.h to keep
+  C++ compilers happy.
+
 - C API [joes]
   Protect against arbitrary recursion depth in apreq_parse_multipart()
   by adding a reasonable compile-time MAX_LEVEL limit.

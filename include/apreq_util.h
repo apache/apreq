@@ -208,7 +208,7 @@ char *apreq_escape(apr_pool_t *p, const char *src, const apr_size_t slen)
     if (src == NULL)
         return NULL;
 
-    rv = apr_palloc(p, 3 * slen + 1);
+    rv = (char *)apr_palloc(p, 3 * slen + 1);
     apreq_encode(rv, src, slen);
     return rv;
 }
