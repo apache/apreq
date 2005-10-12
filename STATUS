@@ -13,7 +13,7 @@ CURRENT RELEASE NOTES:
 RELEASE SHOWSTOPPERS:
 
     - The perl docs are missing Test::Inline tests.
-    - Implement (some of) RFC 2047 in the multipart parser.
+    - Implement (some of) RFC 2184 in the multipart parser.
 
 
 CURRENT VOTES:
