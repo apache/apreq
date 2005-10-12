@@ -30,19 +30,17 @@ APR::Request - wrapper for libapreq2's module/handle API.
 
   $req = APR::Request::Custom->handle($pool,
                                       "foo=arg1&bar=arg2",
-                                      "cookie=apache",
+                                      "apache=quux",
                                        $parser, 1e6, $bb);
   $param = $req->param("foo");
-  $cookie = $req->jar("cookie");
+  $cookie = $req->jar("apache");
 
 =for example end
 
 =for example_testing
     ok $req->isa("APR::Request");
     is $param, "arg1", "param";
-    is $cookie, "apache", "cookie";
-
-
+    is $cookie, "quux", "cookie";
 
 
 =head1 DESCRIPTION
@@ -98,6 +96,13 @@ APR::Request
 
 Returns the APR::Pool object associated to this handle.
 
+=for example begin
+
+=for example end
+
+=for example_testing
+    is ${$req->pool()}, $$pool, "pool";
+
 
 
 
@@ -106,6 +111,13 @@ Returns the APR::Pool object associated to this handle.
     $req->bucket_alloc()
 
 Returns the APR::BucketAlloc object associated to this handle.
+
+=for example begin
+
+=for example end
+
+=for example_testing
+    is ${$req->bucket_alloc()}, $$ba, "bucket alloc";
 
 
 
@@ -116,6 +128,13 @@ Returns the APR::BucketAlloc object associated to this handle.
 
 Returns the final status code of the handle's cookie header parser.
 
+=for example begin
+
+=for example end
+
+=for example_testing
+    is $req->jar_status == 0, 1, "jar status";
+
 
 
 
@@ -125,6 +144,13 @@ Returns the final status code of the handle's cookie header parser.
 
 Returns the final status code of the handle's query-string parser.
 
+=for example begin
+
+=for example end
+
+=for example_testing
+    is $req->args_status == 0, 1, "args status";
+
 
 
 
@@ -133,6 +159,13 @@ Returns the final status code of the handle's query-string parser.
     $req->body_status()
 
 Returns the final status code of the handle's body parser.
+
+=for example begin
+
+=for example end
+
+=for example_testing
+    is $req->body_status == 0, 1, "body status";
 
 
 
@@ -144,6 +177,15 @@ Returns the final status code of the handle's body parser.
 Returns C<< ($req->args_status, $req->body_status) >> in list
 context; otherwise returns C<< $req->args_status || $req->body_status >>.
 
+=for example begin
+
+=for example end
+
+=for example_testing
+    is $req->param_status == 0, 1, "param status";
+
+
+
 
 =head2 parse
 
@@ -151,6 +193,22 @@ context; otherwise returns C<< $req->args_status || $req->body_status >>.
 
 Parses the jar, args, and body tables. Returns
 C<< $req->jar_status, $req->args_status, $req->body_status >>.
+
+=for example begin
+
+    @status = $req->parse;
+    ok @status == 3;
+    ok $status[0] == $req->jar_status;
+    ok $status[1] == $req->args_status;
+    ok $status[2] == $req->body_status;
+
+=for example end
+
+=for example_testing
+    $_ += 0 for @status; # convert to proper IVs
+    is "@status", "0 0 0", "parse";
+
+
 
 
 =head2 jar
@@ -167,6 +225,23 @@ matching cookie.  In list context it returns all matching cookies.
 The returned cookies are the values as they appeared in the incoming
 Cookie header.
 
+=for example begin
+
+    $jar = $req->jar;
+    @cookie_names = $req->jar;
+    ok $jar->isa("APR::Request::Cookie::Table");
+    ok shift @cookie_names eq $_ for keys %$jar;
+
+    $cookie = $req->jar("apache");
+    @cookies = $req->jar("apache");
+
+=for example end
+
+=for example_testing
+    is $cookie, "quux", "cookie";
+    is "@cookies", "quux", "cookies";
+
+
 
 
 =head2 args
@@ -180,6 +255,23 @@ the parsed query-string arguments.
 
 With the C<$key> argument, in scalar context this method fetches the first
 matching query-string arg.  In list context it returns all matching args.
+
+=for example begin
+
+   $args = $req->args;
+   @arg_names = $req->args;
+   ok $args->isa("APR::Request::Param::Table");
+   ok shift @arg_names eq $_ for keys %$args;
+
+   $foo = $req->args("foo");
+   @bar = $req->args("bar");
+
+=for example end
+
+=for example_testing
+   is $foo, "arg1", "arg";
+   is "@bar", "arg2", "args";
+
 
 
 
@@ -195,6 +287,23 @@ the parsed cookies.
 With the C<$key> argument, in scalar context this method fetches the first
 matching body param.  In list context it returns all matching body params.
 
+=for example begin
+
+    $body = $req->body;
+    @body_names = $req->body;
+    ok $body->isa("APR::Request::Param::Table");
+    ok shift @body_names eq $_ for keys %$body;
+
+    $alpha = $req->body("alpha");
+    @beta = $req->body("beta");
+
+=for example end
+
+=for example_testing
+    is $alpha, "body1", "alpha body";
+    is "@beta", "body2", "beta body";
+
+
 
 
 =head2 param
@@ -208,6 +317,22 @@ the incoming (args + body) params.
 
 With the C<$key> argument, in scalar context this method fetches the first
 matching param.  In list context it returns all matching params.
+
+=for example begin
+
+    $param = $req->param;
+    @param_names = $req->param;
+    ok $param->isa("APR::Request::Param::Table");
+    ok shift @param_names eq $_ for keys %$param;
+
+    $foo = $req->param("foo");
+    @foo = $req->param("foo");
+
+=for example end
+
+=for example_testing
+    is $foo, "arg1", "scalar param";
+    is "@foo", "arg1 body3", "list param";
 
 
 
@@ -350,12 +475,11 @@ or undef if no cookie class is defined.
 
 
 =for example begin
-
+    $jar = $req->jar;
     {
         package FOO;
-        @ISA= 'APR::Request::Cookie';
+        use base 'APR::Request::Cookie';
     }
-
     $jar->cookie_class("FOO");
     ok $_->isa("FOO") for values %$jar;
 
