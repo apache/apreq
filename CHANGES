@@ -6,6 +6,10 @@
 
 
 - C API [joes]
+  Protect against arbitrary recursion depth in apreq_parse_multipart()
+  by adding a reasonable compile-time MAX_LEVEL limit.
+
+- C API [joes]
   Clean up end-of-file parsing for apreq_parse_multipart(), 
   conforming to rfc-2046 § 5.1.1.
 

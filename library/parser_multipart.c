@@ -35,7 +35,8 @@
         return APR_INCOMPLETE;                     \
 } while (0);
 
-
+/* maximum recursion level in the mfd parser */
+#define MAX_LEVEL 8
 
 struct mfd_ctx {
     apr_table_t                 *info;
@@ -59,6 +60,7 @@ struct mfd_ctx {
     apr_bucket                  *eos;
     const char                  *param_name;
     apreq_param_t               *upload;
+    unsigned                    level;
 };
 
 
@@ -204,7 +206,8 @@ struct mfd_ctx * create_multipart_context(const char *content_type,
                                           apr_pool_t *pool,
                                           apr_bucket_alloc_t *ba,
                                           apr_size_t brigade_limit,
-                                          const char *temp_dir)
+                                          const char *temp_dir,
+                                          unsigned level)
 
 {
     apr_status_t s;
@@ -243,6 +246,7 @@ struct mfd_ctx * create_multipart_context(const char *content_type,
     ctx->next_parser = NULL;
     ctx->param_name = NULL;
     ctx->upload = NULL;
+    ctx->level = level;
 
     return ctx;
 }
@@ -258,7 +262,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
         ctx = create_multipart_context(parser->content_type,
                                        pool, ba,
                                        parser->brigade_limit,
-                                       parser->temp_dir);
+                                       parser->temp_dir, 1);
         if (ctx == NULL)
             return APREQ_ERROR_GENERAL;
 
@@ -389,9 +393,15 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
             if (ct != NULL && strncmp(ct, "multipart/", 10) == 0) {
                 struct mfd_ctx *next_ctx;
 
+                if (ctx->level >= MAX_LEVEL) {
+                    ctx->status = MFD_ERROR;
+                    goto mfd_parse_brigade;
+                }
+
                 next_ctx = create_multipart_context(ct, pool, ba,
                                                     parser->brigade_limit,
-                                                    parser->temp_dir);
+                                                    parser->temp_dir,
+                                                    ctx->level + 1);
 
                 next_ctx->param_name = "";
 
