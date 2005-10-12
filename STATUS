@@ -13,6 +13,7 @@ CURRENT RELEASE NOTES:
 RELEASE SHOWSTOPPERS:
 
     - The perl docs are missing Test::Inline tests.
+    - Implement (some of) RFC 2047 in the multipart parser.
 
 
 CURRENT VOTES:
@@ -32,8 +33,6 @@ CURRENT VOTES:
 
 
 TODO:
-
-    - Implement (some of) RFC 2047 in the multipart parser.
 
     - Dump automake, preferably replacing that with more stuff from
       httpd/apr's build system.
@@ -57,12 +56,6 @@ TODO:
       API function should have its own tests, and each possible
       error status should be both tested & documented.  Also
       upgrade these tests to use the Apache::Test framework.
-
-    - Add a "memory_limit" setting to apreq_parser_t and apreq_module_t, 
-      which will control how much pool allocation the parser may use.
-
-    - Add a "header_limit" setting to control outgoing header size
-      (mainly for baking cookies) instead of using a compiled-in limit.
 
     - in glue/perl/t/apreq/cgi.t on Win32, printing to the error log
       hangs if the strings involved are about 10000 in size.
@@ -90,14 +83,6 @@ OPEN ISSUES:
 
     - Should we bundle an apr-based "application/xml" parser?  
       If so, how should we parse the xml data into an apr_table?
-
-    - Determine whether or not it's good for the perl glue to ever set 
-      the SvUTF8 flag on a param.  The current code ties this action to the 
-      apreq_param_is_tainted flag.
-
-    - Should we let hooks interrupt parsers via APREQ_ERROR_INTERRUPT?
-      That'd need a delete_hook method to make interrupts a useful
-      way of tuning parser behavior.
 
 
 BUGS:
