@@ -14,6 +14,9 @@ static char *apreq_xs_cookie_pool_copy(pTHX_ SV *obj, SV *value)
     apr_pool_t *p;
     SV *parent;
 
+    if (!SvOK(value))
+        return NULL;
+
     v = SvPV(value, vlen);
     mg = mg_find(obj, PERL_MAGIC_ext);
     iv = SvIVX(mg->mg_obj);
