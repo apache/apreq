@@ -18,7 +18,4 @@ sub new {
 }
 
 sub freeze { return $_[1] }
-sub thaw {
-    my $obj = shift;
-    return $obj->value;
-}
+sub thaw { return shift->value }
