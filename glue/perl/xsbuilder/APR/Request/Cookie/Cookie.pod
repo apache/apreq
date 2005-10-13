@@ -83,7 +83,14 @@ APR::Request::Cookie
 The double-quote interpolation operator maps to
 C<< APR::Request::Cookie::value() >>.
 
+=for example begin
 
+    ok "$cookie" eq $cookie->value;
+
+=for example end
+
+=for example_testing
+    1;
 
 
 =head1 METHODS
@@ -139,6 +146,15 @@ the corresponding method's documentation.
 Class method representing the default serializer;
 here it returns $value unmodified.
 
+=for example begin
+
+    ok "foo" eq APR::Request::Cookie->freeze("foo");
+
+=for example end
+
+=for example_testing
+    1;
+
 
 
 
@@ -148,6 +164,15 @@ here it returns $value unmodified.
 
 Reverses C<< freeze() >>; here it simply returns 
 $cookie->value since freeze() is a noop.
+
+=for example begin
+
+    ok $cookie->thaw eq $cookie->value;
+
+=for example end
+
+=for example_testing
+    1;
 
 
 
@@ -161,6 +186,13 @@ cannot be modified and is never serialized;
 ie freeze() and thaw() do not act on the
 cookie's name.
 
+=for example begin
+
+=for example end
+
+=for example_testing
+    is $cookie->name, "foo", "name";
+
 
 
 
@@ -170,6 +202,13 @@ cookie's name.
 
 Fetch the cookie's raw (frozen) value.
 This attribute cannot be modified.
+
+=for example begin
+
+=for example end
+
+=for example_testing
+    is $cookie->value, "bar", "value";
 
 
 
@@ -181,6 +220,17 @@ This attribute cannot be modified.
 
 
 Get/set the cookie's secure flag.
+
+=for example begin
+
+    $cookie->secure(1);
+    ok $cookie->secure == 1;
+
+=for example end
+
+=for example_testing
+    $cookie->secure(0);
+    is $cookie->secure, 0, "secure";
 
 
 
@@ -195,6 +245,18 @@ Version 0 cookies conform to the Netscape
 spec; Version 1 cookies conform to either
 RFC 2109 or RFC 2965.
 
+=for example begin
+
+    $version = $cookie->version;
+    $cookie->version(1);
+    ok $cookie->version == 1;
+
+=for example end
+
+=for example_testing
+    $cookie->version($version);
+    is $cookie->version, $version, "version";
+
 
 
 
@@ -205,6 +267,18 @@ RFC 2109 or RFC 2965.
 
 Get/set the cookie's path string.
 
+=for example begin
+
+    $path = $cookie->path;
+    $cookie->path("/1/2/3/4");
+    ok $cookie->path eq "/1/2/3/4";
+
+=for example end
+
+=for example_testing
+    $cookie->path($path);
+    is $cookie->path, $path, "path";
+
 
 
 
@@ -214,6 +288,18 @@ Get/set the cookie's path string.
     $cookie->domain($set)
 
 Get/set the cookie's domain string.
+
+=for example begin
+
+    $domain = $cookie->domain;
+    $cookie->domain("apache.org");
+    ok $cookie->domain eq "apache.org";
+
+=for example end
+
+=for example_testing
+    $cookie->domain($domain);
+    is $cookie->domain, $domain, "domain";
 
 
 
@@ -226,6 +312,18 @@ Get/set the cookie's domain string.
 Get/set the cookie's port string.
 Only valid for Version 1 cookies.
 
+=for example begin
+
+    $port = $cookie->port;
+    $cookie->port(8888);
+    ok $cookie->port == 8888;
+
+=for example end
+
+=for example_testing
+    $cookie->port($port);
+    is $cookie->port, $port, "port";
+
 
 
 
@@ -236,6 +334,18 @@ Only valid for Version 1 cookies.
 
 Get/set the cookie's comment string.
 Only valid for Version 1 cookies.
+
+=for example begin
+
+    $comment = $cookie->comment;
+    $cookie->comment("quux");
+    ok $cookie->comment eq "quux";
+
+=for example end
+
+=for example_testing
+    $cookie->comment($comment);
+    is $cookie->comment, $comment, "comment";
 
 
 
@@ -248,6 +358,18 @@ Only valid for Version 1 cookies.
 Get/set the cookie's commentURL string.
 Only valid for Version 1 cookies.
 
+=for example begin
+
+    $commentURL = $cookie->commentURL;
+    $cookie->commentURL("/foo/bar");
+    ok $cookie->commentURL eq "/foo/bar";
+
+=for example end
+
+=for example_testing
+    $cookie->commentURL($commentURL);
+    is $cookie->commentURL, $commentURL, "commentURL";
+
 
 
 
@@ -256,8 +378,19 @@ Only valid for Version 1 cookies.
     $cookie->is_tainted()
     $cookie->is_tainted($set)
 
-
 Get/set the cookie's internal tainted flag.
+
+=for example begin
+
+    $tainted = $cookie->is_tainted;
+    $cookie->is_tainted(1);
+    ok $cookie->is_tainted == 1;
+
+=for example end
+
+=for example_testing
+    $cookie->is_tainted($tainted);
+    is $cookie->is_tainted, $tainted, "tainted";
 
 
 =head2 make
@@ -279,7 +412,15 @@ passed in arguments; no freezing/encoding is done on the $value.
 String representation of the cookie, suitable for inclusion
 in a "Set-Cookie" header.
 
+=for example begin
 
+    print "Set-Cookie: ", $cookie->as_string, "\n";
+
+=for example end
+
+=for example_testing
+    is $_STDOUT_, qq/Set-Cookie: foo=bar; Version=1; domain="example.com"\n/,
+        "as_string";
 
 
 =head1 SUBROUTINES
