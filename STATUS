@@ -13,7 +13,6 @@ CURRENT RELEASE NOTES:
 RELEASE SHOWSTOPPERS:
 
     - The perl docs are missing Test::Inline tests.
-    - Implement (some of) RFC 2184 in the multipart parser.
 
 
 CURRENT VOTES:
@@ -33,6 +32,8 @@ CURRENT VOTES:
 
 
 TODO:
+
+    - Implement (some of) RFC 2184 in the multipart parser.
 
     - Dump automake, preferably replacing that with more stuff from
       httpd/apr's build system.
