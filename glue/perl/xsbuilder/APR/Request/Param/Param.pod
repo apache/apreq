@@ -57,6 +57,8 @@ EOT
   ok $_->isa("APR::Request::Param") for values %$body;
 
   @uploads = grep {$_->upload} values %$body;
+  $param = $body->get('beta');
+  $param->upload_slurp(my $content);
 
 
 =for example end
@@ -64,7 +66,7 @@ EOT
 =for example_testing
   is $arg1, "arg1", 'alpha arg is "arg1"';
   ok @uploads == 1;
-
+  is $content, "second", 'contents of upload_slurp'; 
 
 
 
@@ -93,6 +95,13 @@ APR::Request::Param
 The double-quote interpolation operator maps to
 C<< APR::Request::Param::value() >>.
 
+=for example begin
+
+=for example end
+
+=for example_testing
+    is "$param", $param->value, "quotes";
+
 
 
 
@@ -110,6 +119,13 @@ APR::Request::Param
 Returns the param's name.
 This attribute cannot be modified.
 
+=for example begin
+
+=for example end
+
+=for example_testing
+    is $param->name, "beta", "name";
+
 
 
 
@@ -119,6 +135,13 @@ This attribute cannot be modified.
 
 Returns the param's value.
 This attribute cannot be modified.
+
+=for example begin
+
+=for example end
+
+=for example_testing
+    is $param->value, "foo.txt", "value";
 
 
 
@@ -133,6 +156,19 @@ Get/set the param's internal tainted flag.
 Note: if the param's charset is APREQ_CHARSET_UTF8 (8),
 this also activates the SvUTF8_on flag during calls
 to name() and/or value().
+
+=for example begin
+
+    $tainted = $param->is_tainted;
+    $param->is_tainted(0);
+    ok $param->is_tainted == 0;
+
+=for example end
+
+=for example_testing
+    $param->is_tainted($tainted);
+    is $param->is_tainted, $tainted, "tainted";
+
 
 
 
@@ -159,6 +195,18 @@ values are
 
 See L<is_tainted> above for info about how APREQ_CHARSET_UTF8
 relates to perl's UTF-8 flag.
+
+=for example begin
+
+    $charset = $param->charset;
+    $param->charset(2);
+    ok $param->charset == 2;
+
+=for example end
+
+=for example_testing
+    $param->charset($charset);
+    is $param->charset, $charset, "charset";
 
 
 
@@ -262,7 +310,7 @@ be treated as a non-seekable IO stream.
 =head2 upload_fh
 
 
-    $param->upload_fh
+    $param->upload_fh()
 
 Returns a seekable filehandle representing the file-upload content.
 
@@ -292,11 +340,14 @@ blesses that copy into the APR::Request::Brigade class.  This
 provides syntactic sugar for using perl's builtin C<read>, C<readline>,
 and C<< <> >> operations on handles tied to this package:
 
+=for example begin
+
     use Symbol;
     $fh = gensym;
-    tie *$fh, "APR::Request:Brigade", $bb;
+    tie *$fh, "APR::Request::Brigade", $bb;
     print while <$fh>;
 
+=for example end
 
 
 
