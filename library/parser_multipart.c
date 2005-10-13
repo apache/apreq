@@ -556,6 +556,8 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                     }
                 }
 
+                apreq_param_charset_set(param,
+                                        apreq_charset_divine(v->data, len));
                 apreq_value_table_add(v, t);
                 ctx->status = MFD_NEXTLINE;
                 ctx->param_name = NULL;
