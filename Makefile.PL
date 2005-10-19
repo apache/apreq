@@ -59,12 +59,20 @@ if (WIN32) {
         my @candidates = qw(with-apache2-apxs with-apache2-httpd
                             with-apr-config with-apu-config);
         foreach my $opt(@candidates) {
-            next unless $args{$opt};
-            (my $d = File::Basename::dirname($args{$opt})) =~ s{(\\|/)bin}{};
-            if (-d $d) {
-                delete $args{$opt};
-                $args{'with-apache2'} = $d;
+            my $c = delete $args{$opt};
+            next unless $c;
+            (my $dir = File::Basename::dirname($c)) =~ s{(\\|/)bin}{};
+            if (-d $dir) {
+                $args{'with-apache2'} = $dir;
                 last;
+            }
+        }
+        unless ($args{'with-apache2'}) {
+            my $mp_ap_prefix = eval {
+                Apache2::Build->build_config->{MP_AP_PREFIX};
+            };
+            if ($mp_ap_prefix and -d $mp_ap_prefix) {
+                $args{'with-apache2'} = $mp_ap_prefix;
             }
         }
     }
