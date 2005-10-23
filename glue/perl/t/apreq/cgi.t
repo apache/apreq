@@ -7,7 +7,6 @@ use Apache::TestConfig;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY
                            GET_BODY_ASSERT POST_BODY GET_RC GET_HEAD);
 use constant WIN32 => Apache::TestConfig::WIN32;
-use HTTP::Cookies;
 use Cwd;
 require File::Basename;
 
@@ -37,6 +36,8 @@ my @big_keys    = ('a'..'z');
 
 plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num +
   @names * @methods, have_lwp && have_cgi;
+
+require HTTP::Cookies;
 
 my $location = '/cgi-bin';
 my $script = $location . '/test_cgi.pl';
