@@ -237,8 +237,8 @@ C<< $req->jar_status, $req->args_status, $req->body_status >>.
     $req->jar($key)
 
 With no arguments, this method returns a tied APR::Request::Cookie::Table
-object in scalar context, or the names (in order, with repetitions) of all
-the parsed cookies.
+object (or undef if the "Cookie" header is absent) in scalar context, or 
+the names (in order, with repetitions) of all the parsed cookies.
 
 With the C<$key> argument, in scalar context this method fetches the first
 matching cookie.  In list context it returns all matching cookies.
@@ -276,8 +276,8 @@ was successfully parsed).
     $req->args($key)
 
 With no arguments, this method returns a tied APR::Request::Param::Table
-object in scalar context, or the names (in order, with repetitions) of all
-the parsed query-string arguments.
+object (or undef if the query string is absent) in scalar context, or the 
+names (in order, with repetitions) of all the parsed query-string arguments.
 
 With the C<$key> argument, in scalar context this method fetches the first
 matching query-string arg.  In list context it returns all matching args.
@@ -312,8 +312,8 @@ was successfully parsed).
     $req->body($key)
 
 With no arguments, this method returns a tied APR::Request::Param::Table
-object in scalar context, or the names (in order, with repetitions) of all
-the parsed cookies.
+object (or undef if the request body is absent) in scalar context, or the 
+names (in order, with repetitions) of all the parsed cookies.
 
 With the C<$key> argument, in scalar context this method fetches the first
 matching body param.  In list context it returns all matching body params.
@@ -348,8 +348,9 @@ successfully parsed).
     $req->param($key)
 
 With no arguments, this method returns a tied APR::Request::Param::Table
-object in scalar context, or the names (in order, with repetitions) of all
-the incoming (args + body) params.
+object (or undef, if the query string and request body are absent) in scalar
+context, or the names (in order, with repetitions) of all the incoming
+(args + body) params.
 
 With the C<$key> argument, in scalar context this method fetches the first
 matching param.  In list context it returns all matching params.
@@ -384,8 +385,9 @@ was successfully parsed).
     $req->upload($key)
 
 With no arguments, this method returns a tied APR::Request::Param::Table
-object in scalar context (whose entries are APR::Request::Param objects),
-or the names (in order, with repetitions) of all the incoming uploads.
+object (or undef if the request body is absent) in scalar context (whose
+entries are APR::Request::Param objects), or the names (in order, with 
+repetitions) of all the incoming uploads.
 
 With the C<$key> argument, in scalar context this method fetches the first
 matching upload.  In list context it returns all matching uploads.  The return
