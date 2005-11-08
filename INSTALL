@@ -30,26 +30,6 @@ Developers and other folks using httpd-apreq-2 directly from svn need to
 execute "./buildconf" prior to running "./configure".
 
 
-Alternately, here's a recipe to install mod_apreq.c as a static apache module:
-
-  1) configure httpd to add mod_apreq.c to its filter modules:
-
-  % cd /path/to/httpd-2.0
-  % CPPFLAGS=-I/path/to/httpd-apreq-2/src \
-    HTTPD_LDFLAGS=/path/to/httpd-apreq-2/src/libapreq2.la \
-    ./configure --with-module=filters:/path/to/httpd-apreq-2/env/mod_apreq.c \
-    ...(add usual httpd+apr options here)...
-
-  2) compile and install everything using httpd-apreq-2's build system:
-
-            % cd /path/to/httpd-apreq-2
-            % ./configure --with-apache2-src=/path/to/httpd-2.0
-            % make
-  (optional)% make test
-            % make install
-
-
-
 Win32 build:
   C:\httpd-apreq-2> perl Makefile.PL
   C:\httpd-apreq-2> nmake
