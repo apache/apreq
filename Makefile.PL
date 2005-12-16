@@ -19,7 +19,7 @@ my %opts;
 undef @opts{qw(with-apache2-apxs with-apache1-apxs with-apache2-src
                with-perl with-apache2-httpd
                with-apr-config with-apu-config apxs
-               with-expat)};
+               with-expat with-mm-opts)};
 undef @opts{qw(with-apache2)} if (WIN32);
 
 my @flags = qw/enable-maintainer-mode enable-perl-glue disable-perl-glue/;
