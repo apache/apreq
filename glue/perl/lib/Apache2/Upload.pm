@@ -32,32 +32,11 @@ __END__
 
 Apache2::Upload - Methods for dealing with file uploads.
 
-=for testing
-    use APR::Pool;
-    use Apache2::Upload;
-    $r = APR::Pool->new;
-    $req = Apache2::Request->new($r);
-    $u = Apache2::Upload->new($r, name => "foo", file => __FILE__);
-    $req->body_status(0);
-    $req->parse;
-    $req->body->add(foo => "bar"); # dummy param with same name as upload
-    $req->body->add($u);
-    open(my $fh, __FILE__) or die $!;
-    binmode $fh;
-    {
-      local $/;
-      $data = <$fh>;
-    }
-    close $fh;
-    ok length $data == -s __FILE__;
-    $data =~ s{\r}{}g;
 
 
 
 =head1 SYNOPSIS
 
-
-=for example begin
 
     use Apache2::Upload;
 
@@ -74,17 +53,6 @@ Apache2::Upload - Methods for dealing with file uploads.
 
     my $io = $upload->io;
     print while <$io>;
-
-=for example end
-
-=for example_testing
-    ok $upload->bb->length == $size;
-    $uploads = $req->upload();
-    is (scalar keys %{$uploads}, 1, "found upload");
-    is $_STDOUT_, $data;
-    is $fh_data, $data;
-    is $slurp_data, $data;
-
 
 
 
@@ -113,9 +81,6 @@ This manpage documents the Apache2::Upload package.
 
 The name of the HTML form element which generated the upload.
 
-=for testing
-    is $u->name, "foo";
-
 
 
 
@@ -126,9 +91,6 @@ The name of the HTML form element which generated the upload.
 The (client-side) filename as submitted in the HTML form.  Note:
 some agents will submit the file's full pathname, while others
 may submit just the basename.
-
-=for testing
-    is $u->filename, __FILE__;
 
 
 
@@ -158,18 +120,8 @@ C<readline> methods available.  However these methods are just
 syntactic sugar for the underlying C<READ> and C<READLINE> methods from
 APR::Request::Brigade.
 
-=for example begin
-
     $io = $upload->io;
     print while $io->read($_); # equivalent to: tied(*$io)->READ($_)
-
-=for example end
-
-=for example_testing
-    is $_STDOUT_, $data;
-    $io = $upload->io;
-    $io->read($h{io}, $upload->size);
-    is $h{io}, $data, "autovivifying read";
 
 See L<READ|read> and L<READLINE|readline> below for additional notes
 on their usage.
@@ -192,9 +144,6 @@ Get/set the APR::Brigade which represents the upload's contents.
 
 Returns the size of the upload in bytes.
 
-=for testing
-    is $u->size, -s __FILE__;
-
 
 
 
@@ -210,8 +159,6 @@ An optional C<$table> argument can be passed to reassign
 the upload's internal (apr_table_t) info table to the one
 C<$table> represents.
 
-=for example begin
-
     my $info = $upload->info;
     while (my($hdr_name, $hdr_value) = each %$info) {
 	# ...
@@ -219,11 +166,6 @@ C<$table> represents.
 
     # fetch upload's Content-Type header
     my $type = $upload->info->{"Content-type"};
-
-=for example end
-
-=for example_testing
-    is $type, "application/octet-stream";
 
 
 
@@ -234,18 +176,11 @@ C<$table> represents.
 
 Returns the MIME type of the given I<Apache2::Upload> object.
 
-=for example begin
-
     my $type = $upload->type;
 
     #same as
     my $content_type = $upload->info->{"Content-Type"};
     $content_type =~ s/;.*$//ms;
-
-=for example end
-
-=for example_testing
-    is $type, $content_type;
 
 
 
@@ -257,13 +192,9 @@ Returns the MIME type of the given I<Apache2::Upload> object.
 To avoid recopying the upload's internal tempfile brigade on a
 *nix-like system, I<link> will create a hard link to it:
 
-=for example begin
-
   my $upload = $req->upload('foo');
   $upload->link("/path/to/newfile") or
       die sprintf "link from '%s' failed: $!", $upload->tempname;
-
-=for example end
 
 Typically the new name must lie on the same device and partition
 as the brigade's tempfile.  If this or any other reason prevents
@@ -281,18 +212,7 @@ copy the temporary file to the specified location.
 Reads the full contents of a file upload into the scalar argument.
 The return value is the length of the file.
 
-=for example begin
-
     my $size = $upload->slurp($contents);
-
-=for example end
-
-=for example_testing
-    is $size, length $contents;
-    $upload->slurp($h{slurp});
-    is $h{slurp}, $contents, "autovivifying slurp";
-    $contents =~ s{\r}{}g;
-    is $contents, $data;
 
 
 
@@ -303,14 +223,7 @@ The return value is the length of the file.
 
 Provides the name of the spool file.
 
-=for example begin
-
     my $tempname = $upload->tempname;
-
-=for example end
-
-=for example_testing
-    like $tempname, qr/apreq.{6}$/;
 
 
 

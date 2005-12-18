@@ -39,38 +39,15 @@ __END__
 Apache2::Request - Methods for dealing with client request data
 
 
-=for testing
-    use Apache2::Request;
-    use Apache2::Upload;
-    use APR::Pool;
-    $r = APR::Pool->new;
-    $req = Apache2::Request->new($r);
-    $u = Apache2::Upload->new($r, name => "foo", file => __FILE__);
-    $req->body_status(0);
-    $req->parse;
-    $req->body->add($u);
-    $req->args->add(foo => 1);
-    $req->args->add(bar => 2);
-    $req->args->add(foo => 3);
-
 
 
 =head1 SYNOPSIS
 
 
-=for example begin
-
     use Apache2::Request;
     $req = Apache2::Request->new($r);
     @foo = $req->param("foo");
     $bar = $req->args("bar");
-
-=for example end
-
-=for example_testing
-    ok $req->isa("Apache2::Request");
-    is "@foo", join " ", 1, 3, __FILE__;
-    is $bar, 2;
 
 
 
@@ -116,16 +93,7 @@ query parameters. The main differences are
 Creates a new Apache2::Request object.
 
 
-=for example begin
-
     my $req = Apache2::Request->new($r, POST_MAX => "1M");
-
-
-=for example end
-
-=for example_testing
-    ok ref $req;
-    ok $req->isa("Apache2::Request");
 
 
 With mod_perl2, the environment object $r must be an Apache2::RequestRec
@@ -153,14 +121,10 @@ Sets the directory where upload files are spooled.  On a *nix-like
 that supports I<link(2)>, the TEMP_DIR should be located on the same
 file system as the final destination file:
 
-=for example begin
-
  use Apache2::Upload;
  my $req = Apache2::Request->new($r, TEMP_DIR => "/home/httpd/tmp");
  my $upload = $req->upload('file');
  $upload->link("/home/user/myfile");
-
-=for example end
 
 For more details on C<link>, see L<Apache2::Upload>.
 
@@ -179,8 +143,6 @@ can be used to provide an upload progress meter during file uploads.
 Apache will automatically continue writing the original data to
 $upload->fh after the hook exits.
 
-=for example begin
-
   my $transparent_hook = sub {
     my ($upload, $data, $data_len, $hook_data) = @_;
     warn "$hook_data: got $data_len bytes for " . $upload->name;
@@ -190,9 +152,6 @@ $upload->fh after the hook exits.
                                   HOOK_DATA => "Note",
                                   UPLOAD_HOOK => $transparent_hook,
                                  );
-
-=for example end
-
 
 =back
 
@@ -224,8 +183,6 @@ Get the request parameters (using case-insensitive keys) by
 mimicing the OO interface of C<CGI::param>.
 
 
-=for example begin
-
     # similar to CGI.pm
 
     my $foo_value   = $req->param('foo');
@@ -238,14 +195,6 @@ mimicing the OO interface of C<CGI::param>.
     # all (args + body) params
     my $table = $req->param;
     @table_keys = keys %$table;
-
-=for example end
-
-=for example_testing
-    is $foo_value, 1;
-    is "@foo_values", join " ", 1, 3, __FILE__;
-    is "@param_names", "foo bar";
-    is "@table_keys", "foo bar foo foo";
 
 
 In list context, or when invoked with no arguments as
@@ -269,8 +218,6 @@ args tables, even if the query-string parser or the body parser
 has failed.  In all other circumstances C<param> will throw an
 Apache2::Request::Error object into $@ should either parser fail.
 
-=for example begin
-
     $req->args_status(1); # set error state for query-string parser
     ok $req->param_status == 1;
 
@@ -283,11 +230,6 @@ Apache2::Request::Error object into $@ should either parser fail.
     ok $@->isa("Apache2::Request::Error");
 
     $req->args_status(0); # reset query-string parser state to "success"
-
-=for example end
-
-=for example_testing
-    # run example
 
 
 Note: modifications to the C<< scalar $req->param() >> table only
@@ -318,28 +260,12 @@ release.
 Returns an I<APR::Request::Param::Table> object containing the POST data
 parameters of the I<Apache2::Request> object.
 
-=for example begin
-
     my $body = $req->body;
-
-=for example end
-
-=for example_testing
-    is join(" ", keys %$body), "foo";
-    is join(" ", values %$body), __FILE__;
-
 
 An optional name parameter can be passed to return the POST data
 parameter associated with the given name:
 
-=for example begin
-
     my $foo_body = $req->body("foo");
-
-=for example end
-
-=for example_testing
-    is $foo_body, __FILE__;
 
 More generally, C<body()> follows the same pattern as C<param()>
 with respect to its return values and argument list.  The main difference
@@ -384,9 +310,6 @@ data, and will not be seen by other libapreq2 applications.
 Get the I<APR> status code of the query-string parser.
 APR_SUCCESS on success, error otherwise.
 
-=for testing
-    is $req->args_status, 0; # APR_SUCCESS
-
 
 
 
@@ -399,8 +322,6 @@ APR_SUCCESS when parser has completed, APR_INCOMPLETE if parser
 has more data to parse, APR_EINIT if no post data has been parsed,
 error otherwise.
 
-=for testing
-    is $req->body_status, 0; # APR_SUCCESS
 
 
 
@@ -417,12 +338,6 @@ C<body_status>, ie
 In list context C<param_status> returns the list
 C<(args_status, body_status)>.
 
-=for testing
-    is scalar($req->param_status),
-       $req->args_status || $req->body_status;
-    is join(" ", $req->param_status),
-       join(" ", $req->args_status, $req->body_status);
-
 
 
 
@@ -436,10 +351,6 @@ query-string or body parser fail. In all other contexts it will
 return the two parsers' combined I<APR> status code
 
     $req->body_status || $req->args_status
-
-=for testing
-     is $req->parse, $req->body_status || $req->args_status;
-
 
 However C<parse> should be avoided in most normal situations.  For example,
 in a mod_perl content handler it is more efficient to write
