@@ -139,7 +139,24 @@
  */
 APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r);
 
+/**
+ * The mod_apreq2 filter is named "apreq2", and may be used in Apache's
+ * input filter directives, e.g.
+ * @code
+ *
+ *     AddInputFilter apreq2         # or
+ *     SetInputFilter apreq2
+ * @endcode
+ * See above
+ */
 #define APREQ_FILTER_NAME "apreq2"
+
+/**
+ * The Apache2 Module Magic Number for use in the Apache 2.x module structures
+ * This gets bumped if changes in th4e API will break third party applications
+ * using this apache2 module
+ * @see APREQ_MODULE
+ */
 #define APREQ_APACHE2_MMN 20050712
 
 /** @} */
