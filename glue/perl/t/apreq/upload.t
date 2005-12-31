@@ -8,7 +8,9 @@ use Cwd;
 require File::Basename;
 
 my $cwd = getcwd();
-my $location = "/TestApReq__upload";
+
+my $module = 'TestApReq::upload';
+my $location = Apache::TestRequest::module2url($module);
 
 my %types = (perl => 'application/octet-stream',
              httpd => 'application/octet-stream',

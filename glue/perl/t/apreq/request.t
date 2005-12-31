@@ -8,7 +8,9 @@ use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
 plan tests => 18, have_lwp;
 
-my $location = "/TestApReq__request";
+my $module = 'TestApReq::request';
+my $location = Apache::TestRequest::module2url($module);
+
 #print GET_BODY $location;
 
 {

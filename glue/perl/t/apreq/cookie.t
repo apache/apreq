@@ -10,7 +10,8 @@ plan tests => 9, have_lwp;
 
 require HTTP::Cookies;
 
-my $location = "/TestApReq__cookie";
+my $module = "TestApReq::cookie";
+my $location = Apache::TestRequest::module2url($module);
 
 {
     my $test  = 'new';
