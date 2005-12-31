@@ -157,7 +157,7 @@ APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r);
  * using this apache2 module
  * @see APREQ_MODULE
  */
-#define APREQ_APACHE2_MMN 20050712
+#define APREQ_APACHE2_MMN 20051231
 
 /** @} */
 
