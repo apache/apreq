@@ -36,7 +36,7 @@ static void *apreq_create_dir_config(apr_pool_t *p, char *d)
     /* d == OR_ALL */
     struct dir_config *dc = apr_palloc(p, sizeof *dc);
     dc->temp_dir      = NULL;
-    dc->read_limit    = (apr_uint64_t)-1;
+    dc->read_limit    = APREQ_DEFAULT_READ_LIMIT;
     dc->brigade_limit = APREQ_DEFAULT_BRIGADE_LIMIT;
     return dc;
 }

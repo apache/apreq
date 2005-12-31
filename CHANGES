@@ -4,6 +4,8 @@
 
 @section v2_07 Changes with libapreq2-2.07
 
+- C API [Philip M. Gollucci]
+  Use the APREQ_DEFAULT_READ_LIMIT constant for the read_limit
 
 - C API [Ville Skyttä, Dirk Nehring]
   Add explicit cast in apreq_escape()/apreq_util.h to keep
