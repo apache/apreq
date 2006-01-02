@@ -43,7 +43,6 @@
  * variable arguments must use APR_DECLARE_NONSTD().
  *
  * @remark Both the declaration and implementations must use the same macro.
- * @example
  */
 /** APREQ_DECLARE(rettype) apeq_func(args)
  */
@@ -64,7 +63,6 @@
  * @see APREQ_DECLARE @see APREQ_DECLARE_NONSTD
  * @remark Note that the declaration and implementations use different forms,
  * but both must include the macro.
- * @example
  */
 /** extern APREQ_DECLARE_DATA type apr_variable;\n
  * APREQ_DECLARE_DATA type apr_variable = value;
