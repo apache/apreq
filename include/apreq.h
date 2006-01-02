@@ -233,7 +233,13 @@ void apreq_value_table_add(const apreq_value_t *v, apr_table_t *t) {
     apr_table_addn(t, v->name, v->data);
 }
 
-
+/**
+ * @param T type
+ * @param A attribute
+ * @param P
+ *
+ * XXX
+ */
 #define apreq_attr_to_type(T,A,P) ( (T*) ((char*)(P)-offsetof(T,A)) )
 
 /**
