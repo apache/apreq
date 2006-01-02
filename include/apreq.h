@@ -120,7 +120,7 @@
 /**
  * Set specified bit f in bitfiled name to value 
  * Note the below BIT/Mask defines are used sans the
- * _BIT, _MASK because of the this define's ##_MASK, ##_BIT usage.
+ * _BIT, _MASK because of the this define's \#\#_MASK, \#\#_BIT usage.
  * Each come in a pair
  */
 #define APREQ_FLAGS_SET(f, name, value)                 \
