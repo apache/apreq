@@ -51,7 +51,7 @@ reconfig:
 
 docs_clean:
 	-rm -rf docs
-	-rm -rf *.html
+	-rm -rf *.html  pod2*.tmp
 
 docs:	pod2html build/doxygen.conf apr_tags docs/html/feather.gif
 	@PERL@ build/version_check.pl doxygen
