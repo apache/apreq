@@ -34,8 +34,8 @@ EXTRACT_STATIC         = YES
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = apreq_config* apreq_private*
-EXAMPLE_PATH           = .
-EXAMPLE_PATTERNS       = README INSTALL LICENSE NOTICE *.html *.man
+EXAMPLE_PATH           = . include
+EXAMPLE_PATTERNS       = README INSTALL LICENSE NOTICE *.html *.man *.h
 IMAGE_PATH             = 
 SOURCE_BROWSER         = NO
 
