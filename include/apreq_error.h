@@ -40,6 +40,10 @@ apreq_strerror(apr_status_t s, char *buf, apr_size_t bufsize);
  */
 
 #ifndef APR_EBADARG
+/**
+ * Bad Arguments return value
+ * @see APR_BADARG
+ */
 #define APR_EBADARG                APR_BADARG   /* XXX: don't use APR_BADARG */
 #endif
 
