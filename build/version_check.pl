@@ -229,7 +229,8 @@ if ($saw =~ /^(\d+)(\.(\d+))$/) {
         $fail = 1, last if $version[$_] > $saw[$_];
     }
 
-    die "version $saw is broken" if exists $prereq{$tool}->{broken_version} && $saw eq $prereq{$tool}->{broken_version};
+    die "version $saw is broken" if exists $prereq{$tool}->{broken_version} 
+        && $saw eq $prereq{$tool}->{broken_version};
 }
 
 if ($fail) {
