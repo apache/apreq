@@ -49,7 +49,7 @@ my %svn = (
                 libtool => { version => "1.4.3",   test => \&gnu_version },
                autoconf => { version => "2.53",    test => \&gnu_version },
                automake => { version => "1.6.0",   test => \&gnu_version },
-                doxygen => { version => "1.2",     test => \&gnu_version },
+                doxygen => { version => "1.2",     test => \&gnu_version, broken_version => '1.4.5' },
                    perl => { version => "5.6.1",   test => \&gnu_version },
   "ExtUtils::XSBuilder" => { version => "0.23",    test => \&xsb_version },
             );
@@ -228,6 +228,8 @@ if ($saw =~ /^(\d+)(\.(\d+))$/) {
         last if $version[$_] < $saw[$_];
         $fail = 1, last if $version[$_] > $saw[$_];
     }
+
+    die "version $saw is broken" if exists $prereq{$tool}->{broken_version} && $saw eq $prereq{$tool}->{broken_version};
 }
 
 if ($fail) {
