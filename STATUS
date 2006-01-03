@@ -30,6 +30,11 @@ CURRENT VOTES:
              0:
             -1:
 
+    - Drop ExtUtils::XSBuilder as the C API is fairly
+      stable now.  The header parsing + xs generation stuff may be too 
+      difficult for the community to maintain over ordinary .xs files.
+
+            +1: pgollucci
 
 TODO:
 
@@ -50,10 +55,6 @@ TODO:
     - Fix the broken make dependencies, especially in the module 
       and glue subdirs.  The libtool workaround (for OSX IIRC) 
       that copies module/.libs to module/t is especially bogus.
-
-    - Drop ExtUtils::XSBuilder as the C API is fairly
-      stable now.  The header parsing + xs generation stuff may be too 
-      difficult for the community to maintain over ordinary .xs files.
 
     - Round out the unit tests in library/t.  Ideally each
       API function should have its own tests, and each possible
