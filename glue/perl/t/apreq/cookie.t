@@ -6,9 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 
-plan tests => 12, have_lwp;
-
-require HTTP::Cookies;
+plan tests => 12;
 
 my $module = "TestApReq::cookie";
 my $location = Apache::TestRequest::module2url($module);
