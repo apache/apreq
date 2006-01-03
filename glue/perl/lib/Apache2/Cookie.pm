@@ -470,6 +470,9 @@ Fetch and parse the incoming I<Cookie> header:
 
     my $cookies = Apache2::Cookie->fetch($r); # APR::Request::Cookie::Table ref
 
+    It should be noted, that with perl 5.8+ Iterator magic, table is able
+    to handle multiple cookies of the same name.
+
     my %cookies = Apache2::Cookie->fetch($r);
 
 
