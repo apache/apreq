@@ -35,6 +35,9 @@ sub handler {
             $r->print(join ' ', map { $_ } @names);
         }
     }
+    elsif ($test eq 'overload') {
+        $r->print($cookies{one});
+    }
     elsif ($key and $cookies{$key}) {
         if ($test eq "bake") {
             $cookies{$key}->bake($r);

@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 
-plan tests => 12;
+plan tests => 13;
 
 my $module = "TestApReq::cookie";
 my $location = Apache::TestRequest::module2url($module);
@@ -147,3 +147,13 @@ my $location = Apache::TestRequest::module2url($module);
 
     ok t_cmp($str, $value, $test);
 }
+
+{
+    my $test = 'overload';
+    my $cookie = qq{\$Version="1"; one="1"};
+    my $value = qq{one="1"; Version=1};
+    my $str = GET_BODY("$location?test=$test", Cookie => $cookie);
+
+    ok t_cmp($str, $value, $test);
+}
+
