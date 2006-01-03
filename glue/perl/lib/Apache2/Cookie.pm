@@ -93,7 +93,11 @@ sub bake2 {
 package Apache2::Cookie::Jar;
 use APR::Request::Apache2;
 push our @ISA, qw/APR::Request::Apache2/;
-sub cookies { Apache2::Cookie->fetch(@_) }
+sub cookies {
+    return Apache2::Cookie->fetch(@_) if @_ == 2;
+    my $cookies = Apache2::Cookie->fetch(@_);
+    return wantarray ? keys %$cookies : $cookies;
+}
 *Apache2::Cookie::Jar::status = *APR::Request::jar_status;
 
 sub new {

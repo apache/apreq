@@ -19,7 +19,23 @@ sub handler {
     my $test = $req->APR::Request::args('test');
     my $key  = $req->APR::Request::args('key');
 
-    if ($key and $cookies{$key}) {
+    if ($test eq 'cookies') {
+        my $jar = Apache2::Cookie::Jar->new($r);
+
+        if ($key eq 'first') {
+            my $cookie = $jar->cookies('one');
+            $r->print($cookie->as_string());
+        }
+        elsif ($key eq 'all') {
+            my @cookies = $jar->cookies('two');
+            $r->print(join ' ', map { $_->as_string() } @cookies);
+        }
+        else {
+            my @names = $jar->cookies();
+            $r->print(join ' ', map { $_ } @names);
+        }
+    }
+    elsif ($key and $cookies{$key}) {
         if ($test eq "bake") {
             $cookies{$key}->bake($r);
         }

@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 
-plan tests => 9, have_lwp;
+plan tests => 12, have_lwp;
 
 require HTTP::Cookies;
 
@@ -91,4 +91,61 @@ my $location = Apache::TestRequest::module2url($module);
     my ($header) = GET_HEAD("$location?test=$test&key=$key",
                             Cookie => $cookie) =~ /^#Set-Cookie2:\s+(.+)/m;
     ok t_cmp($header, qq{$key="$value"; Version=1; path="$location"}, $test);
+}
+
+{
+    my $test = 'cookies';
+    my $key = 'first';
+    my $cookie1 = qq{\$Version="1"; one="1"};
+    my $cookie2 = qq{\$Version="1"; two="2"};
+    my $cookie3 = qq{\$Version="1"; three="3"};
+    my $cookie4 = qq{\$Version="1"; two="22"};
+    my $value = qq{one="1"; Version=1};
+
+    my $str = GET_BODY("$location?test=$test&key=$key",
+                       Cookie  => $cookie1,
+                       Cookie  => $cookie2,
+                       Cookie  => $cookie3,
+                       Cookie  => $cookie4,
+                      );
+
+    ok t_cmp($str, $value, $test);
+}
+
+{
+    my $test = 'cookies';
+    my $key = 'all';
+    my $cookie1 = qq{\$Version="1"; one="1"};
+    my $cookie2 = qq{\$Version="1"; two="2"};
+    my $cookie3 = qq{\$Version="1"; three="3"};
+    my $cookie4 = qq{\$Version="1"; two="22"};
+    my $value = qq{two="2"; Version=1 two="22"; Version=1};
+
+    my $str = GET_BODY("$location?test=$test&key=$key",
+                       Cookie  => $cookie1,
+                       Cookie  => $cookie2,
+                       Cookie  => $cookie3,
+                       Cookie  => $cookie4,
+                      );
+
+    ok t_cmp($str, $value, $test);
+}
+
+{
+    my $test = 'cookies';
+    my $key = 'name';
+    my $cookie1 = qq{\$Version="1"; one="1"};
+    my $cookie2 = qq{\$Version="1"; two="2"};
+    my $cookie3 = qq{\$Version="1"; three="3"};
+    my $cookie4 = qq{\$Version="1"; two="22"};
+    my $value = qq{one two three two};
+
+    my $str = GET_BODY("$location?test=$test&key=$key",
+                       Cookie  => $cookie1,
+                       Cookie  => $cookie2,
+                       Cookie  => $cookie3,
+                       Cookie  => $cookie4,
+                      );
+
+    ok t_cmp($str, $value, $test);
 }
