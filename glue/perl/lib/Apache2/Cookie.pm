@@ -487,7 +487,8 @@ Changes to the 1.X API:
 
 =item * C<Apache2::Cookie::fetch> now expects an C<$r> object as (second)
         argument, although this isn't necessary in mod_perl 2 if
-        C<Apache2::RequestUtil> is loaded.
+        C<Apache2::RequestUtil> is loaded and 'PerlOptions +GlobalRequest'
+        is in effect.
 
 =item * C<Apache2::Cookie::parse> is gone.
 
