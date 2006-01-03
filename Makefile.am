@@ -15,7 +15,7 @@ APU_DOX = (cd $(APU_SRCDIR); cat docs/doxygen.conf - | doxygen -)
 APR_DOX = (cd $(APR_SRCDIR); cat docs/doxygen.conf - | doxygen -)
 SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi, \
 	s(href="/Apache2(?:/\w+)*/([^/]+).html")(href="group__apreq__xs__\L$$1.html")g, \
-	s(href="/APR/Request/Param/Table.html")(href="group__apreq__xs__apr__request__param__table.html")g, \
+	s(href="/APR/Request/Param/(?:Table|Cookie).html")(href="group__apreq__xs__apr__request.html")g, \
 	s(href="/APR/Request.html")(href="group__apreq__xs__apr__request.html")g, \
 	s(href="/APR/Request/([^/]+).html")(href="group__apreq__xs__apr__request__\L$$1.html")g, \
 	s(href="/APR/Brigade.html")(href="http://apr.apache.org/docs/apr-util/apr__buckets_8h.html")g, \
