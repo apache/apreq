@@ -1,4 +1,7 @@
-ScriptAlias /cgi-bin/ "@ServerRoot@/cgi-bin/"
+<IfModule mod_alias.c>
+    ScriptAlias /cgi-bin/ "@ServerRoot@/cgi-bin/"
+</IfModule>
+
 <IfModule !mpm_winnt.c>
    LockFile @ServerRoot@/logs/accept.lock
 </IfModule>
