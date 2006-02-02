@@ -1,3 +1,7 @@
+<IfModule mod_env.c>
+    PassEnv PERL5LIB
+</IfModule>
+
 <IfModule mod_alias.c>
     ScriptAlias /cgi-bin/ "@ServerRoot@/cgi-bin/"
 </IfModule>
