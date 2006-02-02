@@ -12,6 +12,9 @@ CURRENT RELEASE NOTES:
 
 RELEASE SHOWSTOPPERS:
 
+    - The header and url parser go can quadratic in CPU time because
+      they fail to maintain their state properly.
+
 
 CURRENT VOTES:
 
