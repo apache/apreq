@@ -30,15 +30,18 @@
 
 struct hdr_ctx {
     apr_bucket_brigade *bb;
-   enum {
-       HDR_NAME,
-       HDR_GAP,
-       HDR_VALUE,
-       HDR_NEWLINE,
-       HDR_CONTINUE,
-       HDR_COMPLETE,
-       HDR_ERROR
-   }                    status;
+    apr_size_t          nlen;
+    apr_size_t          glen;
+    apr_size_t          vlen;
+    enum {
+        HDR_NAME,
+        HDR_GAP,
+        HDR_VALUE,
+        HDR_NEWLINE,
+        HDR_CONTINUE,
+        HDR_COMPLETE,
+        HDR_ERROR
+    }                   status;
 };
 
 /********************* header parsing utils ********************/
@@ -161,23 +164,25 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
         ctx = apr_pcalloc(pool, sizeof *ctx);
         ctx->bb = apr_brigade_create(pool, parser->bucket_alloc);
         parser->ctx = ctx;
+        ctx->status = HDR_NAME;
     }
     else
         ctx = parser->ctx;
 
     PARSER_STATUS_CHECK(HDR);
+    e = APR_BRIGADE_LAST(ctx->bb);
     APR_BRIGADE_CONCAT(ctx->bb, bb);
 
  parse_hdr_brigade:
 
-    ctx->status = HDR_NAME;
 
     /* parse the brigade for CRLF_CRLF-terminated header block,
      * each time starting from the front of the brigade.
      */
 
-    for (e = APR_BRIGADE_FIRST(ctx->bb), nlen = glen = vlen = 0;
-         e != APR_BRIGADE_SENTINEL(ctx->bb); e = APR_BUCKET_NEXT(e))
+    for (e = APR_BUCKET_NEXT(e);
+         e != APR_BRIGADE_SENTINEL(ctx->bb);
+         e = APR_BUCKET_NEXT(e))
     {
         apr_size_t off = 0, dlen;
         const char *data;
@@ -235,12 +240,12 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                         off = 1;
                         e = APR_BUCKET_NEXT(e);
                     }
-                    ++glen;
+                    ++ctx->glen;
                     ctx->status = HDR_GAP;
                     goto parse_hdr_bucket;
 
                 default:
-                    ++nlen;
+                    ++ctx->nlen;
                 }
 
             }
@@ -254,7 +259,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                 switch (data[off++]) {
                 case ' ':
                 case '\t':
-                    ++glen;
+                    ++ctx->glen;
                     break;
 
                 case '\n':
@@ -270,7 +275,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                         off = 1;
                         e = APR_BUCKET_NEXT(e);
                     }
-                    ++vlen;
+                    ++ctx->vlen;
                     goto parse_hdr_bucket;
                 }
             }
@@ -280,7 +285,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
         case HDR_VALUE:
 
             while (off < dlen) {
-                ++vlen;
+                ++ctx->vlen;
                 if (data[off++] == '\n') {
                     ctx->status = HDR_NEWLINE;
                     goto parse_hdr_bucket;
@@ -300,14 +305,14 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                 case '\t':
                     ctx->status = HDR_CONTINUE;
                     ++off;
-                    ++vlen;
+                    ++ctx->vlen;
                     break;
 
                 default:
                     /* can parse brigade now */
                     if (off > 0)
                         apr_bucket_split(e, off);
-                    s = split_header_line(&param, pool, ctx->bb, nlen, glen, vlen);
+                    s = split_header_line(&param, pool, ctx->bb, ctx->nlen, ctx->glen, ctx->vlen);
                     if (parser->hook != NULL && s == APR_SUCCESS)
                         s = apreq_hook_run(parser->hook, param, NULL);
 
@@ -317,6 +322,12 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                     }
 
                     apreq_value_table_add(&param->v, t);
+                    e = APR_BRIGADE_SENTINEL(ctx->bb);
+                    ctx->status = HDR_NAME;
+                    ctx->nlen = 0;
+                    ctx->vlen = 0;
+                    ctx->glen = 0;
+
                     goto parse_hdr_brigade;
                 }
 
@@ -330,7 +341,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                 switch (data[off++]) {
                 case ' ':
                 case '\t':
-                    ++vlen;
+                    ++ctx->vlen;
                     break;
 
                 case '\n':
@@ -339,7 +350,7 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
 
                 default:
                     ctx->status = HDR_VALUE;
-                    ++vlen;
+                    ++ctx->vlen;
                     goto parse_hdr_bucket;
                 }
             }

@@ -4,6 +4,11 @@
 
 @section v2_07 Changes with libapreq2-2.07
 
+
+- C API [joes]
+  Eliminate potential quadratic behavior in apreq_parse_headers() and
+  apreq_parse_urlencoded().
+
 - Perl API [Philip M. Gollucci]
   Fix Apache2::Cookie->cookies() to comply with its documentation
 

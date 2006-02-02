@@ -32,6 +32,8 @@
 
 struct url_ctx {
     apr_bucket_brigade *bb;
+    apr_size_t          nlen;
+    apr_size_t          vlen;
     enum {
         URL_NAME,
         URL_VALUE,
@@ -156,12 +158,11 @@ static apr_status_t split_urlword(apreq_param_t **p, apr_pool_t *pool,
 APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
 {
     apr_pool_t *pool = parser->pool;
-    apr_ssize_t nlen, vlen;
     apr_bucket *e;
     struct url_ctx *ctx;
 
     if (parser->ctx == NULL) {
-        ctx = apr_palloc(pool, sizeof *ctx);
+        ctx = apr_pcalloc(pool, sizeof *ctx);
         ctx->bb = apr_brigade_create(pool, parser->bucket_alloc);
         parser->ctx = ctx;
         ctx->status = URL_NAME;
@@ -170,15 +171,14 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
         ctx = parser->ctx;
 
     PARSER_STATUS_CHECK(URL);
+    e = APR_BRIGADE_LAST(ctx->bb);
     APR_BRIGADE_CONCAT(ctx->bb, bb);
 
  parse_url_brigade:
 
-    ctx->status = URL_NAME;
-
-    for (e  =  APR_BRIGADE_FIRST(ctx->bb), nlen = vlen = 0;
-         e !=  APR_BRIGADE_SENTINEL(ctx->bb);
-         e  =  APR_BUCKET_NEXT(e))
+    for (e  = APR_BUCKET_NEXT(e);
+         e != APR_BRIGADE_SENTINEL(ctx->bb);
+         e  = APR_BUCKET_NEXT(e))
     {
         apreq_param_t *param;
         apr_size_t off = 0, dlen;
@@ -190,7 +190,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
                 s = APR_SUCCESS;
             }
             else {
-                s = split_urlword(&param, pool, ctx->bb, nlen, vlen);
+                s = split_urlword(&param, pool, ctx->bb, ctx->nlen, ctx->vlen);
                 if (parser->hook != NULL && s == APR_SUCCESS)
                     s = apreq_hook_run(parser->hook, param, NULL);
 
@@ -229,7 +229,7 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
                     ctx->status = URL_VALUE;
                     goto parse_url_bucket;
                 default:
-                    ++nlen;
+                    ++ctx->nlen;
                 }
             }
             break;
@@ -241,7 +241,8 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
                 case '&':
                 case ';':
                     apr_bucket_split(e, off);
-                    s = split_urlword(&param, pool, ctx->bb, nlen, vlen);
+                    s = split_urlword(&param, pool, ctx->bb,
+                                      ctx->nlen, ctx->vlen);
                     if (parser->hook != NULL && s == APR_SUCCESS)
                         s = apreq_hook_run(parser->hook, param, NULL);
 
@@ -251,10 +252,14 @@ APREQ_DECLARE_PARSER(apreq_parse_urlencoded)
                     }
 
                     apreq_value_table_add(&param->v, t);
+                    ctx->status = URL_NAME;
+                    ctx->nlen = 0;
+                    ctx->vlen = 0;
+                    e = APR_BRIGADE_SENTINEL(ctx->bb);
                     goto parse_url_brigade;
 
                 default:
-                    ++vlen;
+                    ++ctx->vlen;
                 }
             }
             break;
