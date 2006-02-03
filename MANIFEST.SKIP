@@ -36,5 +36,6 @@ t/cgi-bin/*
 t/core*
 
 # Apache 1.x module (exclude for now)
+module/apache$
 module/apache/
 

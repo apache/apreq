@@ -32,7 +32,7 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 dnl Checks for library functions.
 
 AC_APREQ
-AC_CONFIG_FILES([Makefile include/Makefile library/Makefile library/t/Makefile module/Makefile module/apache2/Makefile module/apache/Makefile glue/Makefile])
+AC_CONFIG_FILES([Makefile include/Makefile library/Makefile library/t/Makefile module/Makefile module/apache2/Makefile glue/Makefile])
 AC_CONFIG_FILES([build/doxygen.conf include/groups.dox])
 AC_CONFIG_FILES([apreq2-config], [chmod +x apreq2-config])
 AC_OUTPUT
