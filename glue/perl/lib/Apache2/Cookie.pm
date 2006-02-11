@@ -9,7 +9,7 @@ use Apache2::RequestUtil;
 use overload '""' => sub { shift->as_string() }, fallback => 1;
 
 push our @ISA, "APR::Request::Cookie";
-our $VERSION = "2.07";
+our $VERSION = "2.08";
 
 sub new {
     my ($class, $r, %attrs) = @_;
