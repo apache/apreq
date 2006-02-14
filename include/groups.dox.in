@@ -53,11 +53,6 @@
  * @defgroup apreq_xs Perl
  * @brief XS Modules
  * @ingroup apreq_lang
-@manonly
-.SH "SEE ALSO"
-.IX Header "SEE ALSO"
-\&\fIapreq_xs_request\fR\|(3), \fIapreq_xs_upload\fR\|(3), \fIapreq_xs_cookie\fR\|(3)
-@endmanonly
  */
 
 /**
