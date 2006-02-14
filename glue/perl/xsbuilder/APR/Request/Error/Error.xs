@@ -50,3 +50,36 @@ BOOT:
                 apreq_xs_error2sv(aTHX_ APREQ_ERROR_GENERAL));
     newCONSTSUB(PL_defstash, "APR::Request::Error::TAINTED",
                 apreq_xs_error2sv(aTHX_ APREQ_ERROR_TAINTED));
+
+    newCONSTSUB(PL_defstash, "APR::Request::Error::BADDATA",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_BADDATA));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::BADCHAR",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_BADCHAR));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::BADSEQ",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_BADSEQ));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::BADATTR",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_BADATTR));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::BADHEADER",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_BADHEADER));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::BADUTF8",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_BADUTF8));
+
+    newCONSTSUB(PL_defstash, "APR::Request::Error::NODATA",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_NODATA));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::NOTOKEN",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_NOTOKEN));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::NOATTR",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_NOATTR));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::NOHEADER",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_NOHEADER));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::NOPARSER",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_NOPARSER));
+
+    newCONSTSUB(PL_defstash, "APR::Request::Error::MISMATCH",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_MISMATCH));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::OVERLIMIT",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_OVERLIMIT));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::UNDERLIMIT",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_UNDERLIMIT));
+    newCONSTSUB(PL_defstash, "APR::Request::Error::NOTEMPTY",
+                apreq_xs_error2sv(aTHX_ APREQ_ERROR_NOTEMPTY));
