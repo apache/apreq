@@ -5,6 +5,10 @@
 @section v2_08 Changes with libapreq2-2.08 (under development)
 
 
+- Perl API [joes]
+  Expose the constants in apreq_error.h via the APR::Request::Error package.
+
+
 @section v2_07 Changes with libapreq2-2.07 (released February 12, 2006)
 
 
