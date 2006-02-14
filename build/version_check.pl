@@ -69,7 +69,7 @@ my %perl_glue = (
          "Apache::Test" => { version => "1.04",    test => \&a_t_version,
                              comment => "Win32 requires version 1.06"    },
                  # mp2 does not contain "_" in its reported version number
-              mod_perl  => { version => "1.999022",test => \&mp2_version },
+             mod_perl2  => { version => "1.999022",test => \&mp2_version },
   "ExtUtils::MakeMaker" => { version => "6.15",    test => \&mm_version },
            "Test::More" => { version => "0.47",    test => \&tm_version },
                 );
@@ -183,7 +183,7 @@ no_index:
 generated_by: $0
 EOT
         my %runtime_prereqs =  (
-                                mod_perl => $perl_glue{mod_perl},
+                               mod_perl2 => $perl_glue{mod_perl},
                                     perl => $perl_glue{perl},
                                );
         print_prereqs "requires:", \%runtime_prereqs;
