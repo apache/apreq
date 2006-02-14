@@ -156,7 +156,6 @@ static apr_status_t split_header_line(apreq_param_t **p,
 APREQ_DECLARE_PARSER(apreq_parse_headers)
 {
     apr_pool_t *pool = parser->pool;
-    apr_ssize_t nlen, glen, vlen;
     apr_bucket *e;
     struct hdr_ctx *ctx;
 
