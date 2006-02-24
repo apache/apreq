@@ -119,9 +119,9 @@ AC_DEFUN([AC_APREQ], [
             fi
             AC_MSG_RESULT(yes)
 
-            AC_MSG_CHECKING(for mod_perl)
-            if test -z "`$prereq_check mod_perl`"; then
-                AC_MSG_WARN([Bad mod_perl version])
+            AC_MSG_CHECKING(for mod_perl2)
+            if test -z "`$prereq_check mod_perl2`"; then
+                AC_MSG_WARN([Bad mod_perl2 version])
             fi
             AC_MSG_RESULT(yes)
 
