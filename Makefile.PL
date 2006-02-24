@@ -34,7 +34,7 @@ $opts .= "--enable-maintainer-mode " if $args{"enable-maintainer-mode"};
 
 unless (exists $args{"disable-perl-glue"}) {
     $opts .= "--enable-perl-glue ";
-    test_prereq "mod_perl";
+    test_prereq "mod_perl2";
     test_prereq "Apache::Test";
     test_prereq "ExtUtils::MakeMaker";
     test_prereq "ExtUtils::XSBuilder";
