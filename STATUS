@@ -19,8 +19,7 @@ CURRENT VOTES:
 
 TODO:
 
-      make install  doesn't work.
-      apreq2-config isn't even included.
+      apreq2-config doesn't install correctly.
       mod_apreq2    doesn't even build.
 
 

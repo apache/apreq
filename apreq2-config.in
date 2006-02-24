@@ -26,9 +26,9 @@ bindir="@bindir@"
 libdir="@libdir@"
 includedir="@includedir@"
 
-LIBS="@APR_LIBS@ @APU_LIBS@"
-LDFLAGS="@LDFLAGS@"
-INCLUDES="@APR_INCLUDES@"
+LIBS="@APREQ_LIBS@"
+LDFLAGS="@APREQ_LDFLAGS@"
+INCLUDES="@APREQ_INCLUDES@"
 
 APREQ_LIBNAME="@APREQ_LIBNAME@"
 
