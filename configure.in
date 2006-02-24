@@ -5,6 +5,9 @@ dnl
 AC_PREREQ(2.50)
 AC_INIT(export_vars.sh.in)
 
+VERSION=2.08
+AC_SUBST(VERSION)
+
 AC_CONFIG_HEADER(include/apreq_config.h)
 AC_CONFIG_AUX_DIR(build)
 
@@ -50,20 +53,6 @@ AC_SUBST(abs_builddir)
 dnl Initialize mkdir -p functionality.
 APR_MKDIR_P_CHECK($abs_srcdir/build/mkdir.sh)
 
-dnl get our version information
-get_version="$abs_srcdir/build/get-version.sh"
-version_hdr="$abs_srcdir/include/apreq_version.h"
-APREQ_MAJOR_VERSION="`$get_version major $version_hdr APREQ`"
-APREQ_MINOR_VERSION="`$get_version minor $version_hdr APREQ`"
-APREQ_PATCH_VERSION="`$get_version patch $version_hdr APREQ`"
-APREQ_DOTTED_VERSION="`$get_version all $version_hdr APREQ`"
-
-AC_SUBST(APREQ_DOTTED_VERSION)
-AC_SUBST(APREQ_MAJOR_VERSION)
-AC_SUBST(APREQ_MINOR_VERSION)
-AC_SUBST(APREQ_PATCH_VERSION)
-
-echo "APREQ Version: ${APREQ_DOTTED_VERSION}"
 
 dnl Enable the layout handling code, then reparse the prefix-style
 dnl arguments due to autoconf being a PITA.
@@ -102,6 +91,27 @@ APR_ADDTO(CPPFLAGS, `$apr_config --cppflags`)
 AC_SUBST(CPP)
 
 APREQ_FIND_APU
+
+dnl get our version information
+get_version="$abs_srcdir/build/get-version.sh"
+version_hdr="$abs_srcdir/include/apreq_version.h"
+APREQ_MAJOR_VERSION="`$get_version major $version_hdr APREQ`"
+APREQ_MINOR_VERSION="`$get_version minor $version_hdr APREQ`"
+APREQ_PATCH_VERSION="`$get_version patch $version_hdr APREQ`"
+APREQ_DOTTED_VERSION="`$get_version all $version_hdr APREQ`"
+
+APR_MAJOR_VERSION="`$apr_config --version | cut -f1 -d.`"
+APREQ_LIBTOOL_VERSION="`expr $APREQ_MAJOR_VERSION + $APREQ_MINOR_VERSION + $APR_MAJOR_VERSION`:$APREQ_PATCH_VERSION:$APREQ_MINOR_VERSION"
+
+AC_SUBST(APREQ_DOTTED_VERSION)
+AC_SUBST(APREQ_LIBTOOL_VERSION)
+AC_SUBST(APREQ_MAJOR_VERSION)
+AC_SUBST(APREQ_MINOR_VERSION)
+AC_SUBST(APREQ_PATCH_VERSION)
+
+echo "APREQ Version: ${APREQ_DOTTED_VERSION}"
+
+
 
 so_ext=$APR_SO_EXT
 lib_target=$APR_LIB_TARGET
@@ -156,6 +166,8 @@ for d in include include/private; do
     test -d $top_builddir/$d || mkdir $top_builddir/$d
 done
 
-AC_CONFIG_FILES([Makefile export_vars.sh])
+AC_CONFIG_FILES([Makefile export_vars.sh apreq2-config])
+
+AC_CONFIG_COMMANDS([default], [chmod +x apreq2-config])
 
 AC_OUTPUT
