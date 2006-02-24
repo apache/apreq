@@ -54,10 +54,14 @@ dnl get our version information
 get_version="$abs_srcdir/build/get-version.sh"
 version_hdr="$abs_srcdir/include/apreq_version.h"
 APREQ_MAJOR_VERSION="`$get_version major $version_hdr APREQ`"
+APREQ_MINOR_VERSION="`$get_version minor $version_hdr APREQ`"
+APREQ_PATCH_VERSION="`$get_version patch $version_hdr APREQ`"
 APREQ_DOTTED_VERSION="`$get_version all $version_hdr APREQ`"
 
 AC_SUBST(APREQ_DOTTED_VERSION)
 AC_SUBST(APREQ_MAJOR_VERSION)
+AC_SUBST(APREQ_MINOR_VERSION)
+AC_SUBST(APREQ_PATCH_VERSION)
 
 echo "APREQ Version: ${APREQ_DOTTED_VERSION}"
 
