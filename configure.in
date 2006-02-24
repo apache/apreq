@@ -99,6 +99,7 @@ APR_SETIFNULL(CPP, `$apr_config --cpp`)
 APR_ADDTO(CFLAGS, `$apr_config --cflags`)
 APR_ADDTO(CPPFLAGS, `$apr_config --cppflags`)
 
+AC_SUBST(CPP)
 
 APREQ_FIND_APU
 
