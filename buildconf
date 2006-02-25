@@ -83,7 +83,7 @@ rm -rf aclocal.m4 autom4te*.cache
 #
 # Generate the autoconf header (include/apreq_config.h) and ./configure
 #
-echo "Creating include/private/apreq_config.h ..."
+echo "Creating include/apreq_config.h ..."
 ${AUTOHEADER:-autoheader}
 
 echo "Creating configure ..."

@@ -1,5 +1,5 @@
 dnl -------------------------------------------------------- -*- autoconf -*-
-dnl Copyright 2002-2005 The Apache Software Foundation or its licensors, as
+dnl Copyright 2002-2006 The Apache Software Foundation or its licensors, as
 dnl applicable.
 dnl
 dnl Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,8 +68,8 @@ dnl If apu_found is "yes" or "reconfig", then the caller should use the
 dnl value of apu_config to fetch any necessary build/link information.
 dnl
 
-AC_DEFUN([APR_FIND_APU], [
-  apu_found="no"
+AC_DEFUN([APR_FIND_APREQ], [
+  apreq_found="no"
 
   if test "$target_os" = "os2-emx"; then
     # Scripts don't pass test -x on OS/2
@@ -80,68 +80,68 @@ AC_DEFUN([APR_FIND_APU], [
 
   ifelse([$4], [],
   [
-    ifdef(AC_WARNING,([$0: missing argument 4 (acceptable-majors): Defaulting to APU 0.x then APU 1.x]))
+    ifdef(AC_WARNING,([$0: missing argument 4 (acceptable-majors): Defaulting to APREQ 0.x then APREQ 1.x]))
     acceptable_majors="0 1"
   ], [acceptable_majors="$4"])
 
-  apu_temp_acceptable_apu_config=""
-  for apu_temp_major in $acceptable_majors
+  apreq_temp_acceptable_apreq_config=""
+  for apreq_temp_major in $acceptable_majors
   do
-    case $apu_temp_major in
+    case $apreq_temp_major in
       0)
-      apu_temp_acceptable_apu_config="$apu_temp_acceptable_apu_config apu-config"
+      apreq_temp_acceptable_apreq_config="$apreq_temp_acceptable_apreq_config apreq-config"
       ;;
       *)
-      apu_temp_acceptable_apu_config="$apu_temp_acceptable_apu_config apu-$apu_temp_major-config"
+      apreq_temp_acceptable_apreq_config="$apreq_temp_acceptable_apreq_config apreq$apreq_temp_major-config"
       ;;
     esac
   done
 
-  AC_MSG_CHECKING(for APR-util)
-  AC_ARG_WITH(apr-util,
-  [  --with-apr-util=PATH    prefix for installed APU, path to APU build tree,
-                          or the full path to apu-config],
+  AC_MSG_CHECKING(for APREQ)
+  AC_ARG_WITH(apreq,
+  [  --with-apreq=PATH    prefix for installed APREQ, path to APREQ build tree,
+                          or the full path to apreq-config],
   [
     if test "$withval" = "no" || test "$withval" = "yes"; then
-      AC_MSG_ERROR([--with-apr-util requires a directory or file to be provided])
+      AC_MSG_ERROR([--with-apreq requires a directory or file to be provided])
     fi
 
-    for apu_temp_apu_config_file in $apu_temp_acceptable_apu_config
+    for apreq_temp_apreq_config_file in $apreq_temp_acceptable_apreq_config
     do
       for lookdir in "$withval/bin" "$withval"
       do
-        if $TEST_X "$lookdir/$apu_temp_apu_config_file"; then
-          apu_found="yes"
-          apu_config="$lookdir/$apu_temp_apu_config_file"
+        if $TEST_X "$lookdir/$apreq_temp_apreq_config_file"; then
+          apreq_found="yes"
+          apreq_config="$lookdir/$apreq_temp_apreq_config_file"
           break 2
         fi
       done
     done
 
-    if test "$apu_found" != "yes" && $TEST_X "$withval" && $withval --help > /dev/null 2>&1 ; then
-      apu_found="yes"
-      apu_config="$withval"
+    if test "$apreq_found" != "yes" && $TEST_X "$withval" && $withval --help > /dev/null 2>&1 ; then
+      apreq_found="yes"
+      apreq_config="$withval"
     fi
 
-    dnl if --with-apr-util is used, it is a fatal error for its argument
+    dnl if --with-apreq is used, it is a fatal error for its argument
     dnl to be invalid
-    if test "$apu_found" != "yes"; then
-      AC_MSG_ERROR([the --with-apr-util parameter is incorrect. It must specify an install prefix, a build directory, or an apu-config file.])
+    if test "$apreq_found" != "yes"; then
+      AC_MSG_ERROR([the --with-apreq parameter is incorrect. It must specify an install prefix, a build directory, or an apreq-config file.])
     fi
   ],[
     if test -n "$3" && test "$3" = "1"; then
-      for apu_temp_apu_config_file in $apu_temp_acceptable_apu_config
+      for apreq_temp_apreq_config_file in $apreq_temp_acceptable_apreq_config
       do
-        if $apu_temp_apu_config_file --help > /dev/null 2>&1 ; then
-          apu_found="yes"
-          apu_config="$apu_temp_apu_config_file"
+        if $apreq_temp_apreq_config_file --help > /dev/null 2>&1 ; then
+          apreq_found="yes"
+          apreq_config="$apreq_temp_apreq_config_file"
           break
         else
           dnl look in some standard places (apparently not in builtin/default)
           for lookdir in /usr /usr/local /usr/local/apr /opt/apr /usr/local/apache2 ; do
-            if $TEST_X "$lookdir/bin/$apu_temp_apu_config_file"; then
-              apu_found="yes"
-              apu_config="$lookdir/bin/$apu_temp_apu_config_file"
+            if $TEST_X "$lookdir/bin/$apreq_temp_apreq_config_file"; then
+              apreq_found="yes"
+              apreq_config="$lookdir/bin/$apreq_temp_apreq_config_file"
               break 2
             fi
           done
@@ -149,28 +149,28 @@ AC_DEFUN([APR_FIND_APU], [
       done
     fi
     dnl if we have not found anything yet and have bundled source, use that
-    if test "$apu_found" = "no" && test -d "$1"; then
-      apu_temp_abs_srcdir="`cd $1 && pwd`"
-      apu_found="reconfig"
-      apu_bundled_major="`sed -n '/#define.*APU_MAJOR_VERSION/s/^[^0-9]*\([0-9]*\).*$/\1/p' \"$1/include/apu_version.h\"`"
-      case $apu_bundled_major in
+    if test "$apreq_found" = "no" && test -d "$1"; then
+      apreq_temp_abs_srcdir="`cd $1 && pwd`"
+      apreq_found="reconfig"
+      apreq_bundled_major="`sed -n '/#define.*APREQ_MAJOR_VERSION/s/^[^0-9]*\([0-9]*\).*$/\1/p' \"$1/include/apreq_version.h\"`"
+      case $apreq_bundled_major in
         "")
-          AC_MSG_ERROR([failed to find major version of bundled APU])
+          AC_MSG_ERROR([failed to find major version of bundled APREQ])
         ;;
         0)
-          apu_temp_apu_config_file="apu-config"
+          apreq_temp_apreq_config_file="apreq-config"
         ;;
         *)
-          apu_temp_apu_config_file="apu-$apu_bundled_major-config"
+          apreq_temp_apreq_config_file="apreq$apreq_bundled_major-config"
         ;;
       esac
       if test -n "$2"; then
-        apu_config="$2/$apu_temp_apu_config_file"
+        apreq_config="$2/$apreq_temp_apreq_config_file"
       else
-        apu_config="$1/$apu_temp_apu_config_file"
+        apreq_config="$1/$apreq_temp_apreq_config_file"
       fi
     fi
   ])
 
-  AC_MSG_RESULT($apu_found)
+  AC_MSG_RESULT($apreq_found)
 ])

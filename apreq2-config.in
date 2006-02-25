@@ -101,7 +101,7 @@ fi
 if test "$location" = "installed"; then
     LA_FILE="$libdir/lib${APREQ_LIBNAME}.la"
 else
-    LA_FILE="$thisdir/library/lib${APREQ_LIBNAME}.la"
+    LA_FILE="$thisdir/lib${APREQ_LIBNAME}.la"
 fi
 
 flags=""
