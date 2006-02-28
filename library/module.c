@@ -48,5 +48,17 @@ APREQ_DECLARE(apr_table_t *)apreq_params(apreq_handle_t *req, apr_pool_t *p)
 
 }
 
+APREQ_DECLARE(apr_table_t *)apreq_cookies(apreq_handle_t *req, apr_pool_t *p)
+{
+    const apr_table_t *jar;
+    apreq_jar(req, &jar);
+
+    if (jar != NULL)
+        return apr_table_copy(p, jar);
+    else
+        return NULL;
+
+}
+
 
 /** @} */
