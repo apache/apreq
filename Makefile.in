@@ -31,6 +31,9 @@ TARGETS = $(TARGET_LIB) apreq.exp
 @INCLUDE_RULES@
 @INCLUDE_OUTPUTS@
 
+APREQ_MKEXPORT = $(AWK) -f @abs_srcdir@/build/make_exports.awk
+APREQ_MKVAREXPORT = $(AWK) -f @abs_srcdir@/build/make_var_export.awk
+
 LINK = $(LIBTOOL) $(LTFLAGS) --mode=link $(LT_LDFLAGS) $(COMPILE) -version-info $(APREQ_LIBTOOL_VERSION) $(ALL_LDFLAGS) -o $@
 
 CLEAN_SUBDIRS = test
@@ -74,10 +77,10 @@ $(TARGET_LIB): $(OBJECTS)
 	$(LINK) @lib_target@ $(ALL_LIBS) $(APREQ_LDFLAGS) $(APREQ_LIBS)
 
 exports.c: $(HEADERS)
-	$(APR_MKEXPORT) $(HEADERS) > $@
+	$(APREQ_MKEXPORT) $(HEADERS) > $@
 
 export_vars.c: $(HEADERS)
-	$(APR_MKVAREXPORT) $(HEADERS) > $@
+	$(APREQ_MKVAREXPORT) $(HEADERS) > $@
 
 apreq.exp: exports.c export_vars.c
 	@echo "#! lib@APREQ_LIBNAME@.so" > $@
