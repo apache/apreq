@@ -25,7 +25,7 @@
 #include "http_request.h"
 #include "apr_strings.h"
 
-#include "apreq_module_apache2.h"
+#include "mod_apreq2.h"
 #include "apreq_private_apache2.h"
 #include "apreq_error.h"
 
