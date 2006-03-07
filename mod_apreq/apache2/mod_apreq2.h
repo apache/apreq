@@ -14,8 +14,8 @@
 **  limitations under the License.
 */
 
-#ifndef APREQ_APACHE2_H
-#define APREQ_APACHE2_H
+#ifndef MOD_APREQ2_H
+#define MOD_APREQ2_H
 
 #include "apreq_module.h"
 #include <httpd.h>
@@ -48,7 +48,7 @@
  *
  * @code
  *
- *     LoadModule apreq_module    modules/mod_apreq2.so
+ *     LoadModule apreq2_module    modules/mod_apreq2.so
  *
  * @endcode
  *
@@ -157,7 +157,7 @@ APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r);
  * using this apache2 module
  * @see APREQ_MODULE
  */
-#define APREQ_APACHE2_MMN 20051231
+#define APREQ_APACHE2_MMN 20060307
 
 /** @} */
 
