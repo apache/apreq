@@ -67,6 +67,7 @@ docs:	pod2html build/doxygen.conf apr_tags docs/html/feather.gif
 docs_install: docs
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
+	cp *.html docs/html
 	cp -R docs $(DESTDIR)$(pkgdatadir)
 
 %.html: $(POD_DIR)/%.pm Makefile.am 

@@ -4,6 +4,10 @@
 
 @section v2_08 Changes with libapreq2-2.08 (under development)
 
+- Perl Glue docs [Philip M. Gollucci]
+  Fix the 'docs_install' make target to actually install
+  the docs for the perl glue.
+
 - Perl Glue Build [Philip M. Gollucci]
   Regenerate glue/perl/xsbuilder/ppport.h to fix perl 5.8.8+ on some
   plaforms.  
