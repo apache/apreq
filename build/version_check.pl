@@ -197,7 +197,7 @@ EOT
             "Build system (core C API) prerequisites\n", \%build;
         print "\n", "=" x 50, "\n";
         print_prereqs
-            "Perl glue (Apache::Request) prerequisites\n", \%perl_glue;
+            "Perl glue (Apache2::Request) prerequisites\n", \%perl_glue;
         print "\n", "=" x 50, "\n";
         print_prereqs
             "Additional prerequisites for apreq subversion builds\n", \%svn;
