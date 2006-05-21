@@ -38,6 +38,11 @@ sub mm_version {
     $ExtUtils::MakeMaker::VERSION;
 }
 
+sub ta_version {
+    require Archive::Tar;
+    $Archive::Tar::VERSION;
+}
+
 sub mp2_version {
     eval {
         require mod_perl2;
@@ -74,6 +79,12 @@ my %perl_glue = (
            "Test::More" => { version => "0.47",    test => \&tm_version },
                 );
 
+$perl_glue{'Archive::Tar'} = { 
+                               version => "1.29", 
+                               test    => \&ta_version,
+                               comment => 'Win32 only',
+                             };
+                
 my %test = (
             "Test::Inline" => { version => "0.16", test => \&ti_version },
            );
