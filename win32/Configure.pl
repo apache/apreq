@@ -12,7 +12,7 @@ use Archive::Tar;
 use File::Path;
 use LWP::Simple;
 my ($apache, $debug, $help, $no_perl, $perl, $with_perl);
-my $VERSION = '2.03-dev';
+my $VERSION = '2.08';
 my $result = GetOptions( 'with-apache2=s' => \$apache,
 			 'debug' => \$debug,
 			 'help' => \$help,
