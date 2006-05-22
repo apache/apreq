@@ -8,7 +8,7 @@ test_cgi_LDFLAGS =  `@APREQ_CONFIG@ --link-libtool`
 
 run_tests : t/TEST
 	-cp -f test_cgi t/cgi-bin
-	-cp -Rp .libs t
+	-cp -Rp .libs t/cgi-bin
 	MAKE=$(MAKE) @PERL@ t/TEST
 
 t/TEST : Makefile.am t/TEST.PL
