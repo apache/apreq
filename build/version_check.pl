@@ -77,7 +77,7 @@ my %perl_glue = (
              mod_perl2  => { version => "1.999022",test => \&mp2_version },
   "ExtUtils::MakeMaker" => { version => "6.15",    test => \&mm_version },
            "Test::More" => { version => "0.47",    test => \&tm_version },
-         "Archive::Tar" => { version => "1.29",    test => \&ta_version,
+         "Archive::Tar" => { version => "0.00",    test => \&ta_version,
                              comment => 'Win32 only',                   },
                 );
                 
