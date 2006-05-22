@@ -4,6 +4,10 @@
 
 @section v2_08 Changes with libapreq2-2.08 (under development)
 
+- Build [Randy Kobes]
+  Fix the location of apxs and the names of the apr and aprutil
+  libraries on Win32 to enable building against Apache/2.2.
+
 - Perl Glue docs [Philip M. Gollucci]
   Fix the 'docs_install' make target to actually install
   the docs for the perl glue.

@@ -11,9 +11,10 @@ use File::Basename;
 use Archive::Tar;
 use File::Path;
 use LWP::Simple;
-my ($apache, $debug, $help, $no_perl, $perl, $with_perl);
+my ($apache, $apxs, $debug, $help, $no_perl, $perl, $with_perl);
 my $VERSION = '2.08';
 my $result = GetOptions( 'with-apache2=s' => \$apache,
+			 'with-apache2-apxs=s' => \$apxs,
 			 'debug' => \$debug,
 			 'help' => \$help,
                          'with-perl=s' => \$perl,
@@ -41,15 +42,15 @@ my %apr_libs;
 my %map = (apr => 'libapr.lib', apu => 'libaprutil.lib');
 my $devnull = devnull();
 foreach (qw(apr apu)) {
-    my $cfg = catfile $apache, 'bin', "$_.bat";
-    $cfg =~ s!\\!/!g;
+    my $cfg = catfile $apache, 'bin', "$_-config.bat";
     my $lib;
     eval {$lib = qx{"$cfg" --$_-lib-file 2>$devnull;}};
     if ($@ or not $lib or $lib =~ /usage/i) {
         $apr_libs{$_} = catfile $apache, 'lib', $map{$_};
     }
     else {
-        $apr_libs{$_} = chomp $lib;
+        chomp $lib;
+        $apr_libs{$_} = $lib;
     }
 }
 
@@ -81,10 +82,12 @@ END
 
 print $make $_ while (<DATA>);
 
-my $apxs_trial = catfile $apache, 'bin', 'apxs.bat';
-my $apxs = (-e $apxs_trial) ? $apxs_trial : which('apxs');
-unless ($apxs) {
-    $apxs = fetch_apxs() ? which('apxs') : '';
+unless (-x $apxs) {
+    my $apxs_trial = catfile $apache, 'bin', 'apxs.bat';
+    $apxs = (-e $apxs_trial) ? $apxs_trial : which('apxs');
+    unless ($apxs) {
+        $apxs = fetch_apxs() ? which('apxs') : '';
+    }
 }
 
 my $test = << 'END';

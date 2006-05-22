@@ -55,6 +55,7 @@ $args{"with-perl-opts"} = "@ARGV" if @ARGV;
 
 if (WIN32) {
     require File::Basename;
+    require File::Spec;
     unless ($args{'with-apache2'}) {
         my @candidates = qw(with-apache2-apxs with-apache2-httpd
                             with-apr-config with-apu-config);
@@ -75,6 +76,10 @@ if (WIN32) {
                 $args{'with-apache2'} = $mp_ap_prefix;
             }
         }
+    }
+    unless (defined $args{'with-apache2-apxs'}) {
+      $args{'with-apache2-apxs'} =
+	  File::Spec->catfile($args{'with-apache2'}, 'bin', 'apxs.bat');
     }
     my @opts = map{qq/--$_="$args{$_}"/} keys %args;
     push @opts, (split ' ', $opts);
