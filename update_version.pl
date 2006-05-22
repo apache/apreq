@@ -38,3 +38,10 @@ my $pattern1 = "(?<=AC_INIT\\(Apache HTTP Server Request Library, )(\\S+)(?=,)";
 my $pattern2 = "(?<=AM_INIT_AUTOMAKE\\(libapreq2, )(\\S+)(?=\\))";
 
 system "perl -i -ple 's/$pattern1/$version/ or s/$pattern2/$version/' configure.ac";
+
+#
+# win32/Configure.pl
+# my $VERSION = '[^']+'
+my $pattern3 = qr/my \$VERSION = "2.08"/;
+my $replace = "my \\\$VERSION = \"$version\"";
+system "perl -i -ple 's/$pattern3/$replace/' win32/Configure.pl";
