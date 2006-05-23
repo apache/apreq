@@ -8,9 +8,7 @@ use Cwd;
 require Win32;
 use ExtUtils::MakeMaker;
 use File::Basename;
-use Archive::Tar;
 use File::Path;
-use LWP::Simple;
 my ($apache, $apxs, $debug, $help, $no_perl, $perl, $with_perl);
 my $VERSION = "2.08";
 my $result = GetOptions( 'with-apache2=s' => \$apache,
@@ -345,6 +343,15 @@ EOT
 }
 
 sub fetch_apxs {
+    eval {require Archive::Tar;};
+    if ($@) {
+        die "Need Archive::Tar installed in order to install apxs.";
+    }
+    eval {require LWP::Simple; import LWP::Simple qw(getstore is_success)};
+    if ($@) {
+        die "Need LWP::Simple installed in order to install apxs.";
+    }
+
     print << 'END';
 
 I could not find an apxs utility on your system, which is
