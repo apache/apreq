@@ -21,7 +21,7 @@ test_clean : cmodules_clean
 	-rm -rf t/htdocs t/logs t/modules t/TEST t/core t/core.* t/cgi-bin/test_cgi t/cgi-bin/.libs t/.libs t/conf/extra.conf t/conf/ssl/ca t/conf/ssl/httpd-passphrase.pl
 
 cmodules_clean:
-	-cd c-modules && $(MAKE) clean
-	-rm c-modules/Makefile c-modules/*/Makefile c-modules/apache_httpd_test.h
+	-cd t/c-modules && $(MAKE) clean
+	-rm t/c-modules/Makefile t/c-modules/*/Makefile t/c-modules/apache_httpd_test.h
 
 clean-local: test_clean
