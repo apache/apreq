@@ -372,7 +372,7 @@ END
         return;
     }
     print " done!\n";
-    
+
     my $arc = Archive::Tar->new($file, 1);
     $arc->extract($arc->list_files());
     my $dir = 'apxs';
@@ -385,7 +385,18 @@ END
         warn "chdir to $dir failed: $!";
         return;
     };
-    my @args = ($^X, 'Configure.pl', "-with-apache2=$apache");
+
+    my $prog;
+    for my $trial(qw(Apache.exe httpd.exe)) {
+        next unless -e catfile($apache, 'bin', $trial);
+        $prog = $trial;
+        last;
+    }
+    die "Could not determine the Apache2 binary name" unless $prog;
+
+    my @args = ($^X, 'Configure.pl',
+                "-with-apache2=$apache",
+                "--with-apache-prog=$prog");
     print "@args\n\n";
     system(@args) == 0 or do {
          warn "system @args failed: $?";
