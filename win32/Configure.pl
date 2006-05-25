@@ -39,16 +39,20 @@ generate_tests($apreq_home, \@tests);
 my %apr_libs;
 my %map = (apr => 'libapr.lib', apu => 'libaprutil.lib');
 my $devnull = devnull();
-foreach (qw(apr apu)) {
-    my $cfg = catfile $apache, 'bin', "$_-config.bat";
+
+my $prog = apache_prog_name($apache);
+foreach my $what (qw(apr apu)) {
+    my $ap = ($prog eq 'httpd.exe') ?
+        "$what-1-config.bat" : "$what-config.bat";
+    my $cfg = catfile $apache, 'bin', $ap;
     my $lib;
-    eval {$lib = qx{"$cfg" --$_-lib-file 2>$devnull;}};
+    eval {$lib = qx{"$cfg" --$what-lib-file 2>$devnull;}};
     if ($@ or not $lib or $lib =~ /usage/i) {
-        $apr_libs{$_} = catfile $apache, 'lib', $map{$_};
+        $apr_libs{$what} = catfile $apache, 'lib', $map{$what};
     }
     else {
         chomp $lib;
-        $apr_libs{$_} = $lib;
+        $apr_libs{$what} = $lib;
     }
 }
 
@@ -258,7 +262,8 @@ sub check {
         unless -e qq{$apache/lib/libhttpd.lib};
     die qq{No httpd header found under $apache/include}
         unless -e qq{$apache/include/httpd.h};
-    my $vers = qx{"$apache/bin/Apache.exe" -v};
+    my $prog = apache_prog_name($apache);
+    my $vers = qx{$prog -v};
     die qq{"$apache" does not appear to be version 2.x}
         unless $vers =~ m!Apache/2.\d!;
     return 1;
@@ -386,14 +391,7 @@ END
         return;
     };
 
-    my $prog;
-    for my $trial(qw(Apache.exe httpd.exe)) {
-        next unless -e catfile($apache, 'bin', $trial);
-        $prog = $trial;
-        last;
-    }
-    die "Could not determine the Apache2 binary name" unless $prog;
-
+    my $prog = apache_prog_name($apache);
     my @args = ($^X, 'Configure.pl',
                 "-with-apache2=$apache",
                 "--with-apache-prog=$prog");
@@ -407,6 +405,18 @@ END
     print "unlink $file\n";
     unlink $file or warn "unlink of $file failed: $!";
     return 1;
+}
+
+sub apache_prog_name {
+    my $apache = shift;
+    my $prog;
+    for my $trial(qw(Apache.exe httpd.exe)) {
+        next unless -e catfile($apache, 'bin', $trial);
+        $prog = $trial;
+        last;
+    }
+    die "Could not determine the Apache2 binary name" unless $prog;
+    return $prog;
 }
 
 __DATA__
