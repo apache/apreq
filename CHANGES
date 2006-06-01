@@ -4,6 +4,9 @@
 
 @section v2_08 Changes with libapreq2-2.08 (under development)
 
+- Perl Glue
+  Fix "value computed not used" gcc 4.1.x compile errors
+  
 - Build [Randy Kobes]
   Fix the location of apxs and the names of the apr and aprutil
   libraries on Win32 to enable building against Apache/2.2.

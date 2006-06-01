@@ -201,7 +201,7 @@ upload_slurp(param, buffer)
         Perl_croak(aTHX_ "$param->upload_slurp($data): can't get upload length");
 
     RETVAL = len;
-    SvUPGRADE(buffer, SVt_PV);
+    (void)SvUPGRADE(buffer, SVt_PV);
     data = SvGROW(buffer, RETVAL + 1);
     data[RETVAL] = 0;
     SvCUR_set(buffer, RETVAL);

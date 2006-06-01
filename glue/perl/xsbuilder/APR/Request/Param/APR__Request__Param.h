@@ -73,7 +73,7 @@ MP_STATIC XS(apreq_xs_brigade_read)
         want = SvIV(ST(2));
     case 2:
         sv = ST(1);
-        SvUPGRADE(sv, SVt_PV);
+        (void)SvUPGRADE(sv, SVt_PV);
         if (SvROK(ST(0))) {
             IV iv;
             obj = apreq_xs_find_bb_obj(aTHX_ ST(0));
