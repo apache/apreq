@@ -4,6 +4,12 @@
 
 @section v2_08 Changes with libapreq2-2.08 (under development)
 
+- Build [Philip M. Gollucci, Bojan Smojver, joes]
+  add -fno-strict-aliasing to all compiles on all systems
+  https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=193740
+  This fixes an infinite look split_on_bdry() of library/parser_multipart.c
+  particularly on linux/gcc 4.x platforms.
+
 - Perl Glue
   Fix "value computed not used" gcc 4.1.x compile errors
   
