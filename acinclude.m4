@@ -188,6 +188,7 @@ AC_DEFUN([AC_APREQ], [
                       ])
                 # -Wdeclaration-after-statement is only supported on gcc 3.4+
         fi
+        APR_ADDTO([CFLAGS], "-fno-strict-aliasing")
 
         APR_ADDTO([CPPFLAGS], "`$APR_CONFIG --cppflags`")
 
