@@ -36,6 +36,8 @@ CURRENT VOTES:
 
 TODO:
 
+    - Get -libmodperl to work like it does in mod_perl land.
+
     - Get static builds working again.
 
     - Implement (some of) RFC 2184 in the multipart parser.
