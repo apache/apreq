@@ -25,6 +25,7 @@ Makefile$
 # perl glue
 glue/perl/blib
 glue/perl/xs\b
+glue/perl/pm_to_blib
 
 #Apache Test stuff
 t/TEST$
