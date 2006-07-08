@@ -7,6 +7,7 @@ noinst_PROGRAMS = test_cgi
 test_cgi_LDFLAGS =  `@APREQ_CONFIG@ --link-libtool`
 
 run_tests : t/TEST
+	if [ ! -d t/cgi-bin ]; then mkdir t/cgi-bin; fi
 	-cp -f test_cgi t/cgi-bin
 	-cp -Rp .libs t/cgi-bin
 	MAKE=$(MAKE) @PERL@ t/TEST
