@@ -27,7 +27,7 @@ FreeBSD note: use gmake!
 
 4. Give the mailing list participants 48-72 hours to comment and
    vote on the candidate.  If there is a "majority consensus" 
-   (three +1 and more +1s than -1s) among the committers, the RM 
+   (three +1 and more +1s than -1s) among the httpd pmc members, the RM 
    may proceed with the release.
 
 
@@ -89,10 +89,12 @@ FreeBSD note: use gmake!
    Then update the website's copy using "cvs co KEYS" in the 
    /www/www.apache.org/dist/httpd/ directory.
 
+8a. Verify or get soeone to Verify that you have CPAN karma.
+    Note, discuss getting a group kind of like AMPL in mod_perl land.
+    (Currently, joes is active and has karma)
 
-8. Upload the package to CPAN. Doublecheck that the md5 checksum
+8b. Upload the package to CPAN. Doublecheck that the md5 checksum
    received from PAUSE is correct.
-
 
 9. Wait ~12-24 hours for the ASF mirrors to pick up the new package, then
    update the apreq homepage to list the new release in the News section
