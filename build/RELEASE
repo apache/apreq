@@ -1,5 +1,6 @@
 Instructions for the apreq Release Manager (RM)
 
+FreeBSD note: use gmake!
 
 1. Prep the package for CPAN by running:
 
