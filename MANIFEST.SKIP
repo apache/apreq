@@ -39,3 +39,6 @@ t/core*
 module/apache$
 module/apache/
 
+# docs
+docs/html/_2.*
+
