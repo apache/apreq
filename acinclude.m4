@@ -37,6 +37,8 @@ AC_DEFUN([AC_APREQ], [
                 AC_HELP_STRING([--with-expat],[specify expat location]),
                 [EXPAT_DIR=$withval],[EXPAT_DIR=""])
 
+        OS=`$PERL -e 'print $^O'`
+
         prereq_check="$PERL $PERL_OPTS build/version_check.pl"
 
         if test -n "$APACHE2_SRC"; then
@@ -215,6 +217,15 @@ AC_DEFUN([AC_APREQ], [
 
         echo "lib$APREQ_LIBNAME Version: $APREQ_DOTTED_VERSION"
 
+        ## Apparently FC5 doesn't like bsdtar
+        ## which is the default /usr/bin/tar on FreeBSD
+        ## by default /usr/ports/archivers/gtar installs here
+        if test "x$OS" = 'xfreebsd'; then
+          TAR='/usr/local/bin/gtar'
+        else
+          TAR='tar'
+        fi
+     
         AC_SUBST(APREQ_CONFIG)
         AC_SUBST(APREQ_LIBNAME)
         AC_SUBST(APREQ_LIBTOOL_VERSION)
@@ -240,6 +251,7 @@ AC_DEFUN([AC_APREQ], [
         AC_SUBST(PERL)
         AC_SUBST(PERL_OPTS)
         AC_SUBST(MM_OPTS)
+        AC_SUBST(TAR)
 ])
 
 dnl APR_CONFIG_NICE(filename)

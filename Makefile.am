@@ -35,18 +35,22 @@ else
 PERL_TEST = 
 endif
 
+TAR=@TAR@
+
 release: reconfig docs_clean docs distdir
 	@PERL@ build/version_check.pl > $(distdir)/PREREQUISITES
 	@PERL@ build/version_check.pl -version=@PACKAGE_VERSION@ > $(distdir)/META.yml
 	echo MANIFEST > $(distdir)/MANIFEST
 	@cd $(distdir); @PERL@ -M$(EUM) -e "$(EUM)::mkmanifest"
-	@PERL@ -ple '$$_="$(distdir)/$$_"' $(distdir)/MANIFEST | tar -czf $(distdir).tar.gz -T -
+	if [ ! -x $(TAR) ]; then echo "$(TAR) is not executable."; fi
+	@PERL@ -ple '$$_="$(distdir)/$$_"' $(distdir)/MANIFEST | $(TAR) -czf $(distdir).tar.gz -T -
 	rm -rf $(distdir)
 	@echo "Made $(distdir).tar.gz"
 
 release_test:
 	-rm -rf $(distdir)
-	tar xzvf $(distdir).tar.gz
+	if [ ! -x $(TAR) ]; then echo "$(TAR) is not executable."; fi
+	$(TAR) xzvf $(distdir).tar.gz
 	@cd $(distdir); @PERL@ -M$(EUM) -e "die 'Bogus MANIFEST' if $(EUM)::manicheck"
 	@cd $(distdir); @PERL@ Makefile.PL -apxs @APACHE2_APXS@ && $(MAKE) test
 	rm -rf $(distdir)
