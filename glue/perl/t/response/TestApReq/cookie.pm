@@ -3,9 +3,8 @@ package TestApReq::cookie;
 use strict;
 use warnings FATAL => 'all';
 
-use Apache2::RequestIO;
-use Apache2::RequestRec;
-use Apache2::Connection;
+use Apache2::RequestIO ();
+use Apache2::RequestRec ();
 
 use Apache2::Cookie ();
 use Apache2::Request ();
