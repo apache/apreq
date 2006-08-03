@@ -4,6 +4,12 @@
 
 @section v2_08 Changes with libapreq2-2.08 (under development)
 
+- Perl API [Randy Kobes]
+  add APR_FILE_NOCLEANUP | APR_SHARELOCK to flags passed to
+  apreq_file_mktemp() on Win32 in library/util.c, in order to 
+  clean up occasional stray temp files left behind in the 
+  Perl upload test (reported by Steve Hay)
+
 - Build [Philip M. Gollucci, Bojan Smojver, joes]
   add -fno-strict-aliasing to all compiles on all systems
   https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=193740
