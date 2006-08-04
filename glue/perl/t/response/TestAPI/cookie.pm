@@ -52,7 +52,7 @@ sub handler {
     ok t_cmp $_->is_tainted, 0, "not tainted: $_" for values %$jar;
 
     eval { $jar->cookie_class("APR::Request::Param") };
-    ok t_cmp qr/^Usage/, $@, "Bad class name";
+    ok t_cmp $@, qr/^Usage/, "Bad class name";
 
 
     ok t_cmp $jar->cookie_class(), "APR::Request::Cookie", "old class";
