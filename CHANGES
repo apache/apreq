@@ -2,7 +2,7 @@
 //! brief List of major changes.
 
 
-@section v2_08 Changes with libapreq2-2.08 (under development)
+@section v2_08 Changes with libapreq2-2.08 (released August 8, 2006)
 
 - Perl API [Randy Kobes]
   add APR_FILE_NOCLEANUP | APR_SHARELOCK to flags passed to
