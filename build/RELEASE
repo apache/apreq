@@ -6,7 +6,7 @@ FreeBSD note: use gmake!
 
         % make release
 
-   This will generate a libapreq2-2.XX.tar.gz candidate in the 
+   This will generate a libapreq2-2.09.tar.gz candidate in the 
    current directory.   You should keep this source tree
    intact to tag the final release.
 
@@ -35,14 +35,14 @@ FreeBSD note: use gmake!
 
        /** @page STATUS
 
-       2.XX released on <today's date>.
+       2.09 released on <today's date>.
 
 
    Also add the release date to the top @section in CHANGES:
 
        /** @page CHANGES
 
-       @section v2_XX Changes with libapreq2-2.XX (released ...).
+       @section v2_09 Changes with libapreq2-2.09 (released ...).
 
    And #undef the APREQ_VERSION_IS_DEV macro definition
    in include/apreq_version.h:
@@ -55,9 +55,9 @@ FreeBSD note: use gmake!
    Now commit the changes and tag the tree (tr/0-9a-zA-Z/_/c in the
    version number)
 
-       % svn commit -m "2.XX released." STATUS CHANGES include/apreq_version.h
+       % svn commit -m "2.09 released." STATUS CHANGES include/apreq_version.h
        % svn cp https://svn.apache.org/repos/asf/httpd/apreq/trunk \
-                https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_XX
+                https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_09
 
 6. Regenerate the release 
 
@@ -65,23 +65,23 @@ FreeBSD note: use gmake!
 
    Then test and sign it via gpg:
 
-        % gpg --detach-sign --armor libapreq2-2.XX.tar.gz
+        % gpg --detach-sign --armor libapreq2-2.09.tar.gz
 
    or pgp:
 
-        % pgp -sba libapreq2-2.XX.tar.gz
+        % pgp -sba libapreq2-2.09.tar.gz
 
 
 7. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
-        % scp libapreq2-2.XX.tar.gz* \
+        % scp libapreq2-2.09.tar.gz* \
           <username>@people.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
    Ask another developer to confirm the uploaded signature is ok.
 
-        % gpg --verify libapreq2-2.XX.tar.gz.asc
-        % pgp libapreq2-2.XX.tar.gz.asc
+        % gpg --verify libapreq2-2.09.tar.gz.asc
+        % pgp libapreq2-2.09.tar.gz.asc
 
    Check that your public key is among those listed in the
    /www/www.apache.org/dist/httpd/KEYS file.   If not, you
@@ -103,13 +103,26 @@ FreeBSD note: use gmake!
    download.html TO POINT AT THE NEW RELEASE PACKAGE!
 
 
-10. Mail the announcement from your cvs.apache.org account by piping the 
+10. Mail the announcement from your people.apache.org account by piping the 
     "CPAN Upload" email acknowledgement (from PAUSE) through build/announcement.pl:
 
-    % build/announcement.pl $user@apache.org < CPAN_ack | ssh user@people.apache.org "sendmail -oi -t -odq"
+    % build/announcement.pl $USER@apache.org < CPAN_ack | ssh $USER@people.apache.org "sendmail -oi -t -odq"
 
 
 11. Update CHANGES and STATUS to reflect the start of a new develoment cycle,
     and run this to update the package version numbers throughout the tree:
 
-    % build/update_version.pl $VERSION+1
+    % build/update_version.pl 2.10
+
+12. 
+   And #define the APREQ_VERSION_IS_DEV macro definition
+   in include/apreq_version.h:
+
+      /**
+        *  This symbol is defined for internal, "development" copies of libapreq.
+        *  This symbol will be \#undef'd for releases.
+        */
+      #define APREQ_IS_DEV_VERSION
+
+13. COMMIT the changes in steps 11 and 12.
+
