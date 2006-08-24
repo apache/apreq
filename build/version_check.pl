@@ -47,7 +47,7 @@ sub mp2_version {
 
 my %svn = (
                 libtool => { version => "1.4.3",   test => \&gnu_version },
-               autoconf => { version => "2.53",    test => \&gnu_version },
+               autoconf => { version => "2.53",    test => \&gnu_version, broken_version => '2.60' },
                automake => { version => "1.6.1",   test => \&gnu_version },
                 doxygen => { version => "1.2",     test => \&gnu_version, broken_version => '1.4.5' },
                    perl => { version => "5.6.1",   test => \&gnu_version },
