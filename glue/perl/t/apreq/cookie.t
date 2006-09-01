@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 
-plan tests => 13, need_lwp;
+plan tests => 1, need_min_module_version('Apache::Test' => 1.29) || need_lwp;
 
 my $module = "TestApReq::cookie";
 my $location = Apache::TestRequest::module2url($module);
