@@ -88,6 +88,14 @@ else {
         die "Can't find package version";
     $version = $1;
 
+		## Code around an autoconf 2.60 bug
+		## http://lists.gnu.org/archive/html/bug-autoconf/2006-06/msg00127.html
+		## $ grep @PACKAGE_VERSION config.status-2.59 config.status-2.60 
+		## config.status-2.59:s,@PACKAGE_VERSION@,2.09,;t t
+		## config.status-2.60:s,@PACKAGE_VERSION@,|#_!!_#|2.09,g
+		foreach ($apache_includes, $apreq_libname, $version) {
+		    s/\|#_!!_#\|//g;
+		}
 }
 
 my $apreq_libs = WIN32 ?
