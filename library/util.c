@@ -692,6 +692,10 @@ APREQ_DECLARE(char *) apreq_join(apr_pool_t *p,
     return rv;
 }
 
+/*
+ * This is intentionally not apr_file_writev()
+ * note, this is iterative and not recursive
+ */
 APR_INLINE
 static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v,
                                   int *nelts, apr_size_t *bytes_written)
@@ -713,7 +717,29 @@ static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v,
 
         /* see how far we've come */
         n = 0;
+
+#ifdef SOLARIS2
+# ifdef __GNUC__
+        /*
+         * iovec.iov_len is a long here
+         * which causes a comparison between 
+         * signed(long) and unsigned(apr_size_t)
+         *
+         */
+        while (n < *nelts && len >= (apr_size_t)v[n].iov_len)
+# else
+          /*
+           * Sun C however defines this as size_t which is unsigned
+           * 
+           */
         while (n < *nelts && len >= v[n].iov_len)
+#else
+          /*
+           * Hopefully everything else does this
+           * (this was the default for years)
+           */
+        while (n < *nelts && len >= v[n].iov_len)
+#endif
             len -= v[n++].iov_len;
 
         if (n == *nelts) {
