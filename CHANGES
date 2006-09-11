@@ -4,6 +4,10 @@
 
 @section v2_09 Changes with libapreq2-2.09 (under developement)
 
+- C API [Philip M. Gollucci]
+  Fix comparison signed vs unsigned comparison
+  in apreq_fwritev() on SunOS/gcc where iovec.iov_len is a long.
+
 - Build [Philip M. Gollucci]
   SunOS (Solaris)
   fix duplicate link error to libexpat.so -- by using the one from httpd
