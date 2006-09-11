@@ -733,6 +733,7 @@ static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v,
            * 
            */
         while (n < *nelts && len >= v[n].iov_len)
+# endif /* !__GNUC__ */
 #else
           /*
            * Hopefully everything else does this
