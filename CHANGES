@@ -5,6 +5,11 @@
 @section v2_09 Changes with libapreq2-2.09 (under developement)
 
 - Build [Philip M. Gollucci]
+  SunOS (Solaris)
+  fix duplicate link error to libexpat.so -- by using the one from httpd
+  exclusively now.
+
+- Build [Philip M. Gollucci]
   code around |#_!!_#| autoconf 2.60 bug.
 
 
