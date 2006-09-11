@@ -158,9 +158,19 @@ AC_DEFUN([AC_APREQ], [
         APU_LA="`$APU_CONFIG --apu-la-file`"
         APR_ADDTO([APR_LTFLAGS], "`$APR_CONFIG --link-libtool`")
         APR_ADDTO([APR_LTFLAGS], "`$APU_CONFIG --link-libtool`")
+
         dnl perl glue/tests do not use libtool: need ld linker flags
-        APR_ADDTO([APR_LIBS], "`$APU_CONFIG --libs`")
         APR_ADDTO([APR_LIBS], "`$APR_CONFIG --libs`")
+
+        dnl ld: fatal: recording name conflict: file `/usr/sfw/lib/gcc/i386-pc-solaris2.10/3.4.3/../../../libexpat.so' and file `httpd/lib/libexpat.so' 
+        dnl provide identical dependency names: libexpat.so.0  (possible multiple inclusion of the same file)
+        if test "x$OS" = "xsolaris"; then
+            APU_LIBS=`$APU_CONFIG --libs | $PERL -pe 's,-lexpat,,'`
+            APR_ADDTO([APR_LIBS], "$APU_LIBS")
+        else
+            APR_ADDTO([APR_LIBS], "`$APU_CONFIG --libs`")
+        fi
+
         APR_ADDTO([APR_LDFLAGS], "`$APU_CONFIG --link-ld --ldflags`")
         APR_ADDTO([APR_LDFLAGS], "`$APR_CONFIG --link-ld --ldflags`")
 
