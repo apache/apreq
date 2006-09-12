@@ -42,6 +42,8 @@ FreeBSD note: use gmake!
 
     % build/update_version.pl 2.10
 
+    % svn commit -m "2.10 cycle" STATUS CHANGES include/apreq_version.h
+
 4. Prep the package for CPAN by running:
 
         % make release
