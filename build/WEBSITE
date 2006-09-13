@@ -42,7 +42,7 @@ UPDATING THE WEBSITE:
 
         % make docs
 
-     FreeBSD note: use gmake!
+     FreeBSD/Solaris note: use gmake!
 
      This will generate the C documentation in the docs/ directory
      using build/doxygen.conf as the config file for doxygen.

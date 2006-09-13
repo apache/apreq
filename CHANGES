@@ -4,6 +4,10 @@
 
 @section v2_09 Changes with libapreq2-2.09 (under developement)
 
+-Build [Philip M. Gollucci]
+  SunOS (Solaris) 
+  Users must use gmake not make for building.
+
 - Build [Philip M. Gollucci]
   SunOS (Solaris)
   Code around bug in libtool (at least in 1.5.18, 1.5.20, 1.5.22)
