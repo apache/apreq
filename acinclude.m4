@@ -265,6 +265,10 @@ AC_DEFUN([AC_APREQ], [
         AC_SUBST(PERL_OPTS)
         AC_SUBST(MM_OPTS)
         AC_SUBST(TAR)
+
+        if test "x$OS" = "xsolaris"; then
+          $PERL -pi -e 's,^shrext=,shrext_cmds=,' libtool
+        fi
 ])
 
 dnl APR_CONFIG_NICE(filename)

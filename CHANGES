@@ -4,6 +4,11 @@
 
 @section v2_09 Changes with libapreq2-2.09 (under developement)
 
+- Build [Philip M. Gollucci]
+  SunOS (Solaris)
+  Code around bug in libtool (at least in 1.5.18, 1.5.20, 1.5.22)
+  causing mod_apreq2 to be built instead of mod_apreq2.so
+
 - C API [Philip M. Gollucci]
   Fix comparison signed vs unsigned comparison
   in apreq_fwritev() on SunOS/gcc where iovec.iov_len is a long.
