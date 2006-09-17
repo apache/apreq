@@ -8,7 +8,7 @@ require File::Copy;
 
 my $num_tests = 18;
 $num_tests *= 2 if Apache::Test::have_ssl();
-plan tests => $num_tests, have_lwp;
+plan tests => $num_tests, need_lwp;
 my $scheme = "http";
 
 START_TESTS:

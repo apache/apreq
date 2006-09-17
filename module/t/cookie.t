@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 
-plan tests => 5, have_lwp;
+plan tests => 5, need_lwp;
 
 require HTTP::Cookies;
 

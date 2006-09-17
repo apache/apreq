@@ -16,7 +16,7 @@ my @big_keys    = ('a'..'z');
 
 my $num_tests = @key_len * @key_num + @big_key_len * @big_key_num;
 $num_tests *= 2 if Apache::Test::have_ssl();
-plan tests => $num_tests, have_lwp;
+plan tests => $num_tests, need_lwp;
 
 my $location = "/apreq_big_request_test";
 my $scheme = 'http';
