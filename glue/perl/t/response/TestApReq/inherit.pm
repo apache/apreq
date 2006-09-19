@@ -3,9 +3,11 @@ use Apache2::Cookie;
 use base qw/Apache2::Request Apache2::Cookie::Jar/;
 use strict;
 use warnings FATAL => 'all';
+
 use APR;
 use Apache2::RequestRec;
 use Apache2::RequestIO;
+use Apache2::Const -compile => qw(OK);
 
 sub handler {
     my $r = shift;
@@ -17,7 +19,7 @@ sub handler {
     my $req = bless { r => $r };
     $req->printf("method => %s\n", $req->method);
     $req->printf("cookie => %s\n", $req->cookies->{"apache"}->as_string);
-    return 0;
+    return Apache2::Const::OK;
 }
 
 sub DESTROY { $_[0]->print("DESTROYING ", __PACKAGE__, " object\n") }

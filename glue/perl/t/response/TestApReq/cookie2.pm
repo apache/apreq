@@ -7,6 +7,7 @@ use Apache::Test;
 use Apache::TestUtil;
 
 use Apache2::RequestRec ();
+use Apache2::Const -compile => qw(OK);
 
 use Apache2::Cookie ();
 
@@ -62,7 +63,7 @@ sub handler {
 
 
 
-    return 0;
+    return Apache2::Const::OK;
 }
 
 1;

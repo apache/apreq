@@ -13,6 +13,7 @@ use APR::Bucket;
 use APR::PerlIO;
 use Apache2::ServerUtil;
 use File::Spec;
+use Apache2::Const -compile => qw(OK);
 
 my $data;
 
@@ -170,7 +171,7 @@ sub handler {
         }
     }
 
-    return 0;
+    return Apache2::Const::OK;
 }
 1;
 __END__
