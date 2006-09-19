@@ -14,7 +14,7 @@ use Apache2::Cookie ();
 sub handler {
     my $r = shift;
 
-    plan $r, tests => 4;
+    plan $r, tests => 5;
 
     {
         my $cookie = Apache2::Cookie->new($r, name => 'n', value => undef);
