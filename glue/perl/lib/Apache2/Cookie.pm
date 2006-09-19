@@ -483,7 +483,7 @@ Fetch and parse the incoming I<Cookie> header:
 
 Changes to the 1.X API:
 
-=over 4
+=over 5
 
 =item * C<Apache2::Cookie::fetch> now expects an C<$r> object as (second)
         argument, although this isn't necessary in mod_perl 2 if
@@ -493,6 +493,9 @@ Changes to the 1.X API:
 =item * C<Apache2::Cookie::parse> is gone.
 
 =item * C<Apache2::Cookie::new> no longer encodes the supplied cookie name.
+
+=item * C<Apache2::Cookie::new()> returns undef if -value is not specified
+        or -value => undef.
 
 =item * C<name()> and C<value()> no longer accept a "set" argument. In other words,
         neither a cookie's name, nor its value, may be modified.  A new cookie
