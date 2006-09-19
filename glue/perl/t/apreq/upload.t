@@ -19,7 +19,7 @@ my %types = (perl => 'application/octet-stream',
 my @names = sort keys %types;
 my @methods = sort qw/slurp fh tempname link io/;
 
-plan tests => @names * @methods, have_lwp;
+plan tests => @names * @methods, need_lwp;
 
 foreach my $name (@names) {
     my $url = ( ($name =~ /\.pod$/) ?

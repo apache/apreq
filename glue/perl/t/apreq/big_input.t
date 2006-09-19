@@ -19,7 +19,7 @@ my @big_key_len = (100, 500, 5000, 10000);
 my @big_key_num = (5, 15, 25);
 my @big_keys    = ('a'..'z');
 
-plan tests => @key_len * @key_num + @big_key_len * @big_key_num, have_lwp;
+plan tests => @key_len * @key_num + @big_key_len * @big_key_num, need_lwp;
 
 
 # GET

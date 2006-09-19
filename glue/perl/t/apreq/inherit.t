@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY UPLOAD_BODY);
 
-plan tests => 4, have_lwp;
+plan tests => 4, need_lwp;
 
 my $module = 'TestApReq::inherit';
 my $location = Apache::TestRequest::module2url($module);
