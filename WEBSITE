@@ -64,6 +64,13 @@ UPDATING THE WEBSITE:
 
   7) Login (via ssh) to people.apache.org and do
 
+    MAKE SURE your umask is 2
+    $ umask
+    22
+    $ umask 2
+    $ umask
+    2
+
     $ cd /www/httpd.apache.org
     $ svn update index.html apreq/
 
