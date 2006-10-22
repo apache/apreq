@@ -15,6 +15,8 @@
 */
 #include <assert.h>
 
+#define APR_WANT_STRFUNC
+#include "apr_want.h"
 #include "apreq_module.h"
 #include "apreq_error.h"
 #include "apr_strings.h"
@@ -48,8 +50,6 @@
  * never catch it now, as args param will match...
  */
 
-
-
 struct cgi_handle {
     struct apreq_handle_t       handle;
 
@@ -70,11 +70,16 @@ struct cgi_handle {
     apr_bucket_brigade          *in;
     apr_bucket_brigade          *tmpbb;
 
-    int interactive_mode;
-    apr_file_t *sout, *sin;
+    int                         interactive_mode;
+    const char                  *promptstr;
+    apr_file_t                  *sout, *sin;
 };
 
 #define CRLF "\015\012"
+const char *nullstr;
+#define DEFAULT_PROMPT "([$t] )$n(\\($l\\))([$d]): "
+#define MAX_PROMPT_NESTING_LEVELS 8
+#define MAX_BUFFER_SIZE 65536
 
 typedef struct {
     const char *t_name;
@@ -95,15 +100,130 @@ static const TRANS priorities[] = {
 
 static char* chomp(char* str) {
     apr_size_t p = strlen(str);
-    while (--p > 0) {
+    while (--p >= 0) {
         switch ((char)(str[p])) {
         case '\015':
         case '\012':str[p]='\000';
                     break;
         default:return str;
         }
-        }
+    }
     return str;
+}
+
+/** TODO: Support wide-characters */
+static char *prompt(apreq_handle_t *handle, const char *name,
+                    const char *type) {
+    struct cgi_handle *req = (struct cgi_handle *)handle;
+    const char *defval = nullstr;
+    const char *label = NULL;
+    const char *prompt;
+    char buf[MAX_PROMPT_NESTING_LEVELS][MAX_BUFFER_SIZE];
+    /* Array of current arg for given p-level */
+    char *start, curarg[MAX_PROMPT_NESTING_LEVELS] = ""; 
+    /* Parenthesis level (for argument/text grouping) */
+    int plevel; 
+
+    prompt = req->promptstr - 1;
+    *buf[0] = plevel = 0;
+    start = buf[0];
+
+    while (*(++prompt) != 0) {
+        switch (*prompt) {
+        case '$':  /* interpolate argument; curarg[plevel] => 1 */
+            prompt++;           
+            switch (*prompt) {
+            case 't':
+                if (type != NULL) {
+                    strcpy(start, type);
+                    start += strlen(type);
+                    curarg[plevel] = 1;
+                } else {
+                    curarg[plevel] = curarg[plevel] | 0;
+                }
+                break;
+            case 'n':
+                /* Name can't be null :-) [If it can, we should 
+                 * immediately return NULL] */
+                strcpy(start, name);
+                start += strlen(name);
+                curarg[plevel] = 1;
+                break;
+            case 'l':
+                if (label != NULL) {
+                    strcpy(start, label);
+                    start += strlen(label);
+                    curarg[plevel] = 1;
+                } else {
+                    curarg[plevel] = curarg[plevel] | 0;
+                }
+                break;
+            case 'd':
+                /* TODO: Once null defaults are available, 
+                 * remove if and use nullstr if defval == NULL */
+                if (defval != NULL) {
+                    strcpy(start, defval);
+                    start += strlen(defval);
+                    curarg[plevel] = 1;
+                } else {
+                    curarg[plevel] = curarg[plevel] | 0;
+                }
+                break;
+            default:
+                /* Handle this? */
+                break;
+            }
+            break;
+
+        case '(':
+            if (plevel <= MAX_PROMPT_NESTING_LEVELS) {
+                plevel++;
+                curarg[plevel] = *buf[plevel] = 0;
+                start = buf[plevel];
+            }
+            /* else? */
+            break;
+
+        case ')':
+            if (plevel > 0) {
+                *start = 0; /* Null terminate current string */
+                
+                /* Move pointer to end of string */
+                start = buf[--plevel] + strlen(buf[plevel]);
+                
+                /* If old curarg was set, concat buffer with level down */
+                if (curarg[plevel + 1]) {
+                    strcpy(start, buf[plevel + 1]);
+                    start += strlen(buf[plevel + 1]);
+                }
+
+                break;
+            }
+        case '\\': /* Check next character for escape sequence 
+                    * (just ignore it for now) */
+            *prompt++;
+            /* Fallthrough */
+
+        default:       
+            *start++ = *prompt;
+        }
+    }
+
+    *start = 0; /* Null terminate the string */
+    
+    apr_file_printf(req->sout, "%s", buf[0]);
+    apr_file_gets(buf[0], MAX_BUFFER_SIZE, req->sin);
+    chomp(buf[0]);
+    if (stricmp(buf[0], "")) {
+/*        if (strcmp(buf[0], nullstr)) */
+            return apr_pstrdup(handle->pool, buf[0]);
+/*        return NULL; */
+    }
+
+    if (strcmp(defval, nullstr))
+        return apr_pstrdup(handle->pool, defval);
+
+    return NULL;
 }
 
 static const char *cgi_header_in(apreq_handle_t *handle,
@@ -350,27 +470,26 @@ static apr_status_t cgi_jar(apreq_handle_t *handle,
 
     if (req->interactive_mode && req->jar_status != APR_SUCCESS) {
         char buf[65536];
-        char *name, *val;
+        const char *name, *val;
         apreq_cookie_t *p;
         int i = 1;
         apr_file_printf(req->sout, "[CGI] Requested all cookies\n");
         while (1) {
-            apr_file_printf(req->sout, "[CGI] Please enter a name for cookie %d (or END to end): ",
+            apr_file_printf(req->sout, "[CGI] Please enter a name for cookie %d (or just hit ENTER to end): ",
                      i++);
             apr_file_gets(buf, 65536, req->sin);
             chomp(buf);
-            if (!strcmp(buf, "END")) {
+            if (!strcmp(buf, "")) {
                 break;
             }
             name = apr_pstrdup(handle->pool, buf);
-            apr_file_printf(req->sout, "[CGI] Please enter a value for cookie %s: ",
-                     name);
-            apr_file_gets(buf, 65536, req->sin);
-            chomp(buf);
-            p = apreq_cookie_make(handle->pool, name, strlen(name), buf, strlen(buf));
+            val = prompt(handle, name, "cookie");
+            if (val == NULL)
+                val = "";
+            p = apreq_cookie_make(handle->pool, name, strlen(name), val, strlen(val));
             apreq_cookie_tainted_on(p);
             apreq_value_table_add(&p->v, req->jar);
-            val = (char *)p->v.data;
+            val = p->v.data;
         }
         req->jar_status = APR_SUCCESS;
     } /** Fallthrough */
@@ -396,27 +515,26 @@ static apr_status_t cgi_args(apreq_handle_t *handle,
 
     if (req->interactive_mode && req->args_status != APR_SUCCESS) {
         char buf[65536];
-        char *name, *val;
+        const char *name, *val;
         apreq_param_t *p;
         int i = 1;
         apr_file_printf(req->sout, "[CGI] Requested all argument parameters\n");
         while (1) {
-            apr_file_printf(req->sout, "[CGI] Please enter a name for parameter %d (or END to end): ",
+            apr_file_printf(req->sout, "[CGI] Please enter a name for parameter %d (or jusr hit ENTER to end): ",
                      i++);
             apr_file_gets(buf, 65536, req->sin);
             chomp(buf);
-            if (!strcmp(buf, "END")) {
+            if (!strcmp(buf, "")) {
                 break;
             }
             name = apr_pstrdup(handle->pool, buf);
-            apr_file_printf(req->sout, "[CGI] Please enter a value for parameter %s: ",
-                     name);
-            apr_file_gets(buf, 65536, req->sin);
-            chomp(buf);
-            p = apreq_param_make(handle->pool, name, strlen(name), buf, strlen(buf));
+            val = prompt(handle, name, "parameter");
+            if (val == NULL)
+                val = "";
+            p = apreq_param_make(handle->pool, name, strlen(name), val, strlen(val));
             apreq_param_tainted_on(p);
             apreq_value_table_add(&p->v, req->args);
-            val = (char *)p->v.data;
+            val = p->v.data;
         }
         req->args_status = APR_SUCCESS;
     } /** Fallthrough */
@@ -443,7 +561,7 @@ static apreq_cookie_t *cgi_jar_get(apreq_handle_t *handle,
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
     const apr_table_t *t;
-    char *val = NULL;
+    const char *val = NULL;
 
     if (req->jar_status == APR_EINIT && !req->interactive_mode)
         cgi_jar(handle, &t);
@@ -455,16 +573,14 @@ static apreq_cookie_t *cgi_jar_get(apreq_handle_t *handle,
         if (!req->interactive_mode) {
             return NULL;
         } else {
-            char buf[65536];
             apreq_cookie_t *p;
-            apr_file_printf(req->sout, "[CGI] Please enter a value for cookie %s: ",
-                            name);
-            apr_file_gets(buf, 65536, req->sin);
-            chomp(buf);
-            p = apreq_cookie_make(handle->pool, name, strlen(name), buf, strlen(buf));
+            val = prompt(handle, name, "cookie");
+            if (val == NULL)
+                return NULL;
+            p = apreq_cookie_make(handle->pool, name, strlen(name), val, strlen(val));
             apreq_cookie_tainted_on(p);
             apreq_value_table_add(&p->v, req->jar);
-            val = (char *)p->v.data;
+            val = p->v.data;
         }
     }
 
@@ -477,28 +593,26 @@ static apreq_param_t *cgi_args_get(apreq_handle_t *handle,
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
     const apr_table_t *t;
-    char *val = NULL;
+    const char *val = NULL;
 
     if (req->args_status == APR_EINIT && !req->interactive_mode)
         cgi_args(handle, &t);
     else
         t = req->args;
 
-    val = (char *)apr_table_get(t, name);
+    val = apr_table_get(t, name);
     if (val == NULL) {
         if (!req->interactive_mode) {
             return NULL;
         } else {
-            char buf[65536];
             apreq_param_t *p;
-            apr_file_printf(req->sout, "[CGI] Please enter a value for parameter %s: ",
-                            name);
-            apr_file_gets(buf, 65536, req->sin);
-            chomp(buf);
-            p = apreq_param_make(handle->pool, name, strlen(name), buf, strlen(buf));
+            val = prompt(handle, name, "parameter");
+            if (val == NULL)
+                return NULL;
+            p = apreq_param_make(handle->pool, name, strlen(name), val, strlen(val));
             apreq_param_tainted_on(p);
             apreq_value_table_add(&p->v, req->args);
-            val = (char *)p->v.data;
+            val = p->v.data;
         }
     }
 
@@ -514,28 +628,27 @@ static apr_status_t cgi_body(apreq_handle_t *handle,
     struct cgi_handle *req = (struct cgi_handle *)handle;
 
     if (req->interactive_mode && req->body_status != APR_SUCCESS) {
-        char buf[65536];
-        char *name, *val;
+        const char *name, *val;
         apreq_param_t *p;
         int i = 1;
         apr_file_printf(req->sout, "[CGI] Requested all body parameters\n");
         while (1) {
-            apr_file_printf(req->sout, "[CGI] Please enter a name for parameter %d (or END to end): ",
+            char buf[65536];
+            apr_file_printf(req->sout, "[CGI] Please enter a name for parameter %d (or just hit ENTER to end): ",
                      i++);
             apr_file_gets(buf, 65536, req->sin);
             chomp(buf);
-            if (!strcmp(buf, "END")) {
+            if (!strcmp(buf, "")) {
                 break;
             }
             name = apr_pstrdup(handle->pool, buf);
-            apr_file_printf(req->sout, "[CGI] Please enter a value for parameter %s: ",
-                     name);
-            apr_file_gets(buf, 65536, req->sin);
-            chomp(buf);
-            p = apreq_param_make(handle->pool, name, strlen(name), buf, strlen(buf));
+            val = prompt(handle, name, "parameter");
+            if (val == NULL)
+                val = "";
+            p = apreq_param_make(handle->pool, name, strlen(name), val, strlen(val));
             apreq_param_tainted_on(p);
             apreq_value_table_add(&p->v, req->body);
-            val = (char *)p->v.data;
+            val = p->v.data;
         }
         req->body_status = APR_SUCCESS;
     } /** Fallthrough */
@@ -561,24 +674,22 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
                                    const char *name)
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
-    char *val = NULL;
+    const char *val = NULL;
     apreq_hook_t *h;
 
     if (req->interactive_mode) {
-        val = (char *)apr_table_get(req->body, name);
+        val = apr_table_get(req->body, name);
         if (val == NULL) {
             return NULL;
         } else {
-            char buf[65536];
             apreq_param_t *p;
-            apr_file_printf(req->sout, "[CGI] Please enter a value for parameter %s: ",
-                            name);
-            apr_file_gets(buf, 65536, req->sin);
-            chomp(buf);
-            p = apreq_param_make(handle->pool, name, strlen(name), buf, strlen(buf));
+            val = prompt(handle, name, "parameter");
+            if (val == NULL)
+                return NULL;
+            p = apreq_param_make(handle->pool, name, strlen(name), val, strlen(val));
             apreq_param_tainted_on(p);
             apreq_value_table_add(&p->v, req->body);
-            val = (char *)p->v.data;
+            val = p->v.data;
             return apreq_value_to_param(val);
         }
     }
@@ -588,7 +699,7 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
 
     case APR_SUCCESS:
 
-        val = (char *)apr_table_get(req->body, name);
+        val = apr_table_get(req->body, name);
         if (val != NULL)
             return apreq_value_to_param(val);
         return NULL;
@@ -604,7 +715,7 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
 
     case APR_INCOMPLETE:
 
-        val = (char *)apr_table_get(req->body, name);
+        val = apr_table_get(req->body, name);
         if (val != NULL)
             return apreq_value_to_param(val);
 
@@ -637,7 +748,7 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
         if (req->body == NULL)
             return NULL;
 
-        val = (char *)apr_table_get(req->body, name);
+        val = apr_table_get(req->body, name);
         if (val != NULL)
             return apreq_value_to_param(val);
         return NULL;
@@ -853,9 +964,13 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
             req->body_status = APR_EINIT;
 
     if (is_interactive_mode(pool)) {
+        char buf[10];
         req->interactive_mode = 1;
         apr_file_open_stdout(&(req->sout), pool);
         apr_file_open_stdin(&(req->sin), pool);
+        req->promptstr=apr_pstrdup(pool, DEFAULT_PROMPT);
+        sprintf(buf, "%s", NULL);
+        nullstr = apr_pstrdup(pool, buf);
     }
 
     apr_pool_userdata_setn(&req->handle, USER_DATA_KEY, NULL, pool);
