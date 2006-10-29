@@ -50,6 +50,9 @@ We recommend using (1), and falling back to (2) until you get (1) working.
 I<Apache2::Upload> is now a separate module in apreq2, so you need to 
 C<use Apache2::Upload> to load the C<Apache2::Request::upload> function.
 
+This also applies to "Can't locate auto/APR/Request/Param/slurp.al in @INC".
+This is because I<Apache2::Upload> is implement by wrapping the I<APR::Request::*>
+packages.
 
 
 
