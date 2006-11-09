@@ -73,6 +73,7 @@ FreeBSD/Solaris note: use gmake!
    announcement to the modperl@ list, to solicit feedback
    from a much larger audience.
 
+   Subject: [RELEASE CANDIDATE] libapreq2 2.10 RC\d+
 
 8. Give the mailing list participants 48-72 hours to comment and
    vote on the candidate.  If there is a "majority consensus" 
