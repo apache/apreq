@@ -59,33 +59,7 @@ FreeBSD/Solaris note: use gmake!
 
    Make sure all perl tests pass.
 
-
-6. Upload the release candidate to people.apache.org/~username
-   and post a candidate announcement to apreq-dev@. Also, it is 
-   strongly recommended that the RM crosspost the candidate 
-   announcement to the modperl@ list, to solicit feedback
-   from a much larger audience.
-
-
-7. Give the mailing list participants 48-72 hours to comment and
-   vote on the candidate.  If there is a "majority consensus" 
-   (three +1 and more +1s than -1s) among the httpd pmc members, the RM 
-   may proceed with the release.
-
-
-8. Tag the Release -- from the BRANCH
-
-    svn cp https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_09 \
-           https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_09
-
-    NOTE the Revision that is copied.  Call it $rE.
-    It will be in the commit e-mail.
-
-9. Regenerate the release 
-
-        % make release && make release_test
-
-   Then test and sign it via gpg:
+6. Sign it via gpg:
 
         % gpg --detach-sign --armor libapreq2-2.09.tar.gz
 
@@ -93,6 +67,26 @@ FreeBSD/Solaris note: use gmake!
 
         % pgp -sba libapreq2-2.09.tar.gz
 
+7. Upload the release candidate to people.apache.org/~username
+   and post a candidate announcement to apreq-dev@. Also, it is 
+   strongly recommended that the RM crosspost the candidate 
+   announcement to the modperl@ list, to solicit feedback
+   from a much larger audience.
+
+
+8. Give the mailing list participants 48-72 hours to comment and
+   vote on the candidate.  If there is a "majority consensus" 
+   (three +1 and more +1s than -1s) among the httpd pmc members, the RM 
+   may proceed with the release.
+
+
+9. Tag the Release -- from the BRANCH
+
+    svn cp https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_09 \
+           https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_09
+
+    NOTE the Revision that is copied.  Call it $rE.
+    It will be in the commit e-mail.
 
 10. Upload (scp) the package and signature to www.apache.org
    for distribution:
@@ -113,7 +107,7 @@ FreeBSD/Solaris note: use gmake!
 
 11. Verify or get soeone to Verify that you have CPAN karma.
     Note, discuss getting a group kind of like AMPL in mod_perl land.
-    (Currently, joes@ is active and has karma)
+    (Currently, joes@ and pgollucci@ are active and have karma)
 
 12. Upload the package to CPAN. Doublecheck that the md5 checksum
    received from PAUSE is correct.
