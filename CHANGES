@@ -6,7 +6,11 @@
 
 @section v2_09 Changes with libapreq2-2.09 ()
 
--Build [Philip M. Gollucci]
+- C API [joes]
+  Fix leak associated to calling apreq_brigade_fwrite() on an upload
+  brigade.
+
+- Build [Philip M. Gollucci]
   SunOS (Solaris) 
   Users must use gmake not make for building.
 
