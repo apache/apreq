@@ -30,19 +30,13 @@ FreeBSD/Solaris note: use gmake!
 
        % svn commit -m "2.09 release started" STATUS CHANGES include/apreq_version.h
 
-    NOTE the revision that you committed.
-    Call it $rS.
-
-    If you make any ADDITIONAL  changes to this branch you'll need to merge them back to the trunk
-    Either now, or when the release cycle is complete (See step 15)
-
 3. On TRUNK:
     Update CHANGES and STATUS to reflect the start of a new develoment cycle,
     and run this to update the package version numbers throughout the tree:
 
     % build/update_version.pl 2.10
 
-    % svn commit -m "2.10 cycle" STATUS CHANGES include/apreq_version.h
+    % svn commit -m "2.10 cycle"
 
 4. Prep the package for CPAN by running:
 
@@ -73,6 +67,7 @@ FreeBSD/Solaris note: use gmake!
    announcement to the modperl@ list, to solicit feedback
    from a much larger audience.
 
+   Subject: [RELEASE CANDIDATE] libapreq2 2.10 RC\d+
 
 8. Give the mailing list participants 48-72 hours to comment and
    vote on the candidate.  If there is a "majority consensus" 
@@ -82,17 +77,14 @@ FreeBSD/Solaris note: use gmake!
 
 9. Tag the Release -- from the BRANCH
 
-    svn cp https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_09 \
+    svn mv https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_09 \
            https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_09
-
-    NOTE the Revision that is copied.  Call it $rE.
-    It will be in the commit e-mail.
 
 10. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
         % scp libapreq2-2.09.tar.gz* \
-          <username>@people.apache.org:/www/www.apache.org/dist/httpd/libapreq/
+          $USER@people.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
    Ask another developer to confirm the uploaded signature is ok.
 
@@ -123,24 +115,5 @@ FreeBSD/Solaris note: use gmake!
 
     % build/announcement.pl $USER@apache.org < CPAN_ack | ssh $USER@people.apache.org "sendmail -oi -t -odq"
 
-15. Once you are SURE, you've merged any ADDITIONAL changes on the BRANCH back to TRUNK,
-    delete the branch:
-
-    [NOTE, $rS and $rE are the values you noted above]
-
-    % svn help merge | head -4
-      merge: Apply the differences between two sources to a working copy path.
-      usage: 1. merge sourceURL1[@N] sourceURL2[@M] [WCPATH]
-             2. merge sourceWCPATH1@N sourceWCPATH2@M [WCPATH]
-             3. merge -r N:M SOURCE[@REV] [WCPATH]
-
-    svn co https://svn.apache.org/repos/asf/httpd/apreq/trunk 
-    cd trunk
-
-    svn merge https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_09@$rS \
-              https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_09@$rE
-  
-    svn del https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_09
-
-16. Drink Beer!
+15. Drink Beer!
 
