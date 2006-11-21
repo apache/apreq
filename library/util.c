@@ -771,43 +771,6 @@ static apr_status_t apreq_fwritev(apr_file_t *f, struct iovec *v,
 }
 
 
-APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
-                                                 apr_off_t *wlen,
-                                                 apr_bucket_brigade *bb)
-{
-    struct iovec v[APREQ_DEFAULT_NELTS];
-    apr_status_t s;
-    apr_bucket *e;
-    int n = 0;
-    *wlen = 0;
-
-    for (e = APR_BRIGADE_FIRST(bb); e != APR_BRIGADE_SENTINEL(bb);
-         e = APR_BUCKET_NEXT(e))
-    {
-        apr_size_t len;
-        if (n == APREQ_DEFAULT_NELTS) {
-            s = apreq_fwritev(f, v, &n, &len);
-            if (s != APR_SUCCESS)
-                return s;
-            *wlen += len;
-        }
-        s = apr_bucket_read(e, (const char **)&(v[n].iov_base),
-                            &len, APR_BLOCK_READ);
-        if (s != APR_SUCCESS)
-            return s;
-
-        v[n++].iov_len = len;
-    }
-
-    while (n > 0) {
-        apr_size_t len;
-        s = apreq_fwritev(f, v, &n, &len);
-        if (s != APR_SUCCESS)
-            return s;
-        *wlen += len;
-    }
-    return APR_SUCCESS;
-}
 
 
 struct cleanup_data {
@@ -1153,3 +1116,60 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_concat(apr_pool_t *pool,
     return s;
 }
 
+APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
+                                                 apr_off_t *wlen,
+                                                 apr_bucket_brigade *bb)
+{
+    struct iovec v[APREQ_DEFAULT_NELTS];
+    apr_status_t s;
+    apr_bucket *e, *first;
+    int n = 0;
+    *wlen = 0;
+    apr_bucket_brigade *tmp = bb;
+
+    if (BUCKET_IS_SPOOL(APR_BRIGADE_LAST(bb))) {
+        tmp = apr_brigade_create(bb->p, bb->bucket_alloc);
+
+        s = apreq_brigade_copy(tmp, bb);
+        if (s != APR_SUCCESS)
+            return s;
+    }
+
+    for (e = APR_BRIGADE_FIRST(tmp); e != APR_BRIGADE_SENTINEL(tmp);
+         e = APR_BUCKET_NEXT(e))
+    {
+        apr_size_t len;
+        if (n == APREQ_DEFAULT_NELTS) {
+            s = apreq_fwritev(f, v, &n, &len);
+            if (s != APR_SUCCESS)
+                return s;
+
+            if (tmp != bb) {
+                while ((first = APR_BRIGADE_FIRST(tmp)) != e)
+                    apr_bucket_delete(first);
+            }
+
+            *wlen += len;
+        }
+        s = apr_bucket_read(e, (const char **)&(v[n].iov_base),
+                            &len, APR_BLOCK_READ);
+        if (s != APR_SUCCESS)
+            return s;
+
+        v[n++].iov_len = len;
+    }
+
+    while (n > 0) {
+        apr_size_t len;
+        s = apreq_fwritev(f, v, &n, &len);
+        if (s != APR_SUCCESS)
+            return s;
+        *wlen += len;
+
+        if (tmp != bb) {
+            while ((first = APR_BRIGADE_FIRST(tmp)) != e)
+                apr_bucket_delete(first);
+        }
+    }
+    return APR_SUCCESS;
+}

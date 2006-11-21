@@ -270,8 +270,8 @@ APREQ_DECLARE(apr_int64_t) apreq_atoi64t(const char *s);
  * @return Error status code from either an unsuccessful apr_bucket_read(),
  *         or a failed apr_file_writev().
  *
- * @remarks       In the future, this function may do something
- *                intelligent with file buckets.
+ * @remarks       This function leaks a bucket brigade into bb->p whenever
+ *                the final bucket in bb is a spool bucket.
  */
 
 APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
