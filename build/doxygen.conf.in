@@ -64,8 +64,8 @@ EXPAND_ONLY_PREDEF     = YES
 PREDEFINED             = APREQ_DECLARE(x)=x \
                          APREQ_DECLARE_NONSTD(x)=x
 
-TAGFILES               = docs/apr.tag=http://apr.apache.org/docs/apr \
-                         docs/apu.tag=http://apr.apache.org/docs/apr-util
+TAGFILES               = docs/apr.tag=http://apr.apache.org/docs/apr/@APR_DOC_VERSION@ \
+                         docs/apu.tag=http://apr.apache.org/docs/apr-util/@APU_DOC_VERSION@
 GENERATE_TAGFILE       = docs/apreq2.tag
 ALLEXTERNALS           = NO
 EXTERNAL_GROUPS        = NO

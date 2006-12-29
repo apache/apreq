@@ -18,8 +18,8 @@ SED_BODY_TAG= s(^[\S\s]+<body.+|</body>[\S\s]+$$)()gi, \
 	s(href="/APR/Request/Param/(?:Table|Cookie).html")(href="group__apreq__xs__apr__request.html")g, \
 	s(href="/APR/Request.html")(href="group__apreq__xs__apr__request.html")g, \
 	s(href="/APR/Request/([^/]+).html")(href="group__apreq__xs__apr__request__\L$$1.html")g, \
-	s(href="/APR/Brigade.html")(href="http://apr.apache.org/docs/apr-util/apr__buckets_8h.html")g, \
-	s(href="/APR/([^/]+).html")(href="http://apr.apache.org/docs/apr/apr__\L$$1s_8h.html")g
+	s(href="/APR/Brigade.html")(href="http://apr.apache.org/docs/apr-util/$(APU_DOC_VERSION)/apr__buckets_8h.html")g, \
+	s(href="/APR/([^/]+).html")(href="http://apr.apache.org/docs/apr/$(APR_DOC_VERSION)/apr__\L$$1s_8h.html")g
 
 EUM=ExtUtils::Manifest
 PM_DIR=glue/perl/lib/Apache2

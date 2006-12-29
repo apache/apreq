@@ -92,6 +92,17 @@ AC_DEFUN([AC_APREQ], [
                 if test -z "`$prereq_check apache2 $APACHE2_HTTPD`"; then
                     AC_MSG_ERROR([Bad apache2 binary ($APACHE2_HTTPD)])
                 fi
+
+                APR_DOC_VERSION=`$APACHE2_APXS -q APR_VERSION 2>/dev/null | cut -d. -f -2`
+                APU_DOC_VERSION=`$APACHE2_APXS -q APU_VERSION 2>/dev/null | cut -d. -f -2`
+        fi
+
+dnl Fallback to oldest version available
+        if test "x$APR_DOC_VERSION" = 'x'; then
+                APR_DOC_VERSION=0.9
+        fi
+        if test "x$APU_DOC_VERSION" = 'x'; then
+                APU_DOC_VERSION=0.9
         fi
 
         AC_CHECK_FILE([$APR_CONFIG],,
@@ -265,6 +276,9 @@ AC_DEFUN([AC_APREQ], [
         AC_SUBST(PERL_OPTS)
         AC_SUBST(MM_OPTS)
         AC_SUBST(TAR)
+
+        AC_SUBST(APR_DOC_VERSION)
+        AC_SUBST(APU_DOC_VERSION)
 
         if test "x$OS" = "xsolaris"; then
           $PERL -pi -e 's,^shrext=,shrext_cmds=,' libtool
