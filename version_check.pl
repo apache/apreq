@@ -218,7 +218,7 @@ die "$0 failed: no version_string found in '$_' for '$tool'.\n" unless /(\d[.\d]
 my $saw = $1;
 my $fail;
 
-if ($saw =~ /^(\d+)(\.(\d+))$/) {
+if ($saw =~ /^(\d+)(\.(\d+))$/ and $version =~ /^(\d+)(\.(\d+))$/) {
     $fail = $saw < $version;
 } else {
     my @version = split /\./, $version;
