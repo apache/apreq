@@ -105,19 +105,19 @@
 
 
 /**
- * Check to see if specified bit f is off in bitfiled name
+ * Check to see if specified bit f is off in bitfield name
  */
 #define APREQ_FLAGS_OFF(f, name) ((f) &= ~(name##_MASK << name##_BIT))
 /**
- * Check to see if specified bit f is on in bitfiled name
+ * Check to see if specified bit f is on in bitfield name
  */
 #define APREQ_FLAGS_ON(f, name)  ((f) |=  (name##_MASK << name##_BIT))
 /**
- *  Get specified bit f in bitfiled name
+ *  Get specified bit f in bitfield name
  */
 #define APREQ_FLAGS_GET(f, name) (((f) >> name##_BIT) & name##_MASK)
 /**
- * Set specified bit f in bitfiled name to value 
+ * Set specified bit f in bitfield name to value 
  * Note the below BIT/Mask defines are used sans the
  * _BIT, _MASK because of the this define's \#\#_MASK, \#\#_BIT usage.
  * Each come in a pair
