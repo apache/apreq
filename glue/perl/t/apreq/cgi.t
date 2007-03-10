@@ -15,8 +15,20 @@ my @key_num = (5, 15, 26);
 my @keys    = ('a'..'z');
 
 my $cwd = getcwd();
-my %types = (perl => 'application/octet-stream',
-             'perltoc.pod' => 'text/x-pod');
+
+my %types = (perl => 'application/octet-stream');
+my $vars = Apache::Test::vars;
+my $perlpod = $vars->{perlpod};
+if (-d $perlpod) {
+    opendir(my $dh, $perlpod);
+    my @files = grep { /\.(pod|pm)$/ } readdir $dh;
+    closedir $dh;
+    if (scalar @files > 0) {
+        my $file = $files[0];
+        $types{$file} = ($file =~ /\.pod$/) ? 'text/x-pod' : 'text/plain';
+    }
+}      
+
 my @names = sort keys %types;
 my @methods = sort qw/slurp fh tempname link io/;
 
@@ -160,7 +172,7 @@ ok t_cmp($body, "\tfoo => 1$line_end",
 # file upload tests
 
 foreach my $name (@names) {
-    my $url = ( ($name =~ /\.pod$/) ?
+    my $url = ( ($name =~ /\.(pod|pm)$/) ?
         "getfiles-perl-pod/" : "/getfiles-binary-" ) . $name;
     my $content = GET_BODY_ASSERT($url);
     my $path = File::Spec->catfile($cwd, 't', $name);

@@ -14,15 +14,28 @@ my $location = Apache::TestRequest::module2url($module);
 
 my %types = (perl => 'application/octet-stream',
              httpd => 'application/octet-stream',
-             'perltoc.pod' => 'text/x-pod',
-             'perlport.pod' => 'text/x-pod');
+            );
+my $vars = Apache::Test::vars;
+my $perlpod = $vars->{perlpod};
+if (-d $perlpod) {
+    opendir(my $dh, $perlpod);
+    my @files = grep { /\.(pod|pm)$/ } readdir $dh;
+    closedir $dh;
+    if (scalar @files > 1) {
+        for my $i (0 .. 1) {
+            my $file = $files[$i];
+            $types{$file} = ($file =~ /\.pod$/) ? 'text/x-pod' : 'text/plain';
+        }
+    }      
+}
+
 my @names = sort keys %types;
 my @methods = sort qw/slurp fh tempname link io/;
 
 plan tests => @names * @methods, need_lwp;
 
 foreach my $name (@names) {
-    my $url = ( ($name =~ /\.pod$/) ?
+    my $url = ( ($name =~ /\.(pod|pm)$/) ?
         "getfiles-perl-pod/" : "/getfiles-binary-" ) . $name;
     my $content = GET_BODY_ASSERT($url);
     my $path = File::Spec->catfile($cwd, 't', $name);
