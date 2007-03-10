@@ -1124,8 +1124,8 @@ APREQ_DECLARE(apr_status_t) apreq_brigade_fwrite(apr_file_t *f,
     apr_status_t s;
     apr_bucket *e, *first;
     int n = 0;
-    *wlen = 0;
     apr_bucket_brigade *tmp = bb;
+    *wlen = 0;
 
     if (BUCKET_IS_SPOOL(APR_BRIGADE_LAST(bb))) {
         tmp = apr_brigade_create(bb->p, bb->bucket_alloc);
