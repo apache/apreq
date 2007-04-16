@@ -64,13 +64,8 @@ sub handler {
 
     $req->content_type('text/plain');
     my $size = -s $temp_file;
-    $r->print(<<END);
-
-type: $type
-size: $size
-filename: $basename
-md5: $cs
-END
+    my $result = qq{type=$type;size=$size;filename=$basename;md5=$cs};
+    $r->print($result);
     unlink $temp_file if -f $temp_file;
     return Apache2::Const::OK;
 }

@@ -32,7 +32,7 @@ if (-d $perlpod) {
 my @names = sort keys %types;
 my @methods = sort qw/slurp fh tempname link io/;
 
-plan tests => @names * @methods, need_lwp;
+plan tests => 4 * @names * @methods, need_lwp;
 
 foreach my $name (@names) {
     my $url = ( ($name =~ /\.(pod|pm)$/) ?
@@ -52,18 +52,18 @@ foreach my $file( map {File::Spec->catfile($cwd, 't', $_)} @names) {
     my $size = -s $file;
     my $cs = $has_md5 ? cs($file) : 0;
     my $basename = File::Basename::basename($file);
-
     for my $method ( @methods) {
         my $result = UPLOAD_BODY("$location?method=$method;has_md5=$has_md5",
                                  filename => $file);
-        my $expected = <<END;
-
-type: $types{$basename}
-size: $size
-filename: $basename
-md5: $cs
-END
-        ok t_cmp($result, $expected, "$method test for $basename");
+        my %h = map {$_;} split /[=&;]/, $result, -1;
+        ok t_cmp($h{type}, $types{$basename},
+	    "'type' test for $method on $basename");
+        ok t_cmp($h{filename}, $basename,
+	    "'filename' test for $method on $basename");
+        ok t_cmp($h{size}, $size,
+	    "'size' test for $method on $basename");
+        ok t_cmp($h{md5}, $cs,
+	    "'checksum' test for $method on $basename");
     }
     unlink $file if -f $file;
 }

@@ -47,7 +47,7 @@ my @big_key_num = (5, 15, 25);
 my @big_keys    = ('a'..'z');
 
 plan tests => 10 + @key_len * @key_num + @big_key_len * @big_key_num +
-  @names * @methods, need_lwp && need_cgi;
+  4 * @names * @methods, need_lwp && need_cgi;
 
 require HTTP::Cookies;
 
@@ -194,14 +194,15 @@ foreach my $file( map {File::Spec->catfile($cwd, 't', $_)} @names) {
         my $result = UPLOAD_BODY("$script?method=$method;has_md5=$has_md5",
                                  filename => $file);
         $result =~ s{\r}{}g;
-        my $expected = <<END;
-
-type: $types{$basename}
-size: $size
-filename: $basename
-md5: $cs
-END
-        ok t_cmp($result, $expected, "$method test for $basename");
+        my %h = map {$_;} split /[=&;]/, $result, -1;
+        ok t_cmp($h{type}, $types{$basename},
+	    "'type' test for $method on $basename");
+        ok t_cmp($h{filename}, $basename,
+	    "'filename' test for $method on $basename");
+        ok t_cmp($h{size}, $size,
+	    "'size' test for $method on $basename");
+        ok t_cmp($h{md5}, $cs,
+	    "'checksum' test for $method on $basename");
     }
     unlink $file if -f $file;
 }
@@ -319,14 +320,8 @@ elsif ($method) {
     my $cs = $has_md5 ? cs($temp_file) : 0;
 
     my $size = -s $temp_file;
-    print <<"END";
-
-
-type: $type
-size: $size
-filename: $basename
-md5: $cs
-END
+    my $result = qq{type=$type;size=$size;filename=$basename;md5=$cs};
+    print "Content-Type: text/plain\n\n$result";
     unlink $temp_file if -f $temp_file;
 }
 
