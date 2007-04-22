@@ -52,7 +52,7 @@ void* my_memstr(char* haystack, int haystacklen, const char* needle,
 */
 int fill_buffer(multipart_buffer *self)
 {
-    int bytes_to_read, actual_read = 0;
+    int bytes_to_read, actual_read = 0, total_read = 0;
 
     /* shift the existing data if necessary */
     if(self->bytes_in_buffer > 0 && self->buf_begin != self->buffer)
@@ -70,18 +70,24 @@ int fill_buffer(multipart_buffer *self)
     }
 
     /* read the required number of bytes */
-    if(bytes_to_read > 0) {
+    while(bytes_to_read > 0) {
 	char *buf = self->buffer + self->bytes_in_buffer;
 	ap_hard_timeout("[libapreq] multipart_buffer.c:fill_buffer", self->r);
 	actual_read = ap_get_client_block(self->r, buf, bytes_to_read);
 	ap_kill_timeout(self->r);
 
 	/* update the buffer length */
-	if(actual_read > 0)
-	  self->bytes_in_buffer += actual_read;
+	if(actual_read > 0) {
+            self->bytes_in_buffer += actual_read;
+            bytes_to_read -= actual_read;
+            total_read += actual_read;
+        }
+        else {
+            break;
+        }
     }
 
-    return actual_read;
+    return total_read;
 }
 
 /*
