@@ -1,0 +1,123 @@
+Instructions for the httpd-apreq Release Manager (RM)
+
+1. Prep the package for CPAN by running:
+
+        % sh BUILD.sh
+        % perl Makefile.PL
+        % make dist
+
+   This will generate a libapreq2-2.xx.tar.gz candidate in the 
+   current directory.   You should keep this source tree
+   intact to generate the final release.
+
+2. Test the generated file's './configure ...' build and
+   'perl Makefile.PL ...' build. Make sure all perl tests pass.
+
+3. Upload a release candidate to httpd.apache.org/~username
+   and post a candidate announcement to apreq-dev@.  The RM
+   or any other apreq committer may call for a formal vote on the 
+   candidate, but a formal vote is not a requirement for the release. 
+   Also, it is strongly recommended that the RM crosspost the 
+   candidate announcement to the modperl@ list, to solicit feedback
+   from a much larger audience.
+
+4. Give the mailing list participants 48-72 hours to comment or
+   call-for-vote on the candidate.  Unless there is a formal vote,
+   the RM may apply any suggested patches to this candidate and 
+   proceed with its release.  However if there is a call-for-vote, 
+   then tally the results after 72 hours of the call.  If there is
+   a "majority consensus" (three +1 and more +1s than -1s) among the 
+   committers, the RM may proceed with the release. Otherwise the 
+   RM must abandon this candidate and start fresh.
+
+5. The candidate is ok. Now return to the original source tree
+   and edit ./Changes:
+
+   =item 2.09 - <Today's Date>
+
+   libapreq2-2.09 released.
+
+6.  Tag the tree, s/./_/g in the version number, and roll the release.
+
+    % svn copy . https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_09
+    % make dist
+
+7. Test the release package, repeating step 2.  If all tests pass,
+   sign it via gpg:
+
+     % gpg --detach-sign --armor libapreq2-2.09.tar.gz
+
+   or pgp:
+
+    unix50i1b: % pgps -b --armor libapreq2-2.09.tar.gz
+    other:     % pgp -sba libapreq2-2.09.tar.gz
+
+8. Upload (scp) the package and signature to www.apache.org
+   for distribution:
+
+    % scp libapreq2-2.09.tar.gz* \
+      <username>@www.apache.org:/www/www.apache.org/dist/httpd/libapreq/
+
+   Ask another developer to confirm the uploaded signature is ok 
+
+    ---------------------------------------------------
+    Subject: please verify sig of libapreq2-2.09.tar.gz
+    [Name], could you please verify the sig:
+
+    http://www.apache.org/dist/httpd/libapreq/libapreq2-2.09.tar.gz
+    http://www.apache.org/dist/httpd/libapreq/libapreq2-2.09.tar.gz.asc
+
+    Thanks. 
+
+    via gpg:
+
+    % gpg --verify libapreq2-2.09.tar.gz.asc
+
+    or pgp:
+
+    unix50i1b: % pgpv libapreq2-2.09.tar.gz.asc
+    other:     % pgp libapreq2-2.09.tar.gz.asc
+
+    Check that your public key is among those listed in the
+   /www/www.apache.org/dist/httpd/KEYS file.
+    ---------------------------------------------------
+
+9. Upload the package to CPAN. Doublecheck that the md5 checksum
+   received from PAUSE is correct.
+
+10. Update the httpd-areq homepage to list the new release in
+    the News section. For instructions on updating the httpd website, 
+    see httpd-apreq-2/build/WEBSITE.
+
+11. Post a final announcement to the modperl@ and apreq-dev@ lists:
+
+        Subject: [ANNOUNCE] libapreq2 2.09 release
+
+    Include the md5 signature in the announcement, as well as
+    a list of the latest Changes (since the previous release).
+
+12. Prepare for the next cycle
+
+  a. increment version in Request/Request.pm
+
+  b. edit ./Changes:
+     - start a new item with incremented version + '-dev'
+
+  =item 2.10-dev
+
+  c. add a release entry in STATUS
+
+  d. update this file versions to make it easy to copy-n-paste things
+    on the next release:
+
+   perl -pi -e 's/\_10/\_11/g' RELEASE
+   perl -pi -e 's/\.10/\.11/g' RELEASE
+   perl -pi -e 's/_09/_10/g'   RELEASE
+   perl -pi -e 's/\.09/\.10/g' RELEASE
+
+    now reload this file and bump up the last number of the first
+    two commands.
+
+  e. commit the changed files
+
+     % svn ci Changes Request/Request.pm STATUS RELEASE
