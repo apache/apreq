@@ -6,15 +6,23 @@ use Apache::TestUtil;
 use Apache::TestRequest qw(UPLOAD_BODY GET_BODY_ASSERT);
 use Cwd;
 require File::Basename;
+use Apache::TestConfig;
+use constant WIN32 => Apache::TestConfig::WIN32;
 
 my $cwd = getcwd();
 
 my $module = 'TestApReq::upload';
 my $location = Apache::TestRequest::module2url($module);
 
-my %types = (perl => 'application/octet-stream',
-             httpd => 'application/octet-stream',
-            );
+my %types = (httpd => 'application/octet-stream');
+
+# for some reason, using the perl binary for uploads
+# on Win32 appears to cause seemingly random stray
+# temp files to be left.
+unless (WIN32) {
+    $types{perl} = 'application/octet-stream';
+}
+
 my $vars = Apache::Test::vars;
 my $perlpod = $vars->{perlpod};
 if (-d $perlpod) {
