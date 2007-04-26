@@ -823,14 +823,7 @@ APREQ_DECLARE(apr_status_t) apreq_file_mktemp(apr_file_t **fp,
 
     /* NO APR_DELONCLOSE! see comment above */
     flag = APR_CREATE | APR_READ | APR_WRITE | APR_EXCL | APR_BINARY;
-    /* Win32 needs the following to remove temp files.
-     * XXX: figure out why the APR_SHARELOCK flag works;
-     * a grep through the httpd sources seems to indicate
-     * it's only used in sdbm files??
-    */
-#ifdef WIN32
-    flag |= APR_FILE_NOCLEANUP | APR_SHARELOCK;
-#endif
+
     rc = apr_file_mktemp(fp, tmpl, flag, pool);
 
     if (rc == APR_SUCCESS) {

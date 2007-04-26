@@ -4,6 +4,11 @@
 
 @section v2_10 Changes with libapreq2-2.10 (under developement)
 
+- C API [suggested by Vinay Y S, tested by Steve Hay and Peter Walsham]
+  For Win32, remove the
+     flag |= APR_FILE_NOCLEANUP | APR_SHARELOCK;
+  in apreq_file_cleanup, to avoid problems with file uploads.
+
 @section v2_09 Changes with libapreq2-2.09 ()
 
 - C API [joes]
