@@ -33,7 +33,6 @@ config.guess
 config.sub
 configure
 configure.in
-depcomp
 eg/c/testapreq/Makefile.apxs
 eg/c/testapreq/Makefile.tmpl
 eg/c/testapreq/mod_testapreq.c
