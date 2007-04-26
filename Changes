@@ -2,7 +2,7 @@ Revision history for libapreq-1
 
 =over 4
 
-=item 1.34 
+=item 1.34 - April 26, 2007
 
 have fill_buffer() completely fill the multipart_buffer.  This
 bug is tickled by the FireFox 2.0 when doing ssl uploads:
