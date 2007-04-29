@@ -250,7 +250,7 @@ static apr_status_t custom_temp_dir_set(apreq_handle_t *handle,
 }
 
 
-static APREQ_MODULE(custom, 20050516);
+static APREQ_MODULE(custom, 20070428);
 
 APREQ_DECLARE(apreq_handle_t *)apreq_handle_custom(apr_pool_t *pool,
                                                    const char *query_string,
@@ -265,6 +265,7 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_custom(apr_pool_t *pool,
     req->handle.pool = pool;
     req->handle.bucket_alloc = in->bucket_alloc;
     req->read_limit = read_limit;
+    req->bytes_read = 0;
     req->parser = parser;
     req->in = apr_brigade_create(pool, in->bucket_alloc);
     req->tmpbb = apr_brigade_create(pool, in->bucket_alloc);
