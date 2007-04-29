@@ -4,6 +4,9 @@
 
 @section v2_10 Changes with libapreq2-2.10 (under developement)
 
+- C API [Andy Grundman, joes]
+  Add missing bytes_read initializer to apreq_handle_custom().
+
 - C API [suggested by Vinay Y S, tested by Steve Hay and Peter Walsham]
   For Win32, remove the
      flag |= APR_FILE_NOCLEANUP | APR_SHARELOCK;
