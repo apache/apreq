@@ -187,14 +187,11 @@ sub get_functions {
 
 sub test_docs {
     my ($pods, $tests) = @_;
-
-    my $pod2test = Apache::TestConfig::which('pod2test');
-    unless ($pod2test) {
-        # try under the perl's bin
-        require Config;
-        my $bin = $Config::Config{bin};
-        $pod2test = catfile $bin, "pod2test";
-    }
+    require Config;
+    my $bin = $Config::Config{bin};
+    my $pod2test = catfile $bin, "pod2test";
+    $pod2test = Apache::TestConfig::which('pod2test')
+        unless -e $pod2test;
 
     return "" unless $pod2test and -e $pod2test;
 
@@ -206,9 +203,10 @@ EOT
 }
 
 sub MY::postamble {
-    my @docs = <docs/*.pod>;
+    my @docs = (<xsbuilder/APR/Request/*/*.pod>, <xsbuilder/APR/Request/*.pod>);
     my @tests = @docs;
     s/pod$/t/ for @tests;
+    s/^xsbuilder/xs/ for @tests;
 
     my $string = "";
     my $test_docs = test_docs(\@docs, \@tests);
