@@ -153,11 +153,12 @@ void at_check(at_t *t, int is_ok, const char *label, const char *file,
         at_trace(t, format, label, file, line);
 
         if (fmt != NULL) {
+            char *f;
             apr_snprintf(format, sizeof format, " format: %s", fmt);
             at_trace(t, "%s", format);
             memcpy(format, "   left:", 8);
-            at_comment(t, format, vp);
-            memcpy(format, "  right:", 8);
+            f = format + strlen(format);
+            apr_snprintf(f, sizeof format - strlen(format), "\n  right: %s", fmt);
             at_comment(t, format, vp);
         }
     }
