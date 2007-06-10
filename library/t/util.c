@@ -93,7 +93,7 @@ static void test_charset_divine(dAT)
     char src1[] = "%C3%80%E3%82%a2"; /* A_GRAVE KATAKANA_A as utf8 */
     char src2[] = "pound%A3";/* latin-1 */
     char src3[] = "euro%80";/* cp-1252 */
-    char expect[6];
+    char expect[7];
 
     AT_int_eq(apreq_decode(expect, &elen, src1, sizeof(src1) -1),
               APR_SUCCESS);
