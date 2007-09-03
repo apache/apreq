@@ -4,6 +4,10 @@
 
 @section v2_10 Changes with libapreq2-2.10 (under developement)
 
+- Build [Randy Kobes]
+  Add appropriate manifest command to embed manifest files on Win32 
+  when using VC8
+
 - C API [Andy Grundman, joes]
   Add missing bytes_read initializer to apreq_handle_custom().
 
