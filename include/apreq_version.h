@@ -68,8 +68,7 @@ extern "C" {
  *  This symbol is defined for internal, "development" copies of libapreq.
  *  This symbol will be \#undef'd for releases.
  */
-#define APREQ_IS_DEV_VERSION
-
+#undef APREQ_IS_DEV_VERSION
 
 /** The formatted string of libapreq's version */
 #define APREQ_VERSION_STRING \
