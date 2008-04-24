@@ -16,7 +16,7 @@
      flag |= APR_FILE_NOCLEANUP | APR_SHARELOCK;
   in apreq_file_cleanup, to avoid problems with file uploads.
 
-@section v2_09 Changes with libapreq2-2.09 ()
+@section v2_09 Changes with libapreq2-2.09 ( not released)
 
 - C API [joes]
   Fix leak associated to calling apreq_brigade_fwrite() on an upload
