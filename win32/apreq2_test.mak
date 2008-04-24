@@ -127,7 +127,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB"/YX /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /FD /GZ  /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /FD /GZ  /c 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(LIBDIR)\apreq2_test.bsc" 
 LIB32=link.exe -lib
