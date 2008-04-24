@@ -68,6 +68,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\module_custom.obj" \
 	"$(INTDIR)\module_cgi.obj" \
 	"$(INTDIR)\error.obj" \
+	"$(INTDIR)\libprocrun.res \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
 
@@ -80,6 +81,8 @@ ALL : "$(OUTDIR)\libapreq2.dll"
 
 CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "APREQ_DECLARE_EXPORT" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /FD /c 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
+RSC=rc.exe
+RSC_PROJ=/l 0x409 /i "$(APACHE)\include" /d "NDEBUG" /i "$(APREQ_HOME)\include"
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapreq2.bsc" 
 LINK32=link.exe
@@ -101,6 +104,8 @@ ALL : "$(OUTDIR)\libapreq2.dll"
 
 CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "APREQ_DECLARE_EXPORT" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /FD /GZ  /c 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
+RSC=rc.exe
+RSC_PROJ=/l 0x409 /i "$(APACHE)\include" /d "_DEBUG /i "$(APREQ_HOME)\include"
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapreq2.bsc" 
 LINK32=link.exe
@@ -207,6 +212,11 @@ SOURCE=$(LIBDIR)\error.c
 
 "$(INTDIR)\error.obj" : $(SOURCE) "$(INTDIR)"
         $(CPP) /Fo"$(INTDIR)\error.obj" $(CPP_PROJ) $(SOURCE)
+
+SOURCE=.\libapreq.rc
+
+"$(INTDIR)\libapreq.res" : $(SOURCE) "$(INTDIR)"
+	$(RSC) /fo"$(INTDIR)\libapreq.res" $(RSC_PROJ) $(SOURCE)
 
 !ENDIF 
 
