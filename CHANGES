@@ -4,6 +4,14 @@
 
 @section v2_10 Changes with libapreq2-2.10 (under developement)
 
+- License [Mladen Turk]
+  Add libapreq.rc and generate libapreq.res
+
+- Build [Mladen Turk]
+  Add APREQ_DECLARE_EXPORT/APREQ_DECLARE_STATIC
+  in the same way as APR declares so that dllexport/dllimport
+  get correctly handled.   
+
 - Build [Randy Kobes]
   Add appropriate manifest command to embed manifest files on Win32 
   when using VC8
@@ -16,7 +24,7 @@
      flag |= APR_FILE_NOCLEANUP | APR_SHARELOCK;
   in apreq_file_cleanup, to avoid problems with file uploads.
 
-@section v2_09 Changes with libapreq2-2.09 ()
+@section v2_09 Changes with libapreq2-2.09 ( not released)
 
 - C API [joes]
   Fix leak associated to calling apreq_brigade_fwrite() on an upload
