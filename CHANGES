@@ -4,6 +4,11 @@
 
 @section v2_10 Changes with libapreq2-2.10 (under developement)
 
+- Build [Mladen Turk]
+  Add APREQ_DECLARE_EXPORT/APREQ_DECLARE_STATIC
+  in the same way as APR declares so that dllexport/dllimport
+  get correctly handled.   
+
 - Build [Randy Kobes]
   Add appropriate manifest command to embed manifest files on Win32 
   when using VC8

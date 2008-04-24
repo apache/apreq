@@ -78,7 +78,7 @@ ALL : "$(OUTDIR)\libapreq2.dll"
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /FD /c 
+CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "APREQ_DECLARE_EXPORT" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /FD /c 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapreq2.bsc" 
@@ -99,7 +99,7 @@ ALL : "$(OUTDIR)\libapreq2.dll"
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /FD /GZ  /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "APREQ_DECLARE_EXPORT" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /YX /FD /GZ  /c 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapreq2.bsc" 

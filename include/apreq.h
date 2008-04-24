@@ -69,10 +69,18 @@
  * APREQ_DECLARE_DATA type apr_variable = value;
  */
 #define APREQ_DECLARE_DATA
-#else
+#elif defined (APREQ_DECLARE_STATIC)
+#define APREQ_DECLARE(type)             type __stdcall
+#define APREQ_DECLARE_NONSTD(type)      type
+#define APREQ_DECLARE_DATA
+#elif defined (APREQ_DECLARE_EXPORT)
 #define APREQ_DECLARE(type)             __declspec(dllexport) type __stdcall
 #define APREQ_DECLARE_NONSTD(type)      __declspec(dllexport) type
 #define APREQ_DECLARE_DATA              __declspec(dllexport)
+#else
+#define APREQ_DECLARE(type)             __declspec(dllimport) type __stdcall
+#define APREQ_DECLARE_NONSTD(type)      __declspec(dllimport) type
+#define APREQ_DECLARE_DATA              __declspec(dllimport)
 #endif
 
 /**
