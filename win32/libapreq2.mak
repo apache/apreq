@@ -62,12 +62,12 @@ LINK32_OBJS= \
 	"$(INTDIR)\parser_header.obj" \
 	"$(INTDIR)\parser_multipart.obj" \
 	"$(INTDIR)\parser_urlencoded.obj" \
-        "$(INTDIR)\util.obj" \
-        "$(INTDIR)\version.obj" \
-        "$(INTDIR)\module.obj" \
-        "$(INTDIR)\module_custom.obj" \
-        "$(INTDIR)\module_cgi.obj" \
-        "$(INTDIR)\error.obj" \
+	"$(INTDIR)\util.obj" \
+	"$(INTDIR)\version.obj" \
+	"$(INTDIR)\module.obj" \
+	"$(INTDIR)\module_custom.obj" \
+	"$(INTDIR)\module_cgi.obj" \
+	"$(INTDIR)\error.obj" \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
 
