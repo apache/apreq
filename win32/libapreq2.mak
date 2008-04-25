@@ -68,7 +68,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\module_custom.obj" \
 	"$(INTDIR)\module_cgi.obj" \
 	"$(INTDIR)\error.obj" \
-	"$(INTDIR)\libprocrun.res \
+	"$(INTDIR)\libapreq.res \
 	"$(APR_LIB)" \
 	"$(APU_LIB)"
 
