@@ -72,7 +72,7 @@ ALL : "$(OUTDIR)\mod_apreq2.dll"
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "MOD_APREQ_EXPORTS" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /I"$(MODDIR)" /YX /FD /c 
+CPP_PROJ=/nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "APREQ_DECLARE_EXPORT" /I"$(APACHE)\include" /I"$(APREQ_HOME)\include" /I"$(MODDIR)" /YX /FD /c 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\mod_apreq2.bsc" 
