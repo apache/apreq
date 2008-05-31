@@ -411,8 +411,9 @@ sub apache_prog_name {
     my $apache = shift;
     my $prog;
     for my $trial(qw(Apache.exe httpd.exe)) {
-        next unless -e catfile($apache, 'bin', $trial);
-        $prog = $trial;
+        my $path = catfile($apache, 'bin', $trial);
+        next unless -e $path;
+        $prog = $path;
         last;
     }
     die "Could not determine the Apache2 binary name" unless $prog;
