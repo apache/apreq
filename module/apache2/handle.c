@@ -207,7 +207,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *handle, const char *name)
         h = ctx->find_param;
         h->next = ctx->parser->hook;
         ctx->parser->hook = h;
-        *(const char **)&h->ctx = name;
+        h->ctx = (void *)name;
 
         do {
             apreq_filter_prefetch(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
