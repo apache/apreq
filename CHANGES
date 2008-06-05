@@ -61,7 +61,7 @@
   Perl upload test (reported by Steve Hay)
 
 - Build [Philip M. Gollucci, Bojan Smojver, joes]
-  add -fno-strict-aliasing to all compiles on all systems
+  make input brigade volatile in order to give hints to GCC
   https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=193740
   This fixes an infinite look split_on_bdry() of library/parser_multipart.c
   particularly on linux/gcc 4.x platforms.

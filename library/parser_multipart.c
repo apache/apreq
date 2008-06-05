@@ -162,11 +162,18 @@ static apr_status_t split_on_bdry(apr_bucket_brigade *out,
              * so we can move previous buckets across
              * and retest buf against the full bdry.
              */
+
+            /* give hints to GCC by making the brigade volatile, otherwise the
+             * loop below will end up being endless. See:
+             * https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=193740
+             */
+            apr_bucket_brigade * volatile in_v = in;
+
             do {
-                apr_bucket *f = APR_BRIGADE_FIRST(in);
+                apr_bucket *f = APR_BRIGADE_FIRST(in_v);
                 APR_BUCKET_REMOVE(f);
                 APR_BRIGADE_INSERT_TAIL(out, f);
-            } while (e != APR_BRIGADE_FIRST(in));
+            } while (e != APR_BRIGADE_FIRST(in_v));
             off = 0;
             goto look_for_boundary_up_front;
         }
