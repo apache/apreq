@@ -64,9 +64,11 @@ if (WIN32) {
 else {
     slurp my $config => "$base_dir/config.status";
     $config =~ /^s,\@APACHE2_INCLUDES\@,([^,]+)/m or
+    $config =~ /^S\["APACHE2_INCLUDES"\]="([^"]+)/m or
         die "Can't find apache include directory";
     $apache_includes = $1;
     $config =~ /^s,\@APR_INCLUDES\@,([^,]+)/m or
+    $config =~ /^S\["APR_INCLUDES"\]="([^"]+)/m or
         die "Can't find apache include directory";
     $apache_includes .= " $1";
 
@@ -81,10 +83,12 @@ else {
     $apr_libs ="";
 
     $config =~ m/^s,\@APREQ_LIBNAME\@,([^,]+)/m or
+    $config =~ m/^S\["APREQ_LIBNAME"\]="([^"]+)/m or
         die "Can't find apreq libname";
     $apreq_libname = $1;
 
     $config =~ m/^s,\@PACKAGE_VERSION\@,([^,]+)/m or
+    $config =~ m/^S\["PACKAGE_VERSION"\]="([^"]+)/m or
         die "Can't find package version";
     $version = $1;
 
