@@ -179,10 +179,18 @@ dnl Fallback to oldest version available
         dnl provide identical dependency names: libexpat.so.0  
         dnl (possible multiple inclusion of the same file)
         if test "x$OS" = "xsolaris"; then
-            APU_LIBS=`$APU_CONFIG --libs | $PERL -pe 's,-lexpat,,'`
+            if $APU_CONFIG --avoid-ldap >/dev/null 2>&1; then
+                APU_LIBS=`$APU_CONFIG --avoid-ldap --libs | $PERL -pe 's,-lexpat,,'`
+            else
+                APU_LIBS=`$APU_CONFIG --libs | $PERL -pe 's,-lexpat,,'`
+            fi
             APR_ADDTO([APR_LIBS], "$APU_LIBS")
         else
-            APR_ADDTO([APR_LIBS], "`$APU_CONFIG --libs`")
+            if $APU_CONFIG --avoid-ldap >/dev/null 2>&1; then
+                APR_ADDTO([APR_LIBS], "`$APU_CONFIG --avoid-ldap --libs`")
+            else
+                APR_ADDTO([APR_LIBS], "`$APU_CONFIG --libs`")
+            fi
         fi
 
         APR_ADDTO([APR_LDFLAGS], "`$APU_CONFIG --link-ld --ldflags`")
