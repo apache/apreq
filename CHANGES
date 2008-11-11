@@ -2,7 +2,10 @@
 //! brief List of major changes.
 
 
-@section v2_10 Changes with libapreq2-2.10 (under developement)
+@section v2_11 Changes with libapreq2-2.11 (under developement)
+
+
+@section v2_10 Changes with libapreq2-2.10 (released Nov 11, 2008)
 
 - Perl Glue Build [Philip M. Gollucci]
   config.status format changed format yet again in autoconf 2.62+.
