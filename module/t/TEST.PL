@@ -71,7 +71,7 @@ sub cmodules_write_makefile {
 
     if (WIN32) {
         require File::Spec;
-        my @goners = map {$name . '.' . $_} qw(exp ilk lib pdb so lo);
+        my @goners = map {$name . '.' . $_} qw(exp ilk lib pdb so lo so.manifest);
         my $libs = join ' ',
             (map {'-l' . File::Spec->catfile($mod_apreq2_dir, $_)}
               qw(libapreq2.lib mod_apreq2.lib));
