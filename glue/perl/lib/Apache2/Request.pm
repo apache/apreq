@@ -399,7 +399,7 @@ from Apache2::Request 1.X.  These issues need to be
 addressed when porting 1.X apps to the new 2.X API.
 
 
-=over 5
+=over 4
 
 =item * Apache2::Upload is now a separate module.  Applications
         requiring the upload API must C<use Apache2::Upload> in 2.X.
