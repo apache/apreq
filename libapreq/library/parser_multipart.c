@@ -1,9 +1,10 @@
 /*
-**  Copyright 2003-2006  The Apache Software Foundation
-**
-**  Licensed under the Apache License, Version 2.0 (the "License");
-**  you may not use this file except in compliance with the License.
-**  You may obtain a copy of the License at
+**  Licensed to the Apache Software Foundation (ASF) under one or more
+** contributor license agreements.  See the NOTICE file distributed with
+** this work for additional information regarding copyright ownership.
+** The ASF licenses this file to You under the Apache License, Version 2.0
+** (the "License"); you may not use this file except in compliance with
+** the License.  You may obtain a copy of the License at
 **
 **      http://www.apache.org/licenses/LICENSE-2.0
 **
@@ -161,11 +162,18 @@ static apr_status_t split_on_bdry(apr_bucket_brigade *out,
              * so we can move previous buckets across
              * and retest buf against the full bdry.
              */
+
+            /* give hints to GCC by making the brigade volatile, otherwise the
+             * loop below will end up being endless. See:
+             * https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=193740
+             */
+            apr_bucket_brigade * volatile in_v = in;
+
             do {
-                apr_bucket *f = APR_BRIGADE_FIRST(in);
+                apr_bucket *f = APR_BRIGADE_FIRST(in_v);
                 APR_BUCKET_REMOVE(f);
                 APR_BRIGADE_INSERT_TAIL(out, f);
-            } while (e != APR_BRIGADE_FIRST(in));
+            } while (e != APR_BRIGADE_FIRST(in_v));
             off = 0;
             goto look_for_boundary_up_front;
         }

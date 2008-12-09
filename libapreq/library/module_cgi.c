@@ -1,9 +1,10 @@
 /*
-**  Copyright 2003-2006  The Apache Software Foundation
-**
-**  Licensed under the Apache License, Version 2.0 (the "License");
-**  you may not use this file except in compliance with the License.
-**  You may obtain a copy of the License at
+**  Licensed to the Apache Software Foundation (ASF) under one or more
+** contributor license agreements.  See the NOTICE file distributed with
+** this work for additional information regarding copyright ownership.
+** The ASF licenses this file to You under the Apache License, Version 2.0
+** (the "License"); you may not use this file except in compliance with
+** the License.  You may obtain a copy of the License at
 **
 **      http://www.apache.org/licenses/LICENSE-2.0
 **
@@ -473,7 +474,7 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
         h = req->find_param;
         h->next = req->parser->hook;
         req->parser->hook = h;
-        *(const char **)&h->ctx = name;
+        h->ctx = (void *)name;
 
         do {
             cgi_read(handle, APREQ_DEFAULT_READ_BLOCK_SIZE);

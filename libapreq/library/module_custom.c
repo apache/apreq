@@ -1,9 +1,10 @@
 /*
-**  Copyright 2003-2006  The Apache Software Foundation
-**
-**  Licensed under the Apache License, Version 2.0 (the "License");
-**  you may not use this file except in compliance with the License.
-**  You may obtain a copy of the License at
+**  Licensed to the Apache Software Foundation (ASF) under one or more
+** contributor license agreements.  See the NOTICE file distributed with
+** this work for additional information regarding copyright ownership.
+** The ASF licenses this file to You under the Apache License, Version 2.0
+** (the "License"); you may not use this file except in compliance with
+** the License.  You may obtain a copy of the License at
 **
 **      http://www.apache.org/licenses/LICENSE-2.0
 **
@@ -249,7 +250,7 @@ static apr_status_t custom_temp_dir_set(apreq_handle_t *handle,
 }
 
 
-static APREQ_MODULE(custom, 20050516);
+static APREQ_MODULE(custom, 20070428);
 
 APREQ_DECLARE(apreq_handle_t *)apreq_handle_custom(apr_pool_t *pool,
                                                    const char *query_string,
@@ -264,6 +265,7 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_custom(apr_pool_t *pool,
     req->handle.pool = pool;
     req->handle.bucket_alloc = in->bucket_alloc;
     req->read_limit = read_limit;
+    req->bytes_read = 0;
     req->parser = parser;
     req->in = apr_brigade_create(pool, in->bucket_alloc);
     req->tmpbb = apr_brigade_create(pool, in->bucket_alloc);
