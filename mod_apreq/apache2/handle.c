@@ -1,9 +1,10 @@
 /*
-**  Copyright 2003-2006  The Apache Software Foundation
-**
-**  Licensed under the Apache License, Version 2.0 (the "License");
-**  you may not use this file except in compliance with the License.
-**  You may obtain a copy of the License at
+**  Licensed to the Apache Software Foundation (ASF) under one or more
+** contributor license agreements.  See the NOTICE file distributed with
+** this work for additional information regarding copyright ownership.
+** The ASF licenses this file to You under the Apache License, Version 2.0
+** (the "License"); you may not use this file except in compliance with
+** the License.  You may obtain a copy of the License at
 **
 **      http://www.apache.org/licenses/LICENSE-2.0
 **
@@ -25,7 +26,7 @@
 #include "http_request.h"
 #include "apr_strings.h"
 
-#include "mod_apreq2.h"
+#include "apreq_module_apache2.h"
 #include "apreq_private_apache2.h"
 #include "apreq_error.h"
 
@@ -206,7 +207,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *handle, const char *name)
         h = ctx->find_param;
         h->next = ctx->parser->hook;
         ctx->parser->hook = h;
-        *(const char **)&h->ctx = name;
+        h->ctx = (void *)name;
 
         do {
             apreq_filter_prefetch(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
