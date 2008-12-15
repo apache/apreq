@@ -12,6 +12,7 @@ Makefile.PL
 Makefile.am
 Makefile.in
 README
+NOTICE
 Request/Makefile.PL
 Request/Request.pm
 Request/Request.xs

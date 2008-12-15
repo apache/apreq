@@ -273,16 +273,24 @@ int multipart_buffer_read(multipart_buffer *self, char *buf, int bytes)
     return len;
 }
 
-/*
-  XXX: this is horrible memory-usage-wise, but we only expect
-  to do this on small pieces of form data.
-*/
 char *multipart_buffer_read_body(multipart_buffer *self)
 {
     char buf[FILLUNIT], *out = "";
+    size_t nalloc = 1, cur_len = 0;
 
-    while(multipart_buffer_read(self, buf, sizeof(buf)))
-	out = ap_pstrcat(self->r->pool, out, buf, NULL);
+    while(multipart_buffer_read(self, buf, sizeof(buf))) {
+        size_t len = strlen(buf);
+        if (len + cur_len + 1 > nalloc) {
+            char *tmp;
+            nalloc = 2 * (nalloc + len + 1);
+            tmp = ap_palloc(self->r->pool, nalloc);
+            strcpy(tmp, out);
+            out = tmp;
+        }
+
+        strcpy(out + cur_len, buf);
+        cur_len += len;
+    }
 
 #ifdef DEBUG
     ap_log_rerror(MPB_ERROR, "multipart_buffer_read_body: '%s'", out);
