@@ -4,6 +4,9 @@ Revision history for libapreq-1
 
 =item 1.34 - December 15, 2008
 
+Remove quadratic memory allocation during multipart_buffer reads
+[joes]
+
 have fill_buffer() completely fill the multipart_buffer.  This
 bug is tickled by the FireFox 2.0 when doing ssl uploads:
 
