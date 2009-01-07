@@ -2,7 +2,7 @@ Revision history for libapreq-1
 
 =over 4
 
-=item 1.34 - December 15, 2008
+=item 1.34 - January 7, 2009
 
 Remove quadratic memory allocation during multipart_buffer reads
 [joes]
