@@ -33,50 +33,50 @@ Instructions for the httpd-apreq Release Manager (RM)
 5. The candidate is ok. Now return to the original source tree
    and edit ./Changes:
 
-   =item 1.34 - <Today's Date>
+   =item 1.35 - <Today's Date>
 
-   libapreq-1.34 released.
+   libapreq-1.35 released.
 
 6.  Tag the tree, s/./_/g in the version number, and roll the release.
 
-    % svn copy . https://svn.apache.org/repos/asf/httpd/apreq/tags/v1_34
+    % svn copy . https://svn.apache.org/repos/asf/httpd/apreq/tags/v1_35
     % make dist
 
 7. Test the release package, repeating step 2.  If all tests pass,
    sign it via gpg:
 
-     % gpg --detach-sign --armor libapreq-1.34.tar.gz
+     % gpg --detach-sign --armor libapreq-1.35.tar.gz
 
    or pgp:
 
-    unix50i1b: % pgps -b --armor libapreq-1.34.tar.gz
-    other:     % pgp -sba libapreq-1.34.tar.gz
+    unix50i1b: % pgps -b --armor libapreq-1.35.tar.gz
+    other:     % pgp -sba libapreq-1.35.tar.gz
 
 8. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
-    % scp libapreq-1.34.tar.gz* \
+    % scp libapreq-1.35.tar.gz* \
       <username>@www.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
    Ask another developer to confirm the uploaded signature is ok 
 
     ---------------------------------------------------
-    Subject: please verify sig of libapreq-1.34.tar.gz
+    Subject: please verify sig of libapreq-1.35.tar.gz
     [Name], could you please verify the sig:
 
-    http://www.apache.org/dist/httpd/libapreq/libapreq-1.34.tar.gz
-    http://www.apache.org/dist/httpd/libapreq/libapreq-1.34.tar.gz.asc
+    http://www.apache.org/dist/httpd/libapreq/libapreq-1.35.tar.gz
+    http://www.apache.org/dist/httpd/libapreq/libapreq-1.35.tar.gz.asc
 
     Thanks. 
 
     via gpg:
 
-    % gpg --verify libapreq-1.34.tar.gz.asc
+    % gpg --verify libapreq-1.35.tar.gz.asc
 
     or pgp:
 
-    unix50i1b: % pgpv libapreq-1.34.tar.gz.asc
-    other:     % pgp libapreq-1.34.tar.gz.asc
+    unix50i1b: % pgpv libapreq-1.35.tar.gz.asc
+    other:     % pgp libapreq-1.35.tar.gz.asc
 
     Check that your public key is among those listed in the
    /www/www.apache.org/dist/httpd/KEYS file.
@@ -91,7 +91,7 @@ Instructions for the httpd-apreq Release Manager (RM)
 
 11. Post a final announcement to the modperl@ and apreq-dev@ lists:
 
-        Subject: [ANNOUNCE] libapreq 1.34 release
+        Subject: [ANNOUNCE] libapreq 1.35 release
 
     Include the md5 signature in the announcement, as well as
     a list of the latest Changes (since the previous release).
@@ -103,16 +103,16 @@ Instructions for the httpd-apreq Release Manager (RM)
   b. edit ./Changes:
      - start a new item with incremented version + '-dev'
 
-  =item 1.35-dev
+  =item 1.36-dev
 
   c. add a release entry in STATUS
 
   d. update this file versions to make it easy to copy-n-paste things
     on the next release:
 
-   perl -pi -e 's/\.35/\.35/g' RELEASE
-   perl -pi -e 's/_34/_35/g'   RELEASE
-   perl -pi -e 's/\.34/\.35/g' RELEASE
+   perl -pi -e 's/\.36/\.37/g' RELEASE
+   perl -pi -e 's/_35/_36/g'   RELEASE
+   perl -pi -e 's/\.35/\.36/g' RELEASE
 
     now reload this file and bump up the last number of the first
     two commands.

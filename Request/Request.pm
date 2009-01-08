@@ -22,7 +22,7 @@ use Apache::Table ();
 
 {
     no strict;
-    $VERSION = '1.34';
+    $VERSION = '1.35';
     @ISA = qw(Apache);
     __PACKAGE__->mod_perl::boot($VERSION);
 }
