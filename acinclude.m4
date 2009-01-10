@@ -212,6 +212,7 @@ dnl Fallback to oldest version available
 
         if test "x$USE_MAINTAINER_MODE" != "xno"; then
             APR_ADDTO([CFLAGS],[
+                      -fno-strict-aliasing
                       -Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
                       -Wmissing-declarations -Wwrite-strings -Wcast-qual
                       -Wfloat-equal -Wshadow -Wpointer-arith
