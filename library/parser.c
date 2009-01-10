@@ -347,7 +347,8 @@ APREQ_DECLARE_HOOK(apreq_hook_find_param)
     apr_status_t s = (hook->next == NULL)
         ? APR_SUCCESS : apreq_hook_run(hook->next, param, bb);
 
-    if (is_final && strcasecmp(ctx->name, param->v.name) == 0) {
+    if (is_final && s == APR_SUCCESS
+        && strcasecmp(ctx->name, param->v.name) == 0) {
         ctx->param = param;
         ctx->prev[0]->next = hook->next;
     }
