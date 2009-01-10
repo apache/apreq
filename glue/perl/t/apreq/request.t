@@ -46,7 +46,7 @@ for my $test (qw/slurp bb tempname link fh io bad;query=string%%/) {
 {
     my $value = 'DataUpload' x 100;
     my $result = UPLOAD_BODY("$location?test=hook", content => $value);
-    ok t_cmp($result, $value, "type");
+    ok t_cmp($result, $value, "hook");
 }
 
 {
