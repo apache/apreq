@@ -246,7 +246,7 @@ sub MY::postamble {
 doc_test : @tests
 	\$(FULLPERLRUN) "-Mblib" "-MTest::Harness" "-e" "runtests(\@ARGV)" @tests
 
-#test :: doc_test
+test :: doc_test
 
 EOT
     } else {
