@@ -417,6 +417,7 @@ static int apreq_pre_init(apr_pool_t *p, apr_pool_t *plog,
                      "Failed to pre-initialize libapreq2");
         return HTTP_INTERNAL_SERVER_ERROR;
     }
+    APR_REGISTER_OPTIONAL_FN(apreq_handle_apache2);
     return OK;
 }
 

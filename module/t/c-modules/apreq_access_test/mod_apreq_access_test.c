@@ -69,11 +69,13 @@ static int apreq_access_checker(request_rec *r)
     apreq_param_t *param;
     struct access_test_cfg *cfg = (struct access_test_cfg *)
         ap_get_module_config(r->per_dir_config, &apreq_access_test_module);
+    APR_OPTIONAL_FN_TYPE(apreq_handle_apache2) *fcn =
+        APR_RETRIEVE_OPTIONAL_FN(apreq_handle_apache2);
 
-    if (!cfg || !cfg->param)
+    if (!cfg || !cfg->param || !fcn)
         return DECLINED;
 
-    handle = apreq_handle_apache2(r);
+    handle = fcn(r);
     param = apreq_param(handle, cfg->param);
     if (param != NULL) {
         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS,
