@@ -350,7 +350,7 @@ APREQ_DECLARE_HOOK(apreq_hook_find_param)
     if (is_final && s == APR_SUCCESS
         && strcasecmp(ctx->name, param->v.name) == 0) {
         ctx->param = param;
-        ctx->prev[0]->next = hook->next;
+        ctx->prev->next = hook->next;
     }
     return s;
 }

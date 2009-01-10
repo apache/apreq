@@ -480,7 +480,7 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
         h->ctx = hook_ctx;
         hook_ctx->name = name;
         hook_ctx->param = NULL;
-        hook_ctx->prev = &req->parser->hook;
+        hook_ctx->prev = req->parser->hook;
 
         do {
             cgi_read(handle, APREQ_DEFAULT_READ_BLOCK_SIZE);

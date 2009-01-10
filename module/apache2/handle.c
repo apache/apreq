@@ -213,7 +213,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *handle, const char *name)
         h->ctx = hook_ctx;
         hook_ctx->name = name;
         hook_ctx->param = NULL;
-        hook_ctx->prev = &ctx->parser->hook;
+        hook_ctx->prev = ctx->parser->hook;
 
         do {
             apreq_filter_prefetch(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
