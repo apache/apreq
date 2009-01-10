@@ -4,6 +4,8 @@
 
 @section v2_10 Changes with libapreq2-2.10 (under developement)
 
+- Clean up buggy apreq_hook_find_param().
+
 - Perl Glue Build [Philip M. Gollucci]
   config.status format changed format yet again in autoconf 2.62+.
 

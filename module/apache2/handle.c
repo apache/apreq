@@ -167,6 +167,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *handle, const char *name)
     struct filter_ctx *ctx;
     const char *val;
     apreq_hook_t *h;
+    apreq_hook_find_param_ctx_t *hook_ctx;
 
     if (f->ctx == NULL)
         apreq_filter_make_context(f);
@@ -199,6 +200,7 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *handle, const char *name)
 
         /* Not seen yet, so we need to scan for
            param while prefetching the body */
+        hook_ctx = apr_palloc(handle->pool, sizeof *hook_ctx);
 
         if (ctx->find_param == NULL)
             ctx->find_param = apreq_hook_make(handle->pool,
@@ -206,15 +208,17 @@ static apreq_param_t *apache2_body_get(apreq_handle_t *handle, const char *name)
                                               NULL, NULL);
         h = ctx->find_param;
         h->next = ctx->parser->hook;
+        h->ctx = hook_ctx;
         ctx->parser->hook = h;
-        h->ctx = &name;
+        h->ctx = hook_ctx;
+        hook_ctx->name = name;
+        hook_ctx->param = NULL;
+        hook_ctx->prev = &ctx->parser->hook;
 
         do {
             apreq_filter_prefetch(f, APREQ_DEFAULT_READ_BLOCK_SIZE);
-            if (h->ctx != &name) {
-                ctx->parser->hook = h->next;
-                return h->ctx;
-            }
+            if (hook_ctx->param != NULL)
+                return hook_ctx->param;
         } while (ctx->body_status == APR_INCOMPLETE);
 
         ctx->parser->hook = h->next;

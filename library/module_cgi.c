@@ -439,6 +439,7 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
     struct cgi_handle *req = (struct cgi_handle *)handle;
     const char *val;
     apreq_hook_t *h;
+    apreq_hook_find_param_ctx_t *hook_ctx;
 
     switch (req->body_status) {
 
@@ -467,6 +468,8 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
         /* Not seen yet, so we need to scan for
            param while prefetching the body */
 
+        hook_ctx = apr_palloc(handle->pool, sizeof *hook_ctx);
+
         if (req->find_param == NULL)
             req->find_param = apreq_hook_make(handle->pool,
                                               apreq_hook_find_param,
@@ -474,14 +477,15 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
         h = req->find_param;
         h->next = req->parser->hook;
         req->parser->hook = h;
-        h->ctx = &name;
+        h->ctx = hook_ctx;
+        hook_ctx->name = name;
+        hook_ctx->param = NULL;
+        hook_ctx->prev = &req->parser->hook;
 
         do {
             cgi_read(handle, APREQ_DEFAULT_READ_BLOCK_SIZE);
-            if (h->ctx != &name) {
-                req->parser->hook = h->next;
-                return h->ctx;
-            }
+            if (hook_ctx->param != NULL)
+                return hook_ctx->param;
         } while (req->body_status == APR_INCOMPLETE);
 
         req->parser->hook = h->next;
@@ -651,7 +655,7 @@ static apr_status_t ba_cleanup(void *data)
 }
 #endif
 
-static APREQ_MODULE(cgi, 20050425);
+static APREQ_MODULE(cgi, 20090110);
 
 APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
 {

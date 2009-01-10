@@ -267,15 +267,28 @@ APREQ_DECLARE_HOOK(apreq_hook_disable_uploads);
 APREQ_DECLARE_HOOK(apreq_hook_discard_brigade);
 
 /**
+ * Context struct for the apreq_hook_find_param hook.
+ */
+typedef struct apreq_hook_find_param_ctx_t {
+    const char    *name;
+    apreq_param_t *param;
+    apreq_hook_t **prev;
+} apreq_hook_find_param_ctx_t;
+
+
+/**
  * Special purpose utility for locating a parameter
  * during parsing.  The hook's ctx shoud be initialized
- * to a const char *, which is a pointer to the desired
- * param name.  The hook's ctx will be reassigned to the
- * first param found.
+ * to an apreq_hook_find_param_ctx_t *, with the name
+ * attribute set to the sought parameter name, the param
+ * attribute set to NULL, and the prev attribute set to
+ * the address of the previous hook.  The param attribute
+ * will be reassigned to the first param found, and once
+ * that happens this hook is immediately removed from the chain.
  *
  * @remarks When used, this should always be the first hook
- * invoked, so add it manually as parser->hook instead of
- * using apreq_parser_add_hook.
+ * invoked, so add it manually with ctx->prev = &parser->hook
+ * instead of using apreq_parser_add_hook.
  */
 APREQ_DECLARE_HOOK(apreq_hook_find_param);
 
