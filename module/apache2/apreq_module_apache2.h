@@ -19,6 +19,7 @@
 #define APREQ_APACHE2_H
 
 #include "apreq_module.h"
+#include "apr_optional.h"
 #include <httpd.h>
 
 #ifdef  __cplusplus
@@ -139,6 +140,12 @@
  * request_rec.
  */
 APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r);
+
+/**
+ *
+ *      
+ */
+APR_DECLARE_OPTIONAL_FN(apreq_handle_t *,apreq_handle_apache2, (request_rec *r));
 
 /**
  * The mod_apreq2 filter is named "apreq2", and may be used in Apache's
