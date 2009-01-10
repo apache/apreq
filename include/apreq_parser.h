@@ -272,7 +272,7 @@ APREQ_DECLARE_HOOK(apreq_hook_discard_brigade);
 typedef struct apreq_hook_find_param_ctx_t {
     const char    *name;
     apreq_param_t *param;
-    apreq_hook_t **prev;
+    apreq_hook_t  *prev;
 } apreq_hook_find_param_ctx_t;
 
 
