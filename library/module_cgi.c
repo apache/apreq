@@ -474,11 +474,11 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
         h = req->find_param;
         h->next = req->parser->hook;
         req->parser->hook = h;
-        h->ctx = (void *)name;
+        h->ctx = &name;
 
         do {
             cgi_read(handle, APREQ_DEFAULT_READ_BLOCK_SIZE);
-            if (h->ctx != name) {
+            if (h->ctx != &name) {
                 req->parser->hook = h->next;
                 return h->ctx;
             }
