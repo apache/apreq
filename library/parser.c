@@ -341,7 +341,7 @@ APREQ_DECLARE_HOOK(apreq_hook_apr_xml_parser)
 
 APREQ_DECLARE_HOOK(apreq_hook_find_param)
 {
-    const char *key = hook->ctx;
+    const char *key = *(const char **)hook->ctx;
     int is_final = (bb == NULL) || APR_BUCKET_IS_EOS(APR_BRIGADE_LAST(bb));
     apr_status_t s = (hook->next == NULL)
         ? APR_SUCCESS : apreq_hook_run(hook->next, param, bb);
