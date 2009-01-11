@@ -15,6 +15,7 @@ perl_test: perl/Makefile
 	cd perl; $(MAKE) test
 
 perl_install:
+	cd perl; INSTALL=1 @PERL@ @PERL_OPTS@ Makefile.PL -apxs @APACHE2_APXS@ @MM_OPTS@
 	cd perl; $(MAKE) install
 
 perl_clean:
