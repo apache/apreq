@@ -4,6 +4,11 @@
 
 @section v2_10 Changes with libapreq2-2.10 (released Nov 11, 2008)
 
+- Perl Glue
+  Fix install-time linking issue of the .so modules.
+  Previously they would remain linked against the src
+  library path, not the install path.
+
 - C API [joes]
   Add optional interface for apreq_handle_apache2().
 

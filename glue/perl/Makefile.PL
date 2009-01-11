@@ -127,9 +127,19 @@ else {
 
 }
 
-my $apreq_libs = WIN32 ?
-    qq{-L$base_dir/win32/libs -llib$apreq_libname -lmod_apreq2 -L$perl_lib -llibaprext -L$apache_dir/lib -lmod_perl} :
-    qx{$base_dir/apreq2-config --link-ld --ldflags --libs};
+
+my $apreq_libs;
+
+if (WIN32) {
+ $apreq_libs = qq{-L$base_dir/win32/libs -llib$apreq_libname -lmod_apreq2 -L$perl_lib -llibaprext -L$apache_dir/lib -lmod_perl};
+} else {
+    my $apreq2_config = "$base_dir/apreq2-config";
+    my $bindir = qx{$apreq2_config --bindir};
+    chomp $bindir;
+    $apreq2_config = "$bindir/apreq2-config" if $ENV{INSTALL};
+    $apreq_libs = qx{$apreq2_config --link-ld --ldflags --libs};
+    chomp $apreq_libs;
+}
 
 my $mp2_typemaps = Apache2::Build->new->typemaps;
 
