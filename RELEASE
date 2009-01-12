@@ -16,7 +16,7 @@ Instructions for the httpd-apreq Release Manager (RM)
 3. Upload a release candidate to httpd.apache.org/~username
    and post a candidate announcement to apreq-dev@.  The RM
    or any other apreq committer may call for a formal vote on the 
-   candidate, but a formal vote is not a requirement for the release. 
+   candidate, but a formal vote is not a requirement for the candidate. 
    Also, it is strongly recommended that the RM crosspost the 
    candidate announcement to the modperl@ list, to solicit feedback
    from a much larger audience.
@@ -36,6 +36,10 @@ Instructions for the httpd-apreq Release Manager (RM)
    =item 1.35 - <Today's Date>
 
    libapreq-1.35 released.
+   
+   Also, add a release entry to ./STATUS
+   
+   1.35       : Released <Today's Date>
 
 6.  Tag the tree, s/./_/g in the version number, and roll the release.
 
@@ -82,21 +86,40 @@ Instructions for the httpd-apreq Release Manager (RM)
    /www/www.apache.org/dist/httpd/KEYS file.
     ---------------------------------------------------
 
-9. Upload the package to CPAN. Doublecheck that the md5 checksum
-   received from PAUSE is correct.
+9. Call for a formal vote on the release artifact as explained in 4 and 5
+   above.  Note that since this is a release artiface, a formal vote is
+   required, and 3 +1 votes from members of the httpd PMC are required to
+   proceed.  If all is well after 72 hours, proceed to step 11 (NOT 10).
+   
+10. If any -1s are received, the release is rejected.  Edit the ./STATUS file
+    and modify the line
+   
+    1.35       : Released <Date>
+   
+    to read
+   
+    1.35       : Not released
+   
+    Follow the instructions in step 14a, c and d (NOT b) to increment the
+    version and commit your changes.  Then start a release with the new version
+    number by starting again from step 1.
 
-10. Update the httpd-areq homepage to list the new release in
+11. If 3 +1 votes are received by members of the httpd PMC, the release is a go.
+    Upload the package to CPAN. Doublecheck that the md5 checksum
+    received from PAUSE is correct.
+
+12. Update the httpd-areq homepage to list the new release in
     the News section. For instructions on updating the httpd website, 
     see httpd-apreq-2/build/WEBSITE.
 
-11. Post a final announcement to the modperl@ and apreq-dev@ lists:
+13. Post a final announcement to the modperl@ and apreq-dev@ lists:
 
         Subject: [ANNOUNCE] libapreq 1.35 release
 
     Include the md5 signature in the announcement, as well as
     a list of the latest Changes (since the previous release).
 
-12. Prepare for the next cycle
+14. Prepare for the next cycle
 
   a. increment version in Request/Request.pm
 
@@ -105,9 +128,7 @@ Instructions for the httpd-apreq Release Manager (RM)
 
   =item 1.36-dev
 
-  c. add a release entry in STATUS
-
-  d. update this file versions to make it easy to copy-n-paste things
+  c. update this file versions to make it easy to copy-n-paste things
     on the next release:
 
    perl -pi -e 's/\.36/\.37/g' RELEASE
@@ -117,6 +138,6 @@ Instructions for the httpd-apreq Release Manager (RM)
     now reload this file and bump up the last number of the first
     two commands.
 
-  e. commit the changed files
+  d. commit the changed files
 
      % svn ci Changes Request/Request.pm STATUS RELEASE
