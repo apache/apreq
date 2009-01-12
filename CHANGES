@@ -1,10 +1,13 @@
 /** @page apreq_changes CHANGES
 //! brief List of major changes.
 
+@section v2_10 Changes with libapreq2-2.10 (not released)
 
-@section v2_10 Changes with libapreq2-2.10 (under developement)
+- Perl Glue [joes]
+  Fix the linking of the perl modules to libapreq2 and libapr
+  on Solaris.
 
-- Perl Glue
+- Perl Glue [joes]
   Fix install-time linking issue of the .so modules.
   Previously they would remain linked against the src
   library path, not the install path.

@@ -20,6 +20,8 @@
 # APR-util script designed to allow easy command line access to APR-util
 # configuration parameters.
 
+PATH=/bin:/usr/bin:/usr/local/bin
+
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 bindir="@bindir@"
@@ -29,7 +31,7 @@ includedir="@includedir@/@APREQ_LIBNAME@"
 LIBS="@APR_LIBS@"
 LDFLAGS="@APR_LDFLAGS@"
 INCLUDES="@APR_INCLUDES@"
-LDFLAGS="@APR_LDFLAGS@"
+SOLARIS=`echo @build_os@ | grep -i solaris`
 
 APREQ_LIBNAME="@APREQ_LIBNAME@"
 
@@ -213,6 +215,9 @@ while test $# -gt 0; do
 done
 
 if test -n "$flags"; then
+  if [ -n $SOLARIS ]; then
+    $flags=`echo $flags | sed -e 's/-L\([^ ]*\)/-R\1 -L\1/g'`
+  fi
   echo "$flags"
 fi
 
