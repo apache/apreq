@@ -1,4 +1,5 @@
 =for testing
+  require APR::Request::CGI;
   ok(1);
 
 =head1 NAME
