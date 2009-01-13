@@ -249,7 +249,7 @@ static char *prompt(apreq_handle_t *handle, const char *name,
 /*        return NULL; */
     }
 
-    if (strcmp(defval, nullstr))
+    if (defval != nullstr)
         return apr_pstrdup(handle->pool, defval);
 
     return NULL;
