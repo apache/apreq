@@ -28,7 +28,7 @@ my @pm;
 find(sub { push @pm, $File::Find::name if /\.pm$/ },
      qw(glue/perl/lib/Apache2));
 
-my $pattern = '(?<=our $VERSION = ")([^"]+)(?=")';
+my $pattern = '(?<=our \$VERSION = ")([^"]+)(?=")';
 system "perl -i -ple 's/$pattern/$version/' @pm";
 
 #
