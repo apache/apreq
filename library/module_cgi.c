@@ -16,6 +16,8 @@
 */
 #include <assert.h>
 
+#define APR_WANT_STRFUNC
+#include "apr_want.h"
 #include "apreq_module.h"
 #include "apreq_error.h"
 #include "apr_strings.h"
@@ -39,8 +41,15 @@
 #define CGILOG_LEVELMASK 7
 #define CGILOG_MARK     __FILE__, __LINE__
 
-
-
+/** Interactive patch:
+ * TODO Don't use 65K buffer
+ * TODO Handle empty/non-existant parameters
+ * TODO Allow body elements to be files
+ * TODO When running body/get/cookies all at once, include previous cached
+ * values (and don't start at 0 in count)
+ * TODO What happens if user does apreq_param, but needs POST value - we'll
+ * never catch it now, as args param will match...
+ */
 
 struct cgi_handle {
     struct apreq_handle_t       handle;
@@ -62,9 +71,16 @@ struct cgi_handle {
     apr_bucket_brigade          *in;
     apr_bucket_brigade          *tmpbb;
 
+    int                         interactive_mode;
+    const char                  *promptstr;
+    apr_file_t                  *sout, *sin;
 };
 
 #define CRLF "\015\012"
+const char *nullstr;
+#define DEFAULT_PROMPT "([$t] )$n(\\($l\\))([$d]): "
+#define MAX_PROMPT_NESTING_LEVELS 8
+#define MAX_BUFFER_SIZE 65536
 
 typedef struct {
     const char *t_name;
@@ -82,6 +98,161 @@ static const TRANS priorities[] = {
     {"debug",   CGILOG_DEBUG},
     {NULL,      -1},
 };
+
+static char* chomp(char* str) {
+    apr_size_t p = strlen(str);
+    while (--p >= 0) {
+        switch ((char)(str[p])) {
+        case '\015':
+        case '\012':str[p]='\000';
+                    break;
+        default:return str;
+        }
+    }
+    return str;
+}
+
+/** TODO: Support wide-characters */
+/* prompt takes a apreq_handle and 2 strings - name and type - and prompts a
+   user for input via stdin/stdout.  used in interactive mode.
+   
+   name must be defined.  type can be null.
+   
+   we take the promptstring defined in the handle and interpolate variables as
+   follows:
+   
+   $n - name of the variable we're asking for (param 2 to prompt())
+   $t - type of the variable we're asking for - like cookie, get, post, etc
+        (param 3 to prompt())
+   parentheses - if a variable is surrounded by parentheses, and interpolates
+                 as null, then nothing else in the parentheses will be displayed
+                 Useful if you want a string to only show up if a given variable
+                 is available
+                 
+   These are planned for forward-compatibility, but the underlying features
+   need some love...  I left these in here just as feature reminders, rather
+   than completely removing them from the code - at least they provide sanity
+   testing of the default prompt & parentheses - issac
+   
+   $l - label for the param  - the end-user-developer can provide a textual
+        description of the param (name) being requested (currently unused in
+        lib)
+   $d - default value for the param (currently unused in lib)
+   
+*/
+static char *prompt(apreq_handle_t *handle, const char *name,
+                    const char *type) {
+    struct cgi_handle *req = (struct cgi_handle *)handle;
+    const char *defval = nullstr;
+    const char *label = NULL;
+    const char *prompt;
+    char buf[MAX_PROMPT_NESTING_LEVELS][MAX_BUFFER_SIZE];
+    /* Array of current arg for given p-level */
+    char *start, curarg[MAX_PROMPT_NESTING_LEVELS] = ""; 
+    /* Parenthesis level (for argument/text grouping) */
+    int plevel; 
+
+    prompt = req->promptstr - 1;
+    *buf[0] = plevel = 0;
+    start = buf[0];
+
+    while (*(++prompt) != 0) {
+        switch (*prompt) {
+        case '$':  /* interpolate argument; curarg[plevel] => 1 */
+            prompt++;           
+            switch (*prompt) {
+            case 't':
+                if (type != NULL) {
+                    strcpy(start, type);
+                    start += strlen(type);
+                    curarg[plevel] = 1;
+                } else {
+                    curarg[plevel] = curarg[plevel] | 0;
+                }
+                break;
+            case 'n':
+                /* Name can't be null :-) [If it can, we should 
+                 * immediately return NULL] */
+                strcpy(start, name);
+                start += strlen(name);
+                curarg[plevel] = 1;
+                break;
+            case 'l':
+                if (label != NULL) {
+                    strcpy(start, label);
+                    start += strlen(label);
+                    curarg[plevel] = 1;
+                } else {
+                    curarg[plevel] = curarg[plevel] | 0;
+                }
+                break;
+            case 'd':
+                /* TODO: Once null defaults are available, 
+                 * remove if and use nullstr if defval == NULL */
+                if (defval != NULL) {
+                    strcpy(start, defval);
+                    start += strlen(defval);
+                    curarg[plevel] = 1;
+                } else {
+                    curarg[plevel] = curarg[plevel] | 0;
+                }
+                break;
+            default:
+                /* Handle this? */
+                break;
+            }
+            break;
+
+        case '(':
+            if (plevel <= MAX_PROMPT_NESTING_LEVELS) {
+                plevel++;
+                curarg[plevel] = *buf[plevel] = 0;
+                start = buf[plevel];
+            }
+            /* else? */
+            break;
+
+        case ')':
+            if (plevel > 0) {
+                *start = 0; /* Null terminate current string */
+                
+                /* Move pointer to end of string */
+                start = buf[--plevel] + strlen(buf[plevel]);
+                
+                /* If old curarg was set, concat buffer with level down */
+                if (curarg[plevel + 1]) {
+                    strcpy(start, buf[plevel + 1]);
+                    start += strlen(buf[plevel + 1]);
+                }
+
+                break;
+            }
+        case '\\': /* Check next character for escape sequence 
+                    * (just ignore it for now) */
+            *prompt++;
+            /* Fallthrough */
+
+        default:       
+            *start++ = *prompt;
+        }
+    }
+
+    *start = 0; /* Null terminate the string */
+    
+    apr_file_printf(req->sout, "%s", buf[0]);
+    apr_file_gets(buf[0], MAX_BUFFER_SIZE, req->sin);
+    chomp(buf[0]);
+    if (stricmp(buf[0], "")) {
+/*        if (strcmp(buf[0], nullstr)) */
+            return apr_pstrdup(handle->pool, buf[0]);
+/*        return NULL; */
+    }
+
+    if (strcmp(defval, nullstr))
+        return apr_pstrdup(handle->pool, defval);
+
+    return NULL;
+}
 
 static const char *cgi_header_in(apreq_handle_t *handle,
                                  const char *name)
@@ -178,8 +349,6 @@ static void init_body(apreq_handle_t *handle)
     apr_pool_t *pool = handle->pool;
     apr_file_t *file;
     apr_bucket *eos, *pipe;
-
-    req->body  = apr_table_make(pool, APREQ_DEFAULT_NELTS);
 
     if (cl_header != NULL) {
         char *dummy;
@@ -327,10 +496,35 @@ static apr_status_t cgi_jar(apreq_handle_t *handle,
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
 
+    if (req->interactive_mode && req->jar_status != APR_SUCCESS) {
+        char buf[65536];
+        const char *name, *val;
+        apreq_cookie_t *p;
+        int i = 1;
+        apr_file_printf(req->sout, "[CGI] Requested all cookies\n");
+        while (1) {
+            apr_file_printf(req->sout, "[CGI] Please enter a name for cookie %d (or just hit ENTER to end): ",
+                     i++);
+            apr_file_gets(buf, 65536, req->sin);
+            chomp(buf);
+            if (!strcmp(buf, "")) {
+                break;
+            }
+            name = apr_pstrdup(handle->pool, buf);
+            val = prompt(handle, name, "cookie");
+            if (val == NULL)
+                val = "";
+            p = apreq_cookie_make(handle->pool, name, strlen(name), val, strlen(val));
+            apreq_cookie_tainted_on(p);
+            apreq_value_table_add(&p->v, req->jar);
+            val = p->v.data;
+        }
+        req->jar_status = APR_SUCCESS;
+    } /** Fallthrough */
+
     if (req->jar_status == APR_EINIT) {
         const char *cookies = cgi_header_in(handle, "Cookie");
         if (cookies != NULL) {
-            req->jar = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
             req->jar_status =
                 apreq_parse_cookie_header(handle->pool, req->jar, cookies);
         }
@@ -347,10 +541,35 @@ static apr_status_t cgi_args(apreq_handle_t *handle,
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
 
+    if (req->interactive_mode && req->args_status != APR_SUCCESS) {
+        char buf[65536];
+        const char *name, *val;
+        apreq_param_t *p;
+        int i = 1;
+        apr_file_printf(req->sout, "[CGI] Requested all argument parameters\n");
+        while (1) {
+            apr_file_printf(req->sout, "[CGI] Please enter a name for parameter %d (or jusr hit ENTER to end): ",
+                     i++);
+            apr_file_gets(buf, 65536, req->sin);
+            chomp(buf);
+            if (!strcmp(buf, "")) {
+                break;
+            }
+            name = apr_pstrdup(handle->pool, buf);
+            val = prompt(handle, name, "parameter");
+            if (val == NULL)
+                val = "";
+            p = apreq_param_make(handle->pool, name, strlen(name), val, strlen(val));
+            apreq_param_tainted_on(p);
+            apreq_value_table_add(&p->v, req->args);
+            val = p->v.data;
+        }
+        req->args_status = APR_SUCCESS;
+    } /** Fallthrough */
+
     if (req->args_status == APR_EINIT) {
         const char *qs = cgi_query_string(handle);
         if (qs != NULL) {
-            req->args = apr_table_make(handle->pool, APREQ_DEFAULT_NELTS);
             req->args_status =
                 apreq_parse_query_string(handle->pool, req->args, qs);
         }
@@ -370,19 +589,29 @@ static apreq_cookie_t *cgi_jar_get(apreq_handle_t *handle,
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
     const apr_table_t *t;
-    const char *val;
+    const char *val = NULL;
 
-    if (req->jar_status == APR_EINIT)
+    if (req->jar_status == APR_EINIT && !req->interactive_mode)
         cgi_jar(handle, &t);
     else
         t = req->jar;
 
-    if (t == NULL)
-        return NULL;
+    val = (char *)apr_table_get(t, name);
+    if (val == NULL) {
+        if (!req->interactive_mode) {
+            return NULL;
+        } else {
+            apreq_cookie_t *p;
+            val = prompt(handle, name, "cookie");
+            if (val == NULL)
+                return NULL;
+            p = apreq_cookie_make(handle->pool, name, strlen(name), val, strlen(val));
+            apreq_cookie_tainted_on(p);
+            apreq_value_table_add(&p->v, req->jar);
+            val = p->v.data;
+        }
+    }
 
-    val = apr_table_get(t, name);
-    if (val == NULL)
-        return NULL;
 
     return apreq_value_to_cookie(val);
 }
@@ -392,19 +621,29 @@ static apreq_param_t *cgi_args_get(apreq_handle_t *handle,
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
     const apr_table_t *t;
-    const char *val;
+    const char *val = NULL;
 
-    if (req->args_status == APR_EINIT)
+    if (req->args_status == APR_EINIT && !req->interactive_mode)
         cgi_args(handle, &t);
     else
         t = req->args;
 
-    if (t == NULL)
-        return NULL;
-
     val = apr_table_get(t, name);
-    if (val == NULL)
-        return NULL;
+    if (val == NULL) {
+        if (!req->interactive_mode) {
+            return NULL;
+        } else {
+            apreq_param_t *p;
+            val = prompt(handle, name, "parameter");
+            if (val == NULL)
+                return NULL;
+            p = apreq_param_make(handle->pool, name, strlen(name), val, strlen(val));
+            apreq_param_tainted_on(p);
+            apreq_value_table_add(&p->v, req->args);
+            val = p->v.data;
+        }
+    }
+
 
     return apreq_value_to_param(val);
 }
@@ -416,6 +655,32 @@ static apr_status_t cgi_body(apreq_handle_t *handle,
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
 
+    if (req->interactive_mode && req->body_status != APR_SUCCESS) {
+        const char *name, *val;
+        apreq_param_t *p;
+        int i = 1;
+        apr_file_printf(req->sout, "[CGI] Requested all body parameters\n");
+        while (1) {
+            char buf[65536];
+            apr_file_printf(req->sout, "[CGI] Please enter a name for parameter %d (or just hit ENTER to end): ",
+                     i++);
+            apr_file_gets(buf, 65536, req->sin);
+            chomp(buf);
+            if (!strcmp(buf, "")) {
+                break;
+            }
+            name = apr_pstrdup(handle->pool, buf);
+            val = prompt(handle, name, "parameter");
+            if (val == NULL)
+                val = "";
+            p = apreq_param_make(handle->pool, name, strlen(name), val, strlen(val));
+            apreq_param_tainted_on(p);
+            apreq_value_table_add(&p->v, req->body);
+            val = p->v.data;
+        }
+        req->body_status = APR_SUCCESS;
+    } /** Fallthrough */
+    
     switch (req->body_status) {
 
     case APR_EINIT:
@@ -437,9 +702,27 @@ static apreq_param_t *cgi_body_get(apreq_handle_t *handle,
                                    const char *name)
 {
     struct cgi_handle *req = (struct cgi_handle *)handle;
-    const char *val;
+    const char *val = NULL;
     apreq_hook_t *h;
     apreq_hook_find_param_ctx_t *hook_ctx;
+
+    if (req->interactive_mode) {
+        val = apr_table_get(req->body, name);
+        if (val == NULL) {
+            return NULL;
+        } else {
+            apreq_param_t *p;
+            val = prompt(handle, name, "parameter");
+            if (val == NULL)
+                return NULL;
+            p = apreq_param_make(handle->pool, name, strlen(name), val, strlen(val));
+            apreq_param_tainted_on(p);
+            apreq_value_table_add(&p->v, req->body);
+            val = p->v.data;
+            return apreq_value_to_param(val);
+        }
+    }
+
 
     switch (req->body_status) {
 
@@ -655,6 +938,31 @@ static apr_status_t ba_cleanup(void *data)
 }
 #endif
 
+/** Determine if we're interactive mode or not.  Order is
+  QUERY_STRING ? NO : Interactive
+
+ I think we should just rely on GATEWAY_INTERFACE to set
+ non-interactive mode, and be interactive if it's not there
+
+ Behaviour change should really be:
+ Always check query_string before prompting user,
+  but rewrite body/cookies to get if interactive
+
+ Definately more work needed here...
+*/
+static int is_interactive_mode(apr_pool_t *pool) {
+    char *value = NULL, qs[] = "GATEWAY_INTERFACE";
+    apr_status_t rv;
+
+    rv = apr_env_get(&value, qs, pool);
+    if (rv != APR_SUCCESS)
+        if (rv == APR_ENOENT)
+            return 1;
+        
+        /** handle else? (!SUCCESS && !ENOENT) */
+    return 0;
+}
+
 static APREQ_MODULE(cgi, 20090110);
 
 APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
@@ -679,9 +987,23 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
     req->read_limit           = (apr_uint64_t) -1;
     req->brigade_limit        = APREQ_DEFAULT_BRIGADE_LIMIT;
 
+    req->args = apr_table_make(pool, APREQ_DEFAULT_NELTS);
+    req->body = apr_table_make(pool, APREQ_DEFAULT_NELTS);
+    req->jar  = apr_table_make(pool, APREQ_DEFAULT_NELTS);
+
     req->args_status =
         req->jar_status =
             req->body_status = APR_EINIT;
+
+    if (is_interactive_mode(pool)) {
+        char buf[10];
+        req->interactive_mode = 1;
+        apr_file_open_stdout(&(req->sout), pool);
+        apr_file_open_stdin(&(req->sin), pool);
+        req->promptstr=apr_pstrdup(pool, DEFAULT_PROMPT);
+        sprintf(buf, "%s", NULL);
+        nullstr = apr_pstrdup(pool, buf);
+    }
 
     apr_pool_userdata_setn(&req->handle, USER_DATA_KEY, NULL, pool);
 
