@@ -145,22 +145,22 @@ static char *prompt(apreq_handle_t *handle, const char *name,
     struct cgi_handle *req = (struct cgi_handle *)handle;
     const char *defval = nullstr;
     const char *label = NULL;
-    const char *prompt;
+    const char *cprompt;
     char buf[MAX_PROMPT_NESTING_LEVELS][MAX_BUFFER_SIZE];
     /* Array of current arg for given p-level */
     char *start, curarg[MAX_PROMPT_NESTING_LEVELS] = ""; 
     /* Parenthesis level (for argument/text grouping) */
     int plevel; 
 
-    prompt = req->promptstr - 1;
+    cprompt = req->promptstr - 1;
     *buf[0] = plevel = 0;
     start = buf[0];
 
-    while (*(++prompt) != 0) {
-        switch (*prompt) {
+    while (*(++cprompt) != 0) {
+        switch (*cprompt) {
         case '$':  /* interpolate argument; curarg[plevel] => 1 */
-            prompt++;           
-            switch (*prompt) {
+            cprompt++;           
+            switch (*cprompt) {
             case 't':
                 if (type != NULL) {
                     strcpy(start, type);
@@ -217,7 +217,8 @@ static char *prompt(apreq_handle_t *handle, const char *name,
                 *start = 0; /* Null terminate current string */
                 
                 /* Move pointer to end of string */
-                start = buf[--plevel] + strlen(buf[plevel]);
+                plevel--;
+                start = buf[plevel] + strlen(buf[plevel]);
                 
                 /* If old curarg was set, concat buffer with level down */
                 if (curarg[plevel + 1]) {
@@ -229,11 +230,11 @@ static char *prompt(apreq_handle_t *handle, const char *name,
             }
         case '\\': /* Check next character for escape sequence 
                     * (just ignore it for now) */
-            *prompt++;
+            *cprompt++;
             /* Fallthrough */
 
         default:       
-            *start++ = *prompt;
+            *start++ = *cprompt;
         }
     }
 
