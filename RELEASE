@@ -1,37 +1,13 @@
 Instructions for the httpd-apreq Release Manager (RM)
 
-1. Prep the package for CPAN by running:
+Note that although binding votes for the release must come from httpd PMC
+members, the RM him- (or her-)self need only be an apreq committer, not a
+PMC member (but cannot vote in this case).
 
-        % sh BUILD.sh
-        % perl Makefile.PL
-        % make dist
 
-   This will generate a libapreq-1.xx.tar.gz candidate in the 
-   current directory.   You should keep this source tree
-   intact to generate the final release.
 
-2. Test the generated file's './configure ...' build and
-   'perl Makefile.PL ...' build. Make sure all perl tests pass.
-
-3. Upload a release candidate to httpd.apache.org/~username
-   and post a candidate announcement to apreq-dev@.  The RM
-   or any other apreq committer may call for a formal vote on the 
-   candidate, but a formal vote is not a requirement for the candidate. 
-   Also, it is strongly recommended that the RM crosspost the 
-   candidate announcement to the modperl@ list, to solicit feedback
-   from a much larger audience.
-
-4. Give the mailing list participants 48-72 hours to comment or
-   call-for-vote on the candidate.  Unless there is a formal vote,
-   the RM may apply any suggested patches to this candidate and 
-   proceed with its release.  However if there is a call-for-vote, 
-   then tally the results after 72 hours of the call.  If there is
-   a "majority consensus" (three +1 and more +1s than -1s) among the 
-   committers, the RM may proceed with the release. Otherwise the 
-   RM must abandon this candidate and start fresh.
-
-5. The candidate is ok. Now return to the original source tree
-   and edit ./Changes:
+1. In /trunk (or in /branches/1.x or wherever the active development happens)
+   edit ./Changes:
 
    =item 1.35 - <Today's Date>
 
@@ -41,13 +17,23 @@ Instructions for the httpd-apreq Release Manager (RM)
    
    1.35       : Released <Today's Date>
 
-6.  Tag the tree, s/./_/g in the version number, and roll the release.
+2. Tag the tree, s/./_/g in the version number.
 
-    % svn copy . https://svn.apache.org/repos/asf/httpd/apreq/tags/v1_35
-    % make dist
+     % svn copy . https://svn.apache.org/repos/asf/httpd/apreq/tags/v1_35
 
-7. Test the release package, repeating step 2.  If all tests pass,
-   sign it via gpg:
+3. Prep the package for CPAN by running:
+
+     % sh BUILD.sh
+     % perl Makefile.PL
+     % make dist
+
+   This will generate a libapreq-1.xx.tar.gz candidate in the 
+   current directory.
+
+4. Test the generated file's './configure ...' build and
+   'perl Makefile.PL ...' build. Make sure all perl tests pass.
+
+5. Sign the package via gpg:
 
      % gpg --detach-sign --armor libapreq-1.35.tar.gz
 
@@ -56,22 +42,26 @@ Instructions for the httpd-apreq Release Manager (RM)
     unix50i1b: % pgps -b --armor libapreq-1.35.tar.gz
     other:     % pgp -sba libapreq-1.35.tar.gz
 
-8. Upload (scp) the package and signature to www.apache.org
-   for distribution:
+   Check that your public key is among those listed in the
+   /www/www.apache.org/dist/httpd/KEYS file.
+   
+   Create an md5 digest of the file
+     
+     % md5sum libapreq-1.35.tar.gz > libapreq-1.35.tar.gz.md5
 
-    % scp libapreq-1.35.tar.gz* \
-      <username>@www.apache.org:/www/www.apache.org/dist/httpd/libapreq/
+6. Upload the release candidate to people.apache.org/~username/public_html
 
+     % scp libapreq-1.35.tar.gz* username@people.apache.org:~/public_html
+     
    Ask another developer to confirm the uploaded signature is ok 
 
     ---------------------------------------------------
     Subject: please verify sig of libapreq-1.35.tar.gz
-    [Name], could you please verify the sig:
+    [Name], could you please verify the sig and md5:
 
-    http://www.apache.org/dist/httpd/libapreq/libapreq-1.35.tar.gz
-    http://www.apache.org/dist/httpd/libapreq/libapreq-1.35.tar.gz.asc
-
-    Thanks. 
+    http://people.apache.org/~username/libapreq-1.35.tar.gz
+    http://people.apache.org/~username/libapreq-1.35.tar.gz.asc
+    http://people.apache.org/~username/libapreq-1.35.tar.gz.md5
 
     via gpg:
 
@@ -81,45 +71,84 @@ Instructions for the httpd-apreq Release Manager (RM)
 
     unix50i1b: % pgpv libapreq-1.35.tar.gz.asc
     other:     % pgp libapreq-1.35.tar.gz.asc
-
-    Check that your public key is among those listed in the
-   /www/www.apache.org/dist/httpd/KEYS file.
+    
+    The md5 can be verified by running
+    
+     % md5sum libapreq-1.35.tar.gz
+     
+    and comparing the output with the contents of libapreq-1.35.tar.gz.md5
+    
+    Thanks!
     ---------------------------------------------------
+    
+7. Post a candidate announcement to apreq-dev@.  
+   Also, it is strongly recommended that the RM crosspost the 
+   candidate announcement to the modperl@ list, to solicit feedback
+   from a much larger audience.
 
-9. Call for a formal vote on the release artifact as explained in 4 and 5
-   above.  Note that since this is a release artiface, a formal vote is
-   required, and 3 +1 votes from members of the httpd PMC are required to
-   proceed.  If all is well after 72 hours, proceed to step 11 (NOT 10).
-   
-10. If any -1s are received, the release is rejected.  Edit the ./STATUS file
-    and modify the line
+8. Give the mailing list participants 48-72 hours to vote on the release.
+   Tally the results after 72 hours of the call.  If there is a
+   "majority consensus" (three +1 and more +1s than -1s) among the
+   httpd PMC members, the RM may proceed with the release. Otherwise
+   the RM must abandon this release and start fresh.  
+
+   If any -1s are received, the release is rejected.  Edit the ./STATUS file
+   and modify the line
    
     1.35       : Released <Date>
    
-    to read
+   to read
    
     1.35       : Not released
    
-    Follow the instructions in step 14a, c and d (NOT b) to increment the
-    version and commit your changes.  Then start a release with the new version
-    number by starting again from step 1.
+   Follow the instructions in step 12a, c and d (NOT b) to increment the
+   version and commit your changes.  Then start a release with the new version
+   number by starting again from step 1.
 
-11. If 3 +1 votes are received by members of the httpd PMC, the release is a go.
-    Upload the package to CPAN. Doublecheck that the md5 checksum
-    received from PAUSE is correct.
+9. If 3 +1 votes are received by members of the httpd PMC, the release is a go.
+   Copy the package and signature to the www.apache.org website 
+   for distribution:
 
-12. Update the httpd-areq homepage to list the new release in
+     people% mv public_html/libapreq-1.35.tar.gz* \
+             /www/www.apache.org/dist/httpd/libapreq/
+
+   Upload the package to CPAN. Doublecheck that the md5 checksum
+   received from PAUSE is correct.
+   
+   Wait 24 hours to allow ASF and CPAN mirrors to propogate the release.
+   
+10. Update the httpd-areq homepage to list the new release in
     the News section. For instructions on updating the httpd website, 
     see httpd-apreq-2/build/WEBSITE.
 
-13. Post a final announcement to the modperl@ and apreq-dev@ lists:
+11. Post a final announcement to the modperl@ and apreq-dev@ lists:
 
-        Subject: [ANNOUNCE] libapreq 1.35 release
+    Subject: [ANNOUNCEMENT] libapreq-1.35 (a.k.a. Apache::Request-1.35) Released
+    ---------------------------------------------------
+    The Apache Software Foundation and the Apache HTTP Server Project are
+    pleased to announce the release of version 1.35 of the Apache HTTP
+    Request Library ("libapreq").  This version includes the following fixes
+    and enhancements:
+    
+    <LIST OF CHANGES SINCE LAST VERSION>
+    
+    We consider this release to be the best version of libapreq-1.x
+    available, and encourage users of all prior versions to upgrade.
+    
+    libapreq-1.35 can be downloaded from the Apache Software Foundation at
+    the following address:
+    http://httpd.apache.org/apreq/download.html
+    
+    libapreq-1.35 is also available at a CPAN mirror near you, and has
+    entered CPAN as
+    
+    <COPY CPAN INFORMATION>
+      file: xxx
+      size: xxx
+       md5: xxx
+    ---------------------------------------------------
 
-    Include the md5 signature in the announcement, as well as
-    a list of the latest Changes (since the previous release).
-
-14. Prepare for the next cycle
+12. Prepare for the next cycle
 
   a. increment version in Request/Request.pm
 
