@@ -77,7 +77,7 @@ struct cgi_handle {
 };
 
 #define CRLF "\015\012"
-const char *nullstr;
+const char *nullstr = 0;
 #define DEFAULT_PROMPT "([$t] )$n(\\($l\\))([$d]): "
 #define MAX_PROMPT_NESTING_LEVELS 8
 #define MAX_BUFFER_SIZE 65536
@@ -997,13 +997,10 @@ APREQ_DECLARE(apreq_handle_t *)apreq_handle_cgi(apr_pool_t *pool)
             req->body_status = APR_EINIT;
 
     if (is_interactive_mode(pool)) {
-        char buf[10];
         req->interactive_mode = 1;
         apr_file_open_stdout(&(req->sout), pool);
         apr_file_open_stdin(&(req->sin), pool);
         req->promptstr=apr_pstrdup(pool, DEFAULT_PROMPT);
-        sprintf(buf, "%s", NULL);
-        nullstr = apr_pstrdup(pool, buf);
     }
 
     apr_pool_userdata_setn(&req->handle, USER_DATA_KEY, NULL, pool);
