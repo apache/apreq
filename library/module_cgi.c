@@ -230,7 +230,7 @@ static char *prompt(apreq_handle_t *handle, const char *name,
             }
         case '\\': /* Check next character for escape sequence 
                     * (just ignore it for now) */
-            *cprompt++;
+            (void)*cprompt++;
             /* Fallthrough */
 
         default:       
@@ -243,7 +243,7 @@ static char *prompt(apreq_handle_t *handle, const char *name,
     apr_file_printf(req->sout, "%s", buf[0]);
     apr_file_gets(buf[0], MAX_BUFFER_SIZE, req->sin);
     chomp(buf[0]);
-    if (stricmp(buf[0], "")) {
+    if (strcmp(buf[0], "")) {
 /*        if (strcmp(buf[0], nullstr)) */
             return apr_pstrdup(handle->pool, buf[0]);
 /*        return NULL; */
@@ -597,7 +597,7 @@ static apreq_cookie_t *cgi_jar_get(apreq_handle_t *handle,
     else
         t = req->jar;
 
-    val = (char *)apr_table_get(t, name);
+    val = apr_table_get(t, name);
     if (val == NULL) {
         if (!req->interactive_mode) {
             return NULL;
