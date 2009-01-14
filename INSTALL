@@ -16,7 +16,7 @@ Unix build, where libtool/automake/autoconf works:
             % make
   (optional)% make test
             % make install
-
+  (optional)% make docs_install
 
 Or using the CPAN/perlish way (which includes the Apache2::Request and
 Apache2::Cookie modules):
@@ -25,6 +25,7 @@ Apache2::Cookie modules):
             % make
   (optional)% make test
             % make install
+  (optional)% make docs_install
 
 Developers and other folks using httpd-apreq-2 directly from svn need to
 execute "./buildconf" prior to running "./configure".
