@@ -77,7 +77,7 @@ struct cgi_handle {
 };
 
 #define CRLF "\015\012"
-const char *nullstr = 0;
+static const char *nullstr = 0;
 #define DEFAULT_PROMPT "([$t] )$n(\\($l\\))([$d]): "
 #define MAX_PROMPT_NESTING_LEVELS 8
 #define MAX_BUFFER_SIZE 65536
@@ -549,7 +549,7 @@ static apr_status_t cgi_args(apreq_handle_t *handle,
         int i = 1;
         apr_file_printf(req->sout, "[CGI] Requested all argument parameters\n");
         while (1) {
-            apr_file_printf(req->sout, "[CGI] Please enter a name for parameter %d (or jusr hit ENTER to end): ",
+            apr_file_printf(req->sout, "[CGI] Please enter a name for parameter %d (or just hit ENTER to end): ",
                      i++);
             apr_file_gets(buf, 65536, req->sin);
             chomp(buf);
