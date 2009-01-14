@@ -27,7 +27,7 @@ PMC member (but cannot vote in this case).
      % perl Makefile.PL
      % make dist
 
-   This will generate a libapreq-1.xx.tar.gz candidate in the 
+   This will generate a libapreq-1.xx.tar.gz candidate in the
    current directory.
 
 4. Test the generated file's './configure ...' build and
@@ -53,7 +53,7 @@ PMC member (but cannot vote in this case).
 
      % scp libapreq-1.35.tar.gz* username@people.apache.org:~/public_html
      
-   Ask another developer to confirm the uploaded signature is ok 
+   Ask another developer to confirm the uploaded signature is ok
 
     ---------------------------------------------------
     Subject: please verify sig of libapreq-1.35.tar.gz
@@ -88,12 +88,12 @@ PMC member (but cannot vote in this case).
 
 8. Give the mailing list participants 48-72 hours to vote on the release.
    Tally the results after 72 hours of the call.  If there is a
-   "majority consensus" (three +1 and more +1s than -1s) among the
+   "majority consensus" (three +1 and more +1's than -1's) among the
    httpd PMC members, the RM may proceed with the release. Otherwise
-   the RM must abandon this release and start fresh.  
+   the RM must abandon this release and start fresh.
 
-   If any -1s are received, the release is rejected.  Edit the ./STATUS file
-   and modify the line
+   If more -1's than +1's are received, or less than 3 +1's are received,
+   the release is rejected.  Edit the ./STATUS file and modify the line
    
     1.35       : Released <Date>
    
@@ -105,9 +105,10 @@ PMC member (but cannot vote in this case).
    version and commit your changes.  Then start a release with the new version
    number by starting again from step 1.
 
-9. If 3 +1 votes are received by members of the httpd PMC, the release is a go.
-   Copy the package and signature to the www.apache.org website 
-   for distribution:
+9. If 3 +1 votes are received by members of the httpd PMC and there are more
+   +1's than -1's after at least a 72 hour window has elapsed (majority
+   consensus), the release is a go.  Copy the package and signature to the
+   www.apache.org website for distribution:
 
      people% mv public_html/libapreq-1.35.tar.gz* \
              /www/www.apache.org/dist/httpd/libapreq/
@@ -117,7 +118,7 @@ PMC member (but cannot vote in this case).
    
    Wait 24 hours to allow ASF and CPAN mirrors to propogate the release.
    
-10. Update the httpd-areq homepage to list the new release in
+10. Update the httpd-apreq homepage to list the new release in
     the News section. For instructions on updating the httpd website, 
     see httpd-apreq-2/build/WEBSITE.
 
