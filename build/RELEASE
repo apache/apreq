@@ -5,7 +5,7 @@ FreeBSD/Solaris note: use gmake!
 1. Create a realease branch:
 
     svn cp https://svn.apache.org/repos/asf/httpd/apreq/trunk \
-           https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_09
+           https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_11
 
 
 2. On the BRANCH
@@ -13,13 +13,13 @@ FreeBSD/Solaris note: use gmake!
 
        /** @page STATUS
 
-       2.09 released on <today's date>.
+       2.11 released on <today's date>.
 
    Also add the release date to the top @section in CHANGES:
 
        /** @page CHANGES
 
-       @section v2_09 Changes with libapreq2-2.09 (released ...).
+       @section v2_11 Changes with libapreq2-2.11 (released ...).
 
    And #undef the APREQ_VERSION_IS_DEV macro definition
    in include/apreq_version.h:
@@ -28,21 +28,21 @@ FreeBSD/Solaris note: use gmake!
        */
        #undef APREQ_IS_DEV_VERSION
 
-       % svn commit -m "2.09 release started" STATUS CHANGES include/apreq_version.h
+       % svn commit -m "2.11 release started" STATUS CHANGES include/apreq_version.h
 
 3. On TRUNK:
     Update CHANGES and STATUS to reflect the start of a new develoment cycle,
     and run this to update the package version numbers throughout the tree:
 
-    % build/update_version.pl 2.10
+    % build/update_version.pl 2.12
 
-    % svn commit -m "2.10 cycle"
+    % svn commit -m "2.12 cycle"
 
 4. Prep the package for CPAN by running:
 
         % make release
 
-   This will generate a libapreq2-2.09.tar.gz candidate in the 
+   This will generate a libapreq2-2.11.tar.gz candidate in the 
    current directory.   You should keep this source tree
    intact to tag the final release.
 
@@ -55,11 +55,11 @@ FreeBSD/Solaris note: use gmake!
 
 6. Sign it via gpg:
 
-        % gpg --detach-sign --armor libapreq2-2.09.tar.gz
+        % gpg --detach-sign --armor libapreq2-2.11.tar.gz
 
    or pgp:
 
-        % pgp -sba libapreq2-2.09.tar.gz
+        % pgp -sba libapreq2-2.11.tar.gz
 
 7. Upload the release candidate to people.apache.org/~username
    and post a candidate announcement to apreq-dev@. Also, it is 
@@ -67,7 +67,7 @@ FreeBSD/Solaris note: use gmake!
    announcement to the modperl@ list, to solicit feedback
    from a much larger audience.
 
-   Subject: [RELEASE CANDIDATE] libapreq2 2.10 RC\d+
+   Subject: [RELEASE CANDIDATE] libapreq2 2.12 RC\d+
 
 8. Give the mailing list participants 48-72 hours to comment and
    vote on the candidate.  If there is a "majority consensus" 
@@ -77,19 +77,19 @@ FreeBSD/Solaris note: use gmake!
 
 9. Tag the Release -- from the BRANCH
 
-    svn mv https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_09 \
-           https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_09
+    svn mv https://svn.apache.org/repos/asf/httpd/apreq/branches/v2_11 \
+           https://svn.apache.org/repos/asf/httpd/apreq/tags/v2_11
 
 10. Upload (scp) the package and signature to www.apache.org
    for distribution:
 
-        % scp libapreq2-2.09.tar.gz* \
+        % scp libapreq2-2.11.tar.gz* \
           $USER@people.apache.org:/www/www.apache.org/dist/httpd/libapreq/
 
    Ask another developer to confirm the uploaded signature is ok.
 
-        % gpg --verify libapreq2-2.09.tar.gz.asc
-        % pgp libapreq2-2.09.tar.gz.asc
+        % gpg --verify libapreq2-2.11.tar.gz.asc
+        % pgp libapreq2-2.11.tar.gz.asc
 
    Check that your public key is among those listed in the
    /www/www.apache.org/dist/httpd/KEYS file.   If not, you
