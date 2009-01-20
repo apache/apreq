@@ -1,7 +1,7 @@
 /** @page apreq_changes CHANGES
 //! brief List of major changes.
 
-@section v2_11 Changes with libapreq2-2.11 (in development)
+@section v2_11 Changes with libapreq2-2.11 (released Jan 20, 2009)
 
 - Interactive CGI module [issac]
   Allow cgi module to interactively prompt for parameters and cookies when
