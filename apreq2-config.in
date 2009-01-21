@@ -215,10 +215,10 @@ while test $# -gt 0; do
 done
 
 if test -n "$flags"; then
-  if [ -n "$SOLARIS" ]; then
-    $flags=`echo $flags | sed -e 's/-L\([^ ]*\)/-R\1 -L\1/g'`
-  fi
-  echo "$flags"
+    if test -n "$SOLARIS"; then
+        flags=`echo $flags | sed -e 's/-L\([^ ]*\)/-R\1 -L\1/g'`
+    fi
+    echo "$flags"
 fi
 
 exit 0
