@@ -242,9 +242,9 @@ void apreq_xs_croak(pTHX_ HV *data, SV *obj, apr_status_t rc,
 {
     HV *stash;
 
-    stash = gv_stashpv(ERROR_CLASS, FALSE);
+    stash = gv_stashpv(class, FALSE);
     if (stash == NULL) {
-        SV *pkg_name = newSVpv(class, 0);
+        SV *pkg_name = sv_2mortal(newSVpv(class, 0));
         Perl_load_module(aTHX_ PERL_LOADMOD_NOIMPORT, pkg_name, Nullsv);
         stash = gv_stashpv(class, TRUE);
     }
