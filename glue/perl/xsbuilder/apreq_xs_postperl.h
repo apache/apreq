@@ -250,13 +250,13 @@ void apreq_xs_croak(pTHX_ HV *data, SV *obj, apr_status_t rc,
     }
 
     if (obj != Nullsv)
-        sv_setsv(*hv_fetch(data, "_r",   2, 1), newRV_inc(obj));
+        sv_setsv(*hv_fetch(data, "_r",   2, 1), sv_2mortal(newRV_inc(obj)));
     sv_setiv(*hv_fetch(data, "rc",   2, 1), rc);
     sv_setpv(*hv_fetch(data, "file", 4, 1), CopFILE(PL_curcop));
     sv_setiv(*hv_fetch(data, "line", 4, 1), CopLINE(PL_curcop));
     sv_setpv(*hv_fetch(data, "func", 4, 1), func);
 
-    sv_setsv(ERRSV, sv_bless(newRV_noinc((SV*)data), stash));
+    sv_setsv(ERRSV, sv_2mortal(sv_bless(newRV_noinc((SV*)data), stash)));
     Perl_croak(aTHX_ Nullch);
 }
 
