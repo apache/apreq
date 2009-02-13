@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 
-plan tests => 13, need_min_module_version('Apache::Test' => 1.29) || need_lwp;
+plan tests => 14, need_min_module_version('Apache::Test' => 1.29) || need_lwp;
 
 my $module = "TestApReq::cookie";
 my $location = Apache::TestRequest::module2url($module);
@@ -157,3 +157,14 @@ my $location = Apache::TestRequest::module2url($module);
     ok t_cmp($str, $value, $test);
 }
 
+{
+    my $test = 'wordpress';
+    my $cookie = qq{wordpressuser_c580712eb86cad2660b3601ac04202b2=admin;}
+        . qq{wordpresspass_c580712eb86cad2660b3601ac04202b2=7ebeeed42ef50}
+            . qq{720940f5b8db2f9db49; rs_session=59ae9b8b503e3af7d17b97e7}
+                . qq{f77f7ea5; dbx-postmeta=grabit=0-,1-,2-,3-,4-,5-,6-&a}
+                    .qq {dvancedstuff=0-,1+,2-};
+    my $value = qq{ok};
+    my $str = GET_BODY("$location?test=$test", Cookie => $cookie);
+    ok t_cmp($str, $value, $test);
+}

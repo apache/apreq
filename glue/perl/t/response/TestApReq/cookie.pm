@@ -14,7 +14,7 @@ use Apache2::Request ();
 sub handler {
     my $r = shift;
     my $req = Apache2::Request->new($r);
-    my %cookies = Apache2::Cookie->fetch($r);
+    my %cookies = eval { Apache2::Cookie->fetch($r) };
 
     $r->content_type('text/plain');
     my $test = $req->APR::Request::args('test');
@@ -38,6 +38,9 @@ sub handler {
     }
     elsif ($test eq 'overload') {
         $r->print($cookies{one});
+    }
+    elsif ($test eq 'wordpress') {
+        $r->print("ok") if $@;
     }
     elsif ($key and $cookies{$key}) {
         if ($test eq "bake") {
