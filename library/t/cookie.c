@@ -30,7 +30,10 @@ static const char nscookies[] = "a=1; foo=bar; fl=left; fr=right;bad; "
 static const char rfccookies[] = "$Version=1; first=a;$domain=quux;second=be,"
                                  "$Version=1;third=cie";
 
-static apr_table_t *jar, *jar2;
+static const char wpcookies[] = "dbx-postmeta=grabit=0-,1-,2-,3-,4-,5-,6-"
+                                "&advancedstuff=0-,1+,2-";
+
+static apr_table_t *jar, *jar2, *jar3;
 static apr_pool_t *p;
 
 static void jar_make(dAT)
@@ -41,6 +44,9 @@ static void jar_make(dAT)
     jar2 = apr_table_make(p, APREQ_DEFAULT_NELTS);
     AT_not_null(jar2);
     AT_int_eq(apreq_parse_cookie_header(p, jar2, rfccookies), APR_SUCCESS);
+    jar3 = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    AT_not_null(jar3);
+    AT_int_eq(apreq_parse_cookie_header(p, jar3, wpcookies), APREQ_ERROR_NOTOKEN);
 }
 
 static void jar_get_rfc(dAT)
@@ -167,7 +173,7 @@ int main(int argc, char *argv[])
     unsigned i, plan = 0;
     dAT;
     at_test_t test_list [] = {
-        { dT(jar_make, 4) },
+        { dT(jar_make, 6) },
         { dT(jar_get_rfc, 6), "1 3 5" },
         { dT(jar_get_ns, 10) },
         { dT(netscape_cookie, 7) },
