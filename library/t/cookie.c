@@ -30,8 +30,13 @@ static const char nscookies[] = "a=1; foo=bar; fl=left; fr=right;bad; "
 static const char rfccookies[] = "$Version=1; first=a;$domain=quux;second=be,"
                                  "$Version=1;third=cie";
 
-static const char wpcookies[] = "dbx-postmeta=grabit=0-,1-,2-,3-,4-,5-,6-"
-                                "&advancedstuff=0-,1+,2-";
+static const char wpcookies[] = "wordpressuser_c580712eb86cad2660b3601ac"
+                                "04202b2=admin; wordpresspass_c580712eb8"
+                                "6cad2660b3601ac04202b2=7ebeeed42ef50720"
+                                "940f5b8db2f9db49; rs_session=59ae9b8b50"
+                                "3e3af7d17b97e7f77f7ea5; dbx-postmeta=gr"
+                                "abit=0-,1-,2-,3-,4-,5-,6-&advancedstuff"
+                                "=0-,1+,2-";
 
 static apr_table_t *jar, *jar2, *jar3;
 static apr_pool_t *p;
