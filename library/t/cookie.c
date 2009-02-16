@@ -38,7 +38,35 @@ static const char wpcookies[] = "wordpressuser_c580712eb86cad2660b3601ac"
                                 "abit=0-,1-,2-,3-,4-,5-,6-&advancedstuff"
                                 "=0-,1+,2-";
 
-static apr_table_t *jar, *jar2, *jar3;
+static const char cgcookies1[] = "UID=MTj9S8CoAzMAAFEq21YAAAAG|c85a9e59db"
+                                 "92b261408eb7539ff7f949b92c7d58; $Versio"
+                                 "n=0;SID=MTj9S8CoAzMAAFEq21YAAAAG|c85a9e"
+                                 "59db92b261408eb7539ff7f949b92c7d58;$Dom"
+                                 "ain=www.xxxx.com;$Path=/";
+
+static const char cgcookies2[] = "UID=Gh9VxX8AAAIAAHP7h6AAAAAC|2e809a9cc9"
+                                 "9c2dca778c385ebdefc5cb86c95dc3; SID=Gh9"
+                                 "VxX8AAAIAAHP7h6AAAAAC|2e809a9cc99c2dca7"
+                                 "78c385ebdefc5cb86c95dc3; $Version=1";
+
+static const char cgcookies3[] = "UID=hCijN8CoAzMAAGVDO2QAAAAF|50299f0793"
+                                 "43fd6146257c105b1370f2da78246a; SID=hCi"
+                                 "jN8CoAzMAAGVDO2QAAAAF|50299f079343fd614"
+                                 "6257c105b1370f2da78246a; $Path=\"/\"; $"
+                                 "Domain=\"www.xxxx.com\"";
+
+static const char cgcookies4[] = "SID=66XUEH8AAAIAAFmLLRkAAAAV|2a48c4ae2e"
+                                 "9fb8355e75192db211f0779bdce244; UID=66X"
+                                 "UEH8AAAIAAFmLLRkAAAAV|2a48c4ae2e9fb8355"
+                                 "e75192db211f0779bdce244; __utma=1441491"
+                                 "62.4479471199095321000.1234471650.12344"
+                                 "71650.1234471650.1; __utmb=144149162.24"
+                                 ".10.1234471650; __utmc=144149162; __utm"
+                                 "z=144149162.1234471650.1.1.utmcsr=szuka"
+                                 "j.xxxx.pl|utmccn=(referral)|utmcmd=refe"
+                                 "rral|utmcct=/internet/0,0.html";
+
+static apr_table_t *jar, *jar2, *jar3, *jar4, *jar5, *jar6, *jar7;
 static apr_pool_t *p;
 
 static void jar_make(dAT)
@@ -52,6 +80,18 @@ static void jar_make(dAT)
     jar3 = apr_table_make(p, APREQ_DEFAULT_NELTS);
     AT_not_null(jar3);
     AT_int_eq(apreq_parse_cookie_header(p, jar3, wpcookies), APREQ_ERROR_NOTOKEN);
+    jar4 = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    AT_not_null(jar4);
+    AT_int_eq(apreq_parse_cookie_header(p, jar4, cgcookies1), APREQ_ERROR_MISMATCH);
+    jar5 = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    AT_not_null(jar5);
+    AT_int_eq(apreq_parse_cookie_header(p, jar5, cgcookies2), APREQ_ERROR_MISMATCH);
+    jar6 = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    AT_not_null(jar6);
+    AT_int_eq(apreq_parse_cookie_header(p, jar6, cgcookies3), APREQ_ERROR_MISMATCH);
+    jar7 = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    AT_not_null(jar7);
+    AT_int_eq(apreq_parse_cookie_header(p, jar7, cgcookies4), APREQ_ERROR_NOTOKEN);
 }
 
 static void jar_get_rfc(dAT)
@@ -178,7 +218,7 @@ int main(int argc, char *argv[])
     unsigned i, plan = 0;
     dAT;
     at_test_t test_list [] = {
-        { dT(jar_make, 6) },
+        { dT(jar_make, 14) },
         { dT(jar_get_rfc, 6), "1 3 5" },
         { dT(jar_get_ns, 10) },
         { dT(netscape_cookie, 7) },
