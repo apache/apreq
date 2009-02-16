@@ -62,9 +62,9 @@ static const char cgcookies4[] = "SID=66XUEH8AAAIAAFmLLRkAAAAV|2a48c4ae2e"
                                  "62.4479471199095321000.1234471650.12344"
                                  "71650.1234471650.1; __utmb=144149162.24"
                                  ".10.1234471650; __utmc=144149162; __utm"
-                                 "z=144149162.1234471650.1.1.utmcsr=szuka"
-                                 "j.xxxx.pl|utmccn=(referral)|utmcmd=refe"
-                                 "rral|utmcct=/internet/0,0.html";
+                                 "z=\"144149162.1234471650.1.1.utmcsr=szu"
+                                 "kaj.xxxx.pl|utmccn=(referral)|utmcmd=re"
+                                 "ferral|utmcct=/internet/0,0.html\"";
 
 static apr_table_t *jar, *jar2, *jar3, *jar4, *jar5, *jar6, *jar7;
 static apr_pool_t *p;
@@ -91,7 +91,7 @@ static void jar_make(dAT)
     AT_int_eq(apreq_parse_cookie_header(p, jar6, cgcookies3), APREQ_ERROR_MISMATCH);
     jar7 = apr_table_make(p, APREQ_DEFAULT_NELTS);
     AT_not_null(jar7);
-    AT_int_eq(apreq_parse_cookie_header(p, jar7, cgcookies4), APREQ_ERROR_NOTOKEN);
+    AT_int_eq(apreq_parse_cookie_header(p, jar7, cgcookies4), APR_SUCCESS);
 }
 
 static void jar_get_rfc(dAT)
