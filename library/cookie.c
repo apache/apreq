@@ -382,16 +382,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
 
             status = get_pair(p, &hdr, &name, &nlen, &value, &vlen, 0);
 
-            switch (status) {
-
-            case APREQ_ERROR_NOTOKEN:
-                rv = status;
-                /* fall thru */
-
-            case APR_SUCCESS:
-                break;
-
-            default:
+            if (status != APR_SUCCESS) {
                 c = NULL;
                 rv = status;
                 goto parse_cookie_error;
