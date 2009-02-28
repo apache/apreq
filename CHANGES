@@ -3,6 +3,9 @@
 
 @section v2_11 Changes with libapreq2-2.11 (in development)
 
+- C API [joes]
+  Make the cookie parser a little more flexible.
+
 - Interactive CGI module [issac]
   Allow cgi module to interactively prompt for parameters and cookies when
   running a script from the command line and not from a CGI interface

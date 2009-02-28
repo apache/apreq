@@ -168,29 +168,52 @@ apr_status_t get_pair(apr_pool_t *p, const char **data,
                       const char **v, apr_size_t *vlen, unsigned unquote)
 {
     const char *hdr, *key, *val;
-
+    int nlen_set = 0;
     hdr = *data;
 
     while (apr_isspace(*hdr) || *hdr == '=')
         ++hdr;
 
-    key = strchr(hdr, '=');
+    key = hdr;
+    *n = hdr;
 
-    if (key == NULL)
-        return APREQ_ERROR_NOTOKEN;
+ scan_name:
 
-    val = key + 1;
+    switch (*hdr) {
 
-    do --key;
-    while (key > hdr && apr_isspace(*key));
+    case 0:
+    case ';':
+    case ',':
+        if (!nlen_set)
+            *nlen = hdr - key;
+        *v = hdr;
+        *vlen = 0;
+        *data = hdr;
+        return *nlen ? APREQ_ERROR_NOTOKEN : APREQ_ERROR_BADCHAR;
 
-    *n = key;
+    case '=':
+        if (!nlen_set) {
+            *nlen = hdr - key;
+            nlen_set = 1;
+        }
+        break;
 
-    while (key >= hdr && !apr_isspace(*key))
-        --key;
+    case ' ':
+    case '\t':
+    case '\r':
+    case '\n':
+        if (!nlen_set) {
+            *nlen = hdr - key;
+            nlen_set = 1;
+        }
+        /* fall thru */
 
-    *nlen = *n - key;
-    *n = key + 1;
+    default:
+        ++hdr;
+        goto scan_name;
+    }
+
+    val = hdr + 1;
 
     while (apr_isspace(*val))
         ++val;
@@ -231,6 +254,7 @@ apr_status_t get_pair(apr_pool_t *p, const char **data,
             }
         }
         /* bad sequence: no terminating quote found */
+        *data = val;
         return APREQ_ERROR_BADSEQ;
     }
     else {
@@ -266,6 +290,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
 {
     apreq_cookie_t *c;
     unsigned version;
+    apr_status_t rv = APR_SUCCESS;
 
  parse_cookie_header:
 
@@ -276,13 +301,13 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
         ++hdr;
 
 
-    if (*hdr == '$') {
-        /* XXX cheat: assume "$..." => "$Version" => RFC Cookie header */
+    if (*hdr == '$' && strncasecmp(hdr, "$Version", 8) == 0) {
+        /* XXX cheat: assume "$Version" => RFC Cookie header */
         version = RFC;
     skip_version_string:
         switch (*hdr++) {
         case 0:
-            return APR_SUCCESS;
+            return rv;
         case ',':
             goto parse_cookie_header;
         case ';':
@@ -307,7 +332,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
             if (c != NULL) {
                 ADD_COOKIE(j, c);
             }
-            return APR_SUCCESS;
+            return rv;
 
         case ',':
             ++hdr;
@@ -317,29 +342,35 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
             goto parse_cookie_header;
 
         case '$':
+            ++hdr;
             if (c == NULL) {
-                return APREQ_ERROR_BADCHAR;
+                rv = APREQ_ERROR_BADCHAR;
+                goto parse_cookie_error;
             }
             else if (version == NETSCAPE) {
-                return APREQ_ERROR_MISMATCH;
+                rv = APREQ_ERROR_MISMATCH;
             }
 
-            ++hdr;
             status = get_pair(p, &hdr, &name, &nlen, &value, &vlen, 1);
-            if (status != APR_SUCCESS)
-                return status;
+            if (status != APR_SUCCESS) {
+                rv = status;
+                goto parse_cookie_error;
+            }
 
             status = apreq_cookie_attr(p, c, name, nlen, value, vlen);
 
             switch (status) {
+
             case APR_ENOTIMPL:
-                /* XXX: skip unrecognized attr?  Not really correct,
-                   but for now, just fall through */
+                rv = APREQ_ERROR_BADATTR;
+                /* fall thru */
 
             case APR_SUCCESS:
                 break;
+
             default:
-                return status;
+                rv = status;
+                goto parse_cookie_error;
             }
 
             break;
@@ -351,8 +382,20 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
 
             status = get_pair(p, &hdr, &name, &nlen, &value, &vlen, 0);
 
-            if (status != APR_SUCCESS)
-                return status;
+            switch (status) {
+
+            case APREQ_ERROR_NOTOKEN:
+                rv = status;
+                /* fall thru */
+
+            case APR_SUCCESS:
+                break;
+
+            default:
+                c = NULL;
+                rv = status;
+                goto parse_cookie_error;
+            }
 
             c = apreq_cookie_make(p, name, nlen, value, vlen);
             apreq_cookie_tainted_on(c);
@@ -361,8 +404,27 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
         }
     }
 
-    /* NOT REACHED */
-    return APREQ_ERROR_GENERAL;
+ parse_cookie_error:
+
+    switch (*hdr) {
+
+    case 0:
+        return rv;
+
+    case ',':
+    case ';':
+        if (c != NULL)
+            ADD_COOKIE(j, c);
+        ++hdr;
+        goto parse_cookie_header;
+
+    default:
+        ++hdr;
+        goto parse_cookie_error;
+    }
+
+    /* not reached */
+    return rv;
 }
 
 

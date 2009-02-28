@@ -110,8 +110,8 @@ static void jar_get_ns(dAT)
 
     AT_str_eq(apr_table_get(jar, "a"), "1");
 
-    /* ignore wacky cookies that don't have an '=' sign */
-    AT_is_null(apr_table_get(jar, "bad"));
+    /* accept wacky cookies that don't have an '=' sign */
+    AT_not_null(apr_table_get(jar, "bad"));
 
     /* accept wacky cookies that contain multiple '=' */
     AT_str_eq(apr_table_get(jar, "ns"), "foo=1&bar=2");
