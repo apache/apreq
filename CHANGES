@@ -1,10 +1,12 @@
 /** @page apreq_changes CHANGES
 //! brief List of major changes.
 
-@section v2_11 Changes with libapreq2-2.11 (in development)
+@section v2_11 Changes with libapreq2-2.12 (in development)
 
 - C API [joes]
   Make the cookie parser a little more flexible.
+
+@section v2_11 Changes with libapreq2-2.11 (not released)
 
 - Interactive CGI module [issac]
   Allow cgi module to interactively prompt for parameters and cookies when
