@@ -145,8 +145,13 @@ APREQ_DECLARE(apreq_handle_t *) apreq_handle_apache2(request_rec *r);
  *
  *      
  */
-APR_DECLARE_OPTIONAL_FN(APREQ_DECLARE(apreq_handle_t *),
+#ifdef WIN32
+APR_DECLARE_OPTIONAL_FN(apreq_handle_t * __stdcall,
                         apreq_handle_apache2, (request_rec *r));
+#else
+APR_DECLARE_OPTIONAL_FN(apreq_handle_t *,
+                        apreq_handle_apache2, (request_rec *r));
+#endif
 
 /**
  * The mod_apreq2 filter is named "apreq2", and may be used in Apache's
