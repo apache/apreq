@@ -16,11 +16,11 @@ AM_CFLAGS= -pg -fprofile-arcs -ftest-coverage
 
 clean-local:
 	-rm *.bb *.bbg *.da *.gcov
-
+	cd t; $(MAKE) clean
 else
 
 clean-local:
-
+	cd t; $(MAKE) clean
 endif
 
 
