@@ -37,12 +37,11 @@ endif
 
 TAR=@TAR@
 
-release: reconfig docs_clean docs distdir
+release: distclean docs_clean reconfig distdir
 	@PERL@ build/version_check.pl > $(distdir)/PREREQUISITES
 	@PERL@ build/version_check.pl -version=@PACKAGE_VERSION@ > $(distdir)/META.yml
 	echo MANIFEST > $(distdir)/MANIFEST
 	@cd $(distdir); @PERL@ -M$(EUM) -e "$(EUM)::mkmanifest"
-	if [ ! -x $(TAR) ]; then echo "$(TAR) is not executable."; fi
 	@PERL@ -ple '$$_="$(distdir)/$$_"' $(distdir)/MANIFEST | $(TAR) -czf $(distdir).tar.gz -T -
 	rm -rf $(distdir)
 	@echo "Made $(distdir).tar.gz"
