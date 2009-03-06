@@ -21,6 +21,8 @@ Makefile$
 \.a$
 \.slo$
 \.so$
+\.deps$
+\.deps/
 
 # perl glue
 glue/perl/blib
