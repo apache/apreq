@@ -1,7 +1,9 @@
 /** @page apreq_changes CHANGES
 //! brief List of major changes.
 
-@section v2_12 Changes with libapreq2-2.12 (in development)
+@section v2_13 Changes with libapreq2-2.13 (in development)
+
+@section v2_12 Changes with libapreq2-2.12 (released March 13, 2009)
 
 - C API [joes]
   Make the cookie parser a little more flexible.
