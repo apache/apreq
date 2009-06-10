@@ -173,25 +173,25 @@ dnl Fallback to oldest version available
         dnl perl glue/tests do not use libtool: need ld linker flags
         APR_ADDTO([APR_LIBS], "`$APR_CONFIG --libs`")
 
+        apu_avoid_libs=""
+        if $APU_CONFIG --avoid-ldap >/dev/null 2>&1; then
+            apu_avoid_libs="--avoid-ldap"
+        fi
+        if $APU_CONFIG --avoid-dbm >/dev/null 2>&1; then
+            apu_avoid_libs="--avoid-dbm $apu_avoid_libs"
+        fi
+
         dnl ld: fatal: recording name conflict: 
         dnl file `/usr/sfw/lib/gcc/i386-pc-solaris2.10/3.4.3/../../../libexpat.so' and
         dnl file `httpd/lib/libexpat.so' 
         dnl provide identical dependency names: libexpat.so.0  
         dnl (possible multiple inclusion of the same file)
         if test "x$OS" = "xsolaris"; then
-            if $APU_CONFIG --avoid-ldap >/dev/null 2>&1; then
-                APU_LIBS=`$APU_CONFIG --avoid-ldap --libs | $PERL -pe 's,-lexpat,,'`
-            else
-                APU_LIBS=`$APU_CONFIG --libs | $PERL -pe 's,-lexpat,,'`
-            fi
-            APR_ADDTO([APR_LIBS], "$APU_LIBS")
+            APU_LIBS="`$APU_CONFIG $apu_avoid_libs --libs | $PERL -pe 's,-lexpat,,'`"
         else
-            if $APU_CONFIG --avoid-ldap >/dev/null 2>&1; then
-                APR_ADDTO([APR_LIBS], "`$APU_CONFIG --avoid-ldap --libs`")
-            else
-                APR_ADDTO([APR_LIBS], "`$APU_CONFIG --libs`")
-            fi
+            APU_LIBS="`$APU_CONFIG $apu_avoid_libs --libs`"
         fi
+        APR_ADDTO([APR_LIBS], "$APU_LIBS")
 
         APR_ADDTO([APR_LDFLAGS], "`$APU_CONFIG --link-ld --ldflags`")
         APR_ADDTO([APR_LDFLAGS], "`$APR_CONFIG --link-ld --ldflags`")
