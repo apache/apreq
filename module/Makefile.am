@@ -4,7 +4,7 @@ TEST_CONFIG_SCRIPT = package Apache::TestMM; filter_args(); generate_script("t/T
 EXTRA_DIST = t
 
 noinst_PROGRAMS = test_cgi
-test_cgi_LDFLAGS =  `@APREQ_CONFIG@ --link-libtool`
+test_cgi_LDFLAGS =  `@APREQ_CONFIG@ --link-libtool` @APR_LDFLAGS@
 
 run_tests : t/TEST
 	if [ ! -d t/cgi-bin ]; then mkdir t/cgi-bin; fi
