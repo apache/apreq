@@ -32,7 +32,7 @@ if (-d $perlpod) {
     if (scalar @files > 1) {
         for my $i (0 .. 1) {
             my $file = $files[$i];
-            $types{$file} = ($file =~ /\.pod$/) ? 'text/x-pod' : 'text/plain';
+            $types{$file} = 'text/*';
         }
     }      
 }
@@ -64,6 +64,7 @@ foreach my $file( map {File::Spec->catfile($cwd, 't', $_)} @names) {
         my $result = UPLOAD_BODY("$location?method=$method;has_md5=$has_md5",
                                  filename => $file);
         my %h = map {$_;} split /[=&;]/, $result, -1;
+        $h{type}=~s{^text/.+}{text/*};
         ok t_cmp($h{type}, $types{$basename},
 	    "'type' test for $method on $basename");
         ok t_cmp($h{filename}, $basename,

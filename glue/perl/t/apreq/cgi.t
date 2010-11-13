@@ -25,7 +25,7 @@ if (-d $perlpod) {
     closedir $dh;
     if (scalar @files > 0) {
         my $file = $files[0];
-        $types{$file} = ($file =~ /\.pod$/) ? 'text/x-pod' : 'text/plain';
+        $types{$file} = 'text/*';
     }
 }      
 
@@ -195,6 +195,7 @@ foreach my $file( map {File::Spec->catfile($cwd, 't', $_)} @names) {
                                  filename => $file);
         $result =~ s{\r}{}g;
         my %h = map {$_;} split /[=&;]/, $result, -1;
+        $h{type}=~s{^text/.+}{text/*};
         ok t_cmp($h{type}, $types{$basename},
 	    "'type' test for $method on $basename");
         ok t_cmp($h{filename}, $basename,
