@@ -49,7 +49,7 @@ typedef struct apreq_handle_t {
 } apreq_handle_t;
 
 /**
- * @brief Vtable describing the necessary environment functions.
+ * @brief Vtable describing the necessary module functions.
  */
 
 
@@ -357,11 +357,11 @@ apr_status_t apreq_temp_dir_get(apreq_handle_t *req, const char **path)
  * Convenience macro for defining a module by mapping
  * a function prefix to an associated apreq_module_t structure.
  *
- * @param pre Prefix to define new environment.  All attributes of
- *            the apreq_env_module_t struct are defined with this as their
+ * @param pre Prefix to define new module.  All attributes of
+ *            the apreq_module_t struct are defined with this as their
  *            prefix. The generated struct is named by appending "_module" to
  *            the prefix.
- * @param mmn Magic number (i.e. version number) of this environment.
+ * @param mmn Magic number (i.e. version number) of this module.
  */
 #define APREQ_MODULE(pre, mmn) const apreq_module_t     \
   pre##_module = { #pre, mmn,                           \
@@ -426,7 +426,7 @@ APREQ_DECLARE(apreq_param_t *)apreq_param(apreq_handle_t *req, const char *key);
  * @param req request handle.
  * @param name desired cookie name
  *
- * @return The first matching parameter (with args searched first) or NULL.
+ * @return The first matching cookie or NULL.
  */
 #define apreq_cookie(req, name) apreq_jar_get(req, name)
 
