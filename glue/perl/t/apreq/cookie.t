@@ -172,11 +172,11 @@ my $location = Apache::TestRequest::module2url($module);
     my $test  = 'httponly';
     my $key   = 'apache';
     my $value = 'ok';
-    my $cookie = "$key=$value; HttpOnly";
+    my $cookie = "foo=$test; path=/quux; domain=example.com; HttpOnly";
     my ($header) =
         GET_HEAD("$location?test=$test&key=$key") =~ /^#Set-Cookie:\s+(.+)/m;
 
-    ok t_cmp($header, $cookie_in, $test);
+    ok t_cmp($header, $cookie, $test);
 
 }
 
