@@ -107,6 +107,27 @@ void apreq_cookie_secure_off(apreq_cookie_t *c) {
     APREQ_FLAGS_OFF(c->flags, APREQ_COOKIE_SECURE);
 }
 
+/** @return 1 if the HttpOnly flag is set, 0 otherwise. */
+static APR_INLINE
+unsigned apreq_cookie_is_httponly(const apreq_cookie_t *c) {
+    return APREQ_FLAGS_GET(c->flags, APREQ_COOKIE_HTTPONLY);
+}
+
+/** Sets the cookie's HttpOnly flag, meaning it is not
+ *  accessible through client-side script in supported
+ *  browsers.
+ */
+static APR_INLINE
+void apreq_cookie_httponly_on(apreq_cookie_t *c) {
+    APREQ_FLAGS_ON(c->flags, APREQ_COOKIE_HTTPONLY);
+}
+
+/** Turns off the cookie's HttpOnly flag. */
+static APR_INLINE
+void apreq_cookie_httponly_off(apreq_cookie_t *c) {
+    APREQ_FLAGS_OFF(c->flags, APREQ_COOKIE_HTTPONLY);
+}
+
 
 /** @return 1 if the taint flag is set, 0 otherwise. */
 static APR_INLINE

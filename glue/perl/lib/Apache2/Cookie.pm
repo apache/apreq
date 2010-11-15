@@ -436,6 +436,20 @@ Get or set the secure flag for the cookie:
 
 
 
+=head2 httponly
+
+    $cookie->httponly()
+    $cookie->httponly($set)
+
+Get or set the HttpOnly flag for the cookie:
+
+    $cookie->httponly(1);
+    $is_HttpOnly = $cookie->httponly;
+    $cookie->httponly(0);
+
+
+
+
 =head2 comment
 
     $cookie->comment()

@@ -3,6 +3,10 @@
 
 @section v2_13 Changes with libapreq2-2.13 (in development)
 
+- HTTP Only Cookie [Robert Stone & Adam Prime]
+  The C and Perl Cookie APIs now support an HttpOnly flag to tell 
+  user agents to deny client-side script access to the cookie
+
 @section v2_12 Changes with libapreq2-2.12 (released March 13, 2009)
 
 - C API [joes]

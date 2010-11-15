@@ -188,6 +188,19 @@
  */
 #define APREQ_COOKIE_SECURE_MASK    1
 
+/**
+ * Cookie's HttpOnly Bit 
+ * @see APREQ_FLAGS_OFF @see APREQ_FLAGS_ON
+ * @see APREQ_FLAGS_GET @see APREQ_FLAGS_SET
+ */
+#define APREQ_COOKIE_HTTPONLY_BIT    14
+/**
+ * Cookie's HttpOnly Mask
+ * @see APREQ_FLAGS_OFF @see APREQ_FLAGS_ON
+ * @see APREQ_FLAGS_GET @see APREQ_FLAGS_SET
+ */
+#define APREQ_COOKIE_HTTPONLY_MASK    1
+
 /** Character encodings. */
 typedef enum {
     APREQ_CHARSET_ASCII  =0,

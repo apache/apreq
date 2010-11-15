@@ -119,6 +119,13 @@ static apr_status_t apreq_cookie_attr(apr_pool_t *p,
             apreq_cookie_secure_off(c);
         return APR_SUCCESS;
 
+    case 'h': /* httponly */
+        if (vlen > 0 && *val != '0' && strncasecmp("off",val,vlen))
+            apreq_cookie_httponly_on(c);
+        else
+            apreq_cookie_httponly_off(c);
+        return APR_SUCCESS;
+
     };
 
     return APR_ENOTIMPL;
@@ -468,6 +475,11 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
         if (apreq_cookie_is_secure(c))
             strcpy(f, "; secure");
 
+        f += strlen(f);
+
+        if (apreq_cookie_is_httponly(c))
+            strcpy(f, "; HttpOnly");
+
         return apr_snprintf(buf, len, format, c->v.name, c->v.data,
            NULL2EMPTY(c->path), NULL2EMPTY(c->domain), expires);
     }
@@ -501,6 +513,11 @@ APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
 
     if (apreq_cookie_is_secure(c))
         strcpy(f, "; secure");
+
+    f += strlen(f);
+
+    if (apreq_cookie_is_httponly(c))
+        strcpy(f, "; HttpOnly");
 
     return apr_snprintf(buf, len, format, c->v.name, c->v.data, version,
                         NULL2EMPTY(c->path), NULL2EMPTY(c->domain),

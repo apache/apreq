@@ -80,6 +80,11 @@ static int apreq_cookie_test_handler(request_rec *r)
         apr_table_add(r->headers_out, "Set-Cookie2",
                       apreq_cookie_as_string(cookie, r->pool));
     }
+    else if (strcmp(test, "httponly") == 0) {
+        apreq_cookie_httponly_on(cookie);
+        apr_table_add(r->headers_out, "Set-Cookie",
+                      apreq_cookie_as_string(cookie, r->pool));
+    }
     else {
         size = strlen(cookie->v.data);
         dest = apr_palloc(r->pool, size + 1);

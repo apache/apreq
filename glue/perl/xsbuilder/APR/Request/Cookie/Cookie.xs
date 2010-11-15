@@ -74,6 +74,23 @@ secure(obj, val=NULL)
     RETVAL
 
 UV
+httponly(obj, val=NULL)
+    APR::Request::Cookie obj
+    SV *val
+
+  CODE:
+    RETVAL = apreq_cookie_is_httponly(obj);
+    if (items == 2) {
+        if (SvTRUE(val))
+            apreq_cookie_httponly_on(obj);
+        else
+            apreq_cookie_httponly_off(obj);
+    }
+
+  OUTPUT:
+    RETVAL
+
+UV
 version(obj, val=0)
     APR::Request::Cookie obj
     UV val
