@@ -68,6 +68,10 @@ sub handler {
             $cookie->version(1);
             $cookie->bake2($req);
         }
+        elsif ($test eq 'httponly'){
+            $cookie->httponly(1);
+            $cookie->bake($req);
+        }
         $r->print($cookie->value);
     }
 

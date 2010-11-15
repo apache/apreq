@@ -6,7 +6,7 @@ use Apache::Test;
 use Apache::TestUtil;
 use Apache::TestRequest qw(GET_BODY GET_HEAD);
 
-plan tests => 14, need_min_module_version('Apache::Test' => 1.29) || need_lwp;
+plan tests => 15, need_min_module_version('Apache::Test' => 1.29) || need_lwp;
 
 my $module = "TestApReq::cookie";
 my $location = Apache::TestRequest::module2url($module);
@@ -168,3 +168,15 @@ my $location = Apache::TestRequest::module2url($module);
     my $str = GET_BODY("$location?test=$test", Cookie => $cookie);
     ok t_cmp($str, $value, $test);
 }
+{
+    my $test  = 'httponly';
+    my $key   = 'apache';
+    my $value = 'ok';
+    my $cookie = "$key=$value; HttpOnly";
+    my ($header) =
+        GET_HEAD("$location?test=$test&key=$key") =~ /^#Set-Cookie:\s+(.+)/m;
+
+    ok t_cmp($header, $cookie_in, $test);
+
+}
+
