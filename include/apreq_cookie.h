@@ -41,9 +41,9 @@ extern "C" {
  *
  */
 
-/** @todo convert this macro to an apreq_module_t method.
+/** This macro is deprecated.
  *
- * Maximum length of a single Set-Cookie(2) header.
+ * Maximum length of a single Set-Cookie(2) header. 
  */
 #define APREQ_COOKIE_MAX_LENGTH            4096
 
