@@ -270,12 +270,13 @@ SV *
 as_string(c)
     APR::Request::Cookie c
   PREINIT:
-    char rv[APREQ_COOKIE_MAX_LENGTH];
     STRLEN len;
 
   CODE:
-    len = apreq_cookie_serialize(c, rv, sizeof rv);
-    RETVAL = newSVpvn(rv, len);
+    len = apreq_cookie_serialize(c, NULL, 0);
+    RETVAL = newSV(len);
+    SvCUR_set(RETVAL, apreq_cookie_serialize(c, SvPVX(RETVAL), len + 1));
+    SvPOK_on(RETVAL);
     if (apreq_cookie_is_tainted(c))
         SvTAINTED_on(RETVAL);
 
