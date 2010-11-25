@@ -1,7 +1,7 @@
 /** @page apreq_changes CHANGES
 //! brief List of major changes.
 
-@section v2_13 Changes with libapreq2-2.13 (in development)
+@section v2_13 Changes with libapreq2-2.13 (released December 3, 2010)
 
 - HTTP Only Cookie [Robert Stone & Adam Prime]
   The C and Perl Cookie APIs now support an HttpOnly flag to tell 
