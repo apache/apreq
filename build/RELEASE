@@ -82,9 +82,10 @@ FreeBSD/Solaris note: use gmake!
 
 10. Upload (scp) the package and signature to www.apache.org
    for distribution:
-
-        % scp libapreq2-2.14.tar.gz* \
-          $USER@people.apache.org:/www/www.apache.org/dist/httpd/libapreq/
+   
+        $ svn co https://dist.apache.org/repos/dist/release/httpd/libapreq/ apreq-dist-site
+        $ cp libapreq2-2.14.tar.gz* apreq-dist-site
+        $ svn commit -m "libapreq2 2.14 release artifacts"
 
    Ask another developer to confirm the uploaded signature is ok.
 
@@ -99,7 +100,7 @@ FreeBSD/Solaris note: use gmake!
 
 11. Verify or get soeone to Verify that you have CPAN karma.
     Note, discuss getting a group kind of like AMPL in mod_perl land.
-    (Currently, joes@ and pgollucci@ are active and have karma)
+    (Currently, joes@, issac@ and pgollucci@ are active and have karma)
 
 12. Upload the package to CPAN. Doublecheck that the md5 checksum
    received from PAUSE is correct.
