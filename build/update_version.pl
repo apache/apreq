@@ -45,3 +45,9 @@ system "perl -i -ple 's/$pattern1/$version/ or s/$pattern2/$version/' configure.
 my $pattern3 = qr/my \$VERSION = "2.14"/;
 my $replace = "my \\\$VERSION = \"$version\"";
 system "perl -i -ple 's/$pattern3/$replace/' win32/Configure.pl";
+
+# RELEASE/WEBSITE/this script
+system "perl -i -ple 's/2.14/$version/' build/RELEASE";
+system "perl -i -ple 's/2.14/$version/' build/WEBSITE";
+system "perl -i -ple 's/2.14/$version/' build/update_version.pl";
+
