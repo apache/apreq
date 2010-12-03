@@ -10,7 +10,7 @@ use ExtUtils::MakeMaker;
 use File::Basename;
 use File::Path;
 my ($apache, $apxs, $debug, $help, $no_perl, $perl, $with_perl);
-my $VERSION = "2.09";
+my $VERSION = "2.14";
 my $result = GetOptions( 'with-apache2=s' => \$apache,
 			 'with-apache2-apxs=s' => \$apxs,
 			 'debug' => \$debug,

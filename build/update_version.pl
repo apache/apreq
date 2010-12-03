@@ -42,6 +42,6 @@ system "perl -i -ple 's/$pattern1/$version/ or s/$pattern2/$version/' configure.
 #
 # win32/Configure.pl
 # my $VERSION = '[^']+'
-my $pattern3 = qr/my \$VERSION = "2.08"/;
+my $pattern3 = qr/my \$VERSION = "2.14"/;
 my $replace = "my \\\$VERSION = \"$version\"";
 system "perl -i -ple 's/$pattern3/$replace/' win32/Configure.pl";
