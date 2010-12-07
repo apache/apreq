@@ -3,6 +3,9 @@
 
 @section v2_14 Changes with libapreq2-2.14 (in development)
 
+- C API [joes]
+  Fix mod_apreq2's config merging.
+
 @section v2_13 Changes with libapreq2-2.13 (released December 3, 2010)
 
 - HTTP Only Cookie [Robert Stone & Adam Prime]
