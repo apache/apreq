@@ -152,7 +152,7 @@ if (@ARGV == 0) {
 --- #YAML:1.0
 name: libapreq2
 version: $opts{version}
-license: open_source
+license: Apache_2_0
 installdirs: site
 distribution_type: module
 dynamic_config: 1
