@@ -6,6 +6,10 @@
 - C API [joes]
   Fix mod_apreq2's config merging.
 
+- Perl glue
+  Updated license info in META.yml
+  Updated documentation for Apache2::Cookie
+
 @section v2_13 Changes with libapreq2-2.13 (released December 3, 2010)
 
 - HTTP Only Cookie [Robert Stone & Adam Prime]
