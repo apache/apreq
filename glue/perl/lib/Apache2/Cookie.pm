@@ -145,7 +145,7 @@ Apache2::Cookie, Apache2::Cookie::Jar - HTTP Cookies Class
                                   -value => $c_in->name );
 
     $c_out->path("/bar");               # set path to "/bar"
-    $c_out->bake;                       # send cookie in response headers
+    $c_out->bake($r);                   # send cookie in response headers
 
 
 
