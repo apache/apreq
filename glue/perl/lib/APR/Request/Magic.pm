@@ -7,12 +7,13 @@ if ($@) {
     base->import("APR::Pool");
     *handle = sub { APR::Request::CGI->handle(@_) };
     *new = sub { bless APR::Pool->new, shift };
-    return 1;
 }
-require Apache2::RequestRec;
-require Apache2::RequestUtil;
-base->import("Apache2::RequestRec");
-*handle = sub { APR::Request::Apache2->handle(@_) };
-*new = sub { bless Apache2::RequestUtil->request, shift };
+else {
+    require Apache2::RequestRec;
+    require Apache2::RequestUtil;
+    base->import("Apache2::RequestRec");
+    *handle = sub { APR::Request::Apache2->handle(@_) };
+    *new = sub { bless Apache2::RequestUtil->request, shift };
+}
 
 1;
