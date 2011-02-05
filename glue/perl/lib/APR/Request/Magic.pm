@@ -1,12 +1,13 @@
 package APR::Request::Magic;
 require base;
+my $ctx;
 eval { local $ENV{PERL_DL_NONLAZY} = 1; require APR::Request::Apache2; };
 if ($@) {
     require APR::Request::CGI;
     require APR::Pool;
     base->import("APR::Pool");
     *handle = sub { APR::Request::CGI->handle(@_) };
-    *new = sub { bless APR::Pool->new, shift };
+    *new = sub { $ctx ||= bless APR::Pool->new, shift; return $ctx };
 }
 else {
     require Apache2::RequestRec;
