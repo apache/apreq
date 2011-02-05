@@ -4,13 +4,11 @@ my $ctx;
 eval { local $ENV{PERL_DL_NONLAZY} = 1; require APR::Request::Apache2; };
 if ($@) {
     require APR::Request::CGI;
-    require APR::Pool;
     base->import("APR::Pool");
     *handle = sub { $ctx ||= bless APR::Pool->new; APR::Request::CGI->handle($ctx, @_) };
     our $MODE = "CGI";
 }
 else {
-    require Apache2::RequestRec;
     require Apache2::RequestUtil;
     base->import("Apache2::RequestRec");
     *handle = sub { APR::Request::Apache2->handle(Apache2::RequestUtil->request, @_) };
