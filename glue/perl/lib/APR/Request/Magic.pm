@@ -6,16 +6,14 @@ if ($@) {
     require APR::Request::CGI;
     require APR::Pool;
     base->import("APR::Pool");
-    *handle = sub { APR::Request::CGI->handle(@_) };
-    *new = sub { $ctx ||= bless APR::Pool->new, shift; return $ctx };
+    *handle = sub { $ctx ||= bless APR::Pool->new; APR::Request::CGI->handle($ctx, @_) };
     our $MODE = "CGI";
 }
 else {
     require Apache2::RequestRec;
     require Apache2::RequestUtil;
     base->import("Apache2::RequestRec");
-    *handle = sub { APR::Request::Apache2->handle(@_) };
-    *new = sub { bless Apache2::RequestUtil->request, shift };
+    *handle = sub { APR::Request::Apache2->handle(Apache2::RequestUtil->request, @_) };
     our $MODE = "Apache2";
 }
 
@@ -33,6 +31,7 @@ else {
 #
 #    use APR::Request::Magic;
 #
-#    my $apreq_ctx    = APR::Request::Magic->new;
-#    my $apreq_handle = $apreq_ctx->handle(@typical_args_without_the_first_one);
-#    # do stuff with $apreq_handle which is an APR::Request object
+#    my $apreq = APR::Request::Magic->handle(@typical_args_sans_the_first_one);
+#    # do stuff with $apreq which is an APR::Request object
+#
+# 3) Be sure PerlOptions +GlobalRequest is set for mp2.
