@@ -1,6 +1,6 @@
 package APR::Request::Magic;
 require base;
-eval { require APR::Request::Apache2; };
+eval { local $ENV{PERL_DL_NONLAZY} = 1; require APR::Request::Apache2; };
 if ($@) {
     require APR::Request::CGI;
     require APR::Pool;
