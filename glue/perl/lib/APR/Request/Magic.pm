@@ -8,6 +8,7 @@ if ($@) {
     base->import("APR::Pool");
     *handle = sub { APR::Request::CGI->handle(@_) };
     *new = sub { $ctx ||= bless APR::Pool->new, shift; return $ctx };
+    our $MODE = "CGI";
 }
 else {
     require Apache2::RequestRec;
@@ -15,6 +16,7 @@ else {
     base->import("Apache2::RequestRec");
     *handle = sub { APR::Request::Apache2->handle(@_) };
     *new = sub { bless Apache2::RequestUtil->request, shift };
+    our $MODE = "Apache2";
 }
 
 1;
