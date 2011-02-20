@@ -56,12 +56,9 @@ available.
 
 =head2 handle
 
-    APR::Request::Magic->handle(%args)
+    APR::Request::Magic->handle()
 
-Creates a new APR::Request::Magic object.  %args are the same options as for
-both APR::Request::CGI and APR::Request::Apache2, but not that the first argument
-(either $p or $r respectively) does not appear here.
-
+Creates a new APR::Request::Magic object.
 
 
 
