@@ -20,8 +20,6 @@
 #include "apr_lib.h"
 #include "apr_strings.h"
 #include "apr_tables.h"
-#include "apr_env.h"
-#include <assert.h>
 
 
 apr_status_t at_begin(at_t *t, int total)
