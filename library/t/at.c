@@ -303,6 +303,8 @@ static int* at_list(apr_pool_t *pool, const char *spec, int *list)
 
     } while (prev >= current);
 
+    *(int *)apr_array_push(&arr) = 0; /* sentinel */
+
     return (int *)arr.elts;
 }
 
