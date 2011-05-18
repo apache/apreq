@@ -189,7 +189,7 @@ static void parse_multipart(dAT)
          * when this many (~1M) tests are involved.
          */
 
-        AT_localize(p);
+        AT_localize();
 
         for (i = 0; i <= strlen(form_data); ++i) {
             const char *val;
@@ -261,6 +261,7 @@ static void parse_multipart(dAT)
 #ifdef APR_POOL_DEBUG
         apr_bucket_alloc_destroy(ba);
 #endif
+        AT_delocalize();
         apr_pool_clear(p);
     }
 }
@@ -536,7 +537,7 @@ int main(int argc, char *argv[])
     apreq_initialize(p);
 
 
-    AT = at_create(test_pool, 0, at_report_stdout_make(test_pool));
+    AT = at_create(0, at_report_stdout_make());
 
     for (i = 0; i < sizeof(test_list) / sizeof(at_test_t);  ++i)
         plan += test_list[i].plan;

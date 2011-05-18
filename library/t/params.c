@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
 
     apreq_initialize(p);
 
-    AT = at_create(p, 0, at_report_stdout_make(p));
+    AT = at_create(0, at_report_stdout_make());
     AT_trace_on();
     for (i = 0; i < sizeof(test_list) / sizeof(at_test_t);  ++i)
         plan += test_list[i].plan;
