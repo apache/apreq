@@ -21,7 +21,7 @@
 
 #define AT_SUCCESS 0
 #define AT_EGENERAL 14
-
+#define min(a, b) ((a < b) ? a : b)
 
 int at_begin(at_t *t, int total)
 {
@@ -57,12 +57,12 @@ int at_comment(at_t *t, const char *fmt, va_list vp)
         return EINVAL;
 
 
-    end = b + rv;
+    end = b + min(rv, 250);
 
     buf[0] = '#';
     buf[1] = ' ';
 
-    if (rv == 250) {
+    if (rv >= 250) {
         end[-1] = '.';
         *end++ = '.';
         *end++ = '.';
@@ -117,10 +117,13 @@ void at_ok(at_t *t, int is_ok, const char *label, const char *file, int line)
         t->todo++;
         is_todo = 1;
     }
+    
+    if (AT_FLAG_TODO(t->flags))
+        is_todo = 1;
 
     if (AT_FLAG_CONCISE(t->flags))
         format[9] = '\0';
-    else if (is_ok && !AT_FLAG_TRACE(t->flags))
+    else if (is_ok && ! is_todo && !AT_FLAG_TRACE(t->flags))
         format[14] = '\0';
     else if (is_fatal && ! is_ok)
         comment = "fatal";
@@ -133,9 +136,9 @@ void at_ok(at_t *t, int is_ok, const char *label, const char *file, int line)
     if (rv <= 0)
         exit(-1);
 
-    end = buf + rv;
+    end = buf + min(rv, 250);
 
-    if (rv == 250) {
+    if (rv >= 250) {
         *end++ = '.';
         *end++ = '.';
         *end++ = '.';

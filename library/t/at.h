@@ -100,6 +100,9 @@ void at_end(at_t *t);
 #define AT_end() at_end(AT)
 
 
+#define AT_FLAG_TODO(f)       ((f) & 8)
+#define AT_FLAG_TODO_ON(f)    ((f) |= 8)
+#define AT_FLAG_TODO_OFF(f)   ((f) &= ~8)
 #define AT_FLAG_DEBUG(f)       ((f) & 4)
 #define AT_FLAG_DEBUG_ON(f)    ((f) |= 4)
 #define AT_FLAG_DEBUG_OFF(f)   ((f) &= ~4)
@@ -110,6 +113,8 @@ void at_end(at_t *t);
 #define AT_FLAG_CONCISE_ON(f)  ((f) |= 1)
 #define AT_FLAG_CONCISE_OFF(f) ((f) &= ~1)
 
+#define AT_todo_on()       AT_FLAG_TODO_ON(AT->flags)
+#define AT_todo_off()      AT_FLAG_TODO_OFF(AT->flags)
 #define AT_debug_on()      AT_FLAG_DEBUG_ON(AT->flags)
 #define AT_debug_off()     AT_FLAG_DEBUG_OFF(AT->flags)
 #define AT_trace_on()      AT_FLAG_TRACE_ON(AT->flags)
