@@ -31,13 +31,14 @@ typedef struct at_t at_t;
 typedef struct at_report_t at_report_t;
 
 typedef int (*at_report_function_t)(at_report_t *r, const char *msg);
-typedef void(*at_test_function_t)(at_t *t);
+typedef void(*at_test_function_t)(at_t *t, void *ctx);
 typedef struct at_test_t at_test_t;
 
 struct at_test_t {
     const char          *name;
     at_test_function_t   func;
     int                  plan;
+    void                *ctx;
     const char          *fatals;
     const char          *skips;
     const char          *todos;
@@ -159,6 +160,20 @@ void at_check(at_t *t, int is_ok, const char *label, const char *file,
             char *f;
             at_snprintf(format, sizeof format, " format: %s", fmt);
             at_trace(t, "%s", format);
+            memcpy(format, "   left:", 8);
+            f = format + strlen(format);
+            at_snprintf(f, sizeof format - strlen(format), "\n  right: %s", fmt);
+            at_comment(t, format, vp);
+        }
+    }
+    else if (AT_FLAG_DEBUG(t->flags) && !is_ok) {
+        char format[32] = "testing: %s (%s:%d)";
+        at_debug(t, format, label, file, line);
+
+        if (fmt != NULL) {
+            char *f;
+            at_snprintf(format, sizeof format, " format: %s", fmt);
+            at_debug(t, "%s", format);
             memcpy(format, "   left:", 8);
             f = format + strlen(format);
             at_snprintf(f, sizeof format - strlen(format), "\n  right: %s", fmt);

@@ -352,7 +352,7 @@ int at_run(at_t *AT, const at_test_t *test)
 
     AT->abort = &j;
     if (setjmp(j) == 0) {
-        test->func(AT);
+        test->func(AT, test->ctx);
         at_free_lists;
         return AT_SUCCESS;
     }

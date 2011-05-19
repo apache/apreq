@@ -20,7 +20,7 @@
 #include "at.h"
 
 
-static void test_strerror(dAT)
+static void test_strerror(dAT, void *ctx)
 {
     char buf[256], *str;
 
@@ -60,7 +60,7 @@ static void test_strerror(dAT)
 
  }
 
-#define dT(func, plan) #func, func, plan
+#define dT(func, plan) #func, func, plan, NULL
 
 
 int main(int argc, char *argv[])
