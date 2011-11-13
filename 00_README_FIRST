@@ -1,0 +1,6 @@
+Please note, all apreq C bindings have now been merged to 
+httpd trunk as of Nov 12, 2011.  Please do not commit further changes here.
+
+We need to figure out what to do with the PERL bindings, likely moving to something
+under the PERL PMC.
+
