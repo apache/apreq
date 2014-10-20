@@ -77,8 +77,17 @@ struct at_t {
 };
 
 
+#if defined(WIN32)
+#define AT_INLINE __inline
+#elif !defined(__GNUC__) || __GNUC__ < 2 || \
+    (__GNUC__ == 2 && __GNUC_MINOR__ < 7) ||\
+    defined(NEXT) || defined(NETWARE)
+#define AT_INLINE
+#else
+#define AT_INLINE __inline__
+#endif
 
-static inline
+static AT_INLINE
 int at_report(at_t *t, const char *msg) {
     at_report_t *r = t->report;
     return r->func(r, msg);
@@ -129,7 +138,7 @@ void at_end(at_t *t);
 
 int at_comment(at_t *t, const char *fmt, va_list vp);
 
-static inline
+static AT_INLINE
 void at_debug(at_t *t, const char *fmt, ...) {
     va_list vp;
     va_start(vp, fmt);
@@ -138,7 +147,7 @@ void at_debug(at_t *t, const char *fmt, ...) {
     va_end(vp);
 }
 
-static inline
+static AT_INLINE
 void at_trace(at_t *t, const char *fmt, ...) {
     va_list vp;
     va_start(vp, fmt);
@@ -150,7 +159,7 @@ void at_trace(at_t *t, const char *fmt, ...) {
 
 /* These are "checks". */
 
-static inline
+static AT_INLINE
 void at_check(at_t *t, int is_ok, const char *label, const char *file,
            int line, const char *fmt, ...)
 {
@@ -268,7 +277,7 @@ void at_check(at_t *t, int is_ok, const char *label, const char *file,
                                   __FILE__, __LINE__, fmt, a, b)
 
 
-static inline
+static AT_INLINE
 void at_skip(at_t *t, int n, const char *reason, const char *file, int line) {
     char buf[256];
     while (n-- > 0) {
@@ -285,7 +294,7 @@ void at_skip(at_t *t, int n, const char *reason, const char *file, int line) {
 /* Report utilities. */
 
 at_report_t *at_report_file_make(FILE *f);
-inline
+AT_INLINE
 static at_report_t *at_report_stdout_make(void)
 {
     return at_report_file_make(stdout);
