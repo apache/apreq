@@ -3,6 +3,9 @@
 
 @section v2_14 Changes with libapreq2-2.14 (in development)
 
+- Build [Richard M Kandarian]
+  Fix debug build for Win32.
+
 - C API [joes]
   Fix mod_apreq2's config merging.
 

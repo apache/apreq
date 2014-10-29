@@ -163,7 +163,7 @@ LINK32_OBJS= \
 <<
 
 "$(LIBTDIR)\parsers.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "$(OUTDIR)\parsers.obj"
-    $(LINK32) /pdb:"$(TESTFILE)\parsers.pdb" /out:"$(LIBTDIR)\parsers.exe" @<<
+    $(LINK32) /pdb:"$(LIBTDIR)\parsers.pdb" /out:"$(LIBTDIR)\parsers.exe" @<<
   $(LINK32_FLAGS) $(LINK32_OBJS) "$(OUTDIR)\parsers.obj"
 <<
 
