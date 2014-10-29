@@ -41,12 +41,12 @@ my $prog = apache_prog_name($apache);
 my @httpd_ver = httpd_version($prog);
 my $devnull = devnull();
 my %map = (
-    apr => $httpd_ver[1] == 2 ? 'libapr-1.lib' : 'libapr.lib',
-    apu => $httpd_ver[1] == 2 ? 'libaprutil-1.lib' : 'libaprutil.lib'
+    apr => $httpd_ver[1] >= 2 ? 'libapr-1.lib' : 'libapr.lib',
+    apu => $httpd_ver[1] >= 2 ? 'libaprutil-1.lib' : 'libaprutil.lib'
 );
 
 foreach my $what (qw(apr apu)) {
-    my $ap = ($httpd_ver[1] == 2) ?
+    my $ap = ($httpd_ver[1] >= 2) ?
         "$what-1-config.bat" : "$what-config.bat";
     my $cfg = catfile $apache, 'bin', $ap;
     my $lib;

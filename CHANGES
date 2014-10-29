@@ -3,6 +3,9 @@
 
 @section v2_14 Changes with libapreq2-2.14 (in development)
 
+- Build [stevehay]
+  Fix httpd-2.4.x build for Win32.
+
 - Build [Richard M Kandarian]
   Fix debug build for Win32.
 
