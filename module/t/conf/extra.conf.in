@@ -2,14 +2,6 @@
     ScriptAlias /cgi-bin/ "@ServerRoot@/cgi-bin/"
 </IfModule>
 
-<IfModule !mpm_winnt.c>
-<IfModule mod_version.c>
-<IfVersion < 2.3.4>
-   LockFile @ServerRoot@/logs/accept.lock
-</IfVersion>
-</IfModule>
-</IfModule>
-
 <Directory "@ServerRoot@/cgi-bin">
    AllowOverride None
    Options None
