@@ -140,7 +140,7 @@ WARN
     close $fh;
 }
 
-if ($path eq 'perl_prereqs') {
+if (defined $path and $path eq 'perl_prereqs') {
     print perl_prereqs();
     exit;
 }
