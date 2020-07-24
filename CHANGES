@@ -1,7 +1,18 @@
 /** @page apreq_changes CHANGES
 //! brief List of major changes.
 
-@section v2_14 Changes with libapreq2-2.14 (in development)
+@section v2_15 Changes with libapreq2-2.15 (in development)
+
+- SECURITY: CVE-2019-12412 (cve.mitre.org)
+  C API [Max Kellermann]
+  Fix a NULL pointer dereference when parsing malformed
+  multipart data in apreq_parse_multipart().
+
+- C API [Yann Ylavic]
+  In apreq_brigade_concat(), fix memory handling and create
+  the FILE bucket correctly.
+
+@section v2_14 Changes with libapreq2-2.14 (not released)
 
 - Build [stevehay]
   Fix httpd-2.4.x build for Win32.
