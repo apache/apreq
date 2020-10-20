@@ -12,6 +12,9 @@
   In apreq_brigade_concat(), fix memory handling and create
   the FILE bucket correctly.
 
+- Build [Petr Pisar]
+  Fix "make release" on Unix.
+
 @section v2_14 Changes with libapreq2-2.14 (not released)
 
 - Build [stevehay]
