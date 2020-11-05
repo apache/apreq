@@ -1,7 +1,7 @@
 /** @page apreq_changes CHANGES
 //! brief List of major changes.
 
-@section v2_15 Changes with libapreq2-2.15 (released July 31, 2020)
+@section v2_15 Changes with libapreq2-2.15 (released November 12, 2020)
 
 - SECURITY: CVE-2019-12412 (cve.mitre.org)
   C API [Max Kellermann]
