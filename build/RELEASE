@@ -80,8 +80,8 @@ FreeBSD/Solaris note: use gmake!
     svn mv https://svn.apache.org/repos/asf/httpd/apreq/branches/v2.16 \
            https://svn.apache.org/repos/asf/httpd/apreq/tags/v2.16
 
-10. Upload (scp) the package and signature to www.apache.org
-   for distribution:
+10. Upload (scp) the package, signature and MD5/SHA* hash files to
+   www.apache.org for distribution:
    
         $ svn co https://dist.apache.org/repos/dist/release/httpd/libapreq/ apreq-dist-site
         $ cp libapreq2-2.16.tar.gz* apreq-dist-site
