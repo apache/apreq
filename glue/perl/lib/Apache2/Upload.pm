@@ -1,7 +1,7 @@
 package Apache2::Upload;
 use Apache2::Request;
 push our @ISA, qw/APR::Request::Param/;
-our $VERSION = "2.16";
+our $VERSION = "2.17";
 no strict 'refs';
 for (qw/slurp type size link tempname fh io filename/) {
     *{$_} = *{"APR::Request::Param::upload_$_"}{CODE};
