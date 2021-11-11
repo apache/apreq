@@ -67,13 +67,13 @@ typedef apr_status_t (*apreq_hook_function_t)(APREQ_HOOK_ARGS);
  * Declares a API parser.
  */
 #define APREQ_DECLARE_PARSER(f) APREQ_DECLARE_NONSTD(apr_status_t) \
-                                (f) (APREQ_PARSER_ARGS)
+                                f (APREQ_PARSER_ARGS)
 
 /**
  * Declares an API hook.
  */
 #define APREQ_DECLARE_HOOK(f)   APREQ_DECLARE_NONSTD(apr_status_t) \
-                                (f) (APREQ_HOOK_ARGS)
+                                f (APREQ_HOOK_ARGS)
 
 /**
  * A hook is called by the parser whenever data arrives in a file
@@ -278,7 +278,7 @@ typedef struct apreq_hook_find_param_ctx_t {
 
 /**
  * Special purpose utility for locating a parameter
- * during parsing.  The hook's ctx shoud be initialized
+ * during parsing.  The hook's ctx should be initialized
  * to an apreq_hook_find_param_ctx_t *, with the name
  * attribute set to the sought parameter name, the param
  * attribute set to NULL, and the prev attribute set to

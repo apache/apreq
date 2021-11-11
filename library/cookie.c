@@ -327,7 +327,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
     for (;;) {
         apr_status_t status;
         const char *name, *value;
-        apr_size_t nlen, vlen;
+        apr_size_t nlen = 0, vlen;
 
         while (*hdr == ';' || apr_isspace(*hdr))
             ++hdr;
@@ -429,7 +429,7 @@ APREQ_DECLARE(apr_status_t)apreq_parse_cookie_header(apr_pool_t *p,
 APREQ_DECLARE(int) apreq_cookie_serialize(const apreq_cookie_t *c,
                                           char *buf, apr_size_t len)
 {
-    /*  The format string must be large enough to accomodate all
+    /*  The format string must be large enough to accommodate all
      *  of the cookie attributes.  The current attributes sum to
      *  ~90 characters (w/ 6-8 padding chars per attr), so anything
      *  over 100 should be fine.

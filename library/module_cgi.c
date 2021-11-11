@@ -43,7 +43,7 @@
 
 /** Interactive patch:
  * TODO Don't use 65K buffer
- * TODO Handle empty/non-existant parameters
+ * TODO Handle empty/non-existent parameters
  * TODO Allow body elements to be files
  * TODO When running body/get/cookies all at once, include previous cached
  * values (and don't start at 0 in count)
@@ -99,8 +99,9 @@ static const TRANS priorities[] = {
     {NULL,      -1},
 };
 
-static char* chomp(char* str) {
-    apr_size_t p = strlen(str);
+static char* chomp(char* str)
+{
+    long p = (long)strlen(str);
     while (--p >= 0) {
         switch ((char)(str[p])) {
         case '\015':
@@ -261,7 +262,7 @@ static const char *cgi_header_in(apreq_handle_t *handle,
     apr_pool_t *p = handle->pool;
     char *key = apr_pstrcat(p, "HTTP_", name, NULL);
     char *k, *value = NULL;
-    for (k = key; *k; ++k) {
+    for (k = key+5; *k; ++k) {
         if (*k == '-')
             *k = '_';
         else
@@ -355,7 +356,7 @@ static void init_body(apreq_handle_t *handle)
         char *dummy;
         apr_int64_t content_length = apr_strtoi64(cl_header, &dummy, 0);
 
-        if (dummy == NULL || *dummy != 0) {
+        if (dummy == cl_header || *dummy != 0) {
             req->body_status = APREQ_ERROR_BADHEADER;
             cgi_log_error(CGILOG_MARK, CGILOG_ERR, req->body_status, handle,
                           "Invalid Content-Length header (%s)", cl_header);
@@ -518,7 +519,6 @@ static apr_status_t cgi_jar(apreq_handle_t *handle,
             p = apreq_cookie_make(handle->pool, name, strlen(name), val, strlen(val));
             apreq_cookie_tainted_on(p);
             apreq_value_table_add(&p->v, req->jar);
-            val = p->v.data;
         }
         req->jar_status = APR_SUCCESS;
     } /** Fallthrough */
@@ -949,7 +949,7 @@ static apr_status_t ba_cleanup(void *data)
  Always check query_string before prompting user,
   but rewrite body/cookies to get if interactive
 
- Definately more work needed here...
+ Definitely more work needed here...
 */
 static int is_interactive_mode(apr_pool_t *pool) {
     char *value = NULL, qs[] = "GATEWAY_INTERFACE";
