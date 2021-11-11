@@ -19,6 +19,8 @@
 #include "apreq_error.h"
 #include "apreq_util.h"
 
+#include "apr_lib.h" /* for apr_iscntrl() & co */
+
 #define PARSER_STATUS_CHECK(PREFIX)   do {         \
     if (ctx->status == PREFIX##_ERROR)             \
         return APREQ_ERROR_GENERAL;                \
@@ -167,6 +169,7 @@ static apr_status_t split_header_line(apreq_param_t **p,
 
 }
 
+#define IS_TOKEN_CHAR(c) (c && (apr_isalnum(c) || strchr("!#$%&'*+-.^_`|~", c)))
 
 APREQ_DECLARE_PARSER(apreq_parse_headers)
 {
@@ -244,6 +247,10 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                     goto parse_hdr_bucket;
 
                 default:
+                    if (!IS_TOKEN_CHAR(ch)) {
+                        ctx->status = HDR_ERROR;
+                        return APR_EINVAL;
+                    }
                     ++ctx->nlen;
                 }
             }
@@ -269,6 +276,10 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                     goto parse_hdr_bucket;
 
                 default:
+                    if (apr_iscntrl(ch)) {
+                        ctx->status = HDR_ERROR;
+                        return APR_EINVAL;
+                    }
                     ctx->status = HDR_VALUE;
                     if (off > 1) {
                         apr_bucket_split(e, off - 1);
@@ -298,6 +309,10 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                     goto parse_hdr_bucket;
 
                 default:
+                    if (apr_iscntrl(ch)) {
+                        ctx->status = HDR_ERROR;
+                        return APR_EINVAL;
+                    }
                     ++ctx->vlen;
                 }
             }
@@ -381,6 +396,10 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                     goto parse_hdr_bucket;
 
                 default:
+                    if (apr_iscntrl(ch)) {
+                        ctx->status = HDR_ERROR;
+                        return APR_EINVAL;
+                    }
                     ctx->status = HDR_VALUE;
                     ++ctx->vlen;
                     goto parse_hdr_bucket;
@@ -405,6 +424,10 @@ APREQ_DECLARE_PARSER(apreq_parse_headers)
                 goto parse_hdr_bucket;
 
             default:
+                if (apr_iscntrl(ch)) {
+                    ctx->status = HDR_ERROR;
+                    return APR_EINVAL;
+                }
                 ctx->status = HDR_NAME;
                 goto parse_hdr_bucket;
             }
