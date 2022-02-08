@@ -917,6 +917,7 @@ APREQ_DECLARE(apr_status_t)
                     return APREQ_ERROR_BADSEQ;
                 case '"':
                     *vlen = v - *val;
+                    ++v;
                     break;
                 case '\\':
                     if (v[1] != 0)
