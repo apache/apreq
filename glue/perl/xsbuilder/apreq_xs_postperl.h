@@ -94,7 +94,7 @@ static SV *apreq_xs_find_obj(pTHX_ SV *in, const char key)
                 in = *svp;
                 break;
             }
-            Perl_croak(aTHX_ "attribute hash has no '%s' key!", key);
+            Perl_croak(aTHX_ "attribute hash has no '%c' key!", key);
         case SVt_PVMG:
             if (SvOBJECT(sv) && SvIOKp(sv))
                 return in;
