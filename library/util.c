@@ -855,6 +855,7 @@ APREQ_DECLARE(apr_status_t)
     do {
         const char *hde, *v;
         apr_size_t tail = 0;
+        int name_is_token = 1;
 
         /* Parse the name => [hdr:hde[ */
         hde = hdr;
@@ -879,12 +880,15 @@ APREQ_DECLARE(apr_status_t)
             ++hde;
             goto look_for_end_name;
         default:
-            /* The name is a token */
-            if (!IS_TOKEN_CHAR(*hde))
+            /* No control chars */
+            if (apr_iscntrl(*hde))
                 return APREQ_ERROR_BADCHAR;
             /* Nothing after the tail */
             if (tail)
                 return APREQ_ERROR_BADATTR;
+            /* Mark non-token for the name=value case */
+            if (!IS_TOKEN_CHAR(*hde))
+                name_is_token = 0;
             ++hde;
             goto look_for_end_name;
         }
@@ -894,6 +898,10 @@ APREQ_DECLARE(apr_status_t)
             if (hde == hdr) {
                 /* The name can't be empty */
                 return APREQ_ERROR_BADATTR;
+            }
+            if (!name_is_token) {
+                /* The name must be a token in a name=value pair */
+                return APREQ_ERROR_BADCHAR;
             }
 
             ++v;
