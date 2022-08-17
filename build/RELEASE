@@ -80,7 +80,7 @@ FreeBSD/Solaris note: use gmake!
     svn mv https://svn.apache.org/repos/asf/httpd/apreq/branches/v2.17 \
            https://svn.apache.org/repos/asf/httpd/apreq/tags/v2.17
 
-10. Upload (scp) the package, signature and MD5/SHA* hash files to
+10. Upload (scp) the package, signature and SHA* hash files to
    www.apache.org for distribution:
    
         $ svn co https://dist.apache.org/repos/dist/release/httpd/libapreq/ apreq-dist-site

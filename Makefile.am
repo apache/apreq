@@ -44,7 +44,6 @@ release: distclean docs_clean reconfig distdir
 	@cd $(distdir); @PERL@ -M$(EUM) -e "$(EUM)::mkmanifest"
 	@PERL@ -ple '$$_="$(distdir)/$$_"' $(distdir)/MANIFEST | $(TAR) -czf $(distdir).tar.gz -T -
 	rm -rf $(distdir)
-	@md5sum $(distdir).tar.gz > $(distdir).tar.gz.md5
 	@sha256sum $(distdir).tar.gz > $(distdir).tar.gz.sha256
 	@sha512sum $(distdir).tar.gz > $(distdir).tar.gz.sha512
 	@echo "Made $(distdir).tar.gz and hashes"
