@@ -62,12 +62,10 @@ static int apreq_upload_test_handler(request_rec *r)
       ap_rputs("not an upload field", r);
     }
     else {
-      apr_table_t *info;      /* upload headers */
       apr_bucket_brigade *bb; /* upload contents */
       apr_bucket *e;
       apr_size_t total = 0;
 
-      info = param->info;
       bb = apr_brigade_create(r->pool, r->connection->bucket_alloc);
       apreq_brigade_copy(bb, param->upload);
 
@@ -89,7 +87,7 @@ static int apreq_upload_test_handler(request_rec *r)
         apr_bucket_delete(e);
       }
 
-      ap_rprintf(r, "%d", total);
+      ap_rprintf(r, "%ld", (unsigned long)total);
     }
 
     ap_log_rerror(APLOG_MARK, APLOG_DEBUG, APR_SUCCESS,

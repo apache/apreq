@@ -35,8 +35,7 @@ extern module AP_MODULE_DECLARE_DATA apreq_output_filter_test_module;
 
 static apr_status_t apreq_output_filter_test_init(ap_filter_t *f)
 {
-    apreq_handle_t *handle;
-    handle = apreq_handle_apache2(f->r);
+    (void)apreq_handle_apache2(f->r);
     return APR_SUCCESS;
 }
 
