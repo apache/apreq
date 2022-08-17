@@ -104,6 +104,8 @@ static void header_attributes(dAT, void *ctx)
     apr_size_t vlen;
     apr_status_t s;
 
+    AT_localize();
+
     s = apreq_header_attribute(hdr, "none", 4, &val, &vlen);
     AT_int_eq(s, APREQ_ERROR_NOATTR);
 
@@ -133,6 +135,7 @@ static void header_attributes(dAT, void *ctx)
     s = apreq_header_attribute(hdr, "no-quote", 8, &val, &vlen);
     AT_int_eq(s, APREQ_ERROR_BADSEQ);
 
+    AT_delocalize();
 }
 
 
