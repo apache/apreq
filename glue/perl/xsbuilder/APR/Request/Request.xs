@@ -233,7 +233,7 @@ upload_hook(obj, sub)
 #endif
 
     apreq_hook_add(req, apreq_hook_make(req->pool, apreq_xs_upload_hook, NULL, ctx));
-    apr_pool_cleanup_register(req->pool, ctx, upload_hook_cleanup, NULL);
+    apr_pool_cleanup_register(req->pool, ctx, upload_hook_cleanup, upload_hook_cleanup);
 
 
 APR::Pool
