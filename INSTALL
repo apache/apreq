@@ -42,7 +42,7 @@ SVN (Subversion) ACCESS
 
 Development of httpd-apreq-2 can be followed through the svn repository:
 
-  $ svn checkout http://svn.apache.org/repos/asf/httpd/apreq/trunk/ httpd-apreq-2
+  $ svn checkout https://svn.apache.org/repos/asf/httpd/apreq/trunk/ httpd-apreq-2
 
 Developers with commit access must use the https protocol instead;
 note that, if you are compiling svn from sources, you must
@@ -52,15 +52,15 @@ enable ssl.
 Subversion sources, and binaries for some platforms, may be obtained
 through the home page:
 
-     http://subversion.tigris.org/
+     https://subversion.apache.org/
 
 Documentation on using svn is available at
 
-     http://svnbook.red-bean.com/
+     https://svnbook.red-bean.com/
 
 In particular,
 
-     http://svnbook.red-bean.com/en/1.0/apa.html
+     https://svnbook.red-bean.com/en/1.0/apa.html
 
 contains a guide for users familiar with cvs.
 

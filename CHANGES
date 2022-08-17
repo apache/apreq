@@ -1,7 +1,7 @@
 /** @page apreq_changes CHANGES
 //! brief List of major changes.
 
-@section v2_17 Changes with libapreq2-2.17 (in development)
+@section v2_17 Changes with libapreq2-2.17 (released 18 March, 2022)
 
 - Multipart header parser [Yann Ylavic]
   Rework apreq_parse_headers() to discard CRLF of folded values.
