@@ -270,16 +270,16 @@ static void test_file_mktemp(dAT, void *ctx)
 
 static void test_header_attribute(dAT, void *ctx)
 {
-    const char hdr[] = "filename=\"filename=foo\" filename=\"quux.txt\"";
+    const char hdr[] = "name=\"filename=foo\"; filename=\"quux.txt\"";
     const char *val;
     apr_size_t vlen;
 
-    AT_int_eq(apreq_header_attribute(hdr+4, "name", 4, &val, &vlen),
+    AT_int_eq(apreq_header_attribute(hdr, "name", 4, &val, &vlen),
               APR_SUCCESS);
     AT_int_eq(vlen, 12);
     AT_mem_eq("filename=foo", val, 12);
 
-    AT_int_eq(apreq_header_attribute(hdr+4, "filename", 8, &val, &vlen),
+    AT_int_eq(apreq_header_attribute(hdr, "filename", 8, &val, &vlen),
               APR_SUCCESS);
     AT_int_eq(vlen, 8);
     AT_mem_eq("quux.txt", val, 8);
