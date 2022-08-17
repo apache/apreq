@@ -942,6 +942,7 @@ APREQ_DECLARE(apr_status_t)
                     break;
                 case ' ':
                 case '\t':
+                    ++v;
                     goto look_for_after_quote;
                 default:
                     if (apr_iscntrl(*v))
