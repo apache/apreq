@@ -38,9 +38,10 @@ FreeBSD/Solaris note: use gmake!
 
     % svn commit -m "2.18 cycle"
 
-4. Prep the package for CPAN by running:
+4. On the BRANCH
+    Prep the package for CPAN by running:
 
-        % make release
+        % ./buildconf && ./configure && make release
 
    This will generate a libapreq2-2.18.tar.gz candidate in the 
    current directory.   You should keep this source tree
