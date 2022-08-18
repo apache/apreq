@@ -4,9 +4,9 @@ FreeBSD/Solaris note: use gmake!
 
 1. Create a realease branch:
 
-    svn cp https://svn.apache.org/repos/asf/httpd/apreq/trunk \
+    svn cp -m "Prepare for v2.17 release." \
+           https://svn.apache.org/repos/asf/httpd/apreq/trunk \
            https://svn.apache.org/repos/asf/httpd/apreq/branches/v2.17
-
 
 2. On the BRANCH
     Edit STATUS, marking the release date
