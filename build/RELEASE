@@ -62,11 +62,16 @@ FreeBSD/Solaris note: use gmake!
 
         % pgp -sba libapreq2-2.18.tar.gz
 
-7. Upload the release candidate to people.apache.org/~username
-   and post a candidate announcement to apreq-dev@. Also, it is 
-   strongly recommended that the RM crosspost the candidate 
-   announcement to the modperl@ list, to solicit feedback
-   from a much larger audience.
+7. Make release candidate files available for testing:
+
+     $ svn co https://dist.apache.org/repos/dist/dev/httpd/libapreq/ apreq-dev-site
+     $ cp libapreq2-2.18.tar.gz* apreq-dev-site
+     $ svn commit -m "libapreq2 2.18 release artifacts" apreq-dev-site
+
+   and post a candidate announcement to dev@httpd.apache.org. Also, it
+   is strongly recommended that the RM crosspost the candidate
+   announcement to the dev@perl list, to solicit feedback from a much
+   larger audience.
 
    Subject: [RELEASE CANDIDATE] libapreq2 2.18 RC\d+
 
@@ -75,14 +80,12 @@ FreeBSD/Solaris note: use gmake!
    (three +1 and more +1s than -1s) among the httpd pmc members, the RM 
    may proceed with the release.
 
-
 9. Tag the Release -- from the BRANCH
 
     svn mv https://svn.apache.org/repos/asf/httpd/apreq/branches/v2.18 \
            https://svn.apache.org/repos/asf/httpd/apreq/tags/v2.18
 
-10. Upload (scp) the package, signature and SHA* hash files to
-   www.apache.org for distribution:
+10. Upload the package, signature and SHA* hash files to dist.apache.org:
    
         $ svn co https://dist.apache.org/repos/dist/release/httpd/libapreq/ apreq-dist-site
         $ cp libapreq2-2.18.tar.gz* apreq-dist-site
@@ -99,23 +102,19 @@ FreeBSD/Solaris note: use gmake!
    Then update the website's copy using "cvs co KEYS" in the 
    /www/www.apache.org/dist/httpd/ directory.
 
-11. Verify or get soeone to Verify that you have CPAN karma.
-    Note, discuss getting a group kind of like AMPL in mod_perl land.
-    (Currently, joes@, issac@ and pgollucci@ are active and have karma)
+11. Wait at least 1 hour for the ASF CDN to pick up the new files.
+    check https://downloads.apache.org/httpd/libapreq/ to see that
+    they have appeared.  Then modify the public web site as follows:
 
-12. Upload the package to CPAN. Doublecheck that the md5 checksum
-   received from PAUSE is correct.
+    git clone git@github.com:apache/httpd-site.git httpd-site
+    
+    modify the version numbers in apreq/download.md and push to
+    complete.
 
-13. Wait ~12-24 hours for the ASF mirrors to pick up the new package, then
-   update the apreq homepage to list the new release in the News section
-   Be sure to update the libapreq2 documentation. For instructions on updating 
-   the httpd website, see build/WEBSITE.  IMPORTANT: YOU MUST UPDATE
-   download.html TO POINT AT THE NEW RELEASE PACKAGE!
+12. Mail the announcement from your people.apache.org using build/announcement.pl:
 
-14. Mail the announcement from your people.apache.org account by piping the 
-    "CPAN Upload" email acknowledgement (from PAUSE) through build/announcement.pl:
+    % build/announcement.pl $USER@apache.org | sendmail -oi -t -f $USER@apache.org
 
-    % build/announcement.pl $USER@apache.org < CPAN_ack | ssh $USER@people.apache.org "sendmail -oi -t -odq"
+13. Ask a kind soul on dev@perl.apache.org to handle the CPAN upload.
 
-15. Drink Beer!
-
+14. Drink Beer! [Now optional]

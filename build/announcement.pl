@@ -20,17 +20,11 @@ my $MAIL_FROM = shift;
 my $RCPT_TO = join ",\n      ", map "<$_>" ,
     qw(
          announce@httpd.apache.org
-        apreq-dev@httpd.apache.org
          announce@perl.apache.org
           modperl@perl.apache.org
       );
 
 my ($LICENSE_VERSION) = grep s/^\s+Version (\d\.\d),.*$/$1/, slurp "LICENSE";
-my $CPAN_DATA = join "", <>;
-
-$CPAN_DATA =~ /^has entered CPAN as(.+?)\nNo action is required/ms
-    or die "Bad CPAN message:\n$CPAN_DATA";
-$CPAN_DATA = $1;
 
 my $TITLE = "libapreq2-$PACKAGE_VERSION Released";
 
@@ -52,9 +46,7 @@ version $LICENSE_VERSION.  It is now available through the ASF mirrors
 
       https://httpd.apache.org/apreq/download.cgi
 
-and has entered the CPAN as $CPAN_DATA
 EOT
-
 
 my $changes = (split /\s+[@]section\s+v\S+\s+/, slurp "CHANGES")[1];
 
