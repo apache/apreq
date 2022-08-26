@@ -65,7 +65,7 @@ docs_clean:
 	-rm -rf docs
 	-rm -rf *.html  pod2*.tmp
 
-docs:	pod2html build/doxygen.conf apr_tags docs/html/feather.gif
+docs:	pod2html build/doxygen.conf apr_tags docs/html/feather.png
 	@PERL@ build/version_check.pl doxygen
 	doxygen build/doxygen.conf
 
@@ -121,10 +121,10 @@ pod2test :: $(POD_DIR)/Request.t $(POD_DIR)/Cookie.t $(POD_DIR)/Upload.t $(POD_D
 
 apr_tags: docs/apr.tag docs/apu.tag
 
-docs/html/feather.gif:
+docs/html/feather.png:
 	${mkinstalldirs} docs
 	${mkinstalldirs} docs/html
-	cp feather.gif docs/html
+	cp feather.png docs/html
 
 docs/apu.tag:
 	${mkinstalldirs} docs
