@@ -92,7 +92,7 @@ tr.header a:active,
 /* h1                     */
 /* ====================== */
 
-h1 {
+h1, div.title {
     padding: 0.2em;
     margin: 0;
     background-color: inherit;
