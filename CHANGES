@@ -1,17 +1,19 @@
 /** @page apreq_changes CHANGES
-//! brief List of major changes.
+@brief List of major changes.
 
-@section v2_17 Changes with libapreq2-2.17 (in development)
+@subsubsection v2_18 Changes with libapreq2-2.18 (in development)
+
+@subsubsection v2_17 Changes with libapreq2-2.17 (released 25 August, 2022)
 
 - Multipart header parser [Yann Ylavic]
   Rework apreq_parse_headers() to discard CRLF of folded values.
 
-@section v2_16 Changes with libapreq2-2.16 (released 17 March, 2021)
+@subsubsection v2_16 Changes with libapreq2-2.16 (released 17 March, 2021)
 
 - Build [Steve Hay]
   Fix file attribute for modules listed as provided in META.yml.
 
-@section v2_15 Changes with libapreq2-2.15 (released 17 November, 2020)
+@subsubsection v2_15 Changes with libapreq2-2.15 (released 17 November, 2020)
 
 - SECURITY: CVE-2019-12412 (cve.mitre.org)
   C API [Max Kellermann]
@@ -25,7 +27,7 @@
 - Build [Petr Pisar]
   Fix "make release" on Unix.
 
-@section v2_14 Changes with libapreq2-2.14 (not released)
+@subsubsection v2_14 Changes with libapreq2-2.14 (not released)
 
 - Build [stevehay]
   Fix httpd-2.4.x build for Win32.
@@ -40,24 +42,24 @@
   Updated license info in META.yml
   Updated documentation for Apache2::Cookie
 
-@section v2_13 Changes with libapreq2-2.13 (released December 3, 2010)
+@subsubsection v2_13 Changes with libapreq2-2.13 (released December 3, 2010)
 
 - HTTP Only Cookie [Robert Stone & Adam Prime]
   The C and Perl Cookie APIs now support an HttpOnly flag to tell 
   user agents to deny client-side script access to the cookie
 
-@section v2_12 Changes with libapreq2-2.12 (released March 13, 2009)
+@subsubsection v2_12 Changes with libapreq2-2.12 (released March 13, 2009)
 
 - C API [joes]
   Make the cookie parser a little more flexible.
 
-@section v2_11 Changes with libapreq2-2.11 (not released)
+@subsubsection v2_11 Changes with libapreq2-2.11 (not released)
 
 - Interactive CGI module [issac]
   Allow cgi module to interactively prompt for parameters and cookies when
   running a script from the command line and not from a CGI interface
 
-@section v2_10 Changes with libapreq2-2.10 (not released)
+@subsubsection v2_10 Changes with libapreq2-2.10 (not released)
 
 - Perl Glue [joes]
   Fix the linking of the perl modules to libapreq2 and libapr
@@ -97,7 +99,7 @@
      flag |= APR_FILE_NOCLEANUP | APR_SHARELOCK;
   in apreq_file_cleanup, to avoid problems with file uploads.
 
-@section v2_09 Changes with libapreq2-2.09 ( not released)
+@subsubsection v2_09 Changes with libapreq2-2.09 ( not released)
 
 - C API [joes]
   Fix leak associated to calling apreq_brigade_fwrite() on an upload
@@ -125,7 +127,7 @@
   code around |#_!!_#| autoconf 2.60 bug.
 
 
-@section v2_08 Changes with libapreq2-2.08 (released August 8, 2006)
+@subsubsection v2_08 Changes with libapreq2-2.08 (released August 8, 2006)
 
 - Perl API [Randy Kobes]
   add APR_FILE_NOCLEANUP | APR_SHARELOCK to flags passed to
@@ -161,7 +163,7 @@
   Expose the constants in apreq_error.h via the APR::Request::Error package.
 
 
-@section v2_07 Changes with libapreq2-2.07 (released February 12, 2006)
+@subsubsection v2_07 Changes with libapreq2-2.07 (released February 12, 2006)
 
 
 - C API [joes]
@@ -223,7 +225,7 @@
   Add explicit casts for apreq_param_charset_* to keep c++ compilers happy.
 
 
-@section v2_06_dev Changes with libapreq2-2.06-dev (released July 20, 2005)
+@subsubsection v2_06_dev Changes with libapreq2-2.06-dev (released July 20, 2005)
 
 
 - C API [Marc Gràcia, joes]
@@ -263,7 +265,7 @@
   Fix cookie domain/path munging in Apache2::Cookie::new().
 
 
-@section v2_05_dev Changes with libapreq2-2.05-dev (released May 5, 2005)
+@subsubsection v2_05_dev Changes with libapreq2-2.05-dev (released May 5, 2005)
 
 
 - Win32 build [Randy Kobes]
@@ -410,11 +412,11 @@
   - Replace env argument with apr_table_t in apreq_params_as_array,
     apreq_params_as_string,
   - Move remaining apreq_param* to apreq_env.h.
-  - Move parser and hook sections to apreq_parsers.h.
+  - Move parser and hook subsubsections to apreq_parsers.h.
   - Change apreq_upload(s) old apreq_request_t arg to apr_table_t.
 
   [apreq_parsers.h]
-  - Acquire the hook and parser sections of original apreq_params.h.
+  - Acquire the hook and parser subsubsections of original apreq_params.h.
   - Remove env argument from APREQ_PARSER_ARGS and APREQ_HOOK_ARGS
   - Augment apreq_hook_t and apreq_parser_t to replace missing env features.
   - Change apreq_make_parser and apreq_make_hook signatures.
@@ -512,7 +514,7 @@
   the hook API.
 
 
-@section v2_04_dev Changes with libapreq2-2.04-dev (released August 30, 2004)
+@subsubsection v2_04_dev Changes with libapreq2-2.04-dev (released August 30, 2004)
 
 
 - Perl API [joes]
@@ -627,7 +629,7 @@
   better organization.
 
 
-@section v2_03_dev Changes with libapreq2-2.03-dev (released June 12, 2004)
+@subsubsection v2_03_dev Changes with libapreq2-2.03-dev (released June 12, 2004)
 
 
 - C API [joes]
@@ -648,7 +650,7 @@
 
 - C API [joes]
   Compensate for a missing CRLF in empty file upload block, which 
-  actually complies with RFC 2046 Section 5.1.1.  Konqueror (version unknown)
+  actually complies with RFC 2046 subsubsection 5.1.1.  Konqueror (version unknown)
   and Mozilla 0.9.7 are known to emit such blocks.
 
 - Perl API [joes]
@@ -700,7 +702,7 @@
   Fix segfault caused by invalid %-escape sequence in query string.
 
 
-@section v2_02_dev Changes with libapreq2-2.02-dev (released Nov 15, 2003)
+@subsubsection v2_02_dev Changes with libapreq2-2.02-dev (released Nov 15, 2003)
 
 
 - Perl API [joes]
@@ -709,7 +711,7 @@
   first reported to modperl list by Wolfgang Kubens.
 
 
-@section v2_01_dev Changes with libapreq2-2.01-dev (released Nov 10, 2003)
+@subsubsection v2_01_dev Changes with libapreq2-2.01-dev (released Nov 10, 2003)
 
 
 - build system [joes]
@@ -732,7 +734,7 @@
   was problematic on non-ELF systems).
 
 
-@section v2_0_0 Changes with libapreq2-2.00-dev (Oct 25, 2003)
+@subsubsection v2_0_0 Changes with libapreq2-2.00-dev (Oct 25, 2003)
 
 
 - C API: libapreq_cgi.c [randyk, joes]
