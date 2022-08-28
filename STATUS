@@ -1,19 +1,19 @@
 /** @page apreq_status STATUS
 
-    2.17 under developement
+\brief 2.18 under developement
 
-Contributors looking for a mission:
+\subsubsection contrib Contributors looking for a mission
 
     - just do an egrep on "TODO" or "XXX" and see what's there
 
 
-CURRENT RELEASE NOTES:
+\subsubsection current_releas CURRENT RELEASE NOTES
 
 
-RELEASE SHOWSTOPPERS:
+\subsubsection showstoppers RELEASE SHOWSTOPPERS
 
 
-CURRENT VOTES:
+\subsubsection votes CURRENT VOTES
 
     - Should we switch to EU::MM for determining the full path to perl?
       The problem is that some folks move their perl binary post-installation,
@@ -34,7 +34,7 @@ CURRENT VOTES:
 
             +1: pgollucci
 
-TODO:
+\subsubsection todo TODO
 
     - Get -libmodperl to work like it does in mod_perl land.
 
@@ -83,19 +83,19 @@ TODO:
       relying on paths like "../../src".
 
 
-OPEN ISSUES:
+\subsubsection issues OPEN ISSUES
 
     - Should we bundle an apr-based "application/xml" parser?  
       If so, how should we parse the xml data into an apr_table?
 
 
-BUGS:
+\subsubsection bugs BUGS
 
     - Fix build automake/libtool/autoconf build system so it works
       properly on OSX & AIX.
 
 
-WISH LIST:
+\subsubsection wishes WISH LIST
 
     - I [joes] wish folks would contribute some glue code for
       one of these:
