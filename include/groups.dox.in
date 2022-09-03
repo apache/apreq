@@ -11,7 +11,7 @@
  *
  * libapreq2 is a shared library based on the Apache
  * Portable Runtime libraries libapr and libaprutil.
- * @see http://apr.apache.org/
+ * @see https://apr.apache.org/
  *
  * @section apreq2_config Configuring libapreq2 Applications
  * This package includes <code>apreq2-config</code>,
