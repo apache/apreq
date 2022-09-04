@@ -79,15 +79,13 @@ APREQ_DECLARE(apr_ssize_t) apreq_index(const char* hay, apr_size_t hlen,
  *             and trailing null byte.
  * @param src  Original string.
  * @param slen Length of original string.
- * @param dest Destination string.
  *
- * @return length of quoted copy in dest.
+ * @return Length of quoted copy in dest.
  */
 APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src,
                                       const apr_size_t slen);
 
 /**
- *
  * Same as apreq_quote() except when src begins and ends in quote marks. In
  * that case it assumes src is quoted correctly, and just copies src to dest.
  *
@@ -95,9 +93,8 @@ APREQ_DECLARE(apr_size_t) apreq_quote(char *dest, const char *src,
  *             and trailing null byte.
  * @param src  Original string.
  * @param slen Length of original string.
- * @param dest Destination string.
  *
- * @return length of quoted copy in dest.
+ * @return Length of quoted copy in dest.
  */
 APREQ_DECLARE(apr_size_t) apreq_quote_once(char *dest, const char *src,
                                            const apr_size_t slen);
