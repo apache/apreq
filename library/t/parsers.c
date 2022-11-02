@@ -25,6 +25,7 @@
 #define CRLF "\015\012"
 
 static apr_pool_t *p;
+static apr_pool_t *test_pool;
 
 static char url_data[] = "alpha=one&beta=two;omega=last%2";
 
@@ -152,10 +153,10 @@ static void parse_urlencoded(dAT, void *ctx)
     apreq_parser_t *parser;
     apr_table_t *body;
 
-    body = apr_table_make(p, APREQ_DEFAULT_NELTS);
-    ba = apr_bucket_alloc_create(p);
-    bb = apr_brigade_create(p, ba);
-    parser = apreq_parser_make(p, ba, URL_ENCTYPE, apreq_parse_urlencoded,
+    body = apr_table_make(test_pool, APREQ_DEFAULT_NELTS);
+    ba = apr_bucket_alloc_create(test_pool);
+    bb = apr_brigade_create(test_pool, ba);
+    parser = apreq_parser_make(test_pool, ba, URL_ENCTYPE, apreq_parse_urlencoded,
                                100, NULL, NULL, NULL);
 
     APR_BRIGADE_INSERT_HEAD(bb,
@@ -178,6 +179,7 @@ static void parse_urlencoded(dAT, void *ctx)
     AT_str_eq(apr_table_get(body,"beta"), "two");
     AT_str_eq(apr_table_get(body,"omega"),"last+last");
 
+    apr_pool_clear(test_pool);
 }
 
 static void parse_multipart(dAT, void *ctx)
@@ -188,7 +190,7 @@ static void parse_multipart(dAT, void *ctx)
 
     for (j = 0; j <= strlen(form_data); ++j) {
 
-        ba = apr_bucket_alloc_create(p);
+        ba = apr_bucket_alloc_create(test_pool);
 
         /* AT_localize checks the inner loop tests itself
          * (and interprets any such failures as being fatal),
@@ -208,9 +210,9 @@ static void parse_multipart(dAT, void *ctx)
             apr_status_t rv;
             apr_bucket *e, *f;
 
-            bb = apr_brigade_create(p, ba);
-            body = apr_table_make(p, APREQ_DEFAULT_NELTS);
-            parser = apreq_parser_make(p, ba, MFD_ENCTYPE
+            bb = apr_brigade_create(test_pool, ba);
+            body = apr_table_make(test_pool, APREQ_DEFAULT_NELTS);
+            parser = apreq_parser_make(test_pool, ba, MFD_ENCTYPE
                                        "; charset=\"iso-8859-1\""
                                        "; boundary=\"AaB03x\"",
                                        apreq_parse_multipart,
@@ -247,7 +249,7 @@ static void parse_multipart(dAT, void *ctx)
             AT_str_eq(val, "file1.txt");
             t = apreq_value_to_param(val)->info;
             vb = apreq_value_to_param(val)->upload;
-            apr_brigade_pflatten(vb, &val2, &len, p);
+            apr_brigade_pflatten(vb, &val2, &len, test_pool);
             AT_int_eq(len, strlen("... contents of file1.txt ..." CRLF));
             AT_mem_eq(val2 ,"... contents of file1.txt ..." CRLF, len);
             val = apr_table_get(t, "content-type");
@@ -257,11 +259,9 @@ static void parse_multipart(dAT, void *ctx)
             apr_brigade_cleanup(bb);
         }
 
-#ifdef APR_POOL_DEBUG
-        apr_bucket_alloc_destroy(ba);
-#endif
         AT_delocalize();
-        apr_pool_clear(p);
+
+        apr_pool_clear(test_pool);
     }
 }
 
@@ -276,17 +276,17 @@ static void parse_disable_uploads(dAT, void *ctx)
     apreq_parser_t *parser;
     apreq_hook_t *hook;
 
-    ba = apr_bucket_alloc_create(p);
-    bb = apr_brigade_create(p, ba);
+    ba = apr_bucket_alloc_create(test_pool);
+    bb = apr_brigade_create(test_pool, ba);
 
     e = apr_bucket_immortal_create(form_data, strlen(form_data), ba);
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
-    body = apr_table_make(p, APREQ_DEFAULT_NELTS);
-    hook = apreq_hook_make(p, apreq_hook_disable_uploads, NULL, NULL);
+    body = apr_table_make(test_pool, APREQ_DEFAULT_NELTS);
+    hook = apreq_hook_make(test_pool, apreq_hook_disable_uploads, NULL, NULL);
 
-    parser = apreq_parser_make(p, ba, MFD_ENCTYPE
+    parser = apreq_parser_make(test_pool, ba, MFD_ENCTYPE
                                "; charset=\"iso-8859-1\""
                                "; boundary=\"AaB03x\"",
                                apreq_parse_multipart,
@@ -305,6 +305,8 @@ static void parse_disable_uploads(dAT, void *ctx)
 
     val = apr_table_get(body, "pics");
     AT_is_null(val);
+
+    apr_pool_clear(test_pool);
 }
 
 
@@ -316,8 +318,8 @@ static void parse_generic(dAT, void *ctx)
     apreq_param_t *dummy;
     apreq_parser_t *parser;
     apr_table_t *body;
-    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
-    apr_bucket_brigade *bb = apr_brigade_create(p, ba);
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(test_pool);
+    apr_bucket_brigade *bb = apr_brigade_create(test_pool, ba);
     apr_bucket *e = apr_bucket_immortal_create(xml_data,
                                                strlen(xml_data),
                                                ba);
@@ -325,19 +327,21 @@ static void parse_generic(dAT, void *ctx)
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(ba));
 
-    body = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    body = apr_table_make(test_pool, APREQ_DEFAULT_NELTS);
 
-    parser = apreq_parser_make(p, ba, "application/xml",
+    parser = apreq_parser_make(test_pool, ba, "application/xml",
                                apreq_parse_generic, 1000, NULL, NULL, NULL);
 
     rv = apreq_parser_run(parser, body, bb);
     AT_int_eq(rv, APR_SUCCESS);
     dummy = *(apreq_param_t **)parser->ctx;
     AT_not_null(dummy);
-    apr_brigade_pflatten(dummy->upload, &val, &vlen, p);
+    apr_brigade_pflatten(dummy->upload, &val, &vlen, test_pool);
 
     AT_int_eq(vlen, strlen(xml_data));
     AT_mem_eq(val, xml_data, vlen);
+
+    apr_pool_clear(test_pool);
 }
 
 static void hook_discard(dAT, void *ctx)
@@ -347,8 +351,8 @@ static void hook_discard(dAT, void *ctx)
     apreq_parser_t *parser;
     apreq_hook_t *hook;
     apr_table_t *body;
-    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
-    apr_bucket_brigade *bb = apr_brigade_create(p, ba);
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(test_pool);
+    apr_bucket_brigade *bb = apr_brigade_create(test_pool, ba);
     apr_bucket *e = apr_bucket_immortal_create(xml_data,
                                                strlen(xml_data),
                                                ba);
@@ -356,10 +360,10 @@ static void hook_discard(dAT, void *ctx)
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(ba));
 
-    body = apr_table_make(p, APREQ_DEFAULT_NELTS);
+    body = apr_table_make(test_pool, APREQ_DEFAULT_NELTS);
 
-    hook = apreq_hook_make(p, apreq_hook_discard_brigade, NULL, NULL);
-    parser = apreq_parser_make(p, ba, "application/xml",
+    hook = apreq_hook_make(test_pool, apreq_hook_discard_brigade, NULL, NULL);
+    parser = apreq_parser_make(test_pool, ba, "application/xml",
                                apreq_parse_generic, 1000, NULL, hook, NULL);
 
 
@@ -369,6 +373,8 @@ static void hook_discard(dAT, void *ctx)
     AT_not_null(dummy);
     AT_not_null(dummy->upload);
     AT_ok(APR_BRIGADE_EMPTY(dummy->upload), "brigade has no contents");
+
+    apr_pool_clear(test_pool);
 }
 
 
@@ -388,18 +394,18 @@ static void parse_related(dAT, void *ctx)
     apreq_parser_t *parser;
     apreq_hook_t *xml_hook;
     apreq_param_t *param;
-    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
-    apr_bucket_brigade *bb = apr_brigade_create(p, ba);
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(test_pool);
+    apr_bucket_brigade *bb = apr_brigade_create(test_pool, ba);
     apr_bucket *e = apr_bucket_immortal_create(rel_data,
                                                    strlen(rel_data),
                                                    bb->bucket_alloc);
 
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
-    xml_hook = apreq_hook_make(p, apreq_hook_apr_xml_parser, NULL, NULL);
+    xml_hook = apreq_hook_make(test_pool, apreq_hook_apr_xml_parser, NULL, NULL);
 
-    body =   apr_table_make(p, APREQ_DEFAULT_NELTS);
-    parser = apreq_parser_make(p, ba, ct, apreq_parse_multipart,
+    body =   apr_table_make(test_pool, APREQ_DEFAULT_NELTS);
+    parser = apreq_parser_make(test_pool, ba, ct, apreq_parse_multipart,
                                1000, NULL, xml_hook, NULL);
 
     rv = apreq_parser_run(parser, body, bb);
@@ -414,12 +420,12 @@ static void parse_related(dAT, void *ctx)
     val = apr_table_get(param->info, "Content-Length");
     AT_str_eq(val, "400");
     AT_not_null(param->upload);
-    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, test_pool);
     AT_int_eq(vlen, 400);
     AT_mem_eq(val2, rel_data + 122, 400);
 
     doc = *(apr_xml_doc **)xml_hook->ctx;
-    apr_xml_to_text(p, doc->root, APR_XML_X2T_FULL,
+    apr_xml_to_text(test_pool, doc->root, APR_XML_X2T_FULL,
                     doc->namespaces, &ns_map, &val, &vlen);
     AT_int_eq(vlen, 400 - 22);
     AT_mem_eq(val, rel_data + 122 + 23, 400 - 23);
@@ -430,7 +436,7 @@ static void parse_related(dAT, void *ctx)
     param = apreq_value_to_param(val);
     AT_not_null(param);
     AT_not_null(param->upload);
-    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, test_pool);
     AT_int_eq(vlen, dlen);
     AT_mem_eq(val2, data, vlen);
 
@@ -439,9 +445,11 @@ static void parse_related(dAT, void *ctx)
     param = apreq_value_to_param(val);
     AT_not_null(param);
     AT_not_null(param->upload);
-    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, test_pool);
     AT_int_eq(vlen, dlen);
     AT_mem_eq(val2, data, vlen);
+
+    apr_pool_clear(test_pool);
 }
 
 typedef struct {
@@ -461,9 +469,9 @@ static void parse_mixed(dAT, void *ctx)
     array_elt *elt;
     char ct[] = MFD_ENCTYPE "; charset=\"iso-8859-1\"; boundary=\"AaB03x\"";
     apreq_parser_t *parser;
-    apr_table_t *body = apr_table_make(p, APREQ_DEFAULT_NELTS);
-    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(p);
-    apr_bucket_brigade *bb = apr_brigade_create(p, ba);
+    apr_table_t *body = apr_table_make(test_pool, APREQ_DEFAULT_NELTS);
+    apr_bucket_alloc_t *ba = apr_bucket_alloc_create(test_pool);
+    apr_bucket_brigade *bb = apr_brigade_create(test_pool, ba);
     apr_bucket *e = apr_bucket_immortal_create(mix_data,
                                                    strlen(mix_data),
                                                    bb->bucket_alloc);
@@ -471,7 +479,7 @@ static void parse_mixed(dAT, void *ctx)
     APR_BRIGADE_INSERT_HEAD(bb, e);
     APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(bb->bucket_alloc));
 
-    parser = apreq_parser_make(p, ba, ct, apreq_parse_multipart,
+    parser = apreq_parser_make(test_pool, ba, ct, apreq_parse_multipart,
                                1000, NULL, NULL, NULL);
 
     rv = apreq_parser_run(parser, body, bb);
@@ -490,7 +498,7 @@ static void parse_mixed(dAT, void *ctx)
     param = apreq_value_to_param(val);
 
     AT_not_null(param->upload);
-    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, test_pool);
     AT_int_eq(vlen, strlen("... contents of file1.txt ..."));
     AT_mem_eq(val2, "... contents of file1.txt ...", vlen);
 
@@ -503,10 +511,11 @@ static void parse_mixed(dAT, void *ctx)
 
     param = apreq_value_to_param(elt->val);
     AT_not_null(param->upload);
-    apr_brigade_pflatten(param->upload, &val2, &vlen, p);
+    apr_brigade_pflatten(param->upload, &val2, &vlen, test_pool);
     AT_int_eq(vlen, strlen("...contents of file2.gif..."));
     AT_mem_eq(val2, "...contents of file2.gif...", vlen);
 
+    apr_pool_clear(test_pool);
 }
 
 
@@ -514,7 +523,6 @@ static void parse_mixed(dAT, void *ctx)
 
 int main(int argc, char *argv[])
 {
-    apr_pool_t *test_pool;
     unsigned i, plan = 0;
     dAT;
     at_test_t test_list [] = {
@@ -532,9 +540,7 @@ int main(int argc, char *argv[])
     atexit(apr_terminate);
 
     apr_pool_create(&p, NULL);
-    apr_pool_create(&test_pool, NULL);
     apreq_initialize(p);
-
 
     AT = at_create(0, at_report_stdout_make());
 
@@ -543,10 +549,14 @@ int main(int argc, char *argv[])
 
     AT_begin(plan);
 
+    apr_pool_create(&test_pool, p);
     for (i = 0; i < sizeof(test_list) / sizeof(at_test_t);  ++i)
         AT_run(&test_list[i]);
+    apr_pool_destroy(test_pool);
 
     AT_end();
+
+    apr_pool_destroy(p);
 
     return 0;
 }

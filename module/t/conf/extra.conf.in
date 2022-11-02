@@ -2,7 +2,10 @@
     ScriptAlias /cgi-bin/ "@ServerRoot@/cgi-bin/"
 </IfModule>
 
-
+<IfModule mod_dumpio.c>
+    DumpIoInput on
+    DumpIoOutput on
+</IfModule>
 
 <Directory "@ServerRoot@/cgi-bin">
    AllowOverride None
