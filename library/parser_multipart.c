@@ -425,7 +425,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
                 if (cd != NULL) {
                     s = apreq_header_attribute(cd, "name", 4,
                                                &name, &nlen);
-                    if (s == APR_SUCCESS && nlen) {
+                    if (s == APR_SUCCESS) {
                         next_ctx->param_name = apr_pstrmemdup(pool, name,
                                                               nlen);
                     }
@@ -460,14 +460,14 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
             if (cd != NULL && strncmp(cd, "form-data", 9) == 0) {
                 s = apreq_header_attribute(cd, "name", 4, &name, &nlen);
-                if (s != APR_SUCCESS || !nlen) {
+                if (s != APR_SUCCESS) {
                     ctx->status = MFD_ERROR;
                     goto mfd_parse_brigade;
                 }
 
                 s = apreq_header_attribute(cd, "filename",
                                            8, &filename, &flen);
-                if (s == APR_SUCCESS && flen) {
+                if (s == APR_SUCCESS) {
                     apreq_param_t *param;
 
                     param = apreq_param_make(pool, name, nlen,
@@ -497,7 +497,7 @@ APREQ_DECLARE_PARSER(apreq_parse_multipart)
 
                 s = apreq_header_attribute(cd, "filename",
                                            8, &filename, &flen);
-                if (s != APR_SUCCESS || !flen || !ctx->param_name) {
+                if (s != APR_SUCCESS || !ctx->param_name) {
                     ctx->status = MFD_ERROR;
                     goto mfd_parse_brigade;
                 }

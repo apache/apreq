@@ -152,7 +152,7 @@ static void test_encode(dAT, void *ctx)
 static void test_cp1252_to_utf8(dAT, void *ctx)
 {
     char src1[] = "%C3%80%E3%82%a2"; /* A_GRAVE KATAKANA_A as utf8 */
-    char src2[5];
+    char src2[6]; /* + '\0' */
     unsigned char expect[16];
     apr_size_t slen;
 
@@ -270,7 +270,9 @@ static void test_file_mktemp(dAT, void *ctx)
 
 static void test_header_attribute(dAT, void *ctx)
 {
-    const char hdr[] = "name=\"filename=foo\"; filename=\"quux.txt\"";
+    const char hdr[] = "form-data; name=\"filename=foo\"; filename=\"quux.txt\"";
+    const char opera[] = "form-data; name=\"foo\"; filename=\"\"";
+    const char empty[] = "form-data; name=\"\"; filename=\"\"";
     const char *val;
     apr_size_t vlen;
 
@@ -278,12 +280,25 @@ static void test_header_attribute(dAT, void *ctx)
               APR_SUCCESS);
     AT_int_eq(vlen, 12);
     AT_mem_eq("filename=foo", val, 12);
-
     AT_int_eq(apreq_header_attribute(hdr, "filename", 8, &val, &vlen),
               APR_SUCCESS);
     AT_int_eq(vlen, 8);
     AT_mem_eq("quux.txt", val, 8);
 
+    AT_int_eq(apreq_header_attribute(opera, "name", 4, &val, &vlen),
+              APR_SUCCESS);
+    AT_int_eq(vlen, 3);
+    AT_mem_eq("foo", val, 3);
+    AT_int_eq(apreq_header_attribute(opera, "filename", 8, &val, &vlen),
+              APR_SUCCESS);
+    AT_int_eq(vlen, 0);
+
+    AT_int_eq(apreq_header_attribute(empty, "name", 4, &val, &vlen),
+              APR_SUCCESS);
+    AT_int_eq(vlen,0);
+    AT_int_eq(apreq_header_attribute(empty, "filename", 8, &val, &vlen),
+              APR_SUCCESS);
+    AT_int_eq(vlen, 0);
 }
 
 static void test_brigade_concat(dAT, void *ctx)
@@ -315,7 +330,7 @@ int main(int argc, char *argv[])
         { dT(test_join, 0) },
         { dT(test_brigade_fwrite, 0) },
         { dT(test_file_mktemp, 0) },
-        { dT(test_header_attribute, 6) },
+        { dT(test_header_attribute, 15) },
         { dT(test_brigade_concat, 0) },
     };
 

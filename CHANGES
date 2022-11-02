@@ -3,6 +3,9 @@
 
 @subsubsection v2_18 Changes with libapreq2-2.18 (in development)
 
+- Multipart parser
+  Allow empty part "name" and "filename" (restore v2.16 behaviour).
+
 @subsubsection v2_17 Changes with libapreq2-2.17 (released 25 August, 2022)
 
 - Multipart header parser [Yann Ylavic]
